@@ -43,7 +43,8 @@ interface Fall extends Fallen { slug: string; t0: number; shown: Shown }
  * landing again within 0.35 s (a beam or spray held on it) 4 for 0.08 s. The pixel game flashes every one of them, so
  * a held channel flickers its target; the models used to flash only the first.
  */
-const flashLevel = (f: number): number => (f >= 16 ? 1 : f >= 9 ? 0.8 : f >= 4 ? 0.5 : 0);
+// a falling fade, not a solid white blink (the user on the rock, round 2: "blinks in and out in too much of a static manner")
+const flashLevel = (f: number): number => (f >= 16 ? 0.9 : f >= 9 ? 0.5 : f >= 4 ? 0.3 : 0);
 
 export class Bodies3D {
   /** Everything this draws, under the parent the view gave. */

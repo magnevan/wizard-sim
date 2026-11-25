@@ -99,11 +99,13 @@ vec4 look(vec2 p) {
   float a = p.x / 6.2831853;
   float f = a * uNt, ti = floor(f), u = fract(f), c = toothTip(ti);
   float brk = clamp((uQ - toothBreak(ti)) / 0.12, 0.0, 1.0);
-  float big = toothH(ti) * pow(tri(u, c), 0.65) * (1.0 - brk);
+  float big = toothH(ti) * pow(tri(u, c), 0.65);
   float f2 = a * uNt * 2.6, t2 = floor(f2), u2 = fract(f2);
   float brk2 = clamp((uQ - 0.84 - uHold - 0.3 * rnd(t2, 6.0)) / 0.1, 0.0, 1.0);
-  float small = (0.3 + 0.22 * rnd(t2, 4.0)) * tri(u2, 0.3 + 0.4 * rnd(t2, 5.0)) * (1.0 - brk2);
-  float band = 0.3 * (1.0 - clamp((uQ - 0.8 - uHold) / 0.18, 0.0, 1.0));
+  float small = (0.3 + 0.22 * rnd(t2, 4.0)) * tri(u2, 0.3 + 0.4 * rnd(t2, 5.0));
+  float band = 0.3;
+  float gone = max(brk, clamp((uQ - 0.8 - uHold) / 0.4, 0.0, 1.0));
+  if (vnoise3(vec3(a * uNt * 3.0, p.y * 5.0, ti * 0.37)) < gone) return vec4(0.0);
   float h = max(band, max(big, small));
   float top = uHeight * uGrow * h, d = top - p.y;
   float aa = fwidth(p.y) + 1e-4;
@@ -138,7 +140,7 @@ vec2 centerAt(float a) {
   float f = clamp(a * 60.0 / ${PATH_STEP}.0, 0.0, ${PATH_N - 1}.0); int i = int(floor(f)), j = min(i + 1, ${PATH_N - 1});
   return mix(uPath[i], uPath[j], fract(f));
 }
-float frontR(float a) { float q = clamp(a / uTr, 0.0, 1.0); return mix(uR0, uR, 1.0 - pow(1.0 - q, 2.5)); }
+float frontR(float a) { float q = clamp(a / uTr, 0.0, 1.0); return mix(uR0, uR, 1.0 - pow(1.0 - q, 1.3)); }
 `;
 
 /** Shards: slivers off each tooth as it breaks (most), and off the crest as it runs (a few). */
@@ -211,14 +213,15 @@ vec4 look(vec2 p) {
   if (inside <= 0.0 || top <= 0.01) return vec4(0.0);
   // dying: holes open where the noise is low, from the bottom up
   float n = fbm3(vec3(cos(p.x) * 7.0, sin(p.x) * 7.0, y * 3.0 - uClock * 2.2) + 3.0);
-  float er = uFade * 1.15 - 0.08;
+  float er = uFade * 1.15 - 0.08 + (vnoise3(vec3(cos(p.x) * 1.6, sin(p.x) * 1.6, 7.0 + uSeed * 0.01)) - 0.5) * 0.35 * step(0.001, uFade);
   float keep = smoothstep(er, er + 0.1, n * 0.75 + y * 0.35 + 0.05);
   if (keep <= 0.0) return vec4(0.0);
   // stepped toon tones up the billow, broken by the fine lumps; a bright crest just under the top
   float tone = y / max(top, 1e-3) + (lump2 - 0.5) * 0.35;
   vec3 c = tone > 0.66 ? vec3(1.7, 1.85, 1.95) : tone > 0.36 ? vec3(0.55, 1.05, 1.55) : vec3(0.12, 0.45, 1.0);
-  c = mix(c, vec3(2.1, 2.15, 2.2), smoothstep(0.1, 0.0, d) * 0.8);
+  c = mix(c, vec3(1.3, 1.4, 1.5), smoothstep(0.1, 0.0, d) * 0.8);
   float a = mix(0.78, 0.96, smoothstep(0.0, 0.55, y / max(top, 1e-3))) * keep * inside * mix(0.4, 1.0, smoothstep(0.0, 0.05, d));
+  a *= 1.0 - uFade * uFade;
   return vec4(c * a, a);
 }`;
 
@@ -228,18 +231,18 @@ ${PATH_GLSL}
 uniform float uPuffs;
 Particle emitParticle(float k, float back) {
   if (k >= uPuffs) return P0();
-  float th = rnd(k, 31.0) * 6.2831853, born = rnd(k, 32.0) * 0.3 * uTr;
-  float life = 0.55 + 0.65 * rnd(k, 33.0), a = uAge - back - born;
+  float th = rnd(k, 31.0) * 6.2831853, born = (0.05 + 0.95 * rnd(k, 32.0)) * uTr;
+  float life = 0.45 + 0.3 * rnd(k, 33.0), a = uAge - back - born;
   if (a < 0.0 || a > life) return P0();
-  float al = a / life;
-  vec2 d = vec2(cos(th), sin(th)), c = centerAt(uAge - back);
-  float rr = min(frontR(uAge - back) * (0.6 + 0.45 * rnd(k, 34.0)) + al * 0.5, uR + 0.7);
-  float y = (0.1 + 1.1 * rnd(k, 35.0)) * uH * sin(min(al * 2.5, 1.0) * 1.5708) - al * al * 0.35;
+  float al = a / life, tau = 0.2, v = 2.0 + 2.0 * rnd(k, 34.0);
+  vec2 d = vec2(cos(th), sin(th)), c = centerAt(born);
+  float rr = frontR(born) * (0.85 + 0.2 * rnd(k, 40.0)) + v * tau * (1.0 - exp(-a / tau));
+  float y = (0.15 + 1.0 * rnd(k, 35.0)) * uH + a * 0.4;
   Particle p = P0(); p.alive = true;
   p.pos = vec3(c.x + d.x * rr, uGy + max(0.06, y), c.y + d.y * rr);
-  p.size = (0.2 + 0.22 * rnd(k, 36.0)) * (0.7 + 0.9 * al);
+  p.size = (0.28 + 0.25 * rnd(k, 36.0)) * (0.8 + 1.0 * al);
   p.rot = rnd(k, 37.0) * 6.28;
-  p.col = vec4(al, 0.0, 0.0, (1.0 - al) * (1.0 - al) * smoothstep(0.0, 0.06, al));
+  p.col = vec4(al, 0.0, 0.0, smoothstep(0.0, 0.08, al) * (1.0 - smoothstep(0.25, 1.0, al)));
   p.data = vec4(rnd(k, 38.0), rnd(k, 39.0), 0.0, 0.0);
   return p;
 }`;
@@ -250,7 +253,7 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   float n = vnoise3(vec3(uv * 2.3 + data.xy * 9.0, uClock * 1.3));
   float m = smoothstep(1.0, 0.4, length(uv) * (0.72 + 0.55 * n));
   vec3 c = mix(vec3(0.25, 0.65, 1.2), vec3(1.6, 1.75, 1.85), smoothstep(-0.4, 0.6, uv.y + (n - 0.5)));
-  float a = m * col.w * 0.8;
+  float a = m * col.w * 0.5;
   return vec4(c * a, a);
 }`;
 
@@ -311,7 +314,9 @@ vec4 decal(vec3 wp) {
   float edge = min(uRn, uRf) * (0.94 + 0.06 * vnoise3(vec3(cos(ang) * 3.0, sin(ang) * 3.0, uSeed * 0.01)));
   vec4 o = vec4(0.0);
   if (rr < edge + 0.2) {
-    float inside = smoothstep(edge, edge - 0.12, rr);
+    float broad = fbm3(vec3(cos(ang) * 2.0, sin(ang) * 2.0, uSeed * 0.01 + 3.0));
+    edge -= (0.3 + 0.6 * broad) * smoothstep(0.6 * uRf, uRf, uRn);
+    float inside = smoothstep(edge, edge - 0.25, rr);
     // uneven melt: patches go first where the noise is low
     float m = fbm3(vec3(wp.xz * 1.2, uSeed * 0.013));
     float keep = smoothstep(uMelt - 0.05, uMelt + 0.1, m);
@@ -325,10 +330,13 @@ vec4 decal(vec3 wp) {
     float k = inside * keep * dens;
     // full strength (the study): nearly opaque, since see-through cyan over the warm stone mixes to grey
     // (the decal isn't lit, so its colour is lifted to the sunlit stone's level, or it reads as a grey film)
-    float a = (0.8 + 0.12 * grain) * k;
-    vec3 film = mix(vec3(0.06, 0.4, 1.15), vec3(0.55, 0.95, 1.4), smoothstep(0.35, 0.75, grain)) * 1.6 * a + vec3(1.0, 1.1, 1.15) * veins * k * 0.7;
-    // a white rim where the front just passed, while it still runs
-    film += vec3(1.0, 1.1, 1.15) * smoothstep(0.1, 0.0, abs(rr - edge)) * uFront * 0.6 * keep;
+    // deposits: about half the stone left bare from the start, frost thrown in radial streaks and patches
+    float patchN = fbm3(vec3(wp.xz * 0.8, uSeed * 0.02 + 11.0));
+    float streak = vnoise3(vec3(cos(ang) * 9.0, sin(ang) * 9.0, rr * 0.45 + uSeed * 0.01));
+    float dep = patchN * 0.65 + streak * 0.5;
+    float cov = smoothstep(0.5, 0.62, dep), ridge = smoothstep(0.66, 0.74, dep);
+    float a = (0.22 * cov + 0.33 * ridge + 0.06 * grain * cov) * k;
+    vec3 film = vec3(0.25, 0.6, 0.95) * 1.6 * (0.22 * cov) * k + vec3(0.95, 1.1, 1.25) * 1.5 * (0.33 * ridge) * k + vec3(1.0, 1.1, 1.15) * veins * k * cov * 0.4;
     o = vec4(film, a);
   }
   // the front's light on the floor: a thin cool band right under it, tinting the stone (a little alpha) and lighting it
@@ -380,7 +388,7 @@ class Slot {
     if (this.rec !== r) { this.rec = r; this.covered = ''; }
     const n = runesOf(r.r), Tr = COLD.reach * stretchOf(r.r), q = age / Tr, hold = holdOf(n);
     const H = COLD.height + COLD.heightPerRune * (n - 1);
-    const Rn = COLD.r0 + (r.r - COLD.r0) * (1 - Math.pow(1 - Math.min(1, q), 2.5));
+    const Rn = COLD.r0 + (r.r - COLD.r0) * (1 - Math.pow(1 - Math.min(1, q), 1.3));
     const [cx, cy] = this.centerAt(r, age);
     const gy = heightAt(r.x, r.y);
     const seed = r.seed;
@@ -399,13 +407,13 @@ class Slot {
     this.shards.u.uShards.value = 24 + 9 * n;
     this.shards.count = SHARD_CAP;
     // the blast: snow powder racing out over the ice, then breaking up
-    const Hb = COLD.blast + COLD.blastPerRune * (n - 1), blastOn = q < 2.2 + hold;
+    const Hb = COLD.blast + COLD.blastPerRune * (n - 1), blastOn = q < 1.45 + hold;
     this.blast.mesh.visible = blastOn;
-    this.B.uClock.value = age; this.B.uGrow.value = Math.min(1, q * 4); this.B.uFade.value = Math.min(1, Math.max(0, (q - 0.85 - hold) / 1.1));
+    this.B.uClock.value = age; this.B.uGrow.value = Math.min(1, q * 4); this.B.uFade.value = Math.min(1, Math.max(0, (q - 0.65 - hold) / 0.75));
     if (blastOn) this.blast.place(cx, cy, Rn + 0.12, Hb, Hb * COLD.blastLean, heightAt);
-    this.puffs.u.uPuffs.value = Math.min(PUFF_CAP, 90 + 40 * n); this.puffs.count = PUFF_CAP;
+    this.puffs.u.uPuffs.value = Math.min(PUFF_CAP, 45 + 18 * n); this.puffs.count = PUFF_CAP;
     this.puffs.mesh.visible = age < Tr * 0.3 + 1.3;
-    this.flakes.u.uFlakes.value = Math.min(FLAKE_CAP, 25 + 9 * n); this.flakes.count = FLAKE_CAP;
+    this.flakes.u.uFlakes.value = Math.min(FLAKE_CAP, 8 + 3 * n); this.flakes.count = FLAKE_CAP;
     this.flakes.mesh.visible = age < Tr * 0.5 + 2.1;
     this.flash.count = 1; this.flash.mesh.visible = age < 0.13;
     this.shards.mesh.visible = age < Tr * (1.3 + hold) + 0.9;

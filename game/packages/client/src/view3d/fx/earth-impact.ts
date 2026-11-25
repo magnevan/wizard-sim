@@ -39,7 +39,8 @@ const h01 = (a: number, b: number, c = 0): number => { const s = Math.sin(a * 12
 
 const GRAV = 22;
 /** Shards an impact throws at n runes: a few big chunks of the rock, and many small ones. */
-const shardCount = (n: number): number => 12 + 5 * n;
+// half the small chips of round 2 (Codex: the aftermath spread wider than the collision); the big chunks stay
+const shardCount = (n: number): number => 7 + 2 * n;
 const BIG = 3;
 
 /**

@@ -142,7 +142,7 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   float lum = max(t.r, max(t.g, t.b)), m = smoothstep(0.08, 0.45, lum);
   // the painting's own colour, pushed past white at its hottest and cooled to red toward the far end
   vec3 c = t * mix(vec3(2.4, 1.9, 1.4), vec3(1.5, 0.7, 0.4), smoothstep(0.3, 1.0, col.x));
-  float a = m * 0.9;
+  float a = m * 0.55;
   return vec4(c * a, a);
 }`;
 
@@ -188,7 +188,7 @@ vec4 decal(vec3 wp) {
   vec2 dir = vec2(cos(uFan.z), sin(uFan.z));
   float a = atan(d.y, d.x) - uFan.z; a = mod(a + 3.14159265, 6.2831853) - 3.14159265;
   // the light spills a little past the flames' outline (about a cell), never further
-  float side = 1.0 - smoothstep(uHalf * 0.9, uHalf * 1.6, abs(a)), end = 1.0 - smoothstep(uFan.w - 0.2, uFan.w + 2.4, r);
+  float side = 1.0 - smoothstep(uHalf * 0.85, uHalf * 1.15, abs(a)), end = 1.0 - smoothstep(uFan.w - 0.2, uFan.w + 1.6, r);
   float n = fbm3(vec3(wp.xz * 1.1 - dir * uClock * 3.0, uClock * 0.7));
   float fan = side * end * smoothstep(0.2, 1.0, r) * (0.7 + 0.3 * n);
   float pool = exp(-dot(wp.xz - uFan.xy - dir * uNozF, wp.xz - uFan.xy - dir * uNozF) / 7.0);
@@ -197,7 +197,7 @@ vec4 decal(vec3 wp) {
   // a warm glaze: it takes a little of the pale stone's own colour away (alpha) and puts saturated firelight back, so the
   // floor under the fire turns orange rather than just brighter (which the tone map would wash to cream)
   vec3 c = mix(vec3(1.0, 0.45, 0.1), vec3(1.0, 0.24, 0.04), clamp(r / max(uFan.w, 1.0), 0.0, 1.0));
-  return vec4(c * k * 1.1, k * 0.3);
+  return vec4(c * k * 0.75, k * 0.25);
 }`;
 
 /** Its runes' heat: shifts the colours hotter (art/spray-jet.ts: hot = 0.035 per rune past the first). */
@@ -267,8 +267,9 @@ export class FireSpray {
     this.U.uTime.value = t - r.t0; this.U.uEnd.value = r.end === Infinity ? 1e9 : r.end - r.t0;
     // the body swells over the channel's first second, and once it stops, fades as its tail runs out after the head
     this.body.uGrow.value = Math.min(1, (t - r.t0) / 1.0);
-    this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - (t - r.end) / 0.4);
-    this.U.uN.value = n; this.U.uHot.value = hotOf(n); this.U.uCore.value = 0.26 + 0.04 * n; this.U.uNoz.value.w = groundY;
+    // the release erodes outward in the body's shader; this only cleans up after it
+    this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - Math.max(0, t - r.end - 0.45) / 0.25);
+    this.U.uN.value = n; this.U.uHot.value = hotOf(n); this.U.uCore.value = 0.16 + 0.025 * n; this.U.uNoz.value.w = groundY;
     for (const l of this.layers) { l.b.u.uRate.value = l.rate(n); l.b.u.uLife.value = l.life(n); }
     const now = this.trail.at(t), on = t <= r.end ? Math.min(1, (t - r.t0) / 0.15) : Math.max(0, 1 - (t - r.end) / 0.3);
     // the light on the floor runs out with the flames (full length in about 0.45 s), not ahead of them

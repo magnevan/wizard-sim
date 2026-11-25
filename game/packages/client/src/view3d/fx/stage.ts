@@ -10,6 +10,7 @@
  */
 import * as THREE from 'three';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 
 /** Uniforms every effect reads, shared by reference: the world's resolved depth, the target's size and the camera's range. */
 export const FX_U = {
@@ -19,7 +20,26 @@ export const FX_U = {
   uFar: { value: 500 },
 };
 
+/**
+ * The haze pass: each pixel of the frame read from a little way off, by the offset (in pixels, xy) the distortion
+ * meshes drew there; light bending round something hot (the user, on the Arcane beam, 2026-11-25).
+ */
+const HAZE = new THREE.ShaderMaterial({
+  uniforms: { tColor: { value: null }, tOff: { value: null }, uRes: { value: new THREE.Vector2(1, 1) } },
+  vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+  fragmentShader: 'uniform sampler2D tColor, tOff; uniform vec2 uRes; varying vec2 vUv; void main() { vec2 o = clamp(texture2D(tOff, vUv).xy, -3.0, 3.0); gl_FragColor = texture2D(tColor, vUv + o / uRes); }',
+  depthTest: false, depthWrite: false,
+});
+
 export class FxStage {
+  /**
+   * Distortion: meshes here draw a screen offset in pixels (rg, added together; b only keeps a fragment from being
+   * discarded), and the frame is bent by it before the tone map. Drawn with the effects' camera, depth-faded like them.
+   */
+  readonly distort = new THREE.Scene();
+  private rtOff: THREE.WebGLRenderTarget | null = null;
+  private rtBent: THREE.WebGLRenderTarget | null = null;
+  private quad = new FullScreenQuad(HAZE);
   /** The effects: particle batches and ground decals go here, never in the world scene. */
   readonly scene = new THREE.Scene();
   private rt: THREE.WebGLRenderTarget | null = null;
@@ -49,12 +69,27 @@ export class FxStage {
     const c0 = renderer.info.autoReset ? 0 : renderer.info.render.calls, t0 = renderer.info.autoReset ? 0 : renderer.info.render.triangles;
     renderer.render(this.scene, fxCamera);   // with autoReset (the default) the counters now hold the effects alone
     this.stats.calls = renderer.info.render.calls - c0; this.stats.triangles = renderer.info.render.triangles - t0;
+    let src = this.rt;
+    if (this.distort.children.some((c) => c.visible && c.children.some((m) => m.visible))) {
+      if (!this.rtOff || this.rtOff.width !== size.x || this.rtOff.height !== size.y) {
+        this.rtOff?.dispose(); this.rtBent?.dispose();
+        this.rtOff = new THREE.WebGLRenderTarget(size.x, size.y, { type: THREE.HalfFloatType, depthBuffer: false });
+        this.rtBent = new THREE.WebGLRenderTarget(size.x, size.y, { type: THREE.HalfFloatType, depthBuffer: false });
+      }
+      const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha();
+      renderer.setRenderTarget(this.rtOff); renderer.setClearColor(0x000000, 0); renderer.clear();
+      renderer.render(this.distort, fxCamera);
+      renderer.setClearColor(cc, ca);
+      HAZE.uniforms.tColor.value = this.rt.texture; HAZE.uniforms.tOff.value = this.rtOff.texture; HAZE.uniforms.uRes.value.copy(size);
+      renderer.setRenderTarget(this.rtBent); this.quad.render(renderer);
+      src = this.rtBent!;
+    }
     renderer.autoClear = auto;
     renderer.setRenderTarget(null);
     if (box) { renderer.setViewport(box.x, box.y, box.w, box.h); renderer.setScissor(box.x, box.y, box.w, box.h); renderer.setScissorTest(true); }
-    this.out.render(renderer, null as unknown as THREE.WebGLRenderTarget, this.rt, 0, false);
+    this.out.render(renderer, null as unknown as THREE.WebGLRenderTarget, src, 0, false);
     if (box) { const s = renderer.getSize(new THREE.Vector2()); renderer.setViewport(0, 0, s.x, s.y); renderer.setScissorTest(false); }
   }
 
-  dispose(): void { this.rt?.dispose(); this.out.dispose(); }
+  dispose(): void { this.rt?.dispose(); this.rtOff?.dispose(); this.rtBent?.dispose(); this.quad.dispose(); this.out.dispose(); }
 }

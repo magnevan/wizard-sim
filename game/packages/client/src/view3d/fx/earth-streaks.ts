@@ -11,7 +11,7 @@ import * as THREE from 'three';
 import { ParticleBatch } from './particles';
 
 /** Rocks and impacts drawn at once, and streaks a rock. */
-const ROCKS = 8, HITS = 8, PER = 5;
+const ROCKS = 8, HITS = 8, PER = 3;
 
 const STREAKS = /* glsl */ `
 uniform vec4 uA[${ROCKS}];   // x0, flight height, z0, t0
@@ -25,15 +25,15 @@ Particle emitParticle(float slot, float back) {
   if (tt < 0.03 || t > V.w) return P0();
   float sp = max(length(V.xy), 1e-3), r = V.z; vec2 d = V.xy / sp, nn = vec2(-d.y, d.x);
   // five lines across the rock's width behind it, each its length re-rolled 30 times a second (the pixel streaks)
-  float across = (j / ${PER - 1}.0 - 0.5) * 2.0 * r * 0.9, fr = floor(uT * 30.0);
-  float L = (0.5 + 0.06 * sp) * (0.6 + r) * (0.55 + 0.6 * rnd(fr * 7.0 + j + A.w * 60.0, 3.0));
+  float across = (j - 1.0) * r * (0.55 + 0.35 * rnd(j + A.w * 60.0, 5.0)), fr = floor(uT * 30.0);
+  float L = (0.5 + 0.06 * sp) * (0.6 + r) * (j == 1.0 ? 1.0 : 0.55) * (0.6 + 0.5 * rnd(fr * 7.0 + j + A.w * 60.0, 3.0));
   vec2 head = A.xz + V.xy * tt;
   Particle p = P0(); p.alive = true;
   // centred a little behind the rock's back edge; stretched back along the motion by its length
   vec2 c = head - d * (r * 0.8) + nn * across;
-  p.pos = vec3(c.x, A.y + (j - 2.0) * r * 0.18, c.y);
+  p.pos = vec3(c.x, A.y + (j - 1.0) * r * 0.2, c.y);
   p.size = 0.025 + 0.012 * r; p.stretch = L / sp;
-  p.col = vec4(1.0 - abs(j - 2.0) * 0.2);
+  p.col = vec4(1.0 - abs(j - 1.0) * 0.3);
   return p;
 }`;
 
@@ -46,33 +46,47 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
 
 const FLASH = /* glsl */ `
 uniform vec4 uH[${HITS}];   // x, y, z, t
-uniform vec4 uHn[${HITS}];  // size, -, -, -
+uniform vec4 uHn[${HITS}];  // size, travel x, travel z, -
 uniform float uT, uHN;
 Particle emitParticle(float slot, float back) {
   if (slot >= uHN) return P0();
   int i = int(slot); vec4 H = uH[i];
   float a = uT - back - H.w;
-  if (a < 0.0 || a > 0.1) return P0();
+  if (a < 0.0 || a > 0.2) return P0();
   Particle p = P0(); p.alive = true;
   p.pos = H.xyz;
   // stepped: full for the first frames, then a smaller, dimmer one (the pixel flash lasts 0.06 s)
-  p.size = uHn[i].x * (a < 0.05 ? 1.0 : 0.6);
-  p.rot = H.w * 13.0;
-  p.col = vec4(a < 0.05 ? 1.0 : 0.5);
+  // it grows as it opens (an eased burst), rather than blinking on and off at one size
+  p.size = uHn[i].x * (0.7 + 1.5 * (1.0 - pow(1.0 - a / 0.2, 2.0)));
+  vec3 dv = mat3(viewMatrix) * vec3(uHn[i].y, 0.0, uHn[i].z);
+  p.rot = atan(dv.y, dv.x);
+  p.aspect = 1.4;
+  p.col = vec4(a / 0.2, H.w * 7.0, 0.0, 0.0);
   return p;
 }`;
 
 const LOOK_FLASH = /* glsl */ `
 vec4 look(vec2 uv, vec4 col, vec4 data) {
-  float x = abs(uv.x), y = abs(uv.y), r = length(uv);
-  float star = max(exp(-x * 9.0) * (1.0 - y), exp(-y * 9.0) * (1.0 - x));
-  float disc = smoothstep(0.55, 0.35, r);
-  float m = clamp(max(star, disc), 0.0, 1.0);
-  return vec4(vec3(3.6, 3.5, 3.2) * m, m * 0.9) * col.x;
+  // uv.x runs along the rock's travel. An evolving burst (the user: the white impact "blinks in and out in too much of
+  // a static manner"): a solid white wedge at contact (age < 0.18), opening into jagged rays splaying forward, which
+  // break up from the middle outward and cool from white to dust as it ends (col.x: age 0..1 over 0.2 s)
+  float age = col.x;
+  vec2 o = vec2(uv.x + 1.0, uv.y);
+  float r = length(o) * 0.5, ang = atan(o.y, o.x);
+  if (abs(ang) > 1.25) return vec4(0.0);
+  float ray = floor(ang * 7.0), rl = 0.55 + 0.45 * rnd(ray + col.y, 3.0);
+  float spoke = 1.0 - smoothstep(0.25, 0.5, abs(fract(ang * 7.0) - 0.5) * 2.0 / max(0.25, 1.0 - r));
+  float solid = smoothstep(0.35, 0.1, r) * (1.0 - smoothstep(0.1, 0.35, age));
+  float rays = spoke * step(r, rl) * smoothstep(0.0, 0.15, age);
+  // eaten from the middle outward: the burst leaves the point it struck
+  float keep = smoothstep(age * 0.9 - 0.05, age * 0.9 + 0.05, r + 0.15 * rnd(ray + col.y, 6.0));
+  float m = clamp(max(solid, rays * keep), 0.0, 1.0) * (1.0 - smoothstep(0.7, 1.0, age));
+  vec3 c = mix(vec3(1.7, 1.55, 1.25), vec3(0.55, 0.42, 0.28), smoothstep(0.2, 0.8, age));
+  return vec4(c * m, m * 0.85);
 }`;
 
 export interface StreakRock { x0: number; y: number; z0: number; t0: number; vx: number; vz: number; r: number; end: number }
-export interface StreakHit { x: number; y: number; z: number; t: number; r: number }
+export interface StreakHit { x: number; y: number; z: number; t: number; r: number; ux: number; uz: number }
 
 export class EarthStreaks {
   readonly group = new THREE.Group();
@@ -92,7 +106,7 @@ export class EarthStreaks {
   update(t: number, rocks: StreakRock[], hits: StreakHit[]): void {
     const nr = Math.min(ROCKS, rocks.length), nh = Math.min(HITS, hits.length);
     for (let i = 0; i < nr; i++) { const r = rocks[i]; this.A[i].set(r.x0, r.y, r.z0, r.t0); this.V[i].set(r.vx, r.vz, r.r, r.end); }
-    for (let i = 0; i < nh; i++) { const h = hits[i]; this.H[i].set(h.x, h.y, h.z, h.t); this.Hn[i].set(0.5 + h.r * 1.6, 0, 0, 0); }
+    for (let i = 0; i < nh; i++) { const h = hits[i]; this.H[i].set(h.x, h.y, h.z, h.t); this.Hn[i].set(0.2 + h.r * 0.8, h.ux, h.uz, 0); }
     this.U.uT.value = t; this.U.uN.value = nr; this.U.uHN.value = nh;
     this.streaks.count = nr * PER; this.flash.count = nh;
     this.group.visible = nr + nh > 0;

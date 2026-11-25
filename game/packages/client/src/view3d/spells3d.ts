@@ -68,6 +68,7 @@ export class Spells3D {
     this.stage.scene.add(this.standins.group);
     this.arcane = new ArcaneBeams((x, z) => this.simHeight(x, z));
     this.stage.scene.add(this.arcane.group);
+    this.stage.distort.add(this.arcane.haze);
     this.cold.heightAt = (x, y) => this.simHeight(x, y);
     this.stage.scene.add(this.cold.group);
     this.earth = new EarthFx((x, z) => this.simHeight(x, z));
@@ -134,7 +135,7 @@ export class Spells3D {
       this.floor.update(t, this.lights);
     }
     // the Arcane beam as its stand-in too: the lab's ?standins=all
-    this.arcane.group.visible = !this.standins.drawArcane;
+    this.arcane.group.visible = this.arcane.haze.visible = !this.standins.drawArcane;
     if (this.arcane.group.visible) this.arcane.update(w, t, this.lights);
     this.cold.group.visible = !this.standins.drawCold;
     if (this.cold.group.visible) this.cold.update(t, this.lights);

@@ -198,7 +198,7 @@ export class EarthFx {
     this.impacts.update(td);
     const flying: StreakRock[] = [];
     for (const r of shown) if (r && td < r.end + 0.02) { const y = this.flightY(r.x0, r.z0, r.r); flying.push({ x0: r.x0, y, z0: r.z0, t0: r.t0, vx: r.vx, vz: r.vz, r: r.r, end: r.end === Infinity ? 1e9 : r.end }); }
-    this.streaks.update(td, flying, this.impacts.recent(td, 0.12).map((i) => ({ x: i.x, y: i.y, z: i.z, t: i.t, r: i.r })));
+    this.streaks.update(td, flying, this.impacts.recent(td, 0.12).map((i) => ({ x: i.x, y: i.y, z: i.z, t: i.t, r: i.r, ux: i.ux, uz: i.uz })));
   }
 
   /** Rock r's wake at time td: from where the rock is (or ended) back along its line. */

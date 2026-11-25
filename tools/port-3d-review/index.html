@@ -75,14 +75,141 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
   <header>
     <div class="eyebrow">Port to 3D · step 0 · 2026-11-25</div>
     <h1>The Court in 3D</h1>
-    <p class="lede"><b>New: <a href="#r2">the four spells rebuilt by the method</a>, in motion.</b> Below them, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
+    <p class="lede"><b>New: <a href="#r3">round 3</a>, your round 2 notes with Codex's second opinion.</b> Below it, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
     <div class="hero"><img src="img/plaza-26.jpg" alt="Two wizards and six goblins on the court's sunk plaza, seen from the 3D game camera"></div>
   </header>
+
+  <section id="r3">
+    <div class="top">
+      <div>
+        <h2>Round 3: your notes, and Codex's second opinion</h2>
+        <p>Each spell's changes answer your round 2 note first. As you suggested, Codex looked at each spell's clips and code and wrote a critique; where it agreed with your notes, I took its fixes. Its four critiques are in <span class="mono">docs/reference/spell-critiques/</span>. Where I went against it, I say so below.</p>
+      </div>
+    </div>
+    <div class="top">
+      <div>
+        <h3>Fire spray</h3>
+        <ul>
+          <li><b>"Too opaque":</b> the dark-red outline shells are gone (they filled every gap), and the body covers far less. A hole pattern shared by all five lobes keeps real openings through it, so the burning goblins show.</li>
+          <li><b>"Wider than the actual cone", "mushroom":</b> no more swelling head; calmer billows; narrower outer lobes.</li>
+          <li><b>"Ends too abruptly":</b> the far end feathers out a little past the cone. When the channel stops, the flame erodes outward from the staff as the last fuel leaves it, rather than the whole shape fading at once.</li>
+          <li>Also from Codex: a shorter white core at the staff, a narrower floor glow, and the fast tongues toned down so they don't refill the openings.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r3-fire" data-rec="keep">
+        <div class="q">Fire spray</div>
+        <div class="choices" role="group" aria-label="Fire spray, round 3">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r3-fire" aria-label="Note on Fire spray, round 3" placeholder="Opacity, shape, the end"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+        <figure><video src="vid/r3-fire-30.mp4" muted loop playsinline autoplay></video><figcaption><b>The game camera, 30 u</b> · the jet into the crowd</figcaption></figure>
+        <figure><video src="vid/r3-fire-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Closer, 14 u</b> · see-through, with openings</figcaption></figure>
+    </div>
+    <div class="shots wide">
+      <figure><img src="img/r3-fire.jpg" alt="Fire spray, pixel above and 3D below"><figcaption><b>Pixel above, 3D below</b> · the same moments, three runes, at 30 u</figcaption></figure>
+    </div>
+    <div class="top">
+      <div>
+        <h3>Frost blast</h3>
+        <ul>
+          <li><b>"Stops too abruptly and falls":</b> the wave travels near-linearly, where before it covered 80% of the way halfway through and then stalled. The snow wall fades from two-thirds of the way out, sector by sector, and the ice teeth dissolve where they stand instead of shrinking into the floor.</li>
+          <li><b>"Floor too circular, too opaque":</b> the frost is now sparse, translucent radial streaks and patches with an uneven edge, about half the stone left bare.</li>
+          <li>Also from Codex: puffs are born on the front and carried outward, fading before they land; fewer of them and fewer flakes; a less blinding crest.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r3-cold" data-rec="keep">
+        <div class="q">Frost blast</div>
+        <div class="choices" role="group" aria-label="Frost blast, round 3">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r3-cold" aria-label="Note on Frost blast, round 3" placeholder="The wave, the fade, the frost"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+        <figure><video src="vid/r3-cold-30.mp4" muted loop playsinline autoplay></video><figcaption><b>The game camera, 30 u</b> · the wave and the frost it leaves</figcaption></figure>
+        <figure><video src="vid/r3-cold-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Closer, 14 u</b> · the wave dissolving</figcaption></figure>
+    </div>
+    <div class="shots wide">
+      <figure><img src="img/r3-cold.jpg" alt="Frost blast, pixel above and 3D below"><figcaption><b>Pixel above, 3D below</b> · the same moments, three runes, at 30 u</figcaption></figure>
+    </div>
+    <div class="top">
+      <div>
+        <h3>Arcane beam</h3>
+        <ul>
+          <li><b>"Too straight":</b> the line now bends between its fixed ends (two travelling waves, pinned where it leaves the staff and where it hits) and its width breathes.</li>
+          <li><b>"Light bending around it, like very hot objects":</b> real heat haze. A new pass bends what's behind the beam by a few pixels, flowing along it; it shows best in motion.</li>
+          <li><b>"Not a fan of the way motion is displayed":</b> the 30 Hz white glints are gone and the surges are slower and softer (they read as racing beads). Here I went against the study's "stepped flicker" rule, because your note and Codex agreed.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r3-arcane" data-rec="keep">
+        <div class="q">Arcane beam</div>
+        <div class="choices" role="group" aria-label="Arcane beam, round 3">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r3-arcane" aria-label="Note on Arcane beam, round 3" placeholder="The bend, the haze, the motion"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+        <figure><video src="vid/r3-arcane-30.mp4" muted loop playsinline autoplay></video><figcaption><b>The game camera, 30 u</b> · the bending beam</figcaption></figure>
+        <figure><video src="vid/r3-arcane-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Closer, 14 u</b> · the bend and the heat haze</figcaption></figure>
+    </div>
+    <div class="shots wide">
+      <figure><img src="img/r3-arcane.jpg" alt="Arcane beam, pixel above and 3D below"><figcaption><b>Pixel above, 3D below</b> · the same moments, three runes, at 30 u</figcaption></figure>
+    </div>
+    <div class="top">
+      <div>
+        <h3>Earth rock</h3>
+        <ul>
+          <li><b>"The white impact blinks in and out in too much of a static manner":</b> the contact is now a burst that evolves over 0.2 s (a white wedge that opens into jagged rays along the rock's travel, breaking up from the middle and cooling to dust). Most of the white was the goblins' own hit flash: a struck body now fades 0.9, 0.5, 0.3 instead of turning solid white, for every spell.</li>
+          <li>From Codex: three uneven speed lines instead of five rails, half the small chips.</li>
+          <li><b>"I don't think the rock should continue because I don't believe it pierces":</b> in the sim, a <i>fully charged</i> rock does pierce (<span class="mono">effects.ts</span>: charge 1 or more), and the lab holds Force about 1.5 s, so every rock in these clips is fully charged and really goes through. The drawing follows the sim, so I left it; the question is below.</li>
+          <li>Still to come: chips off a wall's face; different impacts for wall, body and ground.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r3-earth" data-rec="keep">
+        <div class="q">Earth rock</div>
+        <div class="choices" role="group" aria-label="Earth rock, round 3">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r3-earth" aria-label="Note on Earth rock, round 3" placeholder="The flight, the hit"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="top">
+      <div><p><b>The rule question:</b> a fully charged rock pierces in the sim today and is drawn going through. Changing that is a rule change, not a look (the golden hash and the balance reports move with it).</p></div>
+      <div class="answer" data-id="r3-pierce" data-rec="keep">
+        <div class="q">Should a fully charged rock pierce?</div>
+        <div class="choices" role="group" aria-label="Rock piercing">
+          <button type="button" data-v="keep">Yes, as now</button><button type="button" data-v="never">No, it always stops</button>
+        </div>
+        <div class="rec">Recommended: <b>yes, as now</b>; a full charge is a commitment worth a reward.</div>
+        <textarea id="note-r3-pierce" aria-label="Note on rock piercing" placeholder="Should it stop, or slow, or pierce only some things?"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+        <figure><video src="vid/r3-earth-30.mp4" muted loop playsinline autoplay></video><figcaption><b>The game camera, 30 u</b> · flight and contact</figcaption></figure>
+        <figure><video src="vid/r3-earth-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Closer, 14 u</b> · the contact wedge</figcaption></figure>
+    </div>
+    <div class="shots wide">
+      <figure><img src="img/r3-earth.jpg" alt="Earth rock, pixel above and 3D below"><figcaption><b>Pixel above, 3D below</b> · the same moments, three runes, at 30 u</figcaption></figure>
+    </div>
+  </section>
 
   <section id="r2">
     <div class="top">
       <div>
-        <h2>The four, rebuilt by the method</h2>
+        <h2>Round 2: the four, rebuilt by the method</h2>
         <p>All four spells after one pass of the method you accepted, so they can be judged together, in motion. Three runes, in the pixel lab's crowd (now in reach, so you see what each does to the goblins), first at the game camera, then closer. Everything is still the sim's own shapes and timings.</p>
         <p><b>For all four:</b> every hit flashes the goblin white, and a held beam or spray flickers it; statuses now hang off the body, ported from the pixel game (flames and embers on the burning, glints and cold breath on the chilled, sparks on the stunned, drips on the wet).</p>
       </div>

@@ -1,0 +1,17 @@
+You are a senior real-time VFX artist (stylised games: League of Legends, Hades, Genshin, Zelda) giving a second opinion on spell effects for a small co-op wizard game. Do NOT generate images. Read, look, think, then write your critique.
+
+The game: top-down-ish camera (28 degree lens, 46 degrees down, about 30 units of ground in view; a wizard is 2.7 units tall), stylised toon-lit 3D court of warm pale sandstone. Rendered with three.js into an HDR target with ACES tone mapping. Effects are our own small kit in C:/Users/mvikj/Code/magicka-toy/.claude/worktrees/port-3d/.claude/worktrees/p3d-react/game/packages/client/src/view3d/fx: stateless GPU particles (every particle a pure function of time and seed: particles.ts), ring bands (nova-ring.ts), straight strips (beam-strip.ts), ground decals (decal.ts), meshes with custom shaders, a pool of 8 point lights. Everything must stay a pure function of the clock and the sim's state (rollback netcode, frozen frames). Hit shapes, sizes and timings come from the game's simulation and can't change; only the look can. There is no screen-space distortion pass yet (we could add one: the stage renders into its own target, fx/stage.ts).
+
+Our method so far (from studying the older pixel-art versions, which the designer liked): body reactions on what is hit; mediums as meshes carrying painted textures that pan, bend and erode; grain and stepped flicker (12 to 30 Hz re-rolls) for energy; full saturation and size; impacts by surface; judge beside the pixel version.
+
+The attached images: (1) eight frames from a clip at a closer camera (14 units), times after the cast in the corner; (2) the old pixel-art version (top row) above the 3D version (bottom row) at the same five moments, at the game camera.
+
+Write your answer as a markdown file named critique-cold.md in the current directory, then reply with just the file name. In it:
+1. What reads wrong, in order of how much it hurts, judged as a player would see it in motion at the game camera. Be blunt and specific (name the layer).
+2. For each of the designer's notes below, the concrete technique you would use to fix it, in terms our kit can do (shader math, mesh shape, particle motion, timing curves, colour/alpha numbers), citing the file and function you'd change after reading the code.
+3. Up to three things you'd add or remove that we haven't thought of.
+4. The single change with the biggest effect, if we can make only one.
+Keep it under 900 words. No praise padding.
+
+The effect: the Frost ring: an area burst around the caster (cold.ts: ice teeth ring and a snow-powder wall, both ring bands from nova-ring.ts, snow puffs, shards, flakes, a flash, a frost decal RIME).
+The designer's notes on this round, verbatim: 'Looks more promising. The wave stops too abruptly and falls. It sort of peaks then stops, it should fade in a more natural way. The floor effect is way too circular, too opaque.' Earlier note on what it should be: 'a blast wave emanating from the character, but the contents is in frost. Maybe like how you'd imagine a blast wave in a snowy landscape to look.'

@@ -30,7 +30,7 @@ import { FX_U } from './stage';
  * cone's sides, a little shorter (the painting's swelling "heart" with tongues at its sides, where one wide tube read
  * as a paper fan): [angle off the middle (of the half-angle), width (of the fan's half-width), length, noise phase].
  */
-const LOBES: [number, number, number, number][] = [[0, 0.6, 1, 0], [-0.42, 0.42, 0.97, 3.1], [0.45, 0.42, 0.98, 5.3], [-0.78, 0.3, 0.93, 7.7], [0.8, 0.3, 0.92, 9.9]];
+const LOBES: [number, number, number, number][] = [[0, 0.55, 1.06, 0], [-0.4, 0.36, 0.98, 3.1], [0.42, 0.36, 1.02, 5.3], [-0.64, 0.24, 0.9, 7.7], [0.66, 0.24, 0.94, 9.9]];
 
 /** Rings along the tube and points round each ring. */
 const NU = 56, NV = 40;
@@ -58,17 +58,17 @@ void main() {
   float W = fanW(A, s);
   // narrow at the staff, opening to the cone, a swell before the head, rounded at both ends
   float caps = sqrt(max(0.0, 1.0 - pow(smoothstep(0.78, 1.0, g), 2.0))) * mix(0.25, 1.0, smoothstep(0.0, 0.1, g));
-  float prof = mix(0.2, 0.8, smoothstep(0.0, 0.5, s)) * (1.0 + 0.32 * smoothstep(0.4, 0.85, s) * uGrow) * caps;
+  float prof = mix(0.2, 0.8, smoothstep(0.0, 0.5, s)) * caps;
   float rw = (0.05 + W * prof * uLobe.y) * uShell, rh = (0.07 + W * prof * 0.38 * sqrt(uLobe.y) + 0.12 * s) * uShell;
   // billows: noise flowing outward pushes the surface in and out, more toward the far end
   float c = cos(th), sn = sin(th);
   float n = fbm3(vec3(s * 3.5 - uTime * 2.2, c * 2.2 + 3.0 + uLobe.w, sn * 2.2 + uSeed * 0.37));
-  float bill = 1.0 + (n - 0.5) * mix(0.9, 2.3, s);
+  float bill = 1.0 + (n - 0.5) * mix(0.6, 0.9, s);
   // heat rises: the axis lifts toward the far end, and the top bulges up more than the bottom
   float up = max(sn, 0.0);
   // tongues lick up off the top: a finer noise, strongest at the far end
   float n3 = fbm3(vec3(s * 6.0 - uTime * 3.0, c * 5.0 + uLobe.w, sn * 5.0 + 17.0));
-  float lift = s * s * 0.3 * uGrow + up * up * max(n3 - 0.38, 0.0) * 2.0 * s * s;
+  float lift = s * s * 0.15 * uGrow + up * up * max(n3 - 0.38, 0.0) * 1.0 * s * s;
   // from the staff's tip down to resting on the floor by mid-way, so the flame stands over the sim's cone, not above it
   vec3 ctr = sprayAt(A, s, off, 0.0, mix(uNoz.y, rh * 0.75, smoothstep(0.0, 0.55, s)) + lift);
   vec3 wp = ctr + side * c * rw * bill + vec3(0.0, 1.0, 0.0) * sn * rh * bill;
@@ -82,7 +82,7 @@ const FRAG = /* glsl */ `
 ${HASH}
 ${NOISE}
 uniform sampler2D uDepth; uniform vec2 uRes; uniform float uNear, uFar;
-uniform float uTime, uHot, uRim, uOn, uHasFlow;
+uniform float uTime, uEnd, uHot, uRim, uOn, uHasFlow;
 uniform vec4 uLobe;
 uniform sampler2D uFlow;
 in vec3 vWp; in vec3 vN; in vec2 vG; in float vS; in float vUp;
@@ -106,7 +106,11 @@ void main() {
   // erosion: grazing surfaces, the far end and the tail eat away first where the painting is dark (the gaps between its
   // tongues), so the body breaks into tongues rather than a smooth edge
   float er = pow(fres, 1.6) * 0.85 + smoothstep(0.5, 1.0, vG.x) * 0.7 + (1.0 - smoothstep(0.0, 0.08, vG.x)) * 0.4 - uRim * 0.06;
+  float since = (uTime - vS * ${BODY_TRAVEL.toFixed(3)}) - uEnd;
+  er += clamp(since / 0.25, 0.0, 1.0) * 1.3 + smoothstep(0.82, 1.06, vS) * 0.9;
   float a = smoothstep(er - 0.03, er + 0.03, n * 0.45 + tl * 0.55 + 0.2);
+  float hole = fbm3(vec3(vWp.x * 1.25 + uTime * 0.9, vWp.z * 1.25 - uTime * 0.6, uTime * 1.4 + 2.0));
+  a *= smoothstep(0.4, 0.5, hole + 0.3 * (1.0 - smoothstep(0.25, 0.75, vS)));
   if (a <= 0.0) discard;
   float scene = -perspectiveDepthToViewZ(texture(uDepth, gl_FragCoord.xy / uRes).r, uNear, uFar);
   float vz = (viewMatrix * vec4(vWp, 1.0)).z;
@@ -128,10 +132,10 @@ void main() {
     // soft toon shading: a little darker on the lower flank, so it reads as a volume
     c *= mix(0.78, 1.08, smoothstep(-0.4, 0.6, N.y));
     // the painting carries the colour (lifted into HDR so the tone map keeps it saturated), cooling toward the far end
-    vec3 painted = tex * vec3(2.3, 1.55, 1.1) * mix(vec3(1.0), vec3(0.8, 0.42, 0.3), smoothstep(0.45, 1.0, h));
-    c = mix(c, painted, 0.7 * uHasFlow);
+    vec3 painted = tex * vec3(2.4, 1.2, 0.55) * mix(vec3(1.0), vec3(0.8, 0.42, 0.3), smoothstep(0.45, 1.0, h));
+    c = mix(c, painted, 0.55 * uHasFlow);
     // covering in the middle, translucent toward the edges and in the painting's dark gaps (layers show through)
-    float cover = mix(0.95, 0.55, smoothstep(0.35, 0.95, fres)) * mix(0.5, 1.0, smoothstep(0.12, 0.55, tl));
+    float cover = mix(0.78, 0.2, smoothstep(0.3, 0.95, fres)) * mix(0.35, 1.0, smoothstep(0.12, 0.55, tl));
     o = vec4(c * cover, cover) * a;
   }
   fxColor = o * soft * uOn;
@@ -176,7 +180,7 @@ export class FireBody {
       this.mats.push(m); this.group.add(mesh);
     };
     // every lobe's outline first, then every lobe's flame, so the outlines show only round the whole mass
-    for (const rim of [true, false]) for (const l of LOBES) shell(new THREE.Vector4(...l), rim ? 1.16 : 1, rim, rim ? 1 : 3);
+    for (const rim of [false]) for (const l of LOBES) shell(new THREE.Vector4(...l), rim ? 1.16 : 1, rim, rim ? 1 : 3);
   }
 
   dispose(): void { this.geo.dispose(); for (const m of this.mats) m.dispose(); }

@@ -75,8 +75,8 @@ export function arcaneBeams(w: World): BeamIn[] {
 
 // ---- the line -----------------------------------------------------------------------------------------------------
 
-/** The surges' spacing (u), speed (u/s) and length (u) at n runes (art/kit.ts beamSurge: 3 + 3n a second at 360 + 60n px/s). */
-const surgeOf = (n: number) => { const v = 16 + 3 * n; return { v, sp: v / (3 + 3 * n), len: 0.35 + 0.1 * n }; };
+/** The surges: spacing (u), speed (u/s) and length (u) at n runes; slower and softer than the pixel beam (art/kit.ts beamSurge) since round 3 (the user and Codex: racing white blocks read as beads). */
+const surgeOf = (n: number) => { const v = 8 + 1.2 * n; return { v, sp: 2.6, len: 0.6 + 0.12 * n }; };
 /** The body's and the core's half-widths (u) at n runes; the halo's reach and strength. A wizard is 2.7 u tall. */
 const widthOf = (n: number) => ({
   body: 0.13 + 0.025 * n,
@@ -88,7 +88,13 @@ const widthOf = (n: number) => ({
 const LINE = /* glsl */ `
 uniform float uClock, uBody, uCore, uHalo, uHaloK, uWide, uWhite, uSurgeSp, uSurgeV, uSurgeL;
 vec4 look(float along, float across, float len) {
-  float ax = along < 0.0 ? -along : max(along - len, 0.0), d = length(vec2(ax, across));
+  // the line bends: two travelling waves across it, pinned at both ends, so the hit stays where the sim says (the
+  // user: "the ray is too straight"); its width breathes too
+  float u = clamp(along / max(len, 1e-3), 0.0, 1.0), env = sin(3.14159 * u);
+  float bend = env * (0.07 * sin(along * 3.2 - uClock * 15.0) + 0.04 * sin(along * 7.1 - uClock * 23.0));
+  float q = across - bend * uWide;
+  float breathe = 1.0 + 0.15 * (vnoise3(vec3(along * 1.8 - uClock * 6.0, 3.0, uClock)) - 0.5) * 2.0;
+  float ax = along < 0.0 ? -along : max(along - len, 0.0), d = length(vec2(ax, q));
   float aa = max(fwidth(across), 1e-4);
   // surges: packets racing out, each a sharp head and a fading tail; one in seven skipped, so they don't tick like a clock
   float ph = (along - uClock * uSurgeV) / uSurgeSp, f = fract(ph), L = min(uSurgeL / uSurgeSp, 0.9);
@@ -98,23 +104,36 @@ vec4 look(float along, float across, float len) {
   // the halo swells round a surge softly (a sharp-headed glow reads as a box)
   float soft = exp(-pow((f - (1.0 - L * 0.4)) / (L * 0.6), 2.0)) * step(0.14, rnd(floor(ph) + 4096.0, 5.0)) * ends;
   surge *= ends;
-  float shim = 0.7 + 0.6 * vnoise3(vec3(along * 2.4 - uClock * 9.0, across * 14.0, uClock * 3.0));
-  float body = uBody * uWide * (1.0 + 0.08 * surge), core = max(uCore * uWide * (1.0 + 0.7 * surge), aa * 0.6 * uWide);
+  float shim = 0.8 + 0.4 * vnoise3(vec3(along * 2.4 - uClock * 5.0, q * 14.0, uClock * 3.0)) * (0.92 + 0.16 * rnd(floor(uClock * 18.0), 4.0));
+  float body = uBody * uWide * breathe, core = max(uCore * uWide * (1.0 + 0.15 * surge), aa * 0.6 * uWide);
   float rim = max(0.018, aa * 1.3) * uWide;
   // the halo: added light round the line
-  float hr = uHalo * uWide, halo = exp(-(d * d) / (hr * hr) * 2.2) * uHaloK * (1.0 + 0.6 * soft);
+  float dh = length(vec2(ax, across - bend * 0.6 * uWide)), hr = uHalo * uWide, halo = exp(-(dh * dh) / (hr * hr) * 2.2) * uHaloK * (1.0 + 0.4 * soft);
   vec3 col = vec3(1.0, 0.1, 1.25) * halo;
   float rimA = smoothstep(body + rim + aa * 0.5, body + rim - aa * 0.5, d);
   float bodyA = smoothstep(body + aa * 0.5, body - aa * 0.5, d);
   float coreA = smoothstep(core + aa * 0.5, core - aa * 0.5, d);
-  vec3 bodyCol = mix(vec3(1.05, 0.05, 1.3), vec3(1.9, 0.4, 2.2), smoothstep(core * 2.4, core * 1.1, d)) * shim * (1.0 + 0.9 * surge);
+  vec3 bodyCol = mix(vec3(1.05, 0.05, 1.3), vec3(1.9, 0.4, 2.2), smoothstep(core * 2.4, core * 1.1, d)) * shim * (1.0 + 0.25 * surge);
   vec3 coreCol = mix(vec3(2.6, 1.6, 3.3), vec3(5.0, 4.8, 5.2), max(uWhite, surge));
   vec3 inner = mix(vec3(0.12, 0.012, 0.2), mix(bodyCol, coreCol, coreA), bodyA);
-  // glints: short stretches of the body flash white, re-rolled 30 times a second (art/kit.ts: every fifth point at 30 Hz)
-  float seg = floor(along / 0.22), fr = floor(uClock * 30.0);
-  float glint = step(0.8, rnd(seg + fr * 131.0, 9.0)) * ends * (1.0 - smoothstep(body * 0.5, body, d));
-  inner = mix(inner, vec3(4.2, 3.6, 4.6), glint * bodyA * 0.85);
+  // (round 2's 30 Hz white glints are gone: they read as blinking beads, and the user didn't like how motion was shown)
   return vec4(col * (1.0 - rimA) + inner * rimA, rimA * 0.95);
+}`;
+
+/**
+ * The haze round the beam (drawn into the stage's distortion pass): a pixel offset from two noises flowing along it,
+ * strongest a little outside the bright body, none inside it, fading at both ends.
+ */
+const HAZE = /* glsl */ `
+uniform float uClock, uHazeW, uOnH;
+vec4 look(float along, float across, float len) {
+  float x = abs(across);
+  float env = smoothstep(uHazeW, uHazeW * 0.45, x) * smoothstep(uHazeW * 0.12, uHazeW * 0.3, x)
+            * smoothstep(-0.2, 0.6, along) * smoothstep(len + 0.3, len - 0.5, along);
+  vec3 p = vec3(along * 2.3 - uClock * 5.0, across * 4.5, uClock * 1.4);
+  float n1 = vnoise3(p) - 0.5, n2 = vnoise3(p * 1.9 + vec3(17.0, 5.0, uClock * 0.7)) - 0.5;
+  float amp = 2.4 * env * uOnH;
+  return vec4((n1 * 1.4 + n2 * 0.6) * amp, (n2 * 1.4 - n1 * 0.6) * amp * 0.6, 0.001 + env, 0.0);
 }`;
 
 const FLOOR = /* glsl */ `
@@ -123,7 +142,7 @@ vec4 look(float along, float across, float len) {
   float k = exp(-(across * across) / (uFW * uFW) * 2.5);
   float ends = smoothstep(-0.3, 0.9, along) * (1.0 - smoothstep(len - 0.1, len + 0.3, along));
   float f = fract((along - uClock * uSurgeV) / uSurgeSp), surge = smoothstep(0.55, 1.0, f) * smoothstep(1.0, 0.97, f);
-  float strip = k * ends * (0.6 + 0.5 * surge);
+  float strip = k * ends * (0.85 + 0.0 * surge);
   float dl = along - len, pool = uHitG * exp(-(dl * dl + across * across) / 0.3);
   float e = (strip * uFK + pool * 0.9) * uOnG;
   return vec4(vec3(1.0, 0.14, 1.15) * e, 0.0);
@@ -261,6 +280,9 @@ export class ArcaneBeam {
   /** The channel as seen (effect clock), the caster's floor height, and its runes; null when nothing is drawn. */
   private rec: { t0: number; end: number; last: number; n: number; groundY: number } | null = null;
   private line: BeamStrip;
+  /** The heat haze round the line (the stage's distortion pass; ArcaneBeams.haze holds it). */
+  readonly haze: BeamStrip;
+  private H = { uClock: { value: 0 }, uHazeW: { value: 0.6 }, uOnH: { value: 0 } };
   private floor: GroundStrip;
   private flare: ParticleBatch;
   private sparks: ParticleBatch;
@@ -279,6 +301,8 @@ export class ArcaneBeam {
 
   constructor(seed: number, heightAt: HeightAt) {
     this.line = new BeamStrip({ look: LINE, uniforms: this.L, order: 3 });
+    this.haze = new BeamStrip({ look: HAZE, uniforms: this.H, soft: 0.4 });
+    this.haze.mesh.visible = false;
     this.floor = new GroundStrip({ look: FLOOR, uniforms: { ...this.G, uClock: this.L.uClock, uSurgeSp: this.L.uSurgeSp, uSurgeV: this.L.uSurgeV } }, heightAt);
     this.flare = new ParticleBatch({ motion: FLARE, look: LOOK_FLARE, cap: 8, order: 5, soft: 0.2, uniforms: { ...this.U, ...this.F } });
     this.sparks = new ParticleBatch({ motion: HIT_SPARKS, look: LOOK_SPARK, cap: Math.ceil(RATE.hit(5, 1) * RATE.hitLife(1)) + 2, order: 4, soft: 0.1, uniforms: { ...this.U, uRate: { value: 1 }, uLife: { value: 1 } } });
@@ -304,7 +328,7 @@ export class ArcaneBeam {
     } else if (r && r.end === Infinity) r.end = r.last;
     if (r && t > r.end + RATE.hitLife(1) + 0.05) r = this.rec = null;
     this.group.visible = !!r;
-    if (!r) return;
+    if (!r) { this.haze.mesh.visible = false; return; }
     const n = r.n, imp = impact === 'b' ? 1 : 0, gy = r.groundY;
     this.trail.fill(t);
     const now = this.trail.at(t), hit = now.reach > 0, reach = Math.abs(now.reach);
@@ -318,10 +342,14 @@ export class ArcaneBeam {
     this.L.uClock.value = t; this.L.uBody.value = W.body; this.L.uCore.value = W.core; this.L.uHalo.value = W.halo; this.L.uHaloK.value = W.haloK;
     this.L.uWide.value = Math.sqrt(wide); this.L.uWhite.value = n >= 4 ? 1 : 0; this.L.uSurgeSp.value = S.sp; this.L.uSurgeV.value = S.v; this.L.uSurgeL.value = S.len;
     this.line.mesh.visible = wide > 0 && len > 0.01;
-    this.line.set(this.a, this.b, W.halo * 1.8 + 0.05, W.halo * 1.8 + 0.05);
+    this.line.set(this.a, this.b, W.halo * 1.8 + 0.15, W.halo * 1.8 + 0.05);
+    // its haze: a band about a wizard's arm either side of the line
+    this.H.uClock.value = t; this.H.uHazeW.value = 0.5 + 0.04 * n; this.H.uOnH.value = wide * grow;
+    this.haze.mesh.visible = this.line.mesh.visible;
+    this.haze.set(this.a, this.b, this.H.uHazeW.value + 0.05, 0.3);
     // the floor strip
     const hitOn = hit && grow >= 1 ? wide : 0;
-    this.G.uFW.value = 0.7 + 0.1 * n; this.G.uOnG.value = wide * grow; this.G.uHitG.value = hitOn * (imp ? 1.3 : 0.8); this.G.uFK.value = 0.65 + 0.08 * n;
+    this.G.uFW.value = 0.7 + 0.1 * n; this.G.uOnG.value = wide * grow; this.G.uHitG.value = hitOn * (imp ? 1.3 : 0.8); this.G.uFK.value = 0.45 + 0.06 * n;
     this.floor.mesh.visible = this.line.mesh.visible;
     this.floor.set(this.a.x, this.a.z, this.b.x, this.b.z, Math.max(this.G.uFW.value * 1.6, 1.2), 1.2);
     // particles
@@ -330,7 +358,6 @@ export class ArcaneBeam {
     this.F.uOnF.value = wide * Math.min(1, (t - r.t0) / 0.06); this.F.uHitOn.value = hitOn; this.F.uStaff.value.copy(this.a); this.F.uHit.value.copy(this.b);
     this.sparks.u.uRate.value = RATE.hit(n, imp); this.sparks.u.uLife.value = RATE.hitLife(imp);
     this.shed.u.uRate.value = Math.max(1e-3, RATE.shed(n)); this.shed.u.uLife.value = RATE.shedLife;
-    this.shed.mesh.visible = n >= 3;
     // light: small, at the staff and where it lands
     if (lights && wide > 0) {
       const flick = 0.85 + 0.15 * Math.sin(t * 31) * Math.sin(t * 11.7);
@@ -339,7 +366,7 @@ export class ArcaneBeam {
     }
   }
 
-  dispose(): void { this.line.dispose(); this.floor.dispose(); this.flare.dispose(); this.sparks.dispose(); this.shed.dispose(); }
+  dispose(): void { this.line.dispose(); this.haze.dispose(); this.floor.dispose(); this.flare.dispose(); this.sparks.dispose(); this.shed.dispose(); }
 }
 
 /** Every seat's Arcane beam and its Double's echo: a fixed pool of slots, each drawn while its beam runs. */
@@ -348,9 +375,11 @@ export class ArcaneBeams {
   /** The impact variant drawn (cast3d.html ?impact=). */
   impact: ImpactLook = 'a';
   private slots: ArcaneBeam[] = [];
+  /** Every beam's haze strip: the host adds it to the stage's distortion scene (FxStage.distort). */
+  readonly haze = new THREE.Group();
 
   constructor(private heightAt: HeightAt) {
-    for (let k = 0; k < MAX_SEATS * 2; k++) { const s = new ArcaneBeam(31 + k * 13, heightAt); this.slots.push(s); this.group.add(s.group); }
+    for (let k = 0; k < MAX_SEATS * 2; k++) { const s = new ArcaneBeam(31 + k * 13, heightAt); this.slots.push(s); this.group.add(s.group); this.haze.add(s.haze.mesh); }
   }
 
   /** One frame: the world's beams at effect time t. */

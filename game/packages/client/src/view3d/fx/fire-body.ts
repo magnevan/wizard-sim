@@ -48,7 +48,7 @@ void main() {
   // the stretch of the stream that exists now: its head runs out over BODY_TRAVEL; after the channel stops its tail
   // leaves the staff and follows the head out
   float head = uEnd > 1e8 ? clamp(uTime / ${BODY_TRAVEL.toFixed(3)}, 0.0, 1.0) : 1.0;
-  float tail = clamp(max(uTime - uEnd, 0.0) / 0.45, 0.0, 1.0);
+  float tail = clamp(max(uTime - uEnd, 0.0) / 0.45, 0.0, 1.0) * 0.8;
   float g = position.x, th = position.y * 6.2831853;
   float s = mix(tail, head * uLobe.z, g);
   vec4 A = aimAt(s * ${BODY_TRAVEL.toFixed(3)});
@@ -111,7 +111,7 @@ void main() {
   } else {
     // heat 0 white-hot .. 1 deep red: hot along the middle and near the staff, cooler where the surface turns away,
     // toward the far end and on top (cooling as it lifts); the noise breaks the bands into tongues
-    float h = 0.1 + vS * 0.55 + fres * 0.6 + vUp * 0.12 * vS + (0.5 - n) * 0.6 - uHot;
+    float h = 0.06 + vS * 0.5 + fres * 0.6 + vUp * 0.12 * vS + (0.5 - n) * 0.95 - uHot;
     vec3 white = vec3(2.6, 2.3, 1.6), yellow = vec3(2.0, 1.05, 0.12), orange = vec3(1.25, 0.3, 0.03), red = vec3(0.6, 0.07, 0.015);
     float e = 0.02;
     vec3 c = mix(white, yellow, smoothstep(0.16 - e, 0.16 + e, h));

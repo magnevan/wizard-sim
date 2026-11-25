@@ -227,7 +227,9 @@ export class FireSpray {
     const n = r.n;
     this.trail.fill(t);
     this.U.uTime.value = t - r.t0; this.U.uEnd.value = r.end === Infinity ? 1e9 : r.end - r.t0;
+    // the body swells over the channel's first second, and once it stops, fades as its tail runs out after the head
     this.body.uGrow.value = Math.min(1, (t - r.t0) / 1.0);
+    this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - (t - r.end) / 0.4);
     this.U.uN.value = n; this.U.uHot.value = hotOf(n); this.U.uCore.value = 0.26 + 0.04 * n; this.U.uNoz.value.w = groundY;
     for (const l of this.layers) { l.b.u.uRate.value = l.rate(n); l.b.u.uLife.value = l.life(n); }
     const now = this.trail.at(t), on = t <= r.end ? Math.min(1, (t - r.t0) / 0.15) : Math.max(0, 1 - (t - r.end) / 0.3);

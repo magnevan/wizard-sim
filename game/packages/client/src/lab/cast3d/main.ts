@@ -16,10 +16,13 @@
  *   &hit=1                   the sim's hit shapes dotted over it in white (spray cones, beam lines, missiles and their
  *                            flight, zones, area rings), to check the stand-ins against
  *   &view=16                 ground in view top to bottom, u (the game shows 26)
- *   &standins=all            Fire's spray and floor and the Arcane beam as stand-ins too (else fire.ts, arcane.ts)
+ *   &standins=all            Fire's spray and floor, the Arcane beam and the Frost ring as stand-ins too (else fire.ts, arcane.ts, cold.ts)
  *   &impact=b                the Arcane beam's impact variant: a (restrained, the default) or b (the fuller burst)
  *   &undying=1               the goblins take hits but never die (a held beam stays on its target)
  *   &sweep=1                 the aim swings either way of its target after the cast (a beam following a turning caster)
+ *   &move=1                  the caster walks east from 0.2 s before the spell goes off (a nova follows its caster)
+ *   &clip=1                  for film: the world is run to t (default -0.1) and drawn; window.__seek(t) then steps it on
+ *                            to any later t and draws that (window.__ready is set after each)
  *   &sheet=channels          a contact sheet instead: one tile per spell of a group (channels, missiles, areas, places,
  *                            walls, self, sigil, weapons, previews, all), or &spells=a;b;c (a recipe each, `|t` after it
  *                            for its own moment); &cols=4, &tile=480x300
@@ -51,6 +54,8 @@ const IMPACT = q.get('impact') === 'b' ? 'b' : 'a';
 const SWEEP = q.get('sweep') === '1', UNDYING = q.get('undying') === '1';
 /** ?sweep=1: the aim swings this far either way (rad), this fast (rad/s of the sine), from the cast on. */
 const SWEEP_AMP = 0.55, SWEEP_RATE = 2.4;
+const MOVE = q.get('move') === '1';
+const CLIP = q.get('clip') === '1';
 const COLS = Math.max(1, Number(q.get('cols') ?? 4) | 0);
 const [TW, TH] = (q.get('tile') ?? '480x300').split('x').map(Number);
 
@@ -131,6 +136,7 @@ const spells = new Spells3D(scene, () => 0);
 spells.standins.drawFire = ALL_FIRE;
 spells.standins.drawArcane = ALL_FIRE;
 spells.arcane.impact = IMPACT;
+spells.standins.drawCold = ALL_FIRE;
 pending.push(spells.load());
 
 // ?hit=1: the sim's own shapes, as white dots on the floor
@@ -139,7 +145,7 @@ hitPts.renderOrder = 20; hitPts.frustumCulled = false; hitPts.visible = HIT;
 spells.stage.scene.add(hitPts);
 
 // ---- a world, stepped to its moment ------------------------------------------------------------------------------------
-interface Run { w: World; bodies: Bodies3D; bursts: { x: number; y: number; r: number; tick: number }[]; t0: number }
+interface Run { w: World; bodies: Bodies3D; bursts: { x: number; y: number; r: number; tick: number }[]; t0: number; next: number }
 
 function makeWorld(): World {
   const w = createWorld(7, 1, { room: 'sanctum', dummies: false });
@@ -155,14 +161,16 @@ function makeWorld(): World {
 
 /** Tick of the cast in the run being stepped (for ?sweep), set by runTo before it steps. */
 let sweepFrom = 0;
-/** One sim step of the lab's run (?undying: the goblins healed whole after it). */
-function stepLab(w: World, k: number, d: Demo): void {
-  step(w, inputs(w, k, d));
+/** One sim step of the lab's run (?undying: the goblins healed whole after it; ?move: seat 0 walks from `walkFrom`). */
+function stepLab(w: World, k: number, d: Demo, walkFrom = Infinity): void {
+  step(w, inputs(w, k, d, walkFrom));
   if (UNDYING) for (let i = MAX_SEATS; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy) w.bodies.hp[i] = w.bodies.maxHp[i];
 }
-const inputs = (w: World, k: number, d: Demo) => Array.from({ length: MAX_SEATS }, (_, p) => {
+/** Every seat's input at tick k: seat 0's demo, swung by ?sweep after the cast, walking east by ?move from `walkFrom`. */
+const inputs = (w: World, k: number, d: Demo, walkFrom = Infinity) => Array.from({ length: MAX_SEATS }, (_, p) => {
   if (p !== 0) return NO_INPUT;
-  const i = demoInput(w, k, 0, d);
+  let i = demoInput(w, k, 0, d);
+  if (MOVE && k >= walkFrom) i = { ...i, moveX: 127 };
   if (!SWEEP || k < sweepFrom) return i;
   const a = SWEEP_AMP * Math.sin(((k - sweepFrom) / 60) * SWEEP_RATE), c = Math.cos(a), s = Math.sin(a), ax = i.aimX * AIM_UNIT, ay = i.aimY * AIM_UNIT;
   return quantize({ ...i, aimX: (ax * c - ay * s) / AIM_UNIT, aimY: (ax * s + ay * c) / AIM_UNIT });
@@ -186,14 +194,21 @@ function runTo(r: Recipe): Run {
   const t0 = findCast(r.demo), end = Math.max(0, t0 + Math.round(r.t * 60));
   sweepFrom = t0;
   spells.reset();
-  for (let k = 0; k < end; k++) {
+  const run: Run = { w, bodies, bursts, t0, next: 0 };
+  stepTo(run, r.demo, end);
+  return run;
+}
+
+/** Step a run on to tick `end`, the view told round every step. */
+function stepTo(run: Run, d: Demo, end: number): void {
+  const { w, bodies, bursts } = run;
+  for (; run.next < end; run.next++) {
     bodies.beforeStep(w);
-    stepLab(w, k, r.demo);
+    stepLab(w, run.next, d, run.t0 - 12);
     bodies.afterStep(w);
     spells.afterStep(w);
     for (const e of w.events) if (e.kind === 'burst' && e.who >= 0) bursts.push({ x: e.x, y: e.y, r: e.amount ?? 0, tick: w.clock[0] });
   }
-  return { w, bodies, bursts, t0 };
 }
 
 function drawHits(run: Run): void {
@@ -239,7 +254,8 @@ const stats = { glow: 0, tint: 0, solid: 0 };
 function draw(run: Run, box?: { x: number; y: number; w: number; h: number }): void {
   place(box ? box.w / box.h : W / H);
   renderer.info.reset();
-  run.bodies.update(run.w, 0, performance.now(), (x, y) => new THREE.Vector3(x, 0, y));
+  // a film's frames pose the bodies on the sim's clock, so every frame is the same however long it took to draw
+  run.bodies.update(run.w, 0, CLIP ? (run.w.clock[0] * 1000) / 60 : performance.now(), (x, y) => new THREE.Vector3(x, 0, y));
   spells.frame(run.w, run.w.clock[0] / 60, { alpha: 0, localSeat: 0, cam });
   if (HIT) drawHits(run);
   spells.render(renderer, scene, cam, box);
@@ -265,6 +281,17 @@ if (SHEET) {
   }
   info.textContent = `${sheetName ?? 'spells'} · scene ${SCENE} · view ${VIEW_H} u${HIT ? ' · hit shapes' : ''}`;
   (window as unknown as { __ready: boolean }).__ready = true;
+} else if (CLIP) {
+  const r = recipes[0], run = runTo({ ...r, t: T_AT ?? -0.1 }), lab = window as unknown as { __ready: boolean; __seek: (t: number) => void };
+  lab.__seek = (t: number) => {
+    lab.__ready = false;
+    stepTo(run, r.demo, Math.max(run.next, run.t0 + Math.round(t * 60)));
+    draw(run);
+    info.textContent = `${r.label} · t = ${((run.next - run.t0) / 60).toFixed(2)} s`;
+    lab.__ready = true;
+  };
+  label(0, 0, recipes[0].label);
+  lab.__seek(T_AT ?? -0.1);
 } else if (T_AT !== null) {
   const run = runTo(recipes[0]);
   draw(run);
@@ -275,7 +302,7 @@ if (SHEET) {
   (window as unknown as { __seek: (t: number) => void }).__seek = (t: number) => {
     const end = cur.t0 + Math.round(t * 60);
     if (t < curT) { scene.remove(cur.bodies.group); cur = runTo({ ...recipes[0], t }); tick = end; }
-    for (; tick < end; tick++) { cur.bodies.beforeStep(cur.w); stepLab(cur.w, tick, recipes[0].demo); cur.bodies.afterStep(cur.w); spells.afterStep(cur.w); }
+    for (; tick < end; tick++) { cur.bodies.beforeStep(cur.w); stepLab(cur.w, tick, recipes[0].demo, cur.t0 - 12); cur.bodies.afterStep(cur.w); spells.afterStep(cur.w); }
     curT = t;
     draw(cur);
     info.textContent = `${recipes[0].label} · t = ${t.toFixed(2)} s`;
@@ -291,7 +318,7 @@ if (SHEET) {
     while (acc >= 1 / 60) {
       acc -= 1 / 60;
       if (tick >= run.t0 + LOOP) { scene.remove(run.bodies.group); run = runTo({ ...r, t: -99 }); tick = 0; }
-      run.bodies.beforeStep(run.w); stepLab(run.w, tick, r.demo); run.bodies.afterStep(run.w); spells.afterStep(run.w);
+      run.bodies.beforeStep(run.w); stepLab(run.w, tick, r.demo, run.t0 - 12); run.bodies.afterStep(run.w); spells.afterStep(run.w);
       for (const e of run.w.events) if (e.kind === 'burst' && e.who >= 0) run.bursts.push({ x: e.x, y: e.y, r: e.amount ?? 0, tick: run.w.clock[0] });
       tick++;
     }

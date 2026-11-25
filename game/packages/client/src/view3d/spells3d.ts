@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { MAX_SEATS, type World } from '@wizard-sim/sim';
 import { ArcaneBeams } from './fx/arcane';
+import { ColdNovas } from './fx/cold';
 import { FireFloor, FireSpray, type FireSheets } from './fx/fire';
 import { SurfGrid, sprays } from './fx/from-sim';
 import { SpellLights } from './fx/lights';
@@ -43,6 +44,8 @@ export class Spells3D {
   readonly fxCam = new THREE.PerspectiveCamera();
   /** Every other spell's stand-in (fx/standins.ts). */
   readonly standins = new Standins();
+  /** The Frost ring (fx/cold.ts), unless the stand-ins draw it (standins.drawCold). */
+  readonly cold = new ColdNovas();
   private spraysBy: FireSpray[] = [];
   private grid: SurfGrid | null = null;
   private floor: FireFloor | null = null;
@@ -57,6 +60,8 @@ export class Spells3D {
     this.stage.scene.add(this.standins.group);
     this.arcane = new ArcaneBeams((x, z) => this.simHeight(x, z));
     this.stage.scene.add(this.arcane.group);
+    this.cold.heightAt = (x, y) => this.simHeight(x, y);
+    this.stage.scene.add(this.cold.group);
   }
 
   /** The floor's height (u) under sim point (x, z); 0 off the scene. */
@@ -87,16 +92,17 @@ export class Spells3D {
     this.standins.afterStep(w);
     // the beams' trails keep every tick too, so sparks fly from where the beam was even in a frozen frame
     if (!this.standins.drawArcane) this.arcane.update(w, w.clock[0] / 60, null);
+    this.cold.afterStep(w);
     if (!this.spraysBy.length) return;
     const t = w.clock[0] / 60, all = sprays(w);
     for (let s = 0; s < MAX_SEATS; s++) this.spraysBy[s].update(t, all.find((p) => p.seat === s && p.kind === 'fire') ?? null, this.groundUnder(w, s), null);
   }
 
   /** After a replayed step (rollback): its events, once each. */
-  replayStep(w: World): void { this.standins.afterStep(w); }
+  replayStep(w: World): void { this.standins.afterStep(w); this.cold.afterStep(w); }
 
   /** A rewind put the world back to its tick: what came after is dropped (the replay brings it back). */
-  rewind(w: World): void { this.standins.rewind(w.clock[0]); }
+  rewind(w: World): void { this.standins.rewind(w.clock[0]); this.cold.rewind(w.clock[0]); }
 
   /** Each frame, before render: effect time `t` (s). */
   frame(w: World, t: number, o: SpellFrame = {}): void {
@@ -116,6 +122,8 @@ export class Spells3D {
     // the Arcane beam as its stand-in too: the lab's ?standins=all
     this.arcane.group.visible = !this.standins.drawArcane;
     if (this.arcane.group.visible) this.arcane.update(w, t, this.lights);
+    this.cold.group.visible = !this.standins.drawCold;
+    if (this.cold.group.visible) this.cold.update(t, this.lights);
     this.standins.draw(w, { t, alpha: o.alpha ?? 0, localSeat: o.localSeat ?? -1, cam: this.fxCam, lights: this.lights, bodyAt: o.bodyAt });
     this.lights.end();
   }
@@ -133,7 +141,7 @@ export class Spells3D {
   }
 
   /** Forget every remembered event (a lab drawing another world with the same effects). */
-  reset(): void { this.standins.rewind(-1); }
+  reset(): void { this.standins.rewind(-1); this.cold.reset(); }
 
   private groundUnder(w: World, s: number): number { return this.simHeight(w.bodies.x[s], w.bodies.y[s]); }
 }

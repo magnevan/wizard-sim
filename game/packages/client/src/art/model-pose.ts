@@ -256,7 +256,10 @@ export const litLook: Look = (src, u, fxMode, infused) => {
         float glow = fxMode == 2 || (infHead > 0.5 && (infMode == 1 || infMode == 5)) ? ${GLOW.toFixed(2)} : 0.0;
         outgoingLight = outgoingLight * ratio + diffuseColor.rgb * glow;
         #include <opaque_fragment>
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(${FLASH_WHITE.toFixed(1)}), flash);`);
+        // the hit flash as a rim of light round the silhouette and a light wash inside, not a solid white body (on a big
+        // model a whole-body flash read as a white cloud that hid the spells: the user, 2026-11-25)
+        float rimK = smoothstep(0.35, 0.85, 1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0));
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(${FLASH_WHITE.toFixed(1)}), flash * (0.08 + 0.62 * rimK));`);
   };
   return m;
 };

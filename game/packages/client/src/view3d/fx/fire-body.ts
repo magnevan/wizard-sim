@@ -52,14 +52,14 @@ void main() {
   float tail = clamp(max(uTime - uEnd, 0.0) / 0.45, 0.0, 1.0) * 0.8;
   float g = position.x, th = position.y * 6.2831853;
   float s = mix(tail, head * uLobe.z, g);
-  vec4 A = aimAt(s * ${BODY_TRAVEL.toFixed(3)});
+  vec4 A = aimAt(s * ${(BODY_TRAVEL * 0.35).toFixed(3)});
   float off = uLobe.x * uHalf * smoothstep(0.0, 0.6, s), ang = A.z + off; vec2 d = vec2(cos(ang), sin(ang)), nn = vec2(-d.y, d.x);
   vec3 side = vec3(nn.x, 0.0, nn.y);
   float W = fanW(A, s);
   // narrow at the staff, opening to the cone, a swell before the head, rounded at both ends
   float caps = sqrt(max(0.0, 1.0 - pow(smoothstep(0.78, 1.0, g), 2.0))) * mix(0.25, 1.0, smoothstep(0.0, 0.1, g));
   float prof = mix(0.2, 0.8, smoothstep(0.0, 0.5, s)) * caps;
-  float rw = (0.05 + W * prof * uLobe.y) * uShell, rh = (0.07 + W * prof * 0.38 * sqrt(uLobe.y) + 0.12 * s) * uShell;
+  float rw = (0.05 + W * prof * uLobe.y) * uShell, rh = (0.1 + W * prof * 0.62 * sqrt(uLobe.y) + 0.18 * s) * uShell;
   // billows: noise flowing outward pushes the surface in and out, more toward the far end
   float c = cos(th), sn = sin(th);
   float n = fbm3(vec3(s * 3.5 - uTime * 2.2, c * 2.2 + 3.0 + uLobe.w, sn * 2.2 + uSeed * 0.37));
@@ -70,7 +70,7 @@ void main() {
   float n3 = fbm3(vec3(s * 6.0 - uTime * 3.0, c * 5.0 + uLobe.w, sn * 5.0 + 17.0));
   float lift = s * s * 0.15 * uGrow + up * up * max(n3 - 0.38, 0.0) * 1.0 * s * s;
   // from the staff's tip down to resting on the floor by mid-way, so the flame stands over the sim's cone, not above it
-  vec3 ctr = sprayAt(A, s, off, 0.0, mix(uNoz.y, rh * 0.75, smoothstep(0.0, 0.55, s)) + lift);
+  vec3 ctr = sprayAt(A, s, off, 0.0, mix(uNoz.y, max(rh * 0.9, uNoz.y * 0.6), smoothstep(0.0, 0.8, s)) + lift * 0.5);
   vec3 wp = ctr + side * c * rw * bill + vec3(0.0, 1.0, 0.0) * sn * rh * bill;
   vWp = wp; vN = normalize(side * c / max(rw, 1e-3) + vec3(0.0, sn / max(rh, 1e-3), 0.0)); vG = vec2(g, position.y); vS = s; vUp = up;
   gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0);
@@ -100,14 +100,14 @@ void main() {
   float n = n1 * 0.62 + n2 * 0.38;
   // the painted flame (fire-flow.png): tongues streaming outward along the tube, scrolled faster than the noise and bent
   // by it (the study's method: a painted texture that pans, bends and erodes on a mesh)
-  vec2 fuv = vec2(vG.y * 3.0 + uLobe.w * 0.13 + (n1 - 0.5) * 0.22, vS * 1.7 - uTime * 2.8 + (n2 - 0.5) * 0.12);
+  vec2 fuv = vec2(vG.y * 3.0 + uLobe.w * 0.13 + (n1 - 0.5) * 0.22, vS * 1.7 - uTime * 2.2 + (n2 - 0.5) * 0.12);
   vec3 tex = uHasFlow > 0.5 ? texture(uFlow, fuv).rgb : vec3(n);
   float tl = max(tex.r, max(tex.g, tex.b));
   // erosion: grazing surfaces, the far end and the tail eat away first where the painting is dark (the gaps between its
   // tongues), so the body breaks into tongues rather than a smooth edge
   float er = pow(fres, 1.6) * 0.85 + smoothstep(0.5, 1.0, vG.x) * 0.7 + (1.0 - smoothstep(0.0, 0.08, vG.x)) * 0.4 - uRim * 0.06;
   float since = (uTime - vS * ${BODY_TRAVEL.toFixed(3)}) - uEnd;
-  er += clamp(since / 0.25, 0.0, 1.0) * 1.3 + smoothstep(0.82, 1.06, vS) * 0.9;
+  er += pow(clamp(since / 0.6, 0.0, 1.0), 1.5) * 1.3 + smoothstep(0.82, 1.06, vS) * 0.9;
   float a = smoothstep(er - 0.03, er + 0.03, n * 0.45 + tl * 0.55 + 0.2);
   float hole = fbm3(vec3(vWp.x * 1.25 + uTime * 0.9, vWp.z * 1.25 - uTime * 0.6, uTime * 1.4 + 2.0));
   a *= smoothstep(0.4, 0.5, hole + 0.3 * (1.0 - smoothstep(0.25, 0.75, vS)));

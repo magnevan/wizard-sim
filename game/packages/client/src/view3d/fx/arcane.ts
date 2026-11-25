@@ -91,10 +91,13 @@ vec4 look(float along, float across, float len) {
   // the line bends: two travelling waves across it, pinned at both ends, so the hit stays where the sim says (the
   // user: "the ray is too straight"); its width breathes too
   float u = clamp(along / max(len, 1e-3), 0.0, 1.0), env = sin(3.14159 * u);
-  float bend = env * (0.07 * sin(along * 3.2 - uClock * 15.0) + 0.04 * sin(along * 7.1 - uClock * 23.0));
+  float bend = env * (0.035 * sin(along * 3.2 - uClock * 15.0) + 0.02 * sin(along * 7.1 - uClock * 23.0));
   float q = across - bend * uWide;
   float breathe = 1.0 + 0.15 * (vnoise3(vec3(along * 1.8 - uClock * 6.0, 3.0, uClock)) - 0.5) * 2.0;
-  float ax = along < 0.0 ? -along : max(along - len, 0.0), d = length(vec2(ax, q));
+  float ax = along < 0.0 ? -along : max(along - len, 0.0), d0 = length(vec2(ax, q));
+  // a ragged edge: fine noise flowing along the line eats into and bulges out of the border, so it isn't a neat tube
+  float rag = (vnoise3(vec3(along * 6.0 - uClock * 11.0, q * 8.0, uClock * 2.0)) - 0.5) * uBody * 0.7;
+  float d = max(0.0, d0 + rag * smoothstep(0.0, uBody * 1.5, d0));
   float aa = max(fwidth(across), 1e-4);
   // surges: packets racing out, each a sharp head and a fading tail; one in seven skipped, so they don't tick like a clock
   float ph = (along - uClock * uSurgeV) / uSurgeSp, f = fract(ph), L = min(uSurgeL / uSurgeSp, 0.9);
@@ -116,6 +119,19 @@ vec4 look(float along, float across, float len) {
   vec3 bodyCol = mix(vec3(1.05, 0.05, 1.3), vec3(1.9, 0.4, 2.2), smoothstep(core * 2.4, core * 1.1, d)) * shim * (1.0 + 0.25 * surge);
   vec3 coreCol = mix(vec3(2.6, 1.6, 3.3), vec3(5.0, 4.8, 5.2), max(uWhite, surge));
   vec3 inner = mix(vec3(0.12, 0.012, 0.2), mix(bodyCol, coreCol, coreA), bodyA);
+  // energy spilling over: two strands winding round the beam, flowing toward what it hits, and wisps of the halo torn
+  // off by noise, so light spills past the border (the user's reference: Diablo 3's Disintegrate)
+  float wisp = smoothstep(0.45, 0.85, fbm3(vec3(along * 2.2 - uClock * 9.0, across * 3.5, uClock * 1.7))) * ends;
+  float spill = 0.0;
+  for (int k = 0; k < 2; k++) {
+    // uneven: each strand's reach and speed wander with noise, and it breaks off in places, so it isn't a neat helix
+    float wan = vnoise3(vec3(along * 0.9 - uClock * 4.0, float(k) * 7.0, uClock * 0.8));
+    float ph = along * (3.4 + 1.6 * wan) - uClock * (17.0 + 8.0 * float(k)) + float(k) * 2.4;
+    float y = sin(ph) * body * (1.4 + 2.2 * wan) + bend * uWide, w = mix(0.01, 0.028, 0.5 + 0.5 * cos(ph));
+    float brk = smoothstep(0.3, 0.45, vnoise3(vec3(along * 1.7 - uClock * 9.0, float(k) * 3.0 + 1.0, 0.0)));
+    spill += smoothstep(w + aa, w - aa * 0.5, abs(across - y)) * (0.55 + 0.45 * cos(ph)) * ends * brk;
+  }
+  col += vec3(1.6, 0.25, 1.9) * wisp * halo * 2.2 + vec3(2.6, 1.2, 3.0) * spill * 0.8;
   // (round 2's 30 Hz white glints are gone: they read as blinking beads, and the user didn't like how motion was shown)
   return vec4(col * (1.0 - rimA) + inner * rimA, rimA * 0.95);
 }`;

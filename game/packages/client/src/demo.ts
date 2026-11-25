@@ -5,7 +5,7 @@
  *   ?spell=arcane,fire/force          seat 0's spell: elements joined by , or + (an unescaped + arrives as a space)
  *   &spell2=water+cold/force          seat 1's (optional)
  *
- * Casts: force (held about 1.5 s, so channels and charges show), area (the ring: aimed at yourself), place, self, weapon,
+ * Casts: force (held about 1.5 s, so channels and charges show), tap (Force clicked: an uncharged missile), area (the ring: aimed at yourself), place, self, weapon,
  * drag (a Place drawn left to right across the target), hold (the Area button held and never let go: the
  * placement preview), holddrag (held while dragging, never let go), burstheld / ringheld (Shift+LMB held and never let
  * go, at the target or on yourself: the burst's preview), guard (Weapon cast, then the button held to block).
@@ -139,6 +139,7 @@ export function demoInput(w: World, tick: number, seat: number, d: Demo): Player
   const go = 10 + d.els.length * 6;
   let buttons = 0;
   if (d.cast === 'force') buttons = ph >= go && ph < go + 90 ? BTN.force : 0;
+  else if (d.cast === 'tap') buttons = ph >= go && ph < go + 2 ? BTN.force : 0;
   // the ring: aimed at yourself, Shift+LMB for elements, Shift+RMB (Place) for Shield's ring and Sigil's orbitals (2026-11-22)
   else if (d.cast === 'area') buttons = ph >= go && ph < go + 3 ? (d.els.some((e) => e === EL.shield || e === EL.sigil) ? BTN.area : BTN.weapon) : 0;
   else if (d.cast === 'place') buttons = ph >= go && ph < go + 24 ? BTN.area : 0;

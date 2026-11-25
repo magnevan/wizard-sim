@@ -75,9 +75,110 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
   <header>
     <div class="eyebrow">Port to 3D · step 0 · 2026-11-25</div>
     <h1>The Court in 3D</h1>
-    <p class="lede"><b>New: <a href="#r3">round 3</a>, your round 2 notes with Codex's second opinion.</b> Below it, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
+    <p class="lede"><b>New: <a href="#r4">round 4</a>, your round 3 notes (and the white cloud fixed).</b> Below it, <a href="#r3">round 3</a>, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
     <div class="hero"><img src="img/plaza-26.jpg" alt="Two wizards and six goblins on the court's sunk plaza, seen from the 3D game camera"></div>
   </header>
+
+  <section id="r4">
+    <div class="top">
+      <div>
+        <h2>Round 4: your round 3 notes</h2>
+        <p><b>First, the white "cloud" that hid everything:</b> it was the struck goblins' hit flash. On a first hit every body turned almost solid white, and the big goblin was the largest white shape on screen. A hit now lights a rim round the body's silhouette with only a faint wash inside, so the goblins keep their shape and colour. That applies to every spell, so the clips should be readable now.</p>
+      </div>
+    </div>
+    <div class="top">
+      <div>
+        <h3>Fire spray</h3>
+        <ul>
+          <li><b>"The end is too abrupt, the flames blink out":</b> when the channel stops, the flame dies down over about 0.6 s, eroding outward from the staff.</li>
+          <li><b>"A thin horizontal sheet that bends down and then comes up":</b> the body is rounder and taller in section, and it eases down to mid-height instead of dropping to the floor and lifting again at the end.</li>
+          <li><b>"Dragging flames with you when you rotate":</b> the body now follows the aim with a third of the lag. After you stop, a curved tail can still linger along the old aim for about a quarter of a second; say if that's the drag you meant.</li>
+          <li><b>"A smidge too fast":</b> the painted flow is about a fifth slower.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r4-fire" data-rec="keep">
+        <div class="q">Fire spray</div>
+        <div class="choices" role="group" aria-label="Fire spray, round 4">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r4-fire" aria-label="Note on Fire spray, round 4" placeholder="What still reads off"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+        <figure><video src="vid/r4-fire-30.mp4" muted loop playsinline autoplay></video><figcaption><b>The game camera, 30 u</b></figcaption></figure>
+        <figure><video src="vid/r4-fire-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Closer, 14 u</b></figcaption></figure>
+        <figure><video src="vid/r4-fire-sweep-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Turning while it burns (empty ground)</b></figcaption></figure>
+    </div>
+    <div class="top">
+      <div>
+        <h3>Frost blast</h3>
+        <ul>
+          <li><b>"Clipped in a circle":</b> each streak runs out on its own, up to 0.8 u past the ring, so the frost ends raggedly.</li>
+          <li><b>"A smidge faster":</b> the wave reaches its ring in 0.32 s instead of 0.38 (for a three-unit ring).</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r4-cold" data-rec="keep">
+        <div class="q">Frost blast</div>
+        <div class="choices" role="group" aria-label="Frost blast, round 4">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r4-cold" aria-label="Note on Frost blast, round 4" placeholder="What still reads off"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+        <figure><video src="vid/r4-cold-30.mp4" muted loop playsinline autoplay></video><figcaption><b>The game camera, 30 u</b></figcaption></figure>
+        <figure><video src="vid/r4-cold-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Closer, 14 u</b></figcaption></figure>
+    </div>
+    <div class="top">
+      <div>
+        <h3>Arcane beam</h3>
+        <ul>
+          <li><b>"The wave is a bit too intense":</b> half the bend.</li>
+          <li><b>"Too neat and uniform, a very defined border, some effect to spill over"</b> (after Disintegrate): the border is ragged, eaten and bulged by fine noise flowing along it; two uneven strands of energy wind round the beam and break off in places; wisps of glow tear off the halo.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r4-arcane" data-rec="keep">
+        <div class="q">Arcane beam</div>
+        <div class="choices" role="group" aria-label="Arcane beam, round 4">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r4-arcane" aria-label="Note on Arcane beam, round 4" placeholder="What still reads off"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+        <figure><video src="vid/r4-arcane-30.mp4" muted loop playsinline autoplay></video><figcaption><b>The game camera, 30 u</b></figcaption></figure>
+        <figure><video src="vid/r4-arcane-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Closer, 14 u</b></figcaption></figure>
+    </div>
+    <div class="top">
+      <div>
+        <h3>Earth rock</h3>
+        <ul>
+          <li><b>Both variants, as you asked:</b> the lab can now cast a tapped rock (<span class="mono">cast3d.html?spell=earth/tap</span>); a tapped rock is half the charge and stops at the first body, a fully charged one pierces.</li>
+          <li>The impact's burst and the speed lines are as in round 3; the white you saw was the goblins' flash, now a rim.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r4-earth" data-rec="keep">
+        <div class="q">Earth rock</div>
+        <div class="choices" role="group" aria-label="Earth rock, round 4">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r4-earth" aria-label="Note on Earth rock, round 4" placeholder="What still reads off"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+        <figure><video src="vid/r4-earth-tap-30.mp4" muted loop playsinline autoplay></video><figcaption><b>Tapped, the usual cast: it stops at the first goblin</b></figcaption></figure>
+        <figure><video src="vid/r4-earth-tap-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Tapped, closer</b></figcaption></figure>
+        <figure><video src="vid/r4-earth-charged-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Fully charged: it pierces</b></figcaption></figure>
+    </div>
+  </section>
 
   <section id="r3">
     <div class="top">

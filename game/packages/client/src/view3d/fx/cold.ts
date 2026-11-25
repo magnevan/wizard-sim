@@ -47,7 +47,7 @@ export const isColdNova = (s: SpellSpec | null | undefined): boolean =>
 /** How the front moves, in seconds and u (art/novas.ts cold(), in 3D units). */
 export const COLD = {
   /** Seconds the front takes to reach a three-unit ring; a ring of radius r takes stretch(r) times that. */
-  reach: 0.38,
+  reach: 0.32,
   /** Where the front starts (u from the centre). */
   r0: 0.35,
   /** The front's height at one rune and per extra rune (u: knee-high at three, a 2.7 u wizard). */
@@ -313,10 +313,13 @@ vec4 decal(vec3 wp) {
   float ang = atan(d.y, d.x);
   float edge = min(uRn, uRf) * (0.94 + 0.06 * vnoise3(vec3(cos(ang) * 3.0, sin(ang) * 3.0, uSeed * 0.01)));
   vec4 o = vec4(0.0);
-  if (rr < edge + 0.2) {
+  if (rr < edge + 1.0) {
     float broad = fbm3(vec3(cos(ang) * 2.0, sin(ang) * 2.0, uSeed * 0.01 + 3.0));
-    edge -= (0.3 + 0.6 * broad) * smoothstep(0.6 * uRf, uRf, uRn);
-    float inside = smoothstep(edge, edge - 0.25, rr);
+    edge -= (0.1 + 0.4 * broad) * smoothstep(0.6 * uRf, uRf, uRn);
+    // no clean circle: each streak runs out on its own, up to 0.8 u past the ring (the user: "clipped in a circle which
+    // looks wrong")
+    float runOut = 0.8 * vnoise3(vec3(cos(ang) * 9.0, sin(ang) * 9.0, uSeed * 0.01 + 21.0));
+    float inside = smoothstep(edge + runOut, edge - 0.4, rr);
     // uneven melt: patches go first where the noise is low
     float m = fbm3(vec3(wp.xz * 1.2, uSeed * 0.013));
     float keep = smoothstep(uMelt - 0.05, uMelt + 0.1, m);

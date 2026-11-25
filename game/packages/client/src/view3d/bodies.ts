@@ -44,7 +44,7 @@ interface Fall extends Fallen { slug: string; t0: number; shown: Shown }
  * a held channel flickers its target; the models used to flash only the first.
  */
 // a falling fade, not a solid white blink (the user on the rock, round 2: "blinks in and out in too much of a static manner")
-const flashLevel = (f: number): number => (f >= 16 ? 0.9 : f >= 9 ? 0.5 : f >= 4 ? 0.3 : 0);
+const flashLevel = (f: number): number => (f >= 16 ? 0.85 : f >= 9 ? 0.45 : f >= 4 ? 0.25 : 0);
 
 export class Bodies3D {
   /** Everything this draws, under the parent the view gave. */

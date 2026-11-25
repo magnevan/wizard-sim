@@ -259,7 +259,7 @@ export class FireSpray {
       // the channel's end isn't set on its first tick (it reads as the room's origin): never past the sim's range
       this.trail.record(t, { x: spray.x, z: spray.z, ang: spray.ang, reach: Math.min(spray.reach, spray.range) });
     } else if (r && r.end === Infinity) r.end = r.last;
-    if (r && t > r.end + 1.5) { r = this.rec = null; }
+    if (r && t > r.end + 1.6) { r = this.rec = null; }
     this.group.visible = !!r;
     if (!r) return;
     const n = r.n;
@@ -268,7 +268,7 @@ export class FireSpray {
     // the body swells over the channel's first second, and once it stops, fades as its tail runs out after the head
     this.body.uGrow.value = Math.min(1, (t - r.t0) / 1.0);
     // the release erodes outward in the body's shader; this only cleans up after it
-    this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - Math.max(0, t - r.end - 0.45) / 0.25);
+    this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - Math.max(0, t - r.end - 0.8) / 0.3);
     this.U.uN.value = n; this.U.uHot.value = hotOf(n); this.U.uCore.value = 0.16 + 0.025 * n; this.U.uNoz.value.w = groundY;
     for (const l of this.layers) { l.b.u.uRate.value = l.rate(n); l.b.u.uLife.value = l.life(n); }
     const now = this.trail.at(t), on = t <= r.end ? Math.min(1, (t - r.t0) / 0.15) : Math.max(0, 1 - (t - r.end) / 0.3);

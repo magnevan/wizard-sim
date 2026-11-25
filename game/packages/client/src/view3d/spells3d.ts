@@ -1,6 +1,8 @@
 /**
- * The spell effects in the game view: the effects kit (fx/) hosted on the court. For now only Fire: each seat's Fire
- * spray and the burning floor, in look B (painted Codex sheets, the chosen direction). Other spells draw nothing yet.
+ * The spell effects in the game view: the effects kit (fx/) hosted on the court. Fire's spray and its burning floor are
+ * drawn in look B (painted Codex sheets, the chosen direction); every other spell, and everything else the sim makes
+ * (walls, devices, wards, telegraphs, previews), draws as its stand-in (fx/standins.ts: the sim's hit shape in the
+ * element's colour) until its family gets a real effect.
  *
  * The effects work in sim space (fx/from-sim.ts: sim (x, y) is three's (x, z), no offset) while the kit scene sits at
  * its own coordinates, the sim's origin at the room's toScene (scene-map.ts). Rather than move the kit (its stones,
@@ -14,9 +16,22 @@ import { FireFloor, FireSpray, type FireSheets } from './fx/fire';
 import { SurfGrid, sprays } from './fx/from-sim';
 import { SpellLights } from './fx/lights';
 import { FxStage } from './fx/stage';
+import { Standins } from './fx/standins';
 import { sceneX, sceneZ } from './scene-map';
 
 const fxUrls = import.meta.glob<string>('../../../../content/generated/fx/fire-*.png', { eager: true, query: '?url', import: 'default' });
+
+/** What the view hands each frame besides the world. */
+export interface SpellFrame {
+  /** How far toward the next step (0..1), for missiles in flight. */
+  alpha?: number;
+  /** The seat whose placement preview shows (-1: none). */
+  localSeat?: number;
+  /** The world camera (scene space): the effects' camera is made from it. */
+  cam?: THREE.PerspectiveCamera;
+  /** Where body i is drawn (sim u), when the view interpolates. */
+  bodyAt?: (i: number) => [number, number];
+}
 
 export class Spells3D {
   readonly stage = new FxStage();
@@ -25,6 +40,8 @@ export class Spells3D {
   readonly lightRoot = new THREE.Group();
   /** The effects' camera: the world camera moved into sim space. */
   readonly fxCam = new THREE.PerspectiveCamera();
+  /** Every other spell's stand-in (fx/standins.ts). */
+  readonly standins = new Standins();
   private spraysBy: FireSpray[] = [];
   private grid: SurfGrid | null = null;
   private floor: FireFloor | null = null;
@@ -33,7 +50,12 @@ export class Spells3D {
   constructor(world: THREE.Scene, private heightAt: (x: number, z: number) => number) {
     this.lightRoot.add(this.lights.group);
     world.add(this.lightRoot);
+    this.standins.ground = (x, y) => this.simHeight(x, y);
+    this.stage.scene.add(this.standins.group);
   }
+
+  /** The floor's height (u) under sim point (x, z); 0 off the scene. */
+  private simHeight(x: number, z: number): number { const h = this.heightAt(sceneX(x), sceneZ(z)); return Number.isNaN(h) ? 0 : h; }
 
   /** Load the painted sheets (look B) and make the effects (they take the sheets as they're made). */
   async load(): Promise<void> {
@@ -44,7 +66,7 @@ export class Spells3D {
     };
     const [wisps, tongues] = await Promise.all([sheet('fire-wisps'), sheet('fire-tongues')]);
     const sheets: FireSheets = { wisps, tongues };
-    const simHeight = (x: number, z: number) => { const h = this.heightAt(sceneX(x), sceneZ(z)); return Number.isNaN(h) ? 0 : h; };
+    const simHeight = (x: number, z: number) => this.simHeight(x, z);
     for (let s = 0; s < MAX_SEATS; s++) {
       const f = new FireSpray('b', sheets, 11 + s * 17);
       f.fan.heightAt = simHeight;
@@ -55,35 +77,53 @@ export class Spells3D {
     this.stage.scene.add(this.floor.group);
   }
 
-  /** After each shown step: the sprays' aim trails keep every tick. */
+  /** After each shown step: the sprays' aim trails keep every tick, and the step's events become stand-ins. */
   afterStep(w: World): void {
+    this.standins.afterStep(w);
     if (!this.spraysBy.length) return;
     const t = w.clock[0] / 60, all = sprays(w);
     for (let s = 0; s < MAX_SEATS; s++) this.spraysBy[s].update(t, all.find((p) => p.seat === s && p.kind === 'fire') ?? null, this.groundUnder(w, s), null);
   }
 
+  /** After a replayed step (rollback): its events, once each. */
+  replayStep(w: World): void { this.standins.afterStep(w); }
+
+  /** A rewind put the world back to its tick: what came after is dropped (the replay brings it back). */
+  rewind(w: World): void { this.standins.rewind(w.clock[0]); }
+
   /** Each frame, before render: effect time `t` (s). */
-  frame(w: World, t: number): void {
+  frame(w: World, t: number, o: SpellFrame = {}): void {
     this.lightRoot.position.set(sceneX(0), 0, sceneZ(0));
-    if (!this.grid || !this.floor) return;
+    if (o.cam) this.syncCam(o.cam);
     this.lights.begin();
-    const all = sprays(w);
-    for (let s = 0; s < MAX_SEATS; s++) this.spraysBy[s].update(t, all.find((p) => p.seat === s && p.kind === 'fire') ?? null, this.groundUnder(w, s), this.lights);
-    this.grid.update(w);
-    this.floor.update(t, this.lights);
+    // Fire as its stand-in too (look B hidden): the lab's ?standins=all
+    const fireB = !this.standins.drawFire;
+    for (const f of this.spraysBy) f.group.visible &&= fireB;
+    if (this.floor) this.floor.group.visible &&= fireB;
+    if (this.grid && this.floor && fireB) {
+      const all = sprays(w);
+      for (let s = 0; s < MAX_SEATS; s++) this.spraysBy[s].update(t, all.find((p) => p.seat === s && p.kind === 'fire') ?? null, this.groundUnder(w, s), this.lights);
+      this.grid.update(w);
+      this.floor.update(t, this.lights);
+    }
+    this.standins.draw(w, { t, alpha: o.alpha ?? 0, localSeat: o.localSeat ?? -1, cam: this.fxCam, lights: this.lights, bodyAt: o.bodyAt });
     this.lights.end();
   }
 
-  /** The world and the effects, tone-mapped to the screen. */
-  render(renderer: THREE.WebGLRenderer, world: THREE.Scene, cam: THREE.PerspectiveCamera): void {
+  private syncCam(cam: THREE.PerspectiveCamera): void {
     this.fxCam.copy(cam);
     this.fxCam.position.x -= sceneX(0); this.fxCam.position.z -= sceneZ(0);
     this.fxCam.updateMatrixWorld();
-    this.stage.render(renderer, world, cam, undefined, this.fxCam);
   }
 
-  private groundUnder(w: World, s: number): number {
-    const h = this.heightAt(sceneX(w.bodies.x[s]), sceneZ(w.bodies.y[s]));
-    return Number.isNaN(h) ? 0 : h;
+  /** The world and the effects, tone-mapped to the screen (or into `box` of it: FxStage.render). */
+  render(renderer: THREE.WebGLRenderer, world: THREE.Scene, cam: THREE.PerspectiveCamera, box?: { x: number; y: number; w: number; h: number }): void {
+    this.syncCam(cam);
+    this.stage.render(renderer, world, cam, box, this.fxCam);
   }
+
+  /** Forget every remembered event (a lab drawing another world with the same effects). */
+  reset(): void { this.standins.rewind(-1); }
+
+  private groundUnder(w: World, s: number): number { return this.simHeight(w.bodies.x[s], w.bodies.y[s]); }
 }

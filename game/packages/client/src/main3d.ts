@@ -10,12 +10,12 @@
  * #practice or ?room=practice) and starts in the court; the view loads each room's scene as the room changes.
  *
  * ?cam=26 sets the view's distance (u of ground in view), ?fade=0 turns fading off, ?kitart=0 draws the kit as
- * greybox, ?shot=plaza / wall / fire / practice / practice-fire sets a scene for scripts/play3d-shot.mjs
- * (window.__ready, window.__perf).
+ * greybox, ?runes=1 gives every wizard the usual rune pools in any room (casting in the court), ?shot=plaza / wall /
+ * fire / fight / practice / practice-fire sets a scene for scripts/play3d-shot.mjs (window.__ready, window.__perf).
  */
 import {
-  ARCH, DT, KIND, MAX_SEATS, PHASE, elementId, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
-  type PartyState, type PlayerInput, type Room, type World,
+  ARCH, DT, KEYED_EL, KIND, MAX_SEATS, PHASE, RUNES, elementId, elementName, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
+  type Mode, type PartyState, type PlayerInput, type Room, type World,
 } from '@wizard-sim/sim';
 import { demoInput, parseDemo } from './demo';
 import { PadSeats } from './gamepad';
@@ -35,6 +35,7 @@ import { GameAudio, loadVolumes, volumeSettings } from './audio/game-audio';
 import { MENU_SECTIONS, onOption, opt, optNum, optOn, seedOpt, setOpt } from './dev-options';
 import { fromLocation, hashFor, scenarioById, scenarioForKey, scenarioOfRoom, usePage, worldFor, type Scenario } from './scenarios';
 import { View3D } from './view3d/view3d';
+import { VIEW_H } from './view3d/camera3d';
 import { setSceneOrigin, simX, simY } from './view3d/scene-map';
 import { hasScene } from './view3d/kit-scene';
 
@@ -46,15 +47,27 @@ const hud = document.getElementById('hud')!;
 /**
  * A shot's scene: its room (default the court), where the wizards and goblins stand (scene u, so it doesn't move with
  * the offset). With `spell`, seat 0 casts it (demo.ts's notation, aimed at `at`, scene u) and the sim runs `ticks`
- * before the shot, the court's no-runes rule lifted for it; otherwise nobody moves.
+ * before the shot, the court's no-runes rule lifted for it; with `casts`, each seat casts its own (`lag` ticks behind the
+ * clock; demoInput's own lag of 37 ticks a seat is undone); otherwise nobody moves.
  */
-const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [number, number][]; face?: number; spell?: string; at?: [number, number]; ticks?: number; hud?: boolean }> = {
+interface ShotCast { spell: string; at: [number, number]; lag?: number }
+const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [number, number][]; face?: number; spell?: string; at?: [number, number]; ticks?: number; hud?: boolean; casts?: ShotCast[] }> = {
   // the plaza, south of the armillary's dais: two wizards facing an arc of six goblins
   plaza: { wiz: [[91.5, 95.5], [98.5, 95.5]], gob: [[83, 91], [86.5, 89.5], [90.5, 88.8], [99.5, 88.8], [103.5, 89.5], [107, 91]], face: 0.75 },
   // a wizard just north of the great hall (95.5, 34; 26 x 12 u, 16 m tall), with a goblin in front of the hall to compare
   wall: { wiz: [[95.5, 25.5], [104, 46]], gob: [[90, 44], [100, 45]], face: 0.25 },
   // Fire spray (three runes) at the goblins, look B, 70 ticks in: the spray, and the floor it set burning
   fire: { wiz: [[95, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5]], face: 0.75, spell: 'fire+fire+fire/force', at: [95, 89], ticks: 70 },
+  // a fight on the plaza, every spell a stand-in but the Fire: an arc, a beam, ice shards and a rock wall drawn, at a warband
+  fight: {
+    wiz: [[87, 97], [93, 98.5], [99, 98.5], [105, 97]], gob: [[84, 89], [88, 88], [92, 88.5], [97, 88], [101, 88.5], [106, 89], [95, 85]], face: 0.75, ticks: 92,
+    casts: [
+      { spell: 'lightning+lightning/force', at: [86, 89] },
+      { spell: 'arcane+arcane+water/force', at: [92, 88.5], lag: 6 },
+      { spell: 'water+cold+water+cold/force', at: [99, 88], lag: 30 },
+      { spell: 'shield+earth/drag', at: [105, 93] },
+    ],
+  },
   // the HUD (view3d/hud3d.ts) mid-fight: seat 0 has sprayed Fire and queues Water + Cold, hurt and burning; seat 1 and a goblin are off screen
   hud: { wiz: [[95, 96], [140, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5], [50, 92]], face: 0.75, spell: 'fire+fire/force', at: [95, 89], ticks: 100, hud: true },
   // the practice ground (54 x 40 u; its dummies stand at 18,21 / 27,19 / 36,21): two wizards in the middle of the yard
@@ -87,13 +100,13 @@ async function boot(): Promise<void> {
   let scenario: Scenario = shot ? scenarioById(shot.room ?? 'court')! : start.scenario;
   const room = scenario.room as Room;
   const ally = optOn('ally');
-  const players = headless ? 2 : ally ? 2 : 1;
+  const players = headless ? Math.max(2, shot.wiz.length) : ally ? 2 : 1;
   const host = document.getElementById('app')!;
 
   const view = new View3D(host, { art: optOn('kitart'), preserve: headless });
   hud.style.display = '';
   hud.textContent = `loading ${scenario.name}...`;
-  const camOpt = () => { view.camera.viewH = optNum('cam', 26); };
+  const camOpt = () => { view.camera.viewH = optNum('cam', VIEW_H); };
   camOpt(); onOption('cam', camOpt);
   const fadeOpt = () => { view.fader.enabled = optOn('fade'); };
   await view.load(hasScene(room) ? room : 'court');
@@ -110,17 +123,30 @@ async function boot(): Promise<void> {
 
   loadSaved();
   const world = createWorld(7, players, { room, checkpoint: opt('at') ?? undefined });
+  /**
+   * ?runes=1: the usual pools (config RUNES.max) in any room, the court's no-runes rule lifted, put back each time the
+   * world's mode is replaced (a room switch). Client-side: without it the sim is untouched; online, every peer needs it.
+   */
+  let runesMode: Mode | null = null;
+  const grantRunes = () => {
+    if (!optOn('runes') || world.mode === runesMode) return;
+    runesMode = { ...world.mode, runeMax: (_w, _i, id) => (id > KEYED_EL ? 0 : RUNES.max[elementName(id)]) };
+    world.mode = runesMode;
+    for (let s = 0; s < MAX_SEATS; s++) if (world.seats.active[s]) devRefillRunes(world, s);
+  };
+  grantRunes();
   if (shot) {
     setSceneOrigin(world.def);
     shot.wiz.forEach(([x, y], s) => { world.bodies.x[s] = simX(x); world.bodies.y[s] = simY(y); world.bodies.face[s] = shot.face ?? 0.75; });
     for (const [x, y] of shot.gob) { const i = devSpawnEnemy(world, ARCH.swarmer, simX(x), simY(y)); if (i >= 0) world.bodies.face[i] = ((shot.face ?? 0.75) + 0.5) % 1; }
     view.beforeStep(world);
-    if (shot.spell) {
+    const casts = shot.casts ?? (shot.spell ? [{ spell: shot.spell, at: shot.at! }] : []);
+    if (casts.length) {
       world.mode = { ...world.mode, runeMax: () => 5 };   // the court (and the party's pools) give no runes: five each, for this shot only
-      devRefillRunes(world, 0);
-      const d = parseDemo(`${shot.spell}@${simX(shot.at![0])},${simY(shot.at![1])}`)!;
+      casts.forEach((_, p) => devRefillRunes(world, p));
+      const ds = casts.map((c) => parseDemo(`${c.spell}@${simX(c.at[0])},${simY(c.at[1])}`)!);
       for (let k = 0; k < (shot.ticks ?? 60); k++) {
-        const inputs = Array.from({ length: MAX_SEATS }, (_, p) => (p === 0 ? demoInput(world, k, 0, d) : NO_INPUT));
+        const inputs = Array.from({ length: MAX_SEATS }, (_, p) => (ds[p] && k >= (casts[p].lag ?? 0) ? demoInput(world, k - (casts[p].lag ?? 0) + p * 37, p, ds[p]) : NO_INPUT));
         view.beforeStep(world); step(world, inputs); view.afterStep(world);
       }
     }
@@ -159,7 +185,7 @@ async function boot(): Promise<void> {
       const s = net!.session!;
       view.setLocalSeat(net!.seat);
       s.hooks = {
-        before: (w) => { net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); stats.afterStep(); tools.afterStep(); saves.update(w.mode.reached?.(w), partyOf(w)); checkLeave(); } else view.replayStep(w); },
+        before: (w) => { grantRunes(); net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); stats.afterStep(); tools.afterStep(); saves.update(w.mode.reached?.(w), partyOf(w)); checkLeave(); } else view.replayStep(w); },
         preRewind: (w) => view.notePreRewind(w), postRewind: (w) => view.notePostRewind(w, net!.seat),
       };
     });
@@ -229,6 +255,7 @@ async function boot(): Promise<void> {
   const runStep = () => {
     const inputs = inputsFor();
     recorder.record(inputs);
+    grantRunes();
     view.beforeStep(world);
     step(world, inputs);
     view.afterStep(world);

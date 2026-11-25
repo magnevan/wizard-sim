@@ -48,6 +48,7 @@ export const OPTIONS = [
   { key: 'beat', group: 'Start', label: 'Tutorial beat', kind: 'number', help: 'Start the tutorial at beat N (also #tutorial-N).' },
   { key: 'at', group: 'Start', label: 'Checkpoint', kind: 'choice', choices: () => [...new Set([...BATTERY_CHECKPOINTS, ...YARD_CHECKPOINTS].map((c) => c.id))], help: 'Start a chapter at a checkpoint (the battery: well-failing, repair).' },
   { key: 'fail', group: 'Start', label: 'Checkpoint (old name)', kind: 'choice', choices: () => ['1', '2'], help: 'Old names for ?at: 1 is well-failing, 2 is repair.' },
+  { key: 'runes', group: 'Start', label: 'Runes in any room', kind: 'flag', help: 'The 3D page: every wizard gets the usual rune pools in any room, the court\'s no-runes rule lifted (casting in the court). Client-side only: every peer must set it alike.' },
   { key: 'local', group: 'Start', label: 'Only seat N on screen', kind: 'number', help: 'The camera follows seat N only, as a networked player\'s screen would (the others get edge arrows).' },
 
   // ---- Panels: what is open at boot ----
@@ -101,7 +102,7 @@ export const OPTIONS = [
   { key: 'scene', group: 'Test runs', label: 'Scene', kind: 'choice', choices: () => ['rally', 'three', 'enemyattacks'], help: 'Headless: rally / three (Survive), or enemyattacks (every enemy frozen at one beat of its attack).' },
   { key: 'phase', group: 'Test runs', label: 'Attack phase', kind: 'choice', choices: () => ['wind', 'strike', 'impact', 'recover', 'loop'], help: 'With scene=enemyattacks.' },
   { key: 'face', group: 'Test runs', label: 'Attack facing', kind: 'number', help: 'With scene=enemyattacks: facing in turns (default 0.06).' },
-  { key: 'shot', group: 'Test runs', label: '3D shot setup', kind: 'choice', choices: () => ['plaza', 'wall', 'fire'], help: 'The 3D page, headless: plaza (two wizards and six goblins on the court\'s plaza) or wall (a wizard behind the great hall), standing still; fire (a wizard spraying Fire at goblins, 70 ticks in) (scripts/play3d-shot.mjs).' },
+  { key: 'shot', group: 'Test runs', label: '3D shot setup', kind: 'choice', choices: () => ['plaza', 'wall', 'fire', 'fight'], help: 'The 3D page, headless: plaza (two wizards and six goblins on the court\'s plaza) or wall (a wizard behind the great hall), standing still; fire (a wizard spraying Fire at goblins, 70 ticks in); fight (four wizards casting at a warband: the stand-ins) (scripts/play3d-shot.mjs, scripts/cast3d-shots.mjs).' },
   { key: 'pauseAt', group: 'Test runs', label: 'Pause at tick', kind: 'number', help: 'Pause the sim at tick N, as P does in the tools panel.' },
   { key: 'selftest', group: 'Test runs', label: 'Selftest', kind: 'flag', help: 'No rendering: run the golden replay and publish its hash on <html data-hash>.' },
   { key: 'ticks', group: 'Test runs', label: 'Selftest ticks', kind: 'number', help: 'How long the selftest replay runs (default 1800).' },

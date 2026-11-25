@@ -1,7 +1,7 @@
 /**
  * The 3D view (the port to 3D, docs/explorations/2026-11-25-port-3d-plan.md): implements GameView with a three.js
  * renderer on its own canvas, hosting the kit scene (kit-scene.ts), the game camera (camera3d.ts), the characters
- * (bodies.ts), the spell effects (spells3d.ts: Fire's spray and floor so far) and holes for hidden wizards (fade.ts).
+ * (bodies.ts), the spell effects (spells3d.ts: Fire's spray and floor, stand-ins for the rest) and holes for hidden wizards (fade.ts).
  * A transparent 2D canvas sits over the 3D one for the HUD (hud3d.ts: the pixel HUD's look, in whole art pixels).
  *
  * The camera follows the local wizards with rollback corrections eased; the bodies themselves don't take that easing
@@ -125,7 +125,7 @@ export class View3D implements GameView {
     this.sound?.afterStep(w, this.isLocal);
   }
 
-  replayStep(w: World): void { this.sound?.replayStep(w, this.localSeat); }
+  replayStep(w: World): void { this.spells.replayStep(w); this.sound?.replayStep(w, this.localSeat); }
 
   notePreRewind(w: World): void { this.preX.set(w.bodies.x); this.preY.set(w.bodies.y); }
   notePostRewind(w: World, localSeat: number): void {
@@ -136,6 +136,7 @@ export class View3D implements GameView {
       if (dx * dx + dy * dy > 9) { this.smoothX[i] = 0; this.smoothY[i] = 0; continue; } // a real teleport: snap
       this.smoothX[i] += dx; this.smoothY[i] += dy;
     }
+    this.spells.rewind(w);
     this.sound?.postRewind(w);
   }
 
@@ -171,7 +172,8 @@ export class View3D implements GameView {
       return out.set(X, Number.isNaN(g) ? this.camera.target.y : g, Z);
     };
     this.bodies.update(w, alpha, now, (x, y) => ground(x, y));
-    this.spells.frame(w, w.clock[0] / 60);   // the effects clock is sim time, as the FX lab runs it
+    // the effects clock is sim time, as the FX lab runs it
+    this.spells.frame(w, w.clock[0] / 60, { alpha, localSeat: this.localSeat, cam: this.camera.cam, bodyAt: (i) => this.drawnAt(w, i, alpha) });
     // hidden wizards: a hole through what stands between the camera and each local one (fade.ts)
     const targets: { x: number; y: number; z: number; h: number }[] = [];
     for (let s = 0; s < MAX_SEATS; s++) {

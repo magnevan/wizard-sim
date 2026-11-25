@@ -2,7 +2,7 @@
 // The Arcane beam's shots and clips (docs/explorations/2026-11-25-spell-concepts-tone.md, the crisp build): stills from
 // the 3D VFX Lab (cast3d.html) at one, three and five runes, close and at the game's 30 u, both impact variants
 // (?impact=a|b), a sweep; and clips (30 fps MP4, H.264) drawn frame by frame through the lab's window.__seek(t), and of
-// the court (play3d.html ?shot=arcane, stepped by window.__advance; a still from it). Out: <name>.png and <name>.mp4 in out-dir (default
+// the court (index.html ?shot=arcane, stepped by window.__advance; a still from it). Out: <name>.png and <name>.mp4 in out-dir (default
 // shots/port-3d/tone/arcane). Uses a dev server already running at --url, else starts its own on 5193 and stops only it.
 // ffmpeg: FFMPEG, else ffmpeg on the PATH, else the user's %APPDATA%\ffmpeg\bin\ffmpeg.exe.
 import { copyFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
@@ -45,8 +45,8 @@ const CLIPS = {
   'clip-lab-n3-close-a': ['cast3d', `undying=1&spell=${spell(3)}&view=12`, 960, 540, -0.1, 2.0],
   'clip-lab-n3-close-b': ['cast3d', `undying=1&spell=${spell(3)}&view=12&impact=b`, 960, 540, -0.1, 2.0],
   'clip-lab-n3-sweep': ['cast3d', `undying=1&spell=${spell(3)}&view=16&sweep=1`, 960, 540, -0.1, 2.0],
-  'clip-court-n3-a': ['play3d', 'shot=arcane&cam=30&local=0', 960, 540, 0, 1.6, 14],
-  'clip-court-n3-b': ['play3d', 'shot=arcane&cam=30&local=0&impact=b', 960, 540, 0, 1.6],
+  'clip-court-n3-a': ['index', 'shot=arcane&cam=30&local=0', 960, 540, 0, 1.6, 14],
+  'clip-court-n3-b': ['index', 'shot=arcane&cam=30&local=0&impact=b', 960, 540, 0, 1.6],
 };
 
 function ffmpegPath() {

@@ -1,5 +1,5 @@
 /**
- * The 3D page's boot and loop (play3d.html, the port to 3D: docs/explorations/2026-11-25-port-3d-plan.md). The same
+ * The 3D page's boot and loop (index.html, the port to 3D: docs/explorations/2026-11-25-port-3d-plan.md). The same
  * fixed-step loop, input, panels, menu, audio and netplay as main.ts, with the 3D view (view3d/) in place of the pixel
  * one. It's a copy of main.ts's boot rather than a split of it, so the deployed pixel game can't change while the port
  * is under way; at the swap (decision 7) this becomes main.ts and the pixel boot goes.

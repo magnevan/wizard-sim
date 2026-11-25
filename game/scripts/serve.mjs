@@ -9,7 +9,13 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const CLIENT = join(here, '../packages/client');
 // PREVIEW_PORT lets two scripts (or agents) run side by side.
 export const PORT = Number(process.env.PREVIEW_PORT) || 4187;
-export const BASE = `http://localhost:${PORT}/`;
+/** The preview's root: the game, in 3D (index.html, main3d.ts). */
+export const ROOT = `http://localhost:${PORT}/`;
+/**
+ * The pixel game (classic.html, main.ts), kept beside the 3D one until the battery and the yard exist in 3D
+ * (docs/threads/port-3d.md). The pixel-era checks and shots load it; ?selftest, the rooms and the art are its.
+ */
+export const BASE = `${ROOT}classic.html`;
 
 export function findChrome() {
   const candidates = [
@@ -27,8 +33,8 @@ export function findChrome() {
 /** Starts vite preview on PORT and resolves once it answers. Returns a stop() that ends only that process tree. */
 export async function startPreview() {
   if (!existsSync(join(CLIENT, 'dist/index.html'))) throw new Error('No build: run npm run build first');
-  const ours = async () => { try { const r = await fetch(BASE); return r.ok && (await r.text()).includes('<title>Wizard Sim</title>'); } catch { return false; } };
-  try { await fetch(BASE); throw new Error(`Port ${PORT} is already in use by another server; stop it or change PORT in scripts/serve.mjs`); } catch (e) { if (String(e.message).startsWith('Port')) throw e; }
+  const ours = async () => { try { const r = await fetch(ROOT); return r.ok && (await r.text()).includes('<title>Wizard Sim</title>'); } catch { return false; } };
+  try { await fetch(ROOT); throw new Error(`Port ${PORT} is already in use by another server; stop it or change PORT in scripts/serve.mjs`); } catch (e) { if (String(e.message).startsWith('Port')) throw e; }
   const child = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], { cwd: CLIENT, shell: true, stdio: 'ignore' });
   const stop = () => {
     if (child.exitCode !== null) return;

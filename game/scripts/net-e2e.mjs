@@ -5,24 +5,30 @@
 // Usage (after npm run build):
 //   node scripts/net-e2e.mjs            BroadcastChannel between the two pages (offline, fast)
 //   node scripts/net-e2e.mjs --webrtc   real WebRTC through PeerJS's public signalling server
-//   node scripts/net-e2e.mjs --webrtc --url https://magnevan.github.io/wizard-sim/   the deployed build
+//   node scripts/net-e2e.mjs --webrtc --url https://magnevan.github.io/wizard-sim/classic.html   the deployed build
+//   node scripts/net-e2e.mjs --3d [--gpu]   the same on the 3D game (index.html), on the real GPU with --gpu; without --3d, the pixel game (classic.html)
 // Exit code 0 on success; prints what each page saw.
 import puppeteer from 'puppeteer-core';
-import { BASE, findChrome, startPreview } from './serve.mjs';
+import { BASE, ROOT, findChrome, startPreview } from './serve.mjs';
 
 const webrtc = process.argv.includes('--webrtc');
+/** --3d: the 3D game (index.html), whose scenarios are the court and the practice ground, so the match moves to the latter. */
+const is3d = process.argv.includes('--3d');
+/** --gpu: Chrome on the real GPU (D3D11), not SwiftShader: two 3D pages on software GL can't hold 60 ticks a second. */
+const gpu = process.argv.includes('--gpu');
+const moveTo = is3d ? 'practice' : 'survive';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fail = (msg) => { console.error('FAIL:', msg); process.exitCode = 1; };
 
 const urlArg = process.argv.indexOf('--url');
-const base = urlArg > 0 ? process.argv[urlArg + 1] : BASE;
+const base = urlArg > 0 ? process.argv[urlArg + 1] : is3d ? ROOT : BASE;
 const stop = urlArg > 0 ? () => {} : await startPreview();
 const browser = await puppeteer.launch({
   executablePath: findChrome(),
   headless: true,
   protocolTimeout: 180_000,
   args: [
-    '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+    ...(gpu ? ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']),
     // Both pages must keep running at full speed, as two visible windows would.
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows',
   ],
@@ -31,7 +37,9 @@ try {
   // --raf: the game's own loop on animation frames, which a page in the background doesn't get (a hidden tab, a covered
   // window): the match must keep running there too (main.ts's worker pump)
   const raf = process.argv.includes('--raf');
-  const url = `${base}?lights=0&timerloop=1${raf ? '&rafloop=1' : ''}${webrtc ? '' : '&net=bc'}`; // small and light: two software-rendered pages share one CPU
+  // --3d loads the court as its greybox (kitart=0): the art's build blocks a software-rendered page for longer than the
+  // check's polling waits, and this is a test of the netcode, not of the art
+  const url = `${base}?lights=0&timerloop=1${raf ? '&rafloop=1' : ''}${webrtc ? '' : '&net=bc'}${is3d ? '&kitart=0' : ''}`; // small and light: two software-rendered pages share one CPU
   const [a, b] = await Promise.all([browser.newPage(), browser.newPage()]);
   for (const p of [a, b]) {
     await p.setViewport({ width: 640, height: 400 }); p.on('pageerror', (e) => console.error('page error:', e.message));
@@ -161,22 +169,22 @@ try {
   if (Math.abs(ra.tick - rb2.tick) > 90) fail(`the rejoined page didn't catch up (${ra.tick} vs ${rb2.tick})`);
   if (!(Math.abs(rx1 - rx0) > 1)) fail(`A didn't see the rejoined wizard walk (x ${rx0.toFixed(2)} -> ${rx1.toFixed(2)})`);
 
-  // 3b. The host moves the match to Survive (the Esc menu's Scenarios): B follows into the new match.
+  // 3b. The host moves the match to Survive (the 3D page: the practice ground) from the Esc menu's Scenarios: B follows into the new match.
   const before = await a.evaluate(() => window.wizardSim.net.match);
-  const moved = await a.evaluate(() => window.wizardSim.net.switchRoom('survive'));
+  const moved = await a.evaluate((m) => window.wizardSim.net.switchRoom(m), moveTo);
   if (!moved) fail('the host could not switch the scenario');
-  await b.waitForFunction((m) => { const n = window.wizardSim.net; return n.state === 'playing' && n.match !== m && !!n.session?.world.run; }, { timeout: 15000, polling: 100 }, before)
-    .catch(() => fail('B did not follow the host into Survive'));
+  await b.waitForFunction((m) => { const n = window.wizardSim.net; return n.state === 'playing' && n.match !== m.before && n.roomName === m.to; }, { timeout: 15000, polling: 100 }, { before, to: moveTo })
+    .catch(() => fail(`B did not follow the host into ${moveTo}`));
   await b.mouse.move(600, 200); await b.mouse.down();
   await sleep(2000);
   await b.mouse.up();
   await sleep(1000);
   const [ma, mb] = [await net(a), await net(b)];
-  console.log('after the move to Survive: A', ma, 'B', mb);
+  console.log(`after the move to ${moveTo}: A`, ma, 'B', mb);
   if (ma.desyncs || mb.desyncs) fail('desync after the scenario switch');
   if (ma.tick < 60 || Math.abs(ma.tick - mb.tick) > 90) fail(`the moved match did not run in step (${ma.tick} vs ${mb.tick})`);
   const roomB = await b.evaluate(() => window.wizardSim.net.roomName);
-  if (roomB !== 'survive') fail(`B's page plays ${roomB}, not survive`);
+  if (roomB !== moveTo) fail(`B's page plays ${roomB}, not ${moveTo}`);
 
   // 4. B's page hitches for 3.5 s (its loop and its messages both stall, as a frozen tab's would). A
   // rightly drops it; B, catching up, must see that the silence was its own and not drop A in turn
@@ -189,7 +197,7 @@ try {
   if (ha.tick < ma.tick + 200) fail(`the host stalled after B's hitch (tick ${ma.tick} -> ${ha.tick})`);
   if (hb.state === 'playing' && !ha.gone[1]) console.log('(A kept B: the hitch was under the drop limit)');
   else if (hb.state === 'playing') fail('B still plays but A dropped it');
-  if (!process.exitCode) console.log(`OK: ${webrtc ? 'WebRTC' : 'BroadcastChannel'} match ran in both pages (rtt ${fast} ms; ${sa.rtt} ms with the simulated link), B rejoined after a reload, followed the host to Survive, and a hitch on B didn't drop the host`);
+  if (!process.exitCode) console.log(`OK: ${webrtc ? 'WebRTC' : 'BroadcastChannel'} match ran in both pages (rtt ${fast} ms; ${sa.rtt} ms with the simulated link), B rejoined after a reload, followed the host to ${moveTo}, and a hitch on B didn't drop the host`);
 } catch (e) {
   fail(e.stack ?? e);
 } finally {

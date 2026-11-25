@@ -1,6 +1,6 @@
 # The port to 3D (the game on the kit renderer, the pixel version retired)
 
-Status: active; steps 0 to 2 built and merged on `port-3d`; effects handed to [spell effects in 3D](spell-effects-3d.md); next: the swap · Last touched: 2026-11-25
+Status: active; steps 0 to 2 built and merged on `port-3d`; effects handed to [spell effects in 3D](spell-effects-3d.md); the swap done 2026-11-25 (the 3D game is `index.html`, the pixel game `classic.html`); next: goblins in the court, rollback smoothing, the help panel · Last touched: 2026-11-25
 Record: [the plan](../explorations/2026-11-25-port-3d-plan.md) (decisions, height in a 2D sim, steps, the team, risks) · [decision](../decisions/README.md#2026-11-25-the-game-moves-to-the-3d-kit-renderer-the-map-editors-scenes-feed-the-sim-explorations2026-11-25-port-3d-planmd) · [fx spike](../explorations/2026-11-25-fx3d-spike.md) · [The Court in 3D](https://claude.ai/artifact/3dWPYc5ZxZqgrYfpksnegu) (step 0 review, `tools/port-3d-review/`) · [stylised 3D](../explorations/2026-11-23-stylised-3d.md) · [the courtyard on the kit](kit-courtyard.md) · [the map editor](map-editor.md) · [height](height.md)
 
 ## Where it stands
@@ -23,10 +23,11 @@ Branch `port-3d` (worktree `.claude/worktrees/port-3d`), not merged to main. Tea
 - [ ] Later: a profiling pass on the user's machine; an exploration of asset handling (streaming, levels of detail, keeping assets across sessions) rather than squeezing sizes.
 - [ ] Agree scene markers (the `marker` object kind, already in `court.scene.json`) and re-running `room.py` on save with the map editor's session.
 - [ ] Frame time left (18.8 ms on the user's machine after batching): the shadow pass on heavy Meshy pieces (shadow-only proxies), `FxStage`'s 4× MSAA HDR target (~3 ms), `buildKit` taking 4.4 s of each load. For the profiling pass.
-- [ ] Then the swap: `play3d.html` becomes `index.html`, the pixel game moves to `classic.html`.
 - [ ] Rollback smoothing for bodies (`Bodies3D` has none; step 3).
 
 ## Done
+
+- 2026-11-25 **The swap:** `play3d.html` became `index.html`, the pixel game moved to `classic.html` (both built; the pixel checks load it through `scripts/serve.mjs` `BASE`). `check:net3d` (`net-e2e.mjs --3d --gpu`) plays a co-op match on the 3D game: host, join, a slow link, a reload and rejoin, the host moving the match to the practice ground, a hitch; on SwiftShader two 3D pages can't hold 60 ticks a second, so it runs on the GPU and loads the greybox court.
 
 - 2026-11-25 step 2 merged: `p3d-cast` (every spell drawn as its sim shape, `?runes=1`, the 3D VFX Lab `cast3d.html`), `p3d-weight` (the kit batched: 2,616 → 438 draw calls, frame 30.7 → 18.8 ms; art loaded per room; no Pixi on the 3D page). Fire draws as stand-ins until rebuilt.
 

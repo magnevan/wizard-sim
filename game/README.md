@@ -7,7 +7,7 @@ The real game, after the design phase. The stack is in `docs/decisions/` (2026-1
 ```sh
 cd game
 npm install
-npm run dev            # http://localhost:5187: hold LMB to walk, QWER ASDFG elements, RMB to Force cast, Esc to clear (empty queue: the menu)
+npm run dev            # http://localhost:5187: the game in 3D (index.html); the pixel game is /classic.html. Hold LMB to walk, QWER ASDFG elements, RMB to Force cast, Esc to clear (empty queue: the menu); ?runes=1 gives runes in the court
 npm run dev:lan        # the same, reachable from other machines on the network (for a second player)
 npm run check          # typecheck all packages + every test (sim determinism, rules sync, purity)
 npm run check:browser  # build, then run the golden replay in headless Chrome; its hash must match node's
@@ -34,6 +34,7 @@ npm run check:sound    # build, then in headless Chrome: every sound of the Soun
 npm run audio:bank     # after changing content/audio: cuts and tunes the sample bank with local ffmpeg
 npm run sound-gallery  # after changing the audio code or the bank: rebuilds tools/sound-gallery/engine.js and bank.js
 npm run check:webrtc   # the same as check:net over real WebRTC (needs internet: PeerJS's public signalling server)
+npm run check:net3d    # the same as check:net on the 3D game (index.html), on the real GPU; check:net and the other pixel checks load classic.html (scripts/serve.mjs BASE)
 npm run build && npm run shot -- --ms 4000 --out shots/run.png   # headless screenshot of the scripted run
                        # (also --size 1280x800, --query "room=arena&autoplay=1": any URL option, see below)
 npm run shots:tutorial # build, then one screenshot per tutorial beat, a bot playing it (shots/tutorial; --beats 1,2 --ms 2500)

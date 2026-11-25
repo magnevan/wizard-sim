@@ -1,5 +1,5 @@
 // usage: node scripts/play3d-shot.mjs [out-dir] [--gpu] [--only name,name]   (npm run shot:3d)
-// The 3D page's step 0 shots (play3d.html, docs/explorations/2026-11-25-port-3d-plan.md): the court at several camera
+// The 3D page's step 0 shots (index.html, docs/explorations/2026-11-25-port-3d-plan.md): the court at several camera
 // distances with two wizards and six goblins standing on the plaza, and a wizard behind the great hall with fading on
 // and off, at 1920 x 1080, as <name>.png in out-dir (default shots/port-3d/view). Then a perf note: frame and render
 // time, draw calls and triangles, load time and MB, written to perf.json there.
@@ -41,7 +41,7 @@ const SHOTS = [
 ].filter((s) => !only || only.split(',').includes(s.name));
 
 const ext = process.env.DEV_URL;
-const lab = ext ? { url: (qs) => `${ext}/play3d.html?${qs}`, stop: () => {} } : await startLab('play3d', Number(process.env.DEV_PORT) || 5293);
+const lab = ext ? { url: (qs) => `${ext}/index.html?${qs}`, stop: () => {} } : await startLab('index', Number(process.env.DEV_PORT) || 5293);
 const perf = {};
 try {
   const gl = gpu ? ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];

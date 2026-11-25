@@ -6,7 +6,7 @@
 // - Live lab pages (cast3d.html or fx3d.html without ?t=): the page's clock is replaced by a virtual one
 //   (performance.now, requestAnimationFrame), advanced 1/fps a frame. Recording starts once the page's caption reads
 //   t = --from s or later (its cast event is t = 0) and runs --secs.
-// - --ticks a:b:step: instead, one page load a frame with &ticks=k added (play3d.html?shot=fire: the shot's casts run k
+// - --ticks a:b:step: instead, one page load a frame with &ticks=k added (index.html?shot=fire: the shot's casts run k
 //   ticks), k from a to b. Floor fire found after a jump is drawn already grown, so this shows the spray, not the floor's flare.
 // Frames go to <out>-frames/ (kept until the next run), encoded with ffmpeg to H.264 (yuv420p, faststart).
 // Needs a dev server for the page (lab pages aren't in the build): `npx vite --port <p>` in packages/client.

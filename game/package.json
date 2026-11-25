@@ -43,6 +43,7 @@
     "massing": "node scripts/massing-shots.mjs",
     "shots:tutorial": "npm run build && node scripts/tutorial-shots.mjs",
     "check:webrtc": "npm run build && node scripts/net-e2e.mjs --webrtc",
+    "check:net3d": "npm run build && node scripts/net-e2e.mjs --3d --gpu",
     "sync-rules": "node scripts/sync-rules.mjs",
     "content": "node packages/content/src/cli.mjs",
     "content:build": "node packages/content/src/cli.mjs build",

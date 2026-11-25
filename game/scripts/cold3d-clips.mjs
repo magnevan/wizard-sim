@@ -1,6 +1,6 @@
 // usage: node scripts/cold3d-clips.mjs (npm run clip:cold3d --) [out-dir] [--url http://localhost:5196] [--gl gpu|soft] [--only name,name] [--keep]
 // The Frost ring's films (docs/explorations/2026-11-25-spell-concepts-tone.md, the crisp build): frames rendered at
-// 30 fps from the 3D VFX Lab (cast3d.html ?clip=1, stepped with window.__seek) and the court (play3d.html ?shot=cold,
+// 30 fps from the 3D VFX Lab (cast3d.html ?clip=1, stepped with window.__seek) and the court (index.html ?shot=cold,
 // stepped with window.__seek), encoded to H.264 MP4 with ffmpeg, as <name>.mp4 in out-dir (default
 // shots/port-3d/tone/cold), with a few stills of each as <name>-t<s>.png. --keep keeps every frame (in out-dir/frames).
 // Uses a dev server already running at --url (lab pages aren't in the build), else starts its own on 5196 and stops
@@ -30,7 +30,7 @@ const FILMS = {
   'lab-n3-walk': ['cast3d', 'spell=cold,cold,cold&form=area&view=30&scene=empty&move=1', -0.3, 2.6, [0.2, 0.4, 0.7]],
   'lab-n3-close': ['cast3d', 'spell=cold,cold,cold&form=area&view=12&scene=crowd', -0.1, 1.6, [0.15, 0.3, 0.45, 0.6]],
   'lab-n3-zoom': ['cast3d', 'spell=cold,cold,cold&form=area&view=6&scene=empty', 0.2, 0.9, [0.3, 0.5, 0.7]],
-  'court-n3': ['play3d', 'shot=cold&cam=30&local=0', -0.15, 3.4, [0.2, 0.4, 1.4]],
+  'court-n3': ['index', 'shot=cold&cam=30&local=0', -0.15, 3.4, [0.2, 0.4, 1.4]],
 };
 
 const lab = URL0 ? { url: (page, qs) => `${URL0}/${page}.html?${qs}`, stop: () => {} } : await (async () => {

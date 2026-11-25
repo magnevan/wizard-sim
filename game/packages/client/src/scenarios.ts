@@ -6,7 +6,7 @@
  *   id     the URL's word: ?room=<id> or #<id> (artifact links carry only the #anchor)
  *   key    the number key that switches to it (1 / 2 / 3 ...), matched on KeyboardEvent.code Digit<key>
  *   room   the sim room it builds (createWorld's opts.room)
- *   pages  the pages that offer it (default the pixel game only): during the port to 3D, play3d.html offers only the
+ *   pages  the pages that offer it (default the pixel game only): during the port to 3D, index.html offers only the
  *          rooms it has a kit scene for, and calls usePage('3d') before reading anything here
  *
  * This will be redesigned closer to a beta (a campaign map, not a list); for now it is how you move
@@ -27,7 +27,7 @@ export interface Scenario {
   pages?: readonly Page[];
 }
 
-/** The two pages during the port to 3D: the pixel game (index.html) and the 3D one (play3d.html). */
+/** The two pages during the port to 3D: the 3D game (index.html) and the pixel game kept beside it (classic.html). */
 export type Page = 'pixel' | '3d';
 
 const ALL: readonly Scenario[] = [
@@ -53,7 +53,7 @@ export const SCENARIOS: readonly Scenario[] = onPage('pixel');
 const DEFAULTS: Record<Page, string> = { pixel: 'sanctum', '3d': 'court' };
 let defaultId = DEFAULTS.pixel;
 
-/** Offer the scenarios of page `p` from here on (play3d.html calls it first thing, before fromLocation). */
+/** Offer the scenarios of page `p` from here on (index.html calls it first thing, before fromLocation). */
 export function usePage(p: Page): void {
   (SCENARIOS as Scenario[]).splice(0, SCENARIOS.length, ...onPage(p));
   defaultId = DEFAULTS[p];

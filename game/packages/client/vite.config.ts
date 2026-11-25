@@ -181,11 +181,12 @@ export default defineConfig({
     chunkSizeWarningLimit: 600,
     // The registry's images stay files, fetched when a room needs them (art/assets.ts), however small.
     assetsInlineLimit: (file) => (file.replace(/\\/g, '/').includes('/content/assets/') ? false : undefined),
-    // Two pages: the pixel game, and the 3D game being ported beside it (play3d.html, docs/threads/port-3d.md). The
-    // lab pages stay dev-only. Vite's preload helper gets a chunk of its own: left to itself it lands in the Pixi
-    // chunk, and the 3D page (which draws nothing with Pixi) would download all of Pixi for it.
+    // Two pages: the game in 3D (index.html, main3d.ts), and the pixel game kept beside it as classic.html until the
+    // battery and the yard exist in 3D (docs/threads/port-3d.md). The lab pages stay dev-only. Vite's preload helper
+    // gets a chunk of its own: left to itself it lands in the Pixi chunk, and the 3D page (which draws nothing with
+    // Pixi) would download all of Pixi for it.
     rolldownOptions: {
-      input: { index: join(here, 'index.html'), play3d: join(here, 'play3d.html') },
+      input: { index: join(here, 'index.html'), classic: join(here, 'classic.html') },
       output: { codeSplitting: { groups: [{ name: 'preload', test: /preload-helper/, priority: 2 }, { name: 'pixi', test: /node_modules[\\/](pixi\.js|@pixi)[\\/]/, priority: 1 }] } },
     },
   },

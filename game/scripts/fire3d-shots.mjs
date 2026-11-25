@@ -1,6 +1,6 @@
 // usage: node scripts/fire3d-shots.mjs (npm run shot:fire3d --) [out-dir] [--gl gpu|soft] [--url http://localhost:5191] [--only name,name]
 // Fire's shots (docs/explorations/2026-11-25-spell-concepts-fire.md, the toon-volume build): the court at the game's 30 u
-// with a three-rune spray on goblins (play3d.html ?shot=fire), and the 3D effects lab (fx3d.html) at one, three and five
+// with a three-rune spray on goblins (index.html ?shot=fire), and the 3D effects lab (fx3d.html) at one, three and five
 // runes, a sweep, the hit shapes and the floor over its life, plus the VFX Lab (cast3d.html), as <name>.png in out-dir
 // (default shots/port-3d/fire). Uses a dev server already running at --url (lab pages aren't in the build), else starts
 // its own on 5195 and stops only that one. --gl gpu (default) renders on the machine's GPU; soft is SwiftShader.
@@ -18,8 +18,8 @@ mkdirSync(out, { recursive: true });
 const STRIP = (times, view = 13) => `times=${times}&tile=560x420&view=${view}`;
 /** name -> [page, query, width, height]; strips size themselves (tile × times). */
 const SHOTS = {
-  'court-n3': ['play3d', 'shot=fire&cam=30&local=0', 1920, 1080],
-  'court-n3-close': ['play3d', 'shot=fire&cam=16&local=0', 1920, 1080],
+  'court-n3': ['index', 'shot=fire&cam=30&local=0', 1920, 1080],
+  'court-n3-close': ['index', 'shot=fire&cam=16&local=0', 1920, 1080],
   'lab-n3-game': ['fx3d', 'n=3&t=1&view=30', 1600, 900],
   'lab-n1-strip': ['fx3d', `n=1&${STRIP('0.1,0.3,0.6,1,2')}`],
   'lab-n3-strip': ['fx3d', `n=3&${STRIP('0.1,0.3,0.6,1,2')}`],

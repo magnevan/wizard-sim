@@ -1,5 +1,5 @@
 // usage: node scripts/perf3d.mjs [--gpu] [--out dir] [--query "kitbatch=0"] [--name plaza] [--cam 30]   (npm run perf:3d builds first)
-// The 3D page's weight on the built client: play3d.html's plaza shot with the camera at 30 u (camera3d.ts VIEW_H), 1920 x 1080. Prints and
+// The 3D page's weight on the built client: index.html's plaza shot with the camera at 30 u (camera3d.ts VIEW_H), 1920 x 1080. Prints and
 // writes <out>/perf3d[-gpu].json:
 //   calls, triangles   per frame, shadow pass included
 //   drawMs             the frame loop's time in view.draw (play3d-shot.mjs's perf note); when the GPU is the bottleneck
@@ -16,7 +16,7 @@ import { join, resolve } from 'node:path';
 import puppeteer from 'puppeteer-core';
 
 process.env.PREVIEW_PORT ??= '4198';
-const { BASE, CLIENT, findChrome, startPreview } = await import('./serve.mjs');
+const { ROOT, CLIENT, findChrome, startPreview } = await import('./serve.mjs');
 
 const arg = (name, dflt) => { const i = process.argv.indexOf('--' + name); return i > 0 ? process.argv[i + 1] : dflt; };
 const gpu = process.argv.includes('--gpu');
@@ -41,7 +41,7 @@ try {
   await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
   let bytes = 0, files = 0;
   cdp.on('Network.loadingFinished', (e) => { bytes += e.encodedDataLength; files++; });
-  await page.goto(`${BASE}play3d.html?shot=${name}&cam=${cam}&perf=1${query ? '&' + query : ''}`, { waitUntil: 'load', timeout: 180000 });
+  await page.goto(`${ROOT}index.html?shot=${name}&cam=${cam}&perf=1${query ? '&' + query : ''}`, { waitUntil: 'load', timeout: 180000 });
   await page.waitForFunction('window.__ready === true || !!window.__error', { timeout: 600000, polling: 500 });
   const err = await page.evaluate(() => window.__error);
   if (err) throw new Error(err);

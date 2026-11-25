@@ -1,7 +1,7 @@
 // usage: node scripts/earth3d-shots.mjs (npm run shot:earth3d --) [out-dir] [--gl gpu|soft] [--url http://localhost:5193] [--only name,name] [--clips] [--fps 30]
 // The Earth rock's shots (docs/explorations/2026-11-25-spell-concepts-tone.md, the toon rock build): stills of the
 // rock in flight and its impact at one, three and five runes in the 3D VFX Lab (cast3d.html) and in the court
-// (play3d.html ?shot=earth), as <name>.png in out-dir (default shots/port-3d/tone/earth). With --clips it renders the
+// (index.html ?shot=earth), as <name>.png in out-dir (default shots/port-3d/tone/earth). With --clips it renders the
 // clips instead, a frame a page load at each moment (everything is a pure function of the sim and the clock, so frames
 // are exact), and encodes each to <name>.mp4 with ffmpeg (FFMPEG or the user's AppData copy). Uses a dev server
 // already running at --url (lab pages aren't in the build), else starts its own on 5196 and stops only that one.
@@ -32,8 +32,8 @@ const STILLS = {
   'lab-n5-impact': ['cast3d', 'spell=earth&n=5&form=strike&t=0.52&view=12', 1600, 900],
   'lab-n3-after': ['cast3d', 'spell=earth&n=3&form=strike&t=1.6&view=12', 1600, 900],
   'lab-n3-game': ['cast3d', 'spell=earth&n=3&form=strike&t=0.3&view=30', 1600, 900],
-  'court-n3-flight': ['play3d', 'shot=earth&cam=30&local=0&shotTicks=50', 1920, 1080],
-  'court-n3-impact': ['play3d', 'shot=earth&cam=30&local=0&shotTicks=90', 1920, 1080],
+  'court-n3-flight': ['index', 'shot=earth&cam=30&local=0&shotTicks=50', 1920, 1080],
+  'court-n3-impact': ['index', 'shot=earth&cam=30&local=0&shotTicks=90', 1920, 1080],
 };
 
 /** name -> [page, query without the moment, from s, to s, width, height, moment key ('t' in s; shotTicks in ticks)]. */
@@ -42,7 +42,7 @@ const CLIPSPEC = {
   'clip-lab-n5': ['cast3d', 'spell=earth&n=5&form=strike&view=30', -0.1, 2.4, 1280, 720, 't'],
   'clip-lab-n5-charged': ['cast3d', 'spell=earth&n=5&view=30', -1.2, 1.8, 1280, 720, 't'],
   'clip-lab-n3-close': ['cast3d', 'spell=earth&n=3&form=strike&view=14', -0.1, 2.0, 1280, 720, 't'],
-  'clip-court-n1': ['play3d', 'shot=earth1&cam=30&local=0', 0.5, 2.6, 1280, 720, 'shotTicks'],
+  'clip-court-n1': ['index', 'shot=earth1&cam=30&local=0', 0.5, 2.6, 1280, 720, 'shotTicks'],
 };
 
 const FFMPEG = process.env.FFMPEG ?? join(homedir(), 'AppData/Roaming/ffmpeg/bin/ffmpeg.exe');

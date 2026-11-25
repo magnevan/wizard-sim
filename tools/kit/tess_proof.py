@@ -36,6 +36,7 @@ PPU = int(opt('--ppu', 64))
 RECT = [float(v) for v in opt('--rect', '81,31.5625,111,48.4375').split(',')]
 SEED = int(opt('--seed', 1))
 ROAD_SCALE = float(opt('--road', 1.7))
+SQUARE = float(opt('--square', 25))           # cross-joints within this many degrees of square to their row are squared (0: off)
 ROUND = float(opt('--round', 0.3))            # how far a stone's corners are rounded: a share of its shorter half-size        # the road's stones this many times the usual size
 # (surfaces are laid whole, never cut to the rectangle: a cut would be an edge, and rows would follow it)
 rng = np.random.default_rng(SEED)
@@ -377,7 +378,11 @@ def straighten(sites, th, a, b, geom, passes=int(opt('--ease', 6)), turn=float(o
             i, j = np.unravel_index(np.argmin(dots), dots.shape)
             if dots[i, j] > LIM: continue
             pa, pb = V[nb[v][i]], V[nb[v][j]]; ab = pb - pa
-            t = np.clip(((V[v] - pa) @ ab) / (ab @ ab), 0.15, 0.85)
+            t = ((V[v] - pa) @ ab) / (ab @ ab)
+            if SQUARE and len(nb[v]) == 3:           # a cross-joint ending on this line a little aslant: slide its end along
+                k = 3 - i - j                        # the line until the cross-joint stands square to it (a true diagonal stays)
+                if abs((d[k] / ln[k]) @ (ab / np.hypot(*ab))) < np.sin(np.radians(SQUARE)): t = ((V[nb[v][k]] - pa) @ ab) / (ab @ ab)
+            t = np.clip(t, 0.15, 0.85)
             new[v] = V[v] + 0.6 * (pa + ab * t - V[v])
         V = new
     return [V[vs] for vs in cells], np.array(idx)

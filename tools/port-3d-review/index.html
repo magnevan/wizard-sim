@@ -44,6 +44,9 @@ section { display: grid; gap: 1.25rem; border-top: 1px solid var(--line); paddin
 figure { margin: 0; display: grid; gap: 0.4rem; min-width: 0; }
 figure img { width: 100%; display: block; border-radius: 6px; border: 1px solid var(--line); cursor: zoom-in; }
 figcaption { font-size: 13px; color: var(--muted); }
+.vids { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); min-width: 0; }
+.vids video { width: 100%; display: block; border-radius: 6px; border: 1px solid var(--line); background: #000; cursor: zoom-in; aspect-ratio: 16 / 9; object-fit: cover; }
+dialog video { max-width: 96vw; max-height: 92vh; display: block; border-radius: 6px; }
 figcaption b { color: var(--fg); font-weight: 600; }
 .answer { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; display: grid; gap: 0.75rem; }
 .answer .q { font-weight: 600; }
@@ -72,7 +75,7 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
   <header>
     <div class="eyebrow">Port to 3D · step 0 · 2026-11-25</div>
     <h1>The Court in 3D</h1>
-    <p class="lede"><b>New: <a href="#fire3">fire built to your pick</a>, and <a href="#tone">the tone pieces</a>, the beam, rock and ring in its style.</b> The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
+    <p class="lede"><b>New: <a href="#motion">the four tone pieces in motion</a>, built in the game.</b> The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
     <div class="hero"><img src="img/plaza-26.jpg" alt="Two wizards and six goblins on the court's sunk plaza, seen from the 3D game camera"></div>
   </header>
 
@@ -151,6 +154,90 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
     <div class="shots wide">
       <figure><img src="img/bodies-attack-26.jpg" alt="Wizard and the six warband models mid-attack at 26 units"><figcaption><b>The band attacking</b> · 26 u, the game's distance</figcaption></figure>
       <figure><img src="img/bodies-wizard-10.jpg" alt="Four wizards close up: casting, flame sword, carried and raised guards"><figcaption><b>Close up</b> · casting Force, the flame sword, the Mirror carried, the Ember raised</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="motion">
+    <div class="top">
+      <div>
+        <h2>The four in motion</h2>
+        <p>All four tone pieces are built in the game, each from your pick, and filmed at the game camera (30 u) in the court and in the lab. After your verdict on the first fire, nothing is a cluster of sprites: each main body is one mesh shaded in its shader, and particles only add sparks, embers and chips. Clips loop; click one to play it larger.</p>
+        <p>My read, before yours:</p>
+        <ul>
+          <li><b>Arcane beam:</b> closest to its concept. Crisp line, white core, dark rim, a star where it lands. In the court a 3-rune beam kills a goblin in under a second, so the impact is a short flash per goblin.</li>
+          <li><b>Cold ring:</b> reads as cold and as one front that sweeps out, quieter as you asked. In the court it may now be too quiet.</li>
+          <li><b>Earth rock:</b> the rock, its shadow, the flying chips and the crack star work. The dust is flat, like brown stains on the stone, not the painting's billows.</li>
+          <li><b>Fire:</b> one shape now, not sprites, but it reads as pale orange cloth, not fire. I'd hand fire to the dedicated effects session with one job: a painted flame texture moving through the mesh.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="motion-fire" data-rec="handoff">
+        <div class="q">Fire</div>
+        <div class="choices" role="group" aria-label="Fire in motion">
+          <button type="button" data-v="keep">Good enough for now</button><button type="button" data-v="tune">Keep at it here</button><button type="button" data-v="handoff">Hand to the effects session</button>
+        </div>
+        <div class="rec">Recommended: <b>hand it on</b>, with the painted-texture plan.</div>
+        <textarea id="note-motion-fire" aria-label="Note on fire in motion" placeholder="What reads wrong in motion"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+      <figure><video src="vid/fire-court-n3.mp4" muted loop playsinline autoplay></video><figcaption><b>Fire</b> · 3 runes in the court, swelling in</figcaption></figure>
+      <figure><video src="vid/fire-lab-n5.mp4" muted loop playsinline autoplay></video><figcaption><b>Fire</b> · 5 runes in the lab</figcaption></figure>
+      <figure><video src="vid/fire-sweep-n3.mp4" muted loop playsinline autoplay></video><figcaption><b>Fire</b> · a sweep</figcaption></figure>
+    </div>
+
+    <div class="top">
+      <div class="vids">
+        <figure><video src="vid/arcane-court-a.mp4" muted loop playsinline autoplay></video><figcaption><b>Beam, impact a</b> · restrained, in the court</figcaption></figure>
+        <figure><video src="vid/arcane-court-b.mp4" muted loop playsinline autoplay></video><figcaption><b>Beam, impact b</b> · fuller, in the court</figcaption></figure>
+        <figure><video src="vid/arcane-lab-n5-a.mp4" muted loop playsinline autoplay></video><figcaption><b>5 runes, a</b> · halo, white core, rings off the staff</figcaption></figure>
+        <figure><video src="vid/arcane-lab-n5-b.mp4" muted loop playsinline autoplay></video><figcaption><b>5 runes, b</b></figcaption></figure>
+      </div>
+      <div class="answer" data-id="motion-arcane" data-rec="a">
+        <div class="q">The beam's impact</div>
+        <div class="choices" role="group" aria-label="Beam impact">
+          <button type="button" data-v="a">a, restrained</button><button type="button" data-v="b">b, fuller</button><button type="button" data-v="mix">a, b at 5 runes</button><button type="button" data-v="redo">Neither</button>
+        </div>
+        <div class="rec">Recommended: <b>a</b>; it reads at 30 u without covering the goblin.</div>
+        <textarea id="note-motion-arcane" aria-label="Note on the beam" placeholder="The beam in motion"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+
+    <div class="top">
+      <div class="vids">
+        <figure><video src="vid/earth-court-n1-partial.mp4" muted loop playsinline autoplay></video><figcaption><b>Rock, 1 rune</b> · in the court (the clip stops just after the impact)</figcaption></figure>
+        <figure><video src="vid/earth-lab-n1.mp4" muted loop playsinline autoplay></video><figcaption><b>1 rune</b> · a small rock</figcaption></figure>
+        <figure><video src="vid/earth-lab-n5.mp4" muted loop playsinline autoplay></video><figcaption><b>5 runes</b> · twice the size, a crater</figcaption></figure>
+        <figure><video src="vid/earth-lab-n5-charged.mp4" muted loop playsinline autoplay></video><figcaption><b>5 runes charged</b> · it pierces, small impacts on the way</figcaption></figure>
+      </div>
+      <div class="answer" data-id="motion-earth" data-rec="tune">
+        <div class="q">The rock</div>
+        <div class="choices" role="group" aria-label="Earth rock in motion">
+          <button type="button" data-v="keep">Good</button><button type="button" data-v="tune">Right, but the dust needs volume</button><button type="button" data-v="redo">Off</button>
+        </div>
+        <div class="rec">Recommended: <b>the dust needs volume</b>. One rock that grows with runes (a cluster would need a sim change), and keep the small camera jolt on impact.</div>
+        <textarea id="note-motion-earth" aria-label="Note on the rock" placeholder="Size, dust, the jolt"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+
+    <div class="top">
+      <div class="vids">
+        <figure><video src="vid/cold-court-n3.mp4" muted loop playsinline autoplay></video><figcaption><b>Ring, 3 runes</b> · in the court</figcaption></figure>
+        <figure><video src="vid/cold-lab-n1.mp4" muted loop playsinline autoplay></video><figcaption><b>1 rune</b></figcaption></figure>
+        <figure><video src="vid/cold-lab-n5.mp4" muted loop playsinline autoplay></video><figcaption><b>5 runes</b> · the ring stands a moment before it breaks</figcaption></figure>
+        <figure><video src="vid/cold-lab-n3-walk.mp4" muted loop playsinline autoplay></video><figcaption><b>Walking</b> · the front follows, the rime stays</figcaption></figure>
+      </div>
+      <div class="answer" data-id="motion-cold" data-rec="keep">
+        <div class="q">The ring</div>
+        <div class="choices" role="group" aria-label="Cold ring in motion">
+          <button type="button" data-v="keep">Good</button><button type="button" data-v="louder">A bit louder</button><button type="button" data-v="redo">Off</button>
+        </div>
+        <div class="rec">Recommended: <b>good</b>; if it's too quiet in the court, raise the rime and the light under it, not the front.</div>
+        <textarea id="note-motion-cold" aria-label="Note on the ring" placeholder="The ring in motion"></textarea>
+        <div class="status"></div>
+      </div>
     </div>
   </section>
 
@@ -386,7 +473,14 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
 <script>
 const zoom = document.getElementById('zoom');
 for (const img of document.querySelectorAll('figure img')) img.addEventListener('click', () => { zoom.querySelector('img').src = img.src; zoom.querySelector('img').alt = img.alt; zoom.showModal(); });
-zoom.addEventListener('click', () => zoom.close());
+for (const v of document.querySelectorAll('.vids video')) v.addEventListener('click', () => {
+  const big = document.createElement('video');
+  Object.assign(big, { src: v.src, muted: true, loop: true, autoplay: true, playsInline: true, controls: true });
+  zoom.replaceChildren(big); zoom.showModal();
+});
+for (const img of document.querySelectorAll('figure img')) img.addEventListener('click', () => { if (!zoom.querySelector('img')) zoom.replaceChildren(document.createElement('img')); });
+zoom.addEventListener('click', (e) => { if (e.target === zoom) zoom.close(); });
+zoom.addEventListener('close', () => { if (!zoom.querySelector('img')) zoom.replaceChildren(document.createElement('img')); });
 
 const boxes = [...document.querySelectorAll('.answer')];
 const state = {};

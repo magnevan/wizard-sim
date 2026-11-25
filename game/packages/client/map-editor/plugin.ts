@@ -1,7 +1,7 @@
 /**
  * The map editor's scene server, as a dev-only Vite plugin (tools/map-editor/README.md has the API): /__map/* over
  * HTTP for the page and for Claude's CLI, and Vite's own WebSocket to push every change to the open editor pages
- * (map:update, map:pins) and to ask a page for a picture (map:view-request -> map:view). The scenes live in
+ * (map:update, map:pins, map:draft) and to ask a page for a picture (map:view-request -> map:view). The scenes live in
  * tools/kit/scenes/; a change to a scene file from outside (an Edit, a git checkout) is picked up by a watcher. After
  * each compile the stone layer lays the scene's road and paving again in the background (map:stones when it has).
  */
@@ -136,6 +136,9 @@ export function mapEditor(repoRoot: string): Plugin {
       }
       case 'POST undo': { const s = await store(name); return json(res, 200, await s.undo(b.author as string | undefined)); }
       case 'POST redo': { const s = await store(name); return json(res, 200, await s.redo()); }
+      case 'GET draft': { const s = await store(name); return json(res, 200, { rev: s.rev, ...s.draft(), keys: undefined }); }
+      case 'POST save': { const s = await store(name); return json(res, 200, await s.save()); }
+      case 'POST discard': { const s = await store(name); return json(res, 200, await s.discard(b.author as string | undefined)); }
       case 'GET history': { const s = await store(name); return json(res, 200, { rev: s.rev, groups: s.historyList(Number(q.n ?? 20)) }); }
       case 'GET pins': { const s = await store(name); return json(res, 200, { rev: s.rev, pins: s.pinList(q.status ?? 'open') }); }
       case 'POST pins': { const s = await store(name); return json(res, 200, s.pinOp(b)); }
@@ -182,7 +185,7 @@ export function mapEditor(repoRoot: string): Plugin {
       // a page asks for the current state when it opens or switches scene
       s.ws.on('map:hello', async (data: { name: string }, client: WebSocketClient) => {
         pages.set(client, data.name);
-        try { const st = await store(data.name); broadcast('map:update', { name: st.name, rev: st.rev, scene: st.scene, compiled: st.compiled, change: null }); }
+        try { const st = await store(data.name); broadcast('map:update', { name: st.name, rev: st.rev, scene: st.scene, compiled: st.compiled, change: null, draft: st.draft() }); }
         catch (e) { broadcast('map:error', { name: data.name, error: (e as Error).message }); }
       });
       if (existsSync(dir)) {

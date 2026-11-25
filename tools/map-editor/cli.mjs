@@ -11,6 +11,8 @@
  *   query <name> <x> <y> [r]        |  query <name> --rect x0 y0 x1 y1
  *   apply <name> <ops|@file.json|-> [--base N] [--dry] [--label "..."] [--author user|claude]
  *   undo <name> [--author claude]   |  redo <name>   |  history <name> [n]
+ *   draft <name>                    what is unsaved: edits go to a draft; the scene file changes only on save
+ *   save <name>                     |  discard <name>   (only when the user asks: saving and discarding are theirs)
  *   pins <name> [--status open|new|resolved|all]
  *   pin <name> add <x> <y> <note>   |  add --ref <id> <u> <v> <note>  |  reply <id> <text>
  *       resolve <id> <scene|rule|piece> [text]  |  seen <id...>  |  delete <id>
@@ -197,6 +199,20 @@ async function main() {
     case 'redo': {
       const d = await call('POST', 'redo', { body: { name } });
       return out(flags, d, (d) => `rev ${d.rev}${d.redone ? ', redone: ' + (d.redone.label ?? '') : ''}`);
+    }
+    case 'draft': {
+      const d = await call('GET', 'draft', { query: { name } });
+      return out(flags, d, (d) => (d.dirty
+        ? `unsaved: ${d.changed.corners} corners${d.changed.ids.length ? `, ${d.changed.ids.join(' ')}` : ''}${d.changed.resized ? ', resized' : ''}\n${d.edits.map((e) => `  ${e.time}  ${e.author}  ${e.label}`).join('\n')}`
+        : `saved (${d.savedAt})`));
+    }
+    case 'save': {
+      const d = await call('POST', 'save', { body: { name } });
+      return out(flags, d, (d) => (d.saved ? `saved ${d.edits} edit(s): ${d.changed.corners} corners${d.changed.ids.length ? `, ${d.changed.ids.join(' ')}` : ''}` : 'nothing to save'));
+    }
+    case 'discard': {
+      const d = await call('POST', 'discard', { body: { name, author: flags.author || 'claude' } });
+      return out(flags, d, (d) => (d.discarded ? `rev ${d.rev}: back to the saved scene (undo brings the draft back)` : 'nothing to discard'));
     }
     case 'history': {
       const d = await call('GET', 'history', { query: { name, n: rest[0] } });

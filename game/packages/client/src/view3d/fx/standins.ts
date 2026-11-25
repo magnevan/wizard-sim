@@ -32,6 +32,7 @@ import {
 } from '@wizard-sim/sim';
 import * as X from '../../art/px';
 import { isColdNova } from './cold';
+import { plainRock } from './earth-sheets';
 import type { SpellLights } from './lights';
 import { Batch, type RGB } from './standins-batch';
 
@@ -101,6 +102,8 @@ export class Standins {
   drawArcane = false;
   /** True: the Frost ring draws as its stand-in too. False: as cold.ts draws it (the crisp concept, 2026-11-25). */
   drawCold = false;
+  /** True: plain Earth's rock (in flight, charging and its impact) draws as a stand-in. False: as fx/earth.ts draws it. */
+  drawEarth = false;
 
   get group(): THREE.Group { return this.batch.group; }
 
@@ -383,7 +386,9 @@ export class Standins {
     for (let i = 0; i < MAX_SEATS; i++) {
       if (!s.active[i] || !b.kind[i]) continue;
       if (s.phase[i] === PHASE.charge) {
-        // Earth's Force charging: a rock growing at the staff
+        // Earth's Force charging: a rock growing at the staff (plain Earth's is fx/earth.ts's)
+        const cs = specOf(w, i);
+        if (!this.drawEarth && cs.form === EL.earth && cs.shape === 'missile' && !cs.heal && (!cs.look || cs.look === EL.earth) && !Array.from(cs.counts).some((c, e) => c > 0 && e !== EL.earth - 1)) continue;
         const [x, y] = at(i), a = Math.atan2(s.aimY[i], s.aimX[i]), k = Math.min(1, s.chanTicks[i] / 60), px = x + Math.cos(a) * 0.7, py = y + Math.sin(a) * 0.7;
         B.ball(px, this.ground(x, y) + STAFF_H, py, 0.15 + 0.3 * k, ROCK_COL, true, undefined, 1, t * 3);
         B.ring(B.tintBuf, px, py, 0, 0.3 + 0.4 * k, palOf(EL.earth).deep, 0.4);
@@ -429,6 +434,7 @@ export class Standins {
     const m = w.missiles, B = this.batch, t = f.t;
     for (let j = 0; j < MAX_MISSILES; j++) {
       if (!m.alive[j] || m.wait[j]) continue;
+      if (!this.drawEarth && plainRock(w, j)) continue;   // fx/earth.ts
       const x = m.x[j] + m.vx[j] * f.alpha / 60, y = m.y[j] + m.vy[j] * f.alpha / 60, ty = m.type[j], r = m.r[j], g = this.ground(x, y), h = g + MISSILE_H;
       const sp = Math.hypot(m.vx[j], m.vy[j]) || 1, ux = m.vx[j] / sp, uy = m.vy[j] / sp;
       const lead = m.look[j] || leadOf(m.els, j), coat = leadOf(m.els, j, EL.earth, ty === 2 ? EL.ice : 0, ty === 2 ? EL.water : 0, ty === 2 ? EL.cold : 0);

@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as earth-cracks.png in the current directory. Reply with just the file name.
+
+The attached image is concept art for an Earth spell in our stylised 3D game: a boulder hits the stone floor and leaves a star of dark cracks round the point of impact. Make a sprite sheet of those crack stars, seen straight from above, for laying on the floor as decals.
+
+A 2 by 2 grid of equal square cells on a pure black background. Each cell holds one star of cracks centred in its cell: a small shattered spot in the middle, seven to ten jagged cracks running out from it, thick at the centre and thinning to fine points, some forking once or twice near their ends, of different lengths, the longest reaching near the cell's edge. Painted as clean white lines on the black (the game uses the white as the shape and draws the cracks dark), in the same toon style: crisp edges, no texture, no shading, no floor. Each of the four is different. Nothing touches the cell borders. No text, no grid lines.

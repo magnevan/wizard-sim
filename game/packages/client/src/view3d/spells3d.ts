@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import { MAX_SEATS, type World } from '@wizard-sim/sim';
 import { ArcaneBeams } from './fx/arcane';
 import { ColdNovas } from './fx/cold';
+import { EarthFx } from './fx/earth';
 import { FireFloor, FireSpray, type FireSheets } from './fx/fire';
 import { SurfGrid, sprays } from './fx/from-sim';
 import { SpellLights } from './fx/lights';
@@ -47,10 +48,14 @@ export class Spells3D {
   /** The Frost ring (fx/cold.ts), unless the stand-ins draw it (standins.drawCold). */
   readonly cold = new ColdNovas();
   private spraysBy: FireSpray[] = [];
+  /** The effect time of the last frame (s), for the impact's jolt at render. */
+  private shakeAt = 0;
   private grid: SurfGrid | null = null;
   private floor: FireFloor | null = null;
   /** Every Arcane beam (fx/arcane.ts); `.impact` picks its impact variant. */
   readonly arcane: ArcaneBeams;
+  /** Plain Earth's rock in flight and its impact (fx/earth.ts); its stones sit in the world scene (lit, shadowed) under lightRoot. */
+  readonly earth: EarthFx;
 
   /** `heightAt(x, z)`: the scene's ground height (u) at scene point x, z. */
   constructor(world: THREE.Scene, private heightAt: (x: number, z: number) => number) {
@@ -62,6 +67,9 @@ export class Spells3D {
     this.stage.scene.add(this.arcane.group);
     this.cold.heightAt = (x, y) => this.simHeight(x, y);
     this.stage.scene.add(this.cold.group);
+    this.earth = new EarthFx((x, z) => this.simHeight(x, z));
+    this.lightRoot.add(this.earth.meshes);
+    this.stage.scene.add(this.earth.group);
   }
 
   /** The floor's height (u) under sim point (x, z); 0 off the scene. */
@@ -93,16 +101,17 @@ export class Spells3D {
     // the beams' trails keep every tick too, so sparks fly from where the beam was even in a frozen frame
     if (!this.standins.drawArcane) this.arcane.update(w, w.clock[0] / 60, null);
     this.cold.afterStep(w);
+    this.earth.afterStep(w);
     if (!this.spraysBy.length) return;
     const t = w.clock[0] / 60, all = sprays(w);
     for (let s = 0; s < MAX_SEATS; s++) this.spraysBy[s].update(t, all.find((p) => p.seat === s && p.kind === 'fire') ?? null, this.groundUnder(w, s), null);
   }
 
   /** After a replayed step (rollback): its events, once each. */
-  replayStep(w: World): void { this.standins.afterStep(w); this.cold.afterStep(w); }
+  replayStep(w: World): void { this.standins.afterStep(w); this.cold.afterStep(w); this.earth.afterStep(w); }
 
   /** A rewind put the world back to its tick: what came after is dropped (the replay brings it back). */
-  rewind(w: World): void { this.standins.rewind(w.clock[0]); this.cold.rewind(w.clock[0]); }
+  rewind(w: World): void { this.standins.rewind(w.clock[0]); this.cold.rewind(w.clock[0]); this.earth.rewind(w); }
 
   /** Each frame, before render: effect time `t` (s). */
   frame(w: World, t: number, o: SpellFrame = {}): void {
@@ -124,6 +133,8 @@ export class Spells3D {
     if (this.arcane.group.visible) this.arcane.update(w, t, this.lights);
     this.cold.group.visible = !this.standins.drawCold;
     if (this.cold.group.visible) this.cold.update(t, this.lights);
+    this.earth.meshes.visible = this.earth.group.visible = !this.standins.drawEarth;
+    if (!this.standins.drawEarth) { this.earth.update(w, t, o.alpha ?? 0, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]]); this.shakeAt = t + (o.alpha ?? 0) / 60; }
     this.standins.draw(w, { t, alpha: o.alpha ?? 0, localSeat: o.localSeat ?? -1, cam: this.fxCam, lights: this.lights, bodyAt: o.bodyAt });
     this.lights.end();
   }
@@ -136,12 +147,16 @@ export class Spells3D {
 
   /** The world and the effects, tone-mapped to the screen (or into `box` of it: FxStage.render). */
   render(renderer: THREE.WebGLRenderer, world: THREE.Scene, cam: THREE.PerspectiveCamera, box?: { x: number; y: number; w: number; h: number }): void {
+    // a rock's impact jolts the view for a moment (fx/earth-impact.ts shake), then the camera is put back
+    const jolt = this.standins.drawEarth ? null : this.earth.shake(this.shakeAt);
+    if (jolt) cam.position.add(jolt);
     this.syncCam(cam);
     this.stage.render(renderer, world, cam, box, this.fxCam);
+    if (jolt) { cam.position.sub(jolt); cam.updateMatrixWorld(); this.syncCam(cam); }
   }
 
   /** Forget every remembered event (a lab drawing another world with the same effects). */
-  reset(): void { this.standins.rewind(-1); this.cold.reset(); }
+  reset(): void { this.standins.rewind(-1); this.cold.reset(); this.earth.reset(); }
 
   private groundUnder(w: World, s: number): number { return this.simHeight(w.bodies.x[s], w.bodies.y[s]); }
 }

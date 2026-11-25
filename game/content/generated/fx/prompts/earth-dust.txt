@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as earth-dust.png in the current directory. Reply with just the file name.
+
+The attached image is concept art for an Earth spell in our stylised 3D game: a boulder flies from a wizard's staff, leaving a thick wake of billowing toon dust puffs. Make a sprite sheet of dust puffs for building that dust out of particles, in the same painted toon style.
+
+A 4 by 4 grid of equal square cells on a pure black background. Each cell holds one chunky puff of dust that fills most of its cell: a few fat rounded lobes, shaded in two or three clear toon steps (a bright top-left, a mid tone, a darker underside), with crisp but slightly soft outer edges. Painted in pale grey and white so its shape and shading read clearly against the black (the game tints it ochre-brown). Each of the sixteen is different: round puffs, puffs of two or three lobes, a flattened low puff, a puff trailing to one side. All at the same scale and lit the same way from the top left. Nothing touches the cell borders. No text, no grid lines.

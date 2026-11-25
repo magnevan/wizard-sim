@@ -64,6 +64,9 @@ const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [numb
   fire: { wiz: [[95, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5]], face: 0.75, spell: 'fire+fire+fire/force', at: [95, 89], ticks: 70, hold: true },
   // the Arcane beam (three runes) along a file of goblins, 50 ticks in: it lands on the first, and moves on as each falls
   arcane: { wiz: [[91, 97]], gob: [[96, 93.25], [99, 91], [102, 88.75], [105, 86.5], [108, 84.25], [111, 82], [93, 88.5], [100, 95]], face: 0.9, spell: 'arcane+arcane+arcane/force', at: [96, 93.25], ticks: 38, hold: true },
+  // an Earth rock (three runes, and one) tapped at a goblin (a quick throw: it breaks on what it hits), in flight; ?shotTicks= runs it on (the impact, a clip's frames)
+  earth: { wiz: [[95, 97], [104, 97.5]], gob: [[91, 89.5], [95, 88.8], [99, 89.5]], face: 0.75, spell: 'earth+earth+earth/strike', at: [95, 88.8], ticks: 40 },
+  earth1: { wiz: [[95, 97], [104, 97.5]], gob: [[91, 89.5], [95, 88.8], [99, 89.5]], face: 0.75, spell: 'earth/strike', at: [95, 88.8], ticks: 30 },
   // a fight on the plaza, every spell a stand-in but the Fire: an arc, a beam, ice shards and a rock wall drawn, at a warband
   fight: {
     wiz: [[87, 97], [93, 98.5], [99, 98.5], [105, 97]], gob: [[84, 89], [88, 88], [92, 88.5], [97, 88], [101, 88.5], [106, 89], [95, 85]], face: 0.75, ticks: 92,
@@ -167,7 +170,7 @@ async function boot(): Promise<void> {
         k++;
       };
       // ?clip=1: the tick seat 0's spell goes off (found on a scratch run), and __seek(t) to step on to t s after it
-      let end = optNum('ticks', shot.ticks ?? 60);
+      let end = optNum('shotTicks', optNum('ticks', shot.ticks ?? 60));
       if (optOn('clip')) {
         const start = snapshot(world);
         let castAt = -1;

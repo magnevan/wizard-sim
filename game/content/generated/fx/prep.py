@@ -6,6 +6,7 @@
 - fire-carpet.png: each of the 16 low flame clusters cut out tight and set on the bottom of a 256 x 128 cell (4 x 4,
   1024 x 512), so a quad's base is the flames' base (fire.ts samples the cell whole).
 - fire-cracks.png: the tileable charred bed with glowing cracks, scaled to 1024 px.
+- earth-cracks.png: 2 x 2 white crack stars on black, as one grey channel (the impact's crack decal), 1024 px.
 """
 from pathlib import Path
 from PIL import Image
@@ -41,3 +42,4 @@ if __name__ == '__main__':
     scaled('fire-licks')
     scaled('fire-cracks')
     carpet()
+    Image.open(RAW / 'earth-cracks-1.png').convert('L').resize((1024, 1024), Image.LANCZOS).save(HERE / 'earth-cracks.png', optimize=True)

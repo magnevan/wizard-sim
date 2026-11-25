@@ -27,6 +27,7 @@
     "shot:arcane3d": "node scripts/arcane3d-clips.mjs",
     "clip:cold3d": "node scripts/cold3d-clips.mjs",
     "clip:fx": "node scripts/fx-clip.mjs",
+    "shot:earth3d": "node scripts/earth3d-shots.mjs",
     "editor:shot": "node scripts/editor-shot.mjs",
     "editor:check": "node scripts/editor-check.mjs",
     "fps:lab": "node scripts/lab-fps.mjs",

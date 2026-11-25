@@ -58,6 +58,9 @@ const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [numb
   wall: { wiz: [[95.5, 25.5], [104, 46]], gob: [[90, 44], [100, 45]], face: 0.25 },
   // Fire spray (three runes) at the goblins, look B, 70 ticks in: the spray, and the floor it set burning
   fire: { wiz: [[95, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5]], face: 0.75, spell: 'fire+fire+fire/force', at: [95, 89], ticks: 70 },
+  // an Earth rock (three runes, and one) tapped at a goblin (a quick throw: it breaks on what it hits), in flight; ?shotTicks= runs it on (the impact, a clip's frames)
+  earth: { wiz: [[95, 97], [104, 97.5]], gob: [[91, 89.5], [95, 88.8], [99, 89.5]], face: 0.75, spell: 'earth+earth+earth/strike', at: [95, 88.8], ticks: 40 },
+  earth1: { wiz: [[95, 97], [104, 97.5]], gob: [[91, 89.5], [95, 88.8], [99, 89.5]], face: 0.75, spell: 'earth/strike', at: [95, 88.8], ticks: 30 },
   // a fight on the plaza, every spell a stand-in but the Fire: an arc, a beam, ice shards and a rock wall drawn, at a warband
   fight: {
     wiz: [[87, 97], [93, 98.5], [99, 98.5], [105, 97]], gob: [[84, 89], [88, 88], [92, 88.5], [97, 88], [101, 88.5], [106, 89], [95, 85]], face: 0.75, ticks: 92,
@@ -145,7 +148,7 @@ async function boot(): Promise<void> {
       world.mode = { ...world.mode, runeMax: () => 5 };   // the court (and the party's pools) give no runes: five each, for this shot only
       casts.forEach((_, p) => devRefillRunes(world, p));
       const ds = casts.map((c) => parseDemo(`${c.spell}@${simX(c.at[0])},${simY(c.at[1])}`)!);
-      for (let k = 0; k < (shot.ticks ?? 60); k++) {
+      for (let k = 0, end = optNum('shotTicks', shot.ticks ?? 60); k < end; k++) {
         const inputs = Array.from({ length: MAX_SEATS }, (_, p) => (ds[p] && k >= (casts[p].lag ?? 0) ? demoInput(world, k - (casts[p].lag ?? 0) + p * 37, p, ds[p]) : NO_INPUT));
         view.beforeStep(world); step(world, inputs); view.afterStep(world);
       }

@@ -1,6 +1,6 @@
 # The port to 3D (the game on the kit renderer, the pixel version retired)
 
-Status: active; steps 0 to 2 built and merged on `port-3d`; the four effect tone pieces built, on review as clips; next: the swap, then the effects thread · Last touched: 2026-11-25
+Status: active; steps 0 to 2 built and merged on `port-3d`; effects handed to [spell effects in 3D](spell-effects-3d.md); next: the swap · Last touched: 2026-11-25
 Record: [the plan](../explorations/2026-11-25-port-3d-plan.md) (decisions, height in a 2D sim, steps, the team, risks) · [decision](../decisions/README.md#2026-11-25-the-game-moves-to-the-3d-kit-renderer-the-map-editors-scenes-feed-the-sim-explorations2026-11-25-port-3d-planmd) · [fx spike](../explorations/2026-11-25-fx3d-spike.md) · [The Court in 3D](https://claude.ai/artifact/3dWPYc5ZxZqgrYfpksnegu) (step 0 review, `tools/port-3d-review/`) · [stylised 3D](../explorations/2026-11-23-stylised-3d.md) · [the courtyard on the kit](kit-courtyard.md) · [the map editor](map-editor.md) · [height](height.md)
 
 ## Where it stands
@@ -12,12 +12,13 @@ Branch `port-3d` (worktree `.claude/worktrees/port-3d`), not merged to main. Tea
 ## Next
 
 - [ ] **Spell effects, how (agreed with the user 2026-11-25):** four tone pieces here (Fire spray and floor, Arcane beam, Earth rock and impact, Cold nova), each concept → build → the user's verdict; then a spell-look guide from them and a critic calibrated on it; then a dedicated effects thread works through every family in batches, one review page per batch. Stand-ins keep the game playable meanwhile; the swap doesn't wait.
-  - [ ] The four tone pieces, built and merged; on review as clips (`motion-*` on The Court in 3D). **Rule for the guide: no effect reads as a cluster of sprites; main bodies are meshes shaded in their shaders, particles only for sparks, embers and chips** (the user on the first built fire: "a very obvious cluster of opaque sprites").
+  - **Handed off 2026-11-25** to its own thread, [spell effects in 3D](spell-effects-3d.md) (the user: "everything looks a bit wrong still"); the verdicts and lessons are there. Below is the record of what this thread did.
+  - [x] The four tone pieces, built and merged; on review as clips (`motion-*` on The Court in 3D). **Rule for the guide: no effect reads as a cluster of sprites; main bodies are meshes shaded in their shaders, particles only for sparks, embers and chips** (the user on the first built fire: "a very obvious cluster of opaque sprites").
     - Arcane beam, crisp (`fx/arcane.ts`, `fx/beam-strip.ts`): closest to its concept; impact a or b is the open question.
     - Cold ring, crisp and toned down (`fx/cold.ts`, the reusable `fx/nova-ring.ts`): may now be too quiet in the court.
     - Earth rock sized by runes (`fx/earth*.ts`, `rock-mesh.ts`, `dust-mesh.ts`): rock, chips and cracks work; the dust is flat, like stains.
     - Fire (`fx/fire-body.ts`, `fire-floor.ts`): one mesh now, but reads as pale cloth, not fire ([record](../explorations/2026-11-25-spell-concepts-fire.md)). Recommended: hand to the effects thread with one job, a painted flame texture moving through the mesh.
-  - [ ] Then the spell-look guide (from the four and the user's verdicts) and the dedicated effects thread.
+  - Then the spell-look guide and every other family: in [spell effects in 3D](spell-effects-3d.md).
 - No art for the practice ground: it's a temporary space and keeps placeholder dummies (the user, 2026-11-25). Practice dummies and the straw goblin get made with the yard ([opening thread](opening.md)).
 - [ ] Later: a profiling pass on the user's machine; an exploration of asset handling (streaming, levels of detail, keeping assets across sessions) rather than squeezing sizes.
 - [ ] Agree scene markers (the `marker` object kind, already in `court.scene.json`) and re-running `room.py` on save with the map editor's session.

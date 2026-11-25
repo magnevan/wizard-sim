@@ -5,6 +5,8 @@ Record: [VFX workflow](../explorations/2026-11-21-vfx-workflow.md) · Guide: [vf
 
 ## Where it stands
 
+*Since 2026-11-25 the game is moving to 3D; spell effects in 3D are their own thread, [spell effects in 3D](spell-effects-3d.md). This thread's tooling (the VFX Lab, `vfx-sheet`, knobs) is the pixel game's, kept for comparison.*
+
 The plan is approved. Steps 1 to 3 are built on the `worktree-vfx-workflow` branch: the guide (spec template and rubric), the VFX Lab, and `npm run vfx-sheet`. Round 2 (the user's notes: no aim control, reloads, typing runes) added the lab's side panel and the first knobs (the three sprays, nova speed) with Save to `fx-knobs.json`. Round 3 fixed the GPU leak and slow scrubbing and added knob A/B. Round 4 absorbed the Spray, Nova and Missile Labs (hit shapes, sweep, walk, rows of spells, film strips) and deleted them. The tooling is done; nobody has used the loop on a real effect yet.
 
 ## Next

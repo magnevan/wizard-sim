@@ -18,10 +18,10 @@ The opening is a chain of eight stops, Life first; the yard and the battery are 
 
 ## The port to 3D
 
-> [!in-review] Pick the camera, the fire and the rest
-> On The Court in 3D, answer its five boxes: the camera distance, how a wizard behind a building shows, whether the unfiltered models are the way forward, fire look A or B, and whether the walk grid matches the court. An empty box means the recommendation stands.
+> [!in-review] Play the 3D page; effects have their own thread
+> The Court in 3D's questions are all answered (2026-11-25). The 3D page runs on the dev server (`play3d.html?runes=1`, `#practice` for the practice ground). Spell effects moved to [their own thread](threads/spell-effects-3d.md), which starts with a fresh session. Next here: the swap, when the 3D page becomes the game (asked first, since it changes the public site).
 
-[The Court in 3D](https://claude.ai/artifact/3dWPYc5ZxZqgrYfpksnegu) · [Thread](threads/port-3d.md) · [Plan](explorations/2026-11-25-port-3d-plan.md)
+[The Court in 3D](https://claude.ai/artifact/3dWPYc5ZxZqgrYfpksnegu) · [Thread](threads/port-3d.md) · [Effects thread](threads/spell-effects-3d.md) · [Plan](explorations/2026-11-25-port-3d-plan.md)
 
 ## Goblin warband art
 

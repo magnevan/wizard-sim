@@ -53,12 +53,15 @@ async function sheetMeans(tex: THREE.Texture): Promise<THREE.Vector3[]> {
   return out;
 }
 
-/** Load a scene's laid stones (none: its floors keep their tiles). */
-export async function loadStones(scene: string): Promise<boolean> {
-  STONE_U.stOn.value = 0;
-  const url = Object.entries(layoutUrls).find(([p]) => p.endsWith(`/${scene}-stones.json`))?.[1];
-  if (!url) return false;
-  const L = await (await fetch(url)).json() as Layout;
+/**
+ * Load a scene's laid stones (none: its floors keep their tiles): from the map editor's server when given (it lays
+ * them again after each edit), else as built with the page.
+ */
+export async function loadStones(scene: string, server = false): Promise<boolean> {
+  const url = server ? `/__map/stones?name=${scene}` : Object.entries(layoutUrls).find(([p]) => p.endsWith(`/${scene}-stones.json`))?.[1];
+  const res = url ? await fetch(url).catch(() => null) : null;
+  if (!res?.ok) { STONE_U.stOn.value = 0; return false; }
+  const L = await res.json() as Layout;
   const st = L.stones.filter((s) => STONE_MATS.includes(s.m) && s.q.length >= 3 && s.q.length <= MAXV);
   // the table
   const rows = Math.ceil(st.length / ROW), tab = new Float32Array(ROW * PER * rows * 4);
@@ -95,16 +98,21 @@ export async function loadStones(scene: string): Promise<boolean> {
   if (over) console.warn(`[stones] ${scene}: ${over} cells hold more than ${CANDS} stones`);
   const gridT = new THREE.DataTexture(grid, nx * 2, ny, THREE.RGBAFormat, THREE.FloatType);
   for (const t of [tabT, gridT]) { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; }
-  // the painted grain
-  const sheet = await new THREE.TextureLoader().loadAsync(Object.values(sheetUrl)[0]);
-  sheet.colorSpace = THREE.SRGBColorSpace; sheet.anisotropy = 8;
-  STONE_U.stMean.value = await sheetMeans(sheet);
+  // the painted grain (loaded once)
+  if (!STONE_U.stSheet.value) {
+    const sheet = await new THREE.TextureLoader().loadAsync(Object.values(sheetUrl)[0]);
+    sheet.colorSpace = THREE.SRGBColorSpace; sheet.anisotropy = 8;
+    STONE_U.stMean.value = await sheetMeans(sheet);
+    STONE_U.stSheet.value = sheet;
+  }
   for (const m of STONE_MATS) {
     const P = L.mats[m]; if (!P) continue;
     STONE_PAINT[m].pal.value = P.pal.map(lin); STONE_PAINT[m].joint.value = lin(P.jointc);
     STONE_PAINT[m].k.value.set(P.tone, P.bevel, P.grain, 0);
   }
-  STONE_U.stTab.value = tabT; STONE_U.stGrid.value = gridT; STONE_U.stSheet.value = sheet;
+  // (the editor loads them again after each edit: the old ones are let go)
+  STONE_U.stTab.value?.dispose(); STONE_U.stGrid.value?.dispose();
+  STONE_U.stTab.value = tabT; STONE_U.stGrid.value = gridT;
   STONE_U.stGridO.value.set(x0, y0); STONE_U.stGridN.value.set(nx, ny);
   STONE_U.stOn.value = 1;
   return true;

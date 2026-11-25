@@ -2,7 +2,8 @@
  * The map editor's scene server, as a dev-only Vite plugin (tools/map-editor/README.md has the API): /__map/* over
  * HTTP for the page and for Claude's CLI, and Vite's own WebSocket to push every change to the open editor pages
  * (map:update, map:pins) and to ask a page for a picture (map:view-request -> map:view). The scenes live in
- * tools/kit/scenes/; a change to a scene file from outside (an Edit, a git checkout) is picked up by a watcher.
+ * tools/kit/scenes/; a change to a scene file from outside (an Edit, a git checkout) is picked up by a watcher. After
+ * each compile the stone layer lays the scene's road and paving again in the background (map:stones when it has).
  */
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, watch, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -11,6 +12,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Browser, Page } from 'puppeteer-core';
 import type { Plugin, ViteDevServer, WebSocketClient } from 'vite';
 import { CompileWorker } from './compile-worker';
+import { StoneLayer } from './stones';
 import { dumpScene, type Scene } from './ops';
 import { HttpError, imageType, SceneStore } from './store';
 
@@ -25,12 +27,14 @@ export function mapEditor(repoRoot: string): Plugin {
   let server: ViteDevServer;
 
   const broadcast = (event: string, data: unknown) => server.ws.send(event, data);
+  const layouts = join(repoRoot, 'game/content/generated/layouts');
+  const stones = new StoneLayer(kitDir, (name, d) => broadcast('map:stones', { name, laid: d.laid, ms: d.ms }));
   const names = () => (existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.scene.json')).map((f) => f.replace('.scene.json', '')).sort() : []);
   function store(name: string): Promise<SceneStore> {
     if (!NAME.test(name) || !names().includes(name)) return Promise.reject(new HttpError(404, `no scene ${JSON.stringify(name)} in tools/kit/scenes (have: ${names().join(', ')})`));
     let s = stores.get(name);
     if (!s) {
-      const st = new SceneStore(name, dir, worker, broadcast);
+      const st = new SceneStore(name, dir, worker, broadcast, (n, c) => stones.compiled(n, c));
       s = st.load().then(() => st);
       s.catch(() => stores.delete(name));
       stores.set(name, s);
@@ -135,6 +139,13 @@ export function mapEditor(repoRoot: string): Plugin {
       case 'GET history': { const s = await store(name); return json(res, 200, { rev: s.rev, groups: s.historyList(Number(q.n ?? 20)) }); }
       case 'GET pins': { const s = await store(name); return json(res, 200, { rev: s.rev, pins: s.pinList(q.status ?? 'open') }); }
       case 'POST pins': { const s = await store(name); return json(res, 200, s.pinOp(b)); }
+      case 'GET stones': {   // the scene's road and paving laid stone by stone (tools/kit/tess_layout.py), as last laid
+        if (!NAME.test(name)) throw new HttpError(400, 'name');
+        const file = join(layouts, `${name}-stones.json`);
+        if (!existsSync(file)) throw new HttpError(404, `${name} has no laid stones`);
+        res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-cache');
+        res.end(readFileSync(file)); return;
+      }
       case 'GET kit': return json(res, 200, JSON.parse(readFileSync(join(kitDir, 'kit.json'), 'utf8')));   // the pieces (set pieces' sizes, the prop list)
       case 'GET refs': { const s = await store(name); return json(res, 200, { refs: s.refs.map((r) => ({ ...r, path: join(s.refsDir, r.file) })) }); }
       case 'POST refs': { const s = await store(name); return json(res, 200, s.refOp(b)); }
@@ -188,7 +199,7 @@ export function mapEditor(repoRoot: string): Plugin {
           }, 150));
         });
       }
-      s.httpServer?.on('close', () => { worker.stop(); headless?.browser.close().catch(() => undefined); headless = null; });
+      s.httpServer?.on('close', () => { worker.stop(); stones.stop(); headless?.browser.close().catch(() => undefined); headless = null; });
     },
   };
 }

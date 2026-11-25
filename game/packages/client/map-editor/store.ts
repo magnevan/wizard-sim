@@ -49,7 +49,8 @@ export class SceneStore {
   private nextRef = 1;
   private queue: Promise<unknown> = Promise.resolve();
 
-  constructor(public name: string, private dir: string, private worker: CompileWorker, private broadcast: Broadcast) {}
+  /** afterCompile: told of each good compile (the stone layer lays the scene's road and paving from it) */
+  constructor(public name: string, private dir: string, private worker: CompileWorker, private broadcast: Broadcast, private afterCompile?: (name: string, c: Compiled) => void) {}
 
   get file() { return join(this.dir, `${this.name}.scene.json`); }
   private get historyFile() { return join(this.dir, `${this.name}.history.jsonl`); }
@@ -105,7 +106,7 @@ export class SceneStore {
   }
 
   private async recompile(): Promise<Compiled> {
-    try { this.compiled = await this.worker.compile(this.scene); }
+    try { this.compiled = await this.worker.compile(this.scene); this.afterCompile?.(this.name, this.compiled); }
     catch (e) {
       const msg = (e as Error).message;
       this.compiled = { G: this.scene.G, size: [0, 0], floors: [], instances: [], pieces: {}, errors: [msg], warnings: [], findings: [{ code: 'crash', severity: 'error', msg, at: null, refs: [] }] };

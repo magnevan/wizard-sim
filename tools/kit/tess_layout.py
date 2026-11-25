@@ -51,7 +51,9 @@ def pieces(scene_data):
 
 
 def stones(m, h, poly, seed):
-    """One piece's stones, as written out."""
+    """One piece's stones, as written out. The pattern's random numbers start from the piece's own seed, so a piece
+    lays the same whatever was laid before it (the editor's worker lays many scenes in one process)."""
+    T.rng = np.random.default_rng(seed)
     S = T.lay(m, poly)
     L = T.LAY[m]
     rr = np.random.default_rng(seed)
@@ -69,28 +71,44 @@ def stones(m, h, poly, seed):
     return out
 
 
+CODE = hashlib.md5(b''.join(open(os.path.join(HERE, f), 'rb').read().replace(b'\r\n', b'\n')   # (line endings differ between checkouts)
+                            for f in ('tess_proof.py', 'tess_layout.py'))).hexdigest()
+
+
 def lay_scene(name, data, force=False, log=print):
-    """Lays a compiled scene's stones and writes them, unless its laid floors and the pattern's code are unchanged
-    since the last time (a fingerprint of both is kept in the file). Returns the file's path, or None with no laid floors."""
+    """Lays a compiled scene's stones and writes them. Each piece (a laid floor at one height, connected) is laid
+    again only when it or the pattern's code changed: its stones are kept in the file under a key made of both, so an
+    edit re-lays only the pieces it touched. Returns {"path", "laid", "kept"} (path None with no laid floors)."""
     ps = pieces(data)
     out = os.path.join(OUT_DIR, f'{name}-stones.json')
     if not ps:
         if os.path.exists(out): os.remove(out)
-        return None
-    code = b''.join(open(os.path.join(HERE, f), 'rb').read().replace(b'\r\n', b'\n') for f in ('tess_proof.py', 'tess_layout.py'))   # (line endings differ between checkouts)
-    fp = hashlib.md5(code + ''.join(f'{m}|{h}|{poly.wkt}' for m, h, poly in ps).encode()).hexdigest()
+        return dict(path=None, laid=0, kept=0)
+    keys = [hashlib.md5(f'{CODE}|{m}|{h}|{poly.wkt}'.encode()).hexdigest()[:16] for m, h, poly in ps]
+    fp = hashlib.md5(''.join(keys).encode()).hexdigest()
+    old = {}
     if not force and os.path.exists(out):
-        with open(out, encoding='utf-8') as f:
-            if f'"fp":"{fp}"' in f.read(200): return out
-    t0, allst = time.time(), []
-    for m, h, poly in ps:
-        seed = int(hashlib.md5(f'{m}{h}{poly.wkt[:200]}'.encode()).hexdigest()[:8], 16)   # the same piece lays the same
-        allst += stones(m, h, poly, seed)
+        with open(out, encoding='utf-8') as f: text = f.read()
+        if f'"fp":"{fp}"' in text[:200]: return dict(path=out, laid=0, kept=len(ps))
+        prev = json.loads(text); at = 0
+        for k, n in prev.get('parts', []): old[k] = prev['stones'][at:at + n]; at += n
+    t0, allst, parts, laid = time.time(), [], [], 0
+    for key, (m, h, poly) in zip(keys, ps):
+        if key in old: st = old[key]
+        else:
+            seed = int(hashlib.md5(f'{m}{h}{poly.wkt[:200]}'.encode()).hexdigest()[:8], 16)   # the same piece lays the same
+            try: st = stones(m, h, poly, seed)
+            except Exception as e:   # (one piece the pattern can't lay keeps its tile; the rest are laid)
+                log(f'{name}: {m} at h={h} ({poly.area:.0f} u2) could not be laid: {type(e).__name__}: {e}'); st = []
+            laid += 1
+        allst += st; parts.append([key, len(st)])
     os.makedirs(OUT_DIR, exist_ok=True)
     mats = {m: {k: T.LAY[m][k] for k in ('pal', 'jointc', 'tone', 'bevel', 'joint', 'sheet')} | {'grain': T.LAY[m].get('grain', 0.7)} for m in LAID}
-    json.dump(dict(fp=fp, v=1, mats=mats, stones=allst), open(out, 'w', encoding='utf-8'), separators=(',', ':'))
-    log(f'{name}: {len(allst)} stones laid in {time.time() - t0:.0f}s -> {os.path.relpath(out)} ({os.path.getsize(out) // 1024} KB)')
-    return out
+    tmp = out + '.tmp'   # (written whole, then swapped in: the editor's server may be reading it)
+    json.dump(dict(fp=fp, v=1, mats=mats, parts=parts, stones=allst), open(tmp, 'w', encoding='utf-8'), separators=(',', ':'))
+    os.replace(tmp, out)
+    log(f'{name}: {laid} of {len(ps)} pieces laid ({len(allst)} stones) in {time.time() - t0:.1f}s -> {os.path.relpath(out)}')
+    return dict(path=out, laid=laid, kept=len(ps) - laid)
 
 
 def main():

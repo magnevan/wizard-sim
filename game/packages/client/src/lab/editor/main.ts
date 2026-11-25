@@ -253,6 +253,7 @@ function onUpdate(d: Update) {
   adoptNewTerrace();
 }
 hot.on('map:update', onUpdate);
+hot.on('map:stones', (d: { name: string }) => { if (d.name === name) void loadStones(name, true); });
 hot.on('map:pins', (d: { name: string; pins: Pin[] }) => { if (d.name === name) { pins = d.pins; rebuildMarkers(); renderLists(); concepts.renderPins(); } });
 hot.on('map:error', (d: { name: string; error: string }) => { if (d.name === name) { $('err').style.display = 'flex'; $('err').textContent = d.error; } });
 
@@ -274,7 +275,7 @@ async function open(n: string) {
   history.replaceState(null, '', `?scene=${n}${q.get('art') === '0' ? '&art=0' : ''}`);
   const p = await call(`pins?name=${n}&status=all`); pins = p?.pins ?? [];
   await concepts.load();
-  await loadStones(n);   // its road and paving laid stone by stone, if tools/kit/tess_layout.py has laid them
+  await loadStones(n, true);   // its road and paving laid stone by stone (the server lays them again after each edit: map:stones)
   hot.send('map:hello', { name: n });
 }
 

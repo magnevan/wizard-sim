@@ -196,6 +196,18 @@
     {"kind": "vignette", "piece": "dress.hook-lamp", "at": [49.7, 71.3], "front": "S", "name": "a lamp at the stair's foot", "id": "v12"},
     {"kind": "vignette", "piece": "dress.crates", "at": [46.1, 73.7], "front": "S", "name": "crates on the quay", "id": "v13"},
     {"kind": "vignette", "piece": "dress.barrel", "at": [47.4, 74], "front": "S", "name": "a barrel on the quay", "id": "v14"},
-    {"kind": "vignette", "piece": "dress.rope-coil", "at": [49.5, 73.8], "front": "S", "name": "a rope coil on the quay", "id": "v15"}
+    {"kind": "vignette", "piece": "dress.rope-coil", "at": [49.5, 73.8], "front": "S", "name": "a rope coil on the quay", "id": "v15"},
+    {"kind": "marker", "id": "start-0", "at": [46.6, 46], "name": "seat 0 starts on the sunk plaza, south of the armillary"},
+    {"kind": "marker", "id": "start-1", "at": [47.5, 45.1], "name": "seat 1's start"},
+    {"kind": "marker", "id": "start-2", "at": [47.5, 46.9], "name": "seat 2's start"},
+    {"kind": "marker", "id": "start-3", "at": [48.4, 46], "name": "seat 3's start"},
+    {"kind": "marker", "id": "gate-yard", "at": [24, 16.5], "name": "the west road between the gate piers: on to the drill yard"},
+    {"kind": "marker", "id": "gate-battery", "at": [94, 16.5], "name": "the east road's end: on to the battery"},
+    {"kind": "marker", "id": "gate-north", "at": [47.5, 9.5], "name": "the north road between the gate towers"},
+    {"kind": "marker", "id": "gate-sea", "at": [47.5, 71.5], "name": "the sea landing's quay"},
+    {"kind": "marker", "id": "door-hall", "at": [47.5, 21], "name": "the great hall's archway, south mouth"},
+    {"kind": "marker", "id": "door-library", "at": [33.2, 34.85], "name": "the library door, between its banners"},
+    {"kind": "marker", "id": "door-workshops", "at": [58.4, 36.25], "name": "the workshops door, between its banners"},
+    {"kind": "marker", "id": "armillary", "at": [47.5, 40], "tag": "landmark", "name": "the armillary"}
   ]
 }

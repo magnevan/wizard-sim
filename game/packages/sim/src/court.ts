@@ -1,10 +1,12 @@
 /**
  * The courtyard (docs/campaign/01-opening): the academy's central court with the great armillary, the opening's hub.
- * Every road starts and ends here. Its level: tools/segments/01-opening/court-level.py.
+ * Every road starts and ends here. Its map is the kit scene tools/kit/scenes/court.scene.json, the one the map editor
+ * edits: tools/kit/room.py exports the room the sim walks on (game/content/generated/rooms/court.room.json), and
+ * `npm run content:build` folds it into rooms.gen.ts. The LDtk Court level is no longer built.
  *
- * For now it is only its gates: walking into one takes the party on. gate-yard is the archway through the west range
- * to the drill yard; gate-battery the east gate onto the battery road. The briefing at the armillary (beat 1) and the
- * gates to the other stops come later.
+ * For now it is only its gates: walking into one takes the party on. gate-yard is the west road between the gate piers,
+ * on to the drill yard; gate-battery the east road's end, on to the battery. The scene's gate-north and gate-sea lead
+ * nowhere yet. The briefing at the armillary (beat 1) and the gates to the other stops come later.
  */
 import { len } from './geom';
 import { markerOf } from './room';

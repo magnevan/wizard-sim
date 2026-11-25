@@ -1,6 +1,25 @@
 # game/content: the maps
 
-The rooms of Wizard Sim are drawn in **[LDtk](https://ldtk.io)** (the free, open-source level editor by Deepnight). The LDtk project is the master copy of every map; the game never reads it directly. A build step compiles it into plain data the sim imports (`packages/sim/src/rooms.gen.ts`), and a check refuses maps the game can't use.
+The rooms of Wizard Sim are drawn in **[LDtk](https://ldtk.io)** (the free, open-source level editor by Deepnight), except the **courtyard**, whose map is its kit scene (`tools/kit/scenes/court.scene.json`, edited in the 3D map editor; [below](#rooms-from-kit-scenes)). The LDtk project is the master copy of every other map; the game never reads it directly. A build step compiles both into plain data the sim imports (`packages/sim/src/rooms.gen.ts`), and a check refuses maps the game can't use.
+
+## Rooms from kit scenes
+
+Since the port to 3D ([plan, decision 1](../../docs/explorations/2026-11-25-port-3d-plan.md#1-one-map-the-kit-scene-feeds-the-sim)) a kit scene is the one map of its room: the picture and the room the sim walks on both come from it.
+
+```sh
+python tools/kit/room.py court          # (from the repo root) writes content/generated/rooms/court.room.json, about 2 s
+npm run content:build                   # (from game/) folds it into rooms.gen.ts as the room "court"
+npm run content:check
+python tools/kit/room_shot.py court     # a picture of the walk grid over the scene: game/shots/port-3d/map/court-walk.png
+```
+
+`python tools/kit/compile.py court --room` exports the room after its own compile. Commit the scene, the `.room.json` and `rooms.gen.ts` together. CI never runs Python, so the room file is committed; `content:check` fails while the scene's hash differs from the file's `sceneHash` (a scene saved in the editor without a re-export), and a content test runs the exporter twice and compares it with the committed file where Python and shapely are installed.
+
+- **Units.** 1 sim unit = 1 kit u = 0.6 m. A sim point (x, y) is the scene point (x + ox, y + oy) in u, with `toScene = [ox, oy]` in the file (half the scene's size: the room is centred on the origin). A scene corner (cx, cy) is the scene point (cx × G, cy × G).
+- **The room** (`room` in the file, the same `RoomDef` an LDtk level makes): cells of 0.5 u take the terrace whose floor covers their centre. Terraces with `walk: false` (the sea, the woods, rock) are `#`. An edge between two walkable cells is a cliff wall unless the scene walks over it: a kerb (0.3 m or less), `steps`, a seam between two levels at one height, a flight's head and foot. A flight's sides are walls. Every other height edge (wall, parapet, retaining wall, a bare drop) is a wall both ways. Heights are tiers as in LDtk rooms; flights and the treads of steps are stair cells (`/`). Set pieces, vignettes and dressing block with their `kit.json` footprint (`propRock`; `props` is empty: the 3D view draws the scene), except pieces under 0.3 m high, those on a pier's cap, and those in ground nobody walks on; a building's archway is left open (`PASSAGES` in `room.py`: the great hall's).
+- **Markers** are scene objects: `{"kind": "marker", "id": "gate-yard", "at": [x, y], "tag"?: "landmark", "name"?: "..."}`, `at` in corners. `start-0` to `start-3` are the four seats' starts; every other id becomes a room marker, with the same id and tag rules as an LDtk Marker. `compile.py` draws nothing for them.
+- **Height-ready data** (`height3d` in the file, not in the room or its hash; the sim doesn't read it yet): every cell's surface (a terrace or a flight) and every edge where two surfaces meet at different heights, as runs `[x1, y1, x2, y2, kind, top, hA, hB]`: its kind (wall, parapet, retain, drop, steps, kerb, flight, flight-side), the height of its top (a parapet's rail) and the heights either side. It's what shots over parapets, knock-offs and bridges will need ([height in a 2D sim](../../docs/explorations/2026-11-25-port-3d-plan.md#height-in-a-2d-sim-what-were-committing-to)).
+- A scene room takes the place of the LDtk level with the same name: the Court level stays in `world.ldtk` (`tools/place-plans/to_ldtk.py` copies it as a template for new levels) but isn't built, its Ground layer isn't emitted, and the agreement check (`maps/scenes/`) skips the room.
 
 ```
 content/
@@ -17,6 +36,7 @@ content/
     world/Terraces.ldtkl   the test room for height tiers (#terraces); written by packages/content/src/terraces-level.mjs
   assets/props/<id>/       the asset registry: meta.json and images, below
   generated/               every raw image bought from an AI tool (its README). Never edited; look here before any call
+  generated/rooms/         the rooms exported from kit scenes (tools/kit/room.py), committed: above
 packages/content/          the build, the check and the grid CLI (node, no runtime part)
   schema/ldtk-1.5.3.schema.json   LDtk's official JSON schema, pinned (from https://ldtk.io/files/JSON_SCHEMA.json)
 ```
@@ -120,7 +140,7 @@ The room's id is the level's name with a lower-case first letter (`Survive` → 
 2. References: every layer, entity and field instance has its definition, IntGrid values are defined, level files exist and match the project's list, iids are unique, entity-reference fields (none yet) point at real entities.
 3. The rooms compile: known entities only, every painted tier has a height in `tierMetres`, every stair joins two heights, all four seats' starts, three altars or none, at least four portals in the Arena and Survive.
 4. Placement: every start, dummy, portal and altar is inside the room, not on painted rock or void and at least 0.7 u from any rock wall or blocking prop, and **reachable on foot from seat 0's start**, as is every Marker whose id starts with `gate-`, on the enemies' pathfinding grid (rock widened as `nav.ts` widens it). Every prop is inside the room.
-5. `packages/sim/src/rooms.gen.ts` is what the maps compile to.
+5. `packages/sim/src/rooms.gen.ts` is what the maps compile to, and each kit scene's room file was exported from its scene as it is now (its `sceneHash`). Scene rooms get checks 3 and 4 too (four starts, placement, every `gate-*` marker reachable from seat 0).
 6. The asset registry: every Prop names an asset that exists; every `meta.json` is whole; its images exist and none are left out; a generated image names a raw file that exists.
 
 **The sense lint** (`packages/content/src/sense.mjs`) runs after every check passes and prints warnings, never errors: a door or gate (`door-*`, `gate-*` markers) with no clear walkable approach 3 u long and 1 u wide, a door whose approach is grass or mostly road (it wants a forecourt), water meeting grass or paving at its own height, the void within about a screen (12 u) of walkable ground, and a roof or wall top standing a metre over walkable ground but painted a floor material. The rules and which are checked where: [making a place](../../docs/campaign/making-a-place.md#the-sense-rules).

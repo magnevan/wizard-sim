@@ -20,6 +20,7 @@
     "shot:overview": "node scripts/overview-shot.mjs",
     "shot:route": "node scripts/route-shots.mjs",
     "shot:lab": "node scripts/lab-shot.mjs",
+    "shot:fx3d": "node scripts/fx3d-shots.mjs",
     "editor:shot": "node scripts/editor-shot.mjs",
     "editor:check": "node scripts/editor-check.mjs",
     "fps:lab": "node scripts/lab-fps.mjs",

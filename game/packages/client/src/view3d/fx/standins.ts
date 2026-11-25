@@ -90,8 +90,11 @@ export class Standins {
   ground: (x: number, y: number) => number = () => 0;
   private recs: Rec[] = [];
   private keys = new Set<string>();
-  /** Fire's spray and floor draw as look B (fire.ts); true draws their stand-ins instead of nothing (the lab's ?standins=all). */
-  drawFire = false;
+  /**
+   * True: Fire's spray and floor draw as stand-ins like every other spell. False: as look B (fire.ts). The user rejected
+   * both fire looks (2026-11-25), so stand-ins until fire is rebuilt from the Codex concept round.
+   */
+  drawFire = true;
 
   get group(): THREE.Group { return this.batch.group; }
 

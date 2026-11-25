@@ -1,10 +1,11 @@
-// usage: node scripts/fx-compare.mjs [out-dir] [--only fire,arcane] [--gpu]
+// usage: node scripts/fx-compare.mjs [out-dir] [--only fire,arcane] [--view 30] [--gpu]
 // The spell-effects study (docs/threads/spell-effects-3d.md): each effect in the pixel game (vfx-lab.html) and in 3D
 // (cast3d.html, at the game's 30 u) at the same moments after the cast, and how much of it moves.
 //   <name>-pixel.png, <name>-3d.png  film strips at the same times (crowd scene)
 //   motion.json                      per effect and renderer: the effect's area (pixels that differ from the frame
 //                                    before the cast) and the share of it that changes from one 1/30 s frame to the
 //                                    next, averaged over a few moments (empty scene)
+// --view sets the 3D strips' ground in view (u, default the game's 30); closer shows what's on the bodies.
 // Serves its own dev server on DEV_PORT (default 5296). Software GL by default; --gpu for the real GPU.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -16,6 +17,7 @@ const args = process.argv.slice(2);
 const gpu = args.includes('--gpu');
 if (gpu) args.splice(args.indexOf('--gpu'), 1);
 const only = takeOpt(args, 'only', '');
+const view = Number(takeOpt(args, 'view', '30'));
 const out = resolve(args.shift() ?? 'shots/port-3d/study');
 mkdirSync(out, { recursive: true });
 
@@ -105,7 +107,7 @@ try {
     await page.screenshot({ path: `${out}/${f.name}-pixel.png`, fullPage: true });
     const spells = f.times.map((t) => `${f.runes}/${f.form}|${t}`).join(';');
     await page.setViewport({ width: 480 * 5, height: 300 });
-    await page.goto(`${base}cast3d.html?spells=${spells}&view=30&cols=5&tile=480x300`, { waitUntil: 'load' });
+    await page.goto(`${base}cast3d.html?spells=${spells}&view=${view}&cols=5&tile=480x300`, { waitUntil: 'load' });
     await d3Ready(); await new Promise((r) => setTimeout(r, 500));
     await page.screenshot({ path: `${out}/${f.name}-3d.png` });
     // motion (empty scene): a pre-cast frame, then pairs 1/30 s apart

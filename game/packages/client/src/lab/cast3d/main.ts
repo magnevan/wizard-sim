@@ -11,7 +11,8 @@
  *   &n=3                     that many presses: the spell's, then more of the first (or cut short)
  *   &t=0.4                   seconds after the spell went off (its cast event; t = 0), frozen there (default 0.4)
  *   &aim=x,y                 where the wizard aims (sim u; the caster stands at -4, 0 and the goblins round 1.5, 0)
- *   &scene=crowd             crowd (goblins held round the target, the default), empty, attack (a warband winding up
+ *   &scene=crowd             crowd (the pixel VFX Lab's: a brute and ten goblins held round the target, the default),
+ *                            sparse (the old four goblins), empty, attack (a warband winding up
  *                            its attacks at the caster: the telegraphs)
  *   &hit=1                   the sim's hit shapes dotted over it in white (spray cones, beam lines, missiles and their
  *                            flight, zones, area rings), to check the stand-ins against
@@ -41,6 +42,7 @@ import { setupStage } from '../kit-render';
 import { Spells3D } from '../../view3d/spells3d';
 import { Bodies3D } from '../../view3d/bodies';
 import { setSceneOrigin } from '../../view3d/scene-map';
+import { SCENES as PIXEL_SCENES } from '../vfx-lab/scenes';
 import { FOV, PITCH } from '../../view3d/camera3d';
 import { liveModel, liveSlugs } from '../../art/model-pose';
 
@@ -77,7 +79,10 @@ GROUPS.all = Object.values(GROUPS).flat();
 const AT: [number, number] = [-4, 0], TARGET: [number, number] = [1.5, 0];
 const SCENES: Record<string, { gob: [number, number, number][]; hold: boolean }> = {
   empty: { gob: [], hold: true },
-  crowd: { gob: [[1.5, 0, ARCH.swarmer], [2.2, 1.6, ARCH.swarmer], [2.0, -1.7, ARCH.swarmer], [3.6, 0.6, ARCH.swarmer]], hold: true },
+  // the pixel VFX Lab's crowd (vfx-lab/scenes.ts), moved so its caster stands where this one does: the same goblins in
+  // the same places, in the spells' reach, so the two labs compare like for like
+  crowd: { gob: PIXEL_SCENES.crowd.enemies!.map((e) => [e.at[0] + AT[0] - PIXEL_SCENES.crowd.wizards[0].at[0], e.at[1], ARCH[e.arch]] as [number, number, number]), hold: true },
+  sparse: { gob: [[1.5, 0, ARCH.swarmer], [2.2, 1.6, ARCH.swarmer], [2.0, -1.7, ARCH.swarmer], [3.6, 0.6, ARCH.swarmer]], hold: true },
   attack: { gob: [[-2.4, 1.3, ARCH.swarmer], [-4.6, -3.4, ARCH.brute], [0.6, -1.8, ARCH.grabber]], hold: false },
 };
 

@@ -21,7 +21,7 @@ The first step of the [spell effects in 3D](../threads/spell-effects-3d.md) thre
 
 In order of how much each seems to matter:
 
-1. **Half the effect is on the bodies.** In every pixel pair the goblins the spell reaches react: a white flash on the hit, then the element's status drawn on the body (flames on a burning goblin, frost on a chilled one, char on an arcane-hit one), and a body thrown by the rock tumbles. That's what makes a spray *burn things* and an impact *land*. In 3D the models get only a status tint; the white flash is drawn on the grey stand-in bodies but not on the models, and no status draws anything on a body. This is the user's "the impact reads like a stamp, not the effect of a beam hitting" and "doesn't look right if it impacts a wall or an enemy". An impact drawn only at a point can't show it; the body has to.
+1. **Half the effect is on the bodies.** In every pixel pair the goblins the spell reaches react: a white flash on the hit, then the element's status drawn on the body (flames on a burning goblin, frost on a chilled one), a held beam flickering its target white, and a body thrown by the rock tumbles. That's what makes a spray *burn things* and an impact *land*. In 3D the models get only a status tint; the white flash is drawn on the grey stand-in bodies but not on the models, and no status draws anything on a body. This is the user's "the impact reads like a stamp, not the effect of a beam hitting" and "doesn't look right if it impacts a wall or an enemy". An impact drawn only at a point can't show it; the body has to.
 2. **Grain: high-frequency detail inside the body.** The pixel bodies are made of hundreds of small elements and dithered texture. The eye reads that fine, changing grain as fast motion even where the shape stays put. The 3D bodies are smooth gradients and low-frequency noise: the "orange cloth" and the "textured tube". The pixel fire has about six times the elements of the 3D one, and all of them small.
 3. **Stepped flicker.** The pixel effects re-roll things on whole frames at 7 to 30 Hz: the beam's white glints (30 Hz), the rock's speed lines (30 Hz), wall crackle (20 Hz), embers (18 Hz), frost glints (7 Hz). The 3D versions use smooth sines and scrolling noise, which read as slow and calm. Energy reads as discontinuity.
 4. **Saturation and opacity.** The pixel colours are full-strength and opaque: magenta, cyan, orange. The 3D ones are pale and translucent after the tone map: a lilac beam, a grey ring. The 3D court's floor is also much paler and brighter than the pixel paving, so a translucent effect has nothing to sit on. "Toned down" went too far on every piece.
@@ -46,7 +46,7 @@ From breakdowns by practitioners and Riot's published guide (sources at the end)
 How the next builds are made and checked. These replace the draft spell-look rules in the [tone round](2026-11-25-spell-concepts-tone.md) where they disagree (rules 4 and 5).
 
 1. **Start from the pixel version's inventory.** List every layer the pixel effect has (from `art/`), and give each a 3D counterpart, or drop it on purpose and say why. Match or beat its element counts and its flicker rates. The pixel version is the floor, not the ceiling.
-2. **Body reactions are part of every effect.** The white hit flash on the models (one to three frames), and each element's status drawn on the body, following its mesh: flames on the burning, frost crust on the chilled, char on the arcane-hit, the thrown body tumbling. These are built with each element, not saved for a statuses batch at the end.
+2. **Body reactions are part of every effect.** The white hit flash on the models (one to three frames), and each element's status drawn on the body, following its mesh: flames on the burning, frost on the chilled, the thrown body tumbling. (An Arcane hit leaves no status in the sim; its body reaction is the flash, flickering under a held beam.) These are built with each element, not saved for a statuses batch at the end.
 3. **Mediums are a mesh shape carrying painted textures**: a Codex-painted texture panned along the motion, bent by a distortion noise and eroded by age, with an inner duplicate for volume. On top, a dense layer of small, fast, short-lived particles. No smooth procedural-only bodies; no sprite cluster as the main body.
 4. **Grain and stepped flicker.** Every body has fine detail inside it, from the texture. Energy layers (glints, crackle, speed lines) re-roll on whole frames at 12 to 30 Hz, as the pixel ones do, rather than sliding smoothly.
 5. **Full strength.** Colours as saturated and bodies as opaque as the pixel version's at the game camera after the tone map, checked by sampling the frame. Sizes at least the pixel version's (the beam at least 0.4 u). Light on the floor as wide as the pixel glow.
@@ -62,6 +62,18 @@ How the next builds are made and checked. These replace the draft spell-look rul
 - **Earth:** the wake becomes speed lines and grit with a short dust trail, not a tube. A white flash at impact, the struck goblins thrown and tumbling, and chips off a wall's face.
 
 One question this raises for the user rather than for the effects: **the 3D court's floor is much paler and brighter than the pixel paving.** Part of why the 3D effects look washed out is that there's no mid or dark value under them. Effects can carry their own dark values (rims, smoke), but the scene's exposure is worth a look in the port thread too.
+
+## The user's answers, and the shared step built (2026-11-25)
+
+On The Court in 3D: **the method, yes** ("Sounds fine. In just need to see it visually"); **shared body reactions first, then fire**; **try the court darker** (filed as #24 for the port thread).
+
+The shared step, on branch `p3d-react`:
+- `cast3d.html`'s `crowd` is now the pixel VFX Lab's crowd (a brute and ten goblins round the target, in the spells' reach), moved so the casters line up; the old four goblins are `scene=sparse`.
+- **The hit flash on every hit** (`view3d/bodies.ts` `flashLevel`): the models' flash follows the hit's level (a fresh hit full white, a repeat hit within 0.35 s half for 0.08 s), where before only a first hit flashed. A beam held on a goblin flickers it, as in the pixel game.
+- **Statuses on the body** (`view3d/fx/statuses.ts`, hosted by `spells3d.ts`), ported from the pixel pass (`art/vfx.ts` `statuses`, `art/kit.ts`): flame licks on the shoulders, re-rolled 14 times a second, embers and an orange light on the burning; glints (stepped: a star, then a dot) and cold breath on the chilled, bigger glints and a pale light on the frozen; sparks re-rolled at 20 Hz on the stunned; drips on the wet. One batch per layer, each quad reading its body from uniform arrays, so it stays a pure function of the clock.
+- `npm run compare:fx -- <out> --view 12` draws the 3D strips closer, to see what's on the bodies.
+
+What the rounds taught: licks placed on the body's own outline are hidden by it from a camera that looks down; out past the silhouette and up on the shoulders they show. A three-rune ring leaves a light chill, and glints in proportion to it almost never showed: any chill now shows, by its square root, at least 0.45. The frost glints are still small at the game camera; they can grow with the frost blast.
 
 ## Sources
 

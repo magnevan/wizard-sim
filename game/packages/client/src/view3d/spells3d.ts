@@ -20,6 +20,7 @@ import { SurfGrid, sprays } from './fx/from-sim';
 import { SpellLights } from './fx/lights';
 import { FxStage } from './fx/stage';
 import { Standins } from './fx/standins';
+import { BodyStatuses } from './fx/statuses';
 import { sceneX, sceneZ } from './scene-map';
 
 const fxUrls = import.meta.glob<string>('../../../../content/generated/fx/fire-*.png', { eager: true, query: '?url', import: 'default' });
@@ -56,6 +57,8 @@ export class Spells3D {
   readonly arcane: ArcaneBeams;
   /** Plain Earth's rock in flight and its impact (fx/earth.ts); its stones sit in the world scene (lit, shadowed) under lightRoot. */
   readonly earth: EarthFx;
+  /** What hangs off bodies with a status (fx/statuses.ts): flames, frost glints, sparks, drips. */
+  readonly statuses: BodyStatuses;
 
   /** `heightAt(x, z)`: the scene's ground height (u) at scene point x, z. */
   constructor(world: THREE.Scene, private heightAt: (x: number, z: number) => number) {
@@ -70,6 +73,8 @@ export class Spells3D {
     this.earth = new EarthFx((x, z) => this.simHeight(x, z));
     this.lightRoot.add(this.earth.meshes);
     this.stage.scene.add(this.earth.group);
+    this.statuses = new BodyStatuses((x, z) => this.simHeight(x, z));
+    this.stage.scene.add(this.statuses.group);
   }
 
   /** The floor's height (u) under sim point (x, z); 0 off the scene. */
@@ -135,6 +140,7 @@ export class Spells3D {
     if (this.cold.group.visible) this.cold.update(t, this.lights);
     this.earth.meshes.visible = this.earth.group.visible = !this.standins.drawEarth;
     if (!this.standins.drawEarth) { this.earth.update(w, t, o.alpha ?? 0, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]]); this.shakeAt = t + (o.alpha ?? 0) / 60; }
+    this.statuses.update(w, t, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]], this.lights);
     this.standins.draw(w, { t, alpha: o.alpha ?? 0, localSeat: o.localSeat ?? -1, cam: this.fxCam, lights: this.lights, bodyAt: o.bodyAt });
     this.lights.end();
   }

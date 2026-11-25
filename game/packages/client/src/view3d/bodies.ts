@@ -38,6 +38,13 @@ const STAND_IN_H: Record<RigKind, number> = { wizard: 2.7, goblin: 1.8, archer: 
 interface Shown { holder: THREE.Group; slug: string | null; inst: Inst | null; stand: THREE.Mesh | null }
 interface Fall extends Fallen { slug: string; t0: number; shown: Shown }
 
+/**
+ * How white a hit flashes a body (bodies-track.ts sets the level): a fresh hit 16 then 9 over its first 0.1 s, a hit
+ * landing again within 0.35 s (a beam or spray held on it) 4 for 0.08 s. The pixel game flashes every one of them, so
+ * a held channel flickers its target; the models used to flash only the first.
+ */
+const flashLevel = (f: number): number => (f >= 16 ? 1 : f >= 9 ? 0.8 : f >= 4 ? 0.5 : 0);
+
 export class Bodies3D {
   /** Everything this draws, under the parent the view gave. */
   readonly group = new THREE.Group();
@@ -79,7 +86,7 @@ export class Bodies3D {
       sh.holder.position.copy(toScene(x, y));
       sh.holder.updateMatrixWorld(true);
       const tint = b.kind[i] === KIND.double ? DOUBLE_TINT : 0xffffff;
-      if (sh.inst && m && slug) this.poseInst(sh, m, livePose(slug, s, i), scopedKey('3d|' + slug + '|' + i), statusTint(s), tint);
+      if (sh.inst && m && slug) this.poseInst(sh, m, livePose(slug, s, i), scopedKey('3d|' + slug + '|' + i), statusTint(s), tint, s.flash);
       else this.poseStand(sh, s, statusTint(s), tint);
     }
     this.drawFalls(ct, toScene);
@@ -163,11 +170,12 @@ export class Bodies3D {
     return mesh;
   }
 
-  private poseInst(sh: Shown, m: Model, p: LivePose, key: string, status: number, tint: number): void {
+  private poseInst(sh: Shown, m: Model, p: LivePose, key: string, status: number, tint: number, flash = 0): void {
     const inst = sh.inst!;
     sh.holder.scale.setScalar(this.scale);
     sh.holder.updateMatrixWorld(true);
     pose(inst, m, p, key);
+    inst.flash.value = flashLevel(flash);
     inst.tint.value.setHex(status).multiply(new THREE.Color(tint));
     if (inst.bow) stringOf(inst, m, p, sh.holder);
   }
@@ -175,7 +183,7 @@ export class Bodies3D {
   private poseStand(sh: Shown, s: RigState, status: number, tint: number): void {
     const mat = sh.stand!.material as THREE.MeshStandardMaterial;
     mat.color.setHex(0x9a968e).multiply(new THREE.Color(status)).multiply(new THREE.Color(tint));
-    mat.emissive.setScalar(s.flash >= 9 ? 1 : 0);
+    mat.emissive.setScalar(flashLevel(s.flash));
     sh.stand!.rotation.z = s.dead ? Math.PI / 2 * Math.min(1, s.dead) : 0;
     sh.stand!.position.y = s.dead ? sh.stand!.scale.x / 2 : sh.stand!.scale.y;
   }

@@ -110,7 +110,13 @@ The user on the painting: "the existing color was fine" (the `base` style stays)
 
 A kerb's sides only exist in 3D, so the kerb is now real blocks in the renderer (`kerbRows` in `kit-road.ts`, on by default; kit3d `?kerb=0` for the plain strip): one row of near-equal blocks along each whole kerb, mitred at its corners, each a slab with rounded corners (`?kerbr=`, 0.24 of its width) and a bevelled top edge. They wear the court's smooth stone mapped by world position on top and sides alike, so nothing drags down a side, with each block's own tone and a darker foot, and they take no ground painting. Mortar shows in the joints. Two things the first try got wrong: the floor's own rock side hid the blocks' road faces (they now stand 0.05 u out over the road), and the joints showed the floor (the bed of mortar now sits a hair above it).
 
-Widths tried: 0.24, 0.32 and 0.45 u (14, 19 and 27 cm), close up and at the game camera: `kerb-widths.jpg`; `kerb-blocks-close.jpg` is 0.32. `?kerbw=` in kit3d and `--kerb` in `tess_proof.py` (the paving is laid up to the kerb's back) must agree. Not yet judged by the user.
+Widths tried: 0.24, 0.32 and 0.45 u (14, 19 and 27 cm), close up and at the game camera: `kerb-widths.jpg`; `kerb-blocks-close.jpg` is 0.32. `?kerbw=` in kit3d and `--kerb` in `tess_proof.py` (the paving is laid up to the kerb's back) must agree.
+
+The user on the kerbs: the middle width (0.32 u) "looks pretty good"; the corners should be rounder, which meant the model's edges (where the top turns down into the sides), not the corners seen from above; the blocks should look good all along the road; and the row of setts from the first attempt should be deleted rather than kept switched off. So:
+
+- **Rounded edges.** Each block's top edge is rounded over all round with a quarter circle 0.09 u in radius (`KERB_EDGE`), five steps with smooth normals, in place of the one bevel. Seen from above the corners are rounded only a little (`?kerbr=`, 0.15 of the width).
+- **Mortar bed in the kerb mesh.** Rounding the corners from above (tried at 0.4 first) opened every joint into a wide V on the road face, and the dark mortar box behind it made curves read as a dashed line; the per-piece box also left a notch at outside mitres where the grass showed. Now the bed is part of the kerb mesh, laid under each block's whole cut just behind its faces, so it runs on through joints and mitres, in a lighter mortar. The two corners on a mitre are barely rounded, so the blocks there close up. `kerb-rounded-edges.jpg` shows both, with close-ups.
+- **The setts are deleted:** `courseStones`, the compiler's `road_courses`, `roads` in `kit.json` and `?stones` are gone. The Codex stone atlases stay for `tess_proof.py`'s grain, moved to `textures/src/` so the game no longer loads them.
 
 Open (written for the cut stones; the seam zones of the straightened cells are irregular polygons instead): where rows from several edges meet, each block of rows keeps its own direction, so wide paving reads as patches at different angles with a few dark triangles of mortar between them; a border course along each edge with one calm direction inside would be quieter. Colours are r6's, not yet matched to the court; nothing is in the shader yet.
 
@@ -119,7 +125,7 @@ Open (written for the cut stones; the seam zones of the straightened cells are i
 - The road tile's rows run east to west everywhere, so they cross the north road and run along the east-west street. Only laying the road in rows (the experiment) fixes that.
 - Anti-repetition shaders alone (stochastic or hex tiling) were left out: they hide a repeat but scramble a laid pattern.
 - A Codex paint-over of the whole road as one unique texture stays the fallback if laid stones don't satisfy; every map edit would invalidate it.
-- Kerb stones are not picked in the editor: a click goes through to the kerb piece under them (now its bed of sand).
+- Kerb blocks are not picked in the editor: a click goes through to the kerb piece under them (now a box hidden inside their bed).
 
 ## Prompts
 

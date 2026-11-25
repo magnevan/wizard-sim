@@ -3,7 +3,7 @@
  * tools/kit/compile.py into instances of made pieces, drawn by kit-render.ts (fitted Meshy models where made, plain
  * placeholders of their exact size elsewhere), so the joins can be judged. Its own page (kit3d.html).
  * ?layout=patch-a, ?x=&y= target (u), ?view=26, ?pitch=46, ?yaw=0 (degrees, turns the camera round the target),
- * ?wiz=0 hides the wizard, ?art=0 draws placeholders only. ?kerb=0 draws kerbs as plain strips, ?kerbw=0.32 sets a kerb block's width (u) and ?kerbr=0.24 how round its corners are; ?stones=1 lays a road's courses of setts.
+ * ?wiz=0 hides the wizard, ?art=0 draws placeholders only. ?kerb=0 draws kerbs as plain strips, ?kerbw=0.32 sets a kerb block's width (u) and ?kerbr=0.15 how round its corners are seen from above.
  * ?plan=30 looks straight down on 30 u across (north up, no shadows, only floors and kerbs): the guide a ground painting is
  * painted over; ?paint=paint/x.png&prect=x0,y0,x1,y1 lays a ground painting over that rectangle (u). The map editor (editor.html) edits the same scenes live.
  */
@@ -27,13 +27,13 @@ const sun = setupStage(renderer, scene);
 if (q.get('art') !== '0') await loadKitArt();
 // the kit's pieces (set pieces' sizes, decals) from the dev server's scene server, when there is one
 await fetch('/__map/kit').then((r) => r.json()).then((k) => setKitPieces(k.pieces)).catch(() => undefined);
-KIT_OPTS.stones = q.get('stones') === '1'; KIT_OPTS.kerb = q.get('kerb') !== '0';
+KIT_OPTS.kerb = q.get('kerb') !== '0';
 if (q.get('kerbw')) KIT_OPTS.kerbW = Number(q.get('kerbw'));
 if (q.get('kerbr')) KIT_OPTS.kerbRound = Number(q.get('kerbr'));
 const PLAN = Number(q.get('plan') ?? 0);
 if (PLAN) renderer.shadowMap.enabled = false;
 if (q.get('paint')) await setGroundPaint(q.get('paint'), (q.get('prect') ?? '').split(',').map(Number) as [number, number, number, number], Number(q.get('pgain') ?? 1));
-scene.add(groundPlane(data), buildKit(PLAN ? { ...data, instances: data.instances.filter((i) => /^(edge|sweep)\.kerb/.test(i.p)), courses: [] } : data));
+scene.add(groundPlane(data), buildKit(PLAN ? { ...data, instances: data.instances.filter((i) => /^(edge|sweep)\.kerb/.test(i.p)) } : data));
 
 // ---- the wizard, for scale ----
 const WIZ_H = 2.9;

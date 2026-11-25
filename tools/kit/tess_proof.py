@@ -443,7 +443,7 @@ def paint(layers, ppu):
     X0, Y0, X1, Y1 = RECT
     w, h = int(round((X1 - X0) * ppu)), int(round((Y1 - Y0) * ppu))
     img = np.zeros((h, w, 3)); height = np.zeros((h, w)); done = np.zeros((h, w), bool)
-    sheets = json.load(open(os.path.join(TEX, 'stones.json')))
+    sheets = json.load(open(os.path.join(TEX, 'src', 'stones.json')))
     noise = lambda seed, sig: (lambda a: a / (np.abs(a).max() + 1e-9))(ndimage.gaussian_filter(np.random.default_rng(seed).normal(0, 1, (h, w)), sig * ppu))
     chips, mossy = noise(SEED + 21, 0.03), noise(SEED + 22, 0.9)
     for S in layers:
@@ -494,7 +494,7 @@ def paint(layers, ppu):
         sweep = r.uniform(0, 2 * np.pi, n)
         pal = pal * lum[:, None] * np.stack([1 + warm, np.ones(n), 1 - warm], 1)
         # painted grain: a window of one painted stone, laid along this stone, as a multiplier round 1
-        sh = sheets[L['sheet']]; atlas = np.asarray(Image.open(os.path.join(TEX, f"stones-{L['sheet']}.png")).convert('RGB')).astype(float)
+        sh = sheets[L['sheet']]; atlas = np.asarray(Image.open(os.path.join(TEX, 'src', f"stones-{L['sheet']}.png")).convert('RGB')).astype(float)
         ch, cw = atlas.shape[0] // sh['rows'], atlas.shape[1] // sh['cols']
         cell = r.integers(0, sh['n'], n); flip = r.integers(0, 4, n)
         dx, dy = pts[:, 0] - S['sites'][own, 0], pts[:, 1] - S['sites'][own, 1]

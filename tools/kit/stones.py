@@ -1,11 +1,12 @@
-"""Cuts a Codex sheet of separate stones (drawn apart on plain magenta) into an atlas of equal cells for laid stones.
+"""Cuts a Codex sheet of separate stones (drawn apart on plain magenta) into an atlas of equal cells: the stones'
+grain in the tessellation proof (tess_proof.py).
 
   python tools/kit/stones.py <sheet.png> <name> [--cols 4] [--cell 256x96]
 
 Each stone is found as a patch that isn't magenta; its middle (the patch less a margin, so no magenta and no painted
 rim shadow) is resized to one cell, and the cells are packed in reading order into
-game/content/generated/textures/stones-<name>.png. The sheet itself is kept in textures/src/sheet-<name>.png, and the
-atlas's grid is written to textures/stones.json ({name: {cols, rows, n}}), which the renderer (kit-road.ts) reads.
+game/content/generated/textures/src/stones-<name>.png (in src/, so the game doesn't load it). The sheet itself is kept
+in textures/src/sheet-<name>.png, and the atlas's grid is written to textures/src/stones.json ({name: {cols, rows, n}}).
 Prompts: tools/concept-gen/prompts/2026-11-24-road/.
 """
 import json, os, shutil, sys
@@ -44,8 +45,8 @@ if __name__ == '__main__':
         atlas.paste(cut, ((i % cols) * cw, (i // cols) * ch))
     os.makedirs(os.path.join(OUT, 'src'), exist_ok=True)
     shutil.copy(src, os.path.join(OUT, 'src', f'sheet-{name}.png'))
-    atlas.save(os.path.join(OUT, f'stones-{name}.png'))
-    meta_path = os.path.join(OUT, 'stones.json')
+    atlas.save(os.path.join(OUT, 'src', f'stones-{name}.png'))
+    meta_path = os.path.join(OUT, 'src', 'stones.json')
     meta = json.load(open(meta_path)) if os.path.exists(meta_path) else {}
     meta[name] = dict(cols=cols, rows=rows, n=len(cells))
     json.dump(meta, open(meta_path, 'w'))

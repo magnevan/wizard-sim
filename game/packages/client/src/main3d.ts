@@ -11,10 +11,11 @@
  *
  * ?cam=26 sets the view's distance (u of ground in view), ?fade=0 turns fading off, ?kitart=0 draws the kit as
  * greybox, ?runes=1 gives every wizard the usual rune pools in any room (casting in the court), ?shot=plaza / wall /
- * fire / fight / practice / practice-fire sets a scene for scripts/play3d-shot.mjs (window.__ready, window.__perf).
+ * fire / fight / practice / practice-fire / cold sets a scene for scripts/play3d-shot.mjs (window.__ready, window.__perf);
+ * with ?clip=1 a shot's spell is filmed (window.__seek, scripts/cold3d-clips.mjs).
  */
 import {
-  ARCH, DT, KEYED_EL, KIND, MAX_SEATS, PHASE, RUNES, elementId, elementName, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
+  ARCH, DT, KEYED_EL, KIND, MAX_SEATS, PHASE, RUNES, elementId, elementName, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, restore, snapshot, step,
   type Mode, type PartyState, type PlayerInput, type Room, type World,
 } from '@wizard-sim/sim';
 import { demoInput, parseDemo } from './demo';
@@ -74,6 +75,8 @@ const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [numb
   practice: { room: 'practice', wiz: [[23, 23.5], [31, 23.5]], gob: [], face: 0.75 },
   // Fire spray from the yard at the middle dummy, 70 ticks in
   'practice-fire': { room: 'practice', wiz: [[27, 25.5], [33, 28]], gob: [], face: 0.75, spell: 'fire+fire+fire/force', at: [27, 19], ticks: 70 },
+  // a three-rune Frost ring among goblins on the plaza, just after it went off (with ?clip=1, a film: scripts/cold3d-clips.mjs)
+  cold: { wiz: [[95, 95], [106, 99]], gob: [[90.5, 91], [95, 90], [99.5, 91.5], [92, 98.5], [99, 98]], face: 0.75, spell: 'cold+cold+cold/area', at: [95, 95], ticks: 36 },
 };
 
 /**
@@ -145,10 +148,32 @@ async function boot(): Promise<void> {
       world.mode = { ...world.mode, runeMax: () => 5 };   // the court (and the party's pools) give no runes: five each, for this shot only
       casts.forEach((_, p) => devRefillRunes(world, p));
       const ds = casts.map((c) => parseDemo(`${c.spell}@${simX(c.at[0])},${simY(c.at[1])}`)!);
-      for (let k = 0; k < (shot.ticks ?? 60); k++) {
+      let k = 0;
+      const stepShot = (withView: boolean) => {
         const inputs = Array.from({ length: MAX_SEATS }, (_, p) => (ds[p] && k >= (casts[p].lag ?? 0) ? demoInput(world, k - (casts[p].lag ?? 0) + p * 37, p, ds[p]) : NO_INPUT));
-        view.beforeStep(world); step(world, inputs); view.afterStep(world);
+        if (withView) view.beforeStep(world);
+        step(world, inputs);
+        if (withView) view.afterStep(world);
+        k++;
+      };
+      // ?clip=1: the tick seat 0's spell goes off (found on a scratch run), and __seek(t) to step on to t s after it
+      let end = shot.ticks ?? 60;
+      if (optOn('clip')) {
+        const start = snapshot(world);
+        let castAt = -1;
+        while (castAt < 0 && k < 600) { stepShot(false); if (world.events.some((e) => e.who === 0 && e.kind === 'cast')) castAt = world.clock[0]; }
+        restore(world, start); k = 0;
+        end = Math.max(0, castAt - world.clock[0] - 30);   // the film starts half a second before the spell
+        const film = window as unknown as { __ready: boolean; __seek: (t: number) => void };
+        film.__seek = (t) => {
+          film.__ready = false;
+          while (k < 2000 && world.clock[0] < castAt + Math.round(t * 60)) stepShot(true);
+          // posed on the sim's clock, so a frame looks the same however long it took
+          view.draw(world, 0, (world.clock[0] * 1000) / 60);
+          film.__ready = true;
+        };
       }
+      while (k < end) stepShot(true);
     }
     if (shot.hud) { hudShot(world, shot.gob); view.beforeStep(world); }
   }

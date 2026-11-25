@@ -16,7 +16,10 @@
  *   &hit=1                   the sim's hit shapes dotted over it in white (spray cones, beam lines, missiles and their
  *                            flight, zones, area rings), to check the stand-ins against
  *   &view=16                 ground in view top to bottom, u (the game shows 26)
- *   &standins=all            Fire's spray and floor as stand-ins too (they're look B otherwise)
+ *   &standins=all            Fire's spray and floor and the Frost ring as stand-ins too (they're fire.ts's and cold.ts's otherwise)
+ *   &move=1                  the caster walks east from 0.2 s before the spell goes off (a nova follows its caster)
+ *   &clip=1                  for film: the world is run to t (default -0.1) and drawn; window.__seek(t) then steps it on
+ *                            to any later t and draws that (window.__ready is set after each)
  *   &sheet=channels          a contact sheet instead: one tile per spell of a group (channels, missiles, areas, places,
  *                            walls, self, sigil, weapons, previews, all), or &spells=a;b;c (a recipe each, `|t` after it
  *                            for its own moment); &cols=4, &tile=480x300
@@ -43,6 +46,8 @@ const HIT = q.get('hit') === '1';
 const VIEW_H = Number(q.get('view') ?? 16);
 const SCENE = q.get('scene') ?? 'crowd';
 const ALL_FIRE = q.get('standins') === 'all';
+const MOVE = q.get('move') === '1';
+const CLIP = q.get('clip') === '1';
 const COLS = Math.max(1, Number(q.get('cols') ?? 4) | 0);
 const [TW, TH] = (q.get('tile') ?? '480x300').split('x').map(Number);
 
@@ -121,6 +126,7 @@ pending.push(...liveSlugs().map((s) => liveModel(s).catch(() => null)));
 setSceneOrigin({ w: 0, h: 0 });
 const spells = new Spells3D(scene, () => 0);
 spells.standins.drawFire = ALL_FIRE;
+spells.standins.drawCold = ALL_FIRE;
 pending.push(spells.load());
 
 // ?hit=1: the sim's own shapes, as white dots on the floor
@@ -129,7 +135,7 @@ hitPts.renderOrder = 20; hitPts.frustumCulled = false; hitPts.visible = HIT;
 spells.stage.scene.add(hitPts);
 
 // ---- a world, stepped to its moment ------------------------------------------------------------------------------------
-interface Run { w: World; bodies: Bodies3D; bursts: { x: number; y: number; r: number; tick: number }[]; t0: number }
+interface Run { w: World; bodies: Bodies3D; bursts: { x: number; y: number; r: number; tick: number }[]; t0: number; next: number }
 
 function makeWorld(): World {
   const w = createWorld(7, 1, { room: 'sanctum', dummies: false });
@@ -143,7 +149,8 @@ function makeWorld(): World {
   return w;
 }
 
-const inputs = (w: World, k: number, d: Demo) => Array.from({ length: MAX_SEATS }, (_, p) => (p === 0 ? demoInput(w, k, 0, d) : NO_INPUT));
+/** Every seat's input at tick k; with ?move=1 and `walkFrom`, seat 0 walks east from that tick on. */
+const inputs = (w: World, k: number, d: Demo, walkFrom = Infinity) => Array.from({ length: MAX_SEATS }, (_, p) => (p === 0 ? (MOVE && k >= walkFrom ? { ...demoInput(w, k, 0, d), moveX: 127 } : demoInput(w, k, 0, d)) : NO_INPUT));
 
 /** The tick whose step casts the spell (its cast event, or a hands move), found on a scratch run. */
 function findCast(d: Demo): number {
@@ -162,14 +169,21 @@ function runTo(r: Recipe): Run {
   const w = makeWorld(), bodies = new Bodies3D(scene), bursts: Run['bursts'] = [];
   const t0 = findCast(r.demo), end = Math.max(0, t0 + Math.round(r.t * 60));
   spells.reset();
-  for (let k = 0; k < end; k++) {
+  const run: Run = { w, bodies, bursts, t0, next: 0 };
+  stepTo(run, r.demo, end);
+  return run;
+}
+
+/** Step a run on to tick `end`, the view told round every step. */
+function stepTo(run: Run, d: Demo, end: number): void {
+  const { w, bodies, bursts } = run;
+  for (; run.next < end; run.next++) {
     bodies.beforeStep(w);
-    step(w, inputs(w, k, r.demo));
+    step(w, inputs(w, run.next, d, run.t0 - 12));
     bodies.afterStep(w);
     spells.afterStep(w);
     for (const e of w.events) if (e.kind === 'burst' && e.who >= 0) bursts.push({ x: e.x, y: e.y, r: e.amount ?? 0, tick: w.clock[0] });
   }
-  return { w, bodies, bursts, t0 };
 }
 
 function drawHits(run: Run): void {
@@ -215,7 +229,8 @@ const stats = { glow: 0, tint: 0, solid: 0 };
 function draw(run: Run, box?: { x: number; y: number; w: number; h: number }): void {
   place(box ? box.w / box.h : W / H);
   renderer.info.reset();
-  run.bodies.update(run.w, 0, performance.now(), (x, y) => new THREE.Vector3(x, 0, y));
+  // a film's frames pose the bodies on the sim's clock, so every frame is the same however long it took to draw
+  run.bodies.update(run.w, 0, CLIP ? (run.w.clock[0] * 1000) / 60 : performance.now(), (x, y) => new THREE.Vector3(x, 0, y));
   spells.frame(run.w, run.w.clock[0] / 60, { alpha: 0, localSeat: 0, cam });
   if (HIT) drawHits(run);
   spells.render(renderer, scene, cam, box);
@@ -241,6 +256,17 @@ if (SHEET) {
   }
   info.textContent = `${sheetName ?? 'spells'} · scene ${SCENE} · view ${VIEW_H} u${HIT ? ' · hit shapes' : ''}`;
   (window as unknown as { __ready: boolean }).__ready = true;
+} else if (CLIP) {
+  const r = recipes[0], run = runTo({ ...r, t: T_AT ?? -0.1 }), lab = window as unknown as { __ready: boolean; __seek: (t: number) => void };
+  lab.__seek = (t: number) => {
+    lab.__ready = false;
+    stepTo(run, r.demo, Math.max(run.next, run.t0 + Math.round(t * 60)));
+    draw(run);
+    info.textContent = `${r.label} · t = ${((run.next - run.t0) / 60).toFixed(2)} s`;
+    lab.__ready = true;
+  };
+  label(0, 0, recipes[0].label);
+  lab.__seek(T_AT ?? -0.1);
 } else if (T_AT !== null) {
   const run = runTo(recipes[0]);
   draw(run);
@@ -257,7 +283,7 @@ if (SHEET) {
     while (acc >= 1 / 60) {
       acc -= 1 / 60;
       if (tick >= run.t0 + LOOP) { scene.remove(run.bodies.group); run = runTo({ ...r, t: -99 }); tick = 0; }
-      run.bodies.beforeStep(run.w); step(run.w, inputs(run.w, tick, r.demo)); run.bodies.afterStep(run.w); spells.afterStep(run.w);
+      run.bodies.beforeStep(run.w); step(run.w, inputs(run.w, tick, r.demo, run.t0 - 12)); run.bodies.afterStep(run.w); spells.afterStep(run.w);
       for (const e of run.w.events) if (e.kind === 'burst' && e.who >= 0) run.bursts.push({ x: e.x, y: e.y, r: e.amount ?? 0, tick: run.w.clock[0] });
       tick++;
     }

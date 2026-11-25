@@ -100,3 +100,34 @@ One per spell to pick the tone, then the alternatives:
 - Family: **toon-sheet-2**.
 
 The rest (toon-beam-1, -2, -4, toon-rock-1, -2, chunky-rock-1, toon-impact-1, toon-nova-2, toon-sheet-1) are kept as takes.
+
+## The build: the Earth rock (2026-11-25)
+
+The user picked [toon-rock-3](../reference/spell-concepts/earth/toon-rock-3.jpg) for the flight and [toon-impact-2](../reference/spell-concepts/earth/toon-impact-2.jpg) for the impact: "Toon looks ok, though this rock is very big, I'd expect this to be one with many rock elements. the impact looks a little weird". Read as: the painting shows a many-rune rock, and one rune should be small. Built on branch `p3d-earth`: `game/packages/client/src/view3d/fx/` `earth.ts` (tracking, the rock, the wake, grit), `earth-impact.ts`, `rock-mesh.ts`, `dust-mesh.ts`, `earth-sheets.ts`. Shots and clips: `npm run shot:earth3d` (add `--clips` for the clips), into `game/shots/port-3d/tone/earth/`.
+
+### The spec
+
+| Field | |
+|---|---|
+| **Job** | Who threw a heavy thing where, and what it broke. A missile, not a quake: the stone is the rock's colour and flies out of the rock, never up out of the floor. |
+| **Silhouette** | A low-poly grey-brown boulder with hewn facets and a dark rim, tumbling forward, its shadow under it; a tube of ochre dust back to the staff. The impact: the rock breaking into a few big chunks and many chips, a low ring of dust rolling out, a star of dark cracks. |
+| **Size** | From the sim. The sim's rock is a 0.3 u circle at any size; its damage is n^rockExp (`config.ts`, 1.3) times its charge (a tap is half). The drawing takes the damage as mass: radius 0.34 × cbrt(n^1.3 × charge), so one charged rune is 0.34 (about the hit circle) and five 0.68; a tapped rock is 0.8 of that. |
+| **Movement** | Flies at the sim's speed (12 u/s tapped, 20 charged), tumbling about a turn per three widths. The wake hangs where the rock passed and thickens, sinks and erodes away over 0.7 to 1 s. Impact: chips fly 0.3 to 0.8 s and sink away; the ring rolls out fast and slows (1.5 s); the cracks run out in 0.12 s, hold 2.2 s and are gone by 3.2 s. A jolt of the view for 0.3 s. |
+| **Colour** | Stone grey-brown with lighter and darker facets, three toon light steps and a dark rim. Dust ochre-brown, darker than the floor, a soft lit top and shaded folds. Cracks near-black brown. No light of its own. |
+| **Runes** | A bigger rock, a thicker wake, more grit and chips, a wider ring, longer cracks; four adds a fast thin shock ring, five a dark crater in the cracks. |
+| **Charged rock** | The sim's fully charged rock pierces (`effects.ts`): each body it goes through gets a small impact (chips and a burst of dust, no floor marks), and the full impact is where it finally ends (a wall, or the end of its 28 u flight, where it lands). |
+| **Budget** | A rock: 1 mesh (80 faces); the wake 1 mesh (48 × 14 quads); grit up to 160 instances, shared. An impact: up to 37 shard instances, 3 dust meshes, 1 decal. |
+| **Not** | Not the floor erupting (the chunky take, kept for the Earthquake); not a pile of dust sprites. |
+
+### What the rounds taught
+
+1. **Painted puff sprites read as a pile of bubbles.** The first wake used a Codex sheet of toon dust puffs (`raw/earth-dust-1.png`, kept): at every alpha and size they read as stacked, outlined blobs, the fire's "cluster of opaque sprites" failure. The dust is now **noise-eroded meshes** (a tube along the flight, a torus for the ring, a blob for the burst) with 3D noise fixed in the world: the outline is the noise's, so no shape repeats, and the erosion threshold climbing with age turns the body into wisps.
+2. **Hard toon steps on dust read as mud.** From the game camera nearly every visible face looks at the sun, so lighting by the normal alone is flat; the noise's depth has to carry the light (lobes lit, folds shaded). Hard steps then gave a camouflage pattern; soft bands and a translucent edge read as dust.
+3. **The rock is a real mesh in the world scene** (in the spell lights' group), so it shades like the court and casts a shadow: that shadow is half of what makes a small rock read as in the air.
+4. **The cracks want a painted star.** A Codex sheet of four crack stars (`earth-cracks.png`), drawn dark on a floor decal, reads at once.
+
+### Against the concept
+
+- Flight: the rock, its dark underside and its shadow match. The wake is thinner and flatter than the painting's chunky billows, and paler where it thins: it reads as dust and not as sprites, but it lacks the painting's volume from this camera.
+- Impact: shards, ring and cracks as asked, and no light. The ring reads as a soft dust ring rather than the painting's chunky rolling puffs; at five runes it is wide.
+- Still open: the dust's volume (more height to the tube and the ring, or a lit version that casts shadows), and whether the view jolt is wanted (it moves the whole camera: 0.02 u at one rune, 0.18 u at five).

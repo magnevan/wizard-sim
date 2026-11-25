@@ -5,7 +5,8 @@
 //   3. the rooms compile, and the game's own rules for them (starts, altars);
 //   4. placement: every spawn, portal, altar and dummy inside the room and clear of rock, and
 //      reachable on foot from seat 0's start;
-//   5. the generated module (packages/sim/src/rooms.gen.ts) is up to date;
+//   5. the generated module (packages/sim/src/rooms.gen.ts) is up to date, and every kit scene's room file
+//      (content/generated/rooms) was exported from its scene as it is now (scene-room.mjs);
 //   6. the asset registry: every prop's meta.json is whole and names images that exist.
 // Then the sense lint (sense.mjs): warnings, printed but not failing.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -206,7 +207,7 @@ export function runCheck({ project = undefined, genOut = GEN_OUT } = {}) {
   try { loaded = loadProject(project); } catch (e) { return { errors: [`can't load the maps: ${e.message}`], rooms: [], source: '' }; }
   checkSchema(loaded, errors);
   checkReferences(loaded, errors);
-  const { rooms, errors: compileErrors } = compileProject(loaded);
+  const { rooms, errors: compileErrors, sceneIds } = compileProject(loaded);
   errors.push(...compileErrors);
   for (const id of SIM.rooms) if (!rooms.some((r) => r.id === id)) errors.push(`no level for the room "${id}" (the game's code names it)`);
   for (const room of rooms) checkRoom(room, errors);
@@ -218,7 +219,8 @@ export function runCheck({ project = undefined, genOut = GEN_OUT } = {}) {
     const grounds = existsSync(GROUND_OUT) ? readFileSync(GROUND_OUT, 'utf8').replace(/\r\n/g, '\n') : '';
     if (grounds !== emitGrounds(loaded)) errors.push(`${GROUND_OUT} is stale: run \`npm run content:build\``);
   } catch (e) { errors.push(e.message); }
-  const warnings = errors.length ? [] : senseLintAll(loaded, rooms);
-  if (!errors.length) { const ag = agreementAll(rooms); errors.push(...ag.errors); warnings.push(...ag.warnings); }
+  const warnings = errors.length ? [] : senseLintAll(loaded, rooms, sceneIds);
+  // a scene-made room is its scene's own: there is no second map for it to disagree with
+  if (!errors.length) { const ag = agreementAll(rooms.filter((r) => !sceneIds.has(r.id))); errors.push(...ag.errors); warnings.push(...ag.warnings); }
   return { errors, warnings, rooms, source };
 }

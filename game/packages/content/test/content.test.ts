@@ -1,6 +1,7 @@
 // The map pipeline: the real maps pass content:check (so `npm run check` covers it), broken maps
 // fail it, the rock tracer and the grid CLI round-trip, and the check's copies of sim numbers and
 // the room hash agree with the sim.
+import { spawnSync } from 'node:child_process';
 import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -421,4 +422,29 @@ describe('the agreement check (scene against sim)', () => {
     const scene = { regions: [{ mat: 'paving', h: 0, kind: 'flat', polys: [square(-2, -2, 2, 2)] }] };
     expect(agreement(room, scene).counts.invisibleWall).toBeGreaterThan(0);
   });
+});
+
+describe('rooms from kit scenes (tools/kit/room.py)', () => {
+  const entry = () => C.loadSceneRooms().find((e: any) => e.doc.scene === 'court');
+  it('the court is the room its scene exported, in place of its LDtk level', () => {
+    const e = entry();
+    expect(e, 'game/content/generated/rooms/court.room.json').toBeDefined();
+    const { room, errors } = C.sceneRoom(e);
+    expect(errors).toEqual([]);
+    expect(ROOMS.court).toEqual(room);
+    expect([ROOMS.court.w, ROOMS.court.h]).toEqual([e.doc.toScene[0] * 2, e.doc.toScene[1] * 2]);
+    expect(C.emitGrounds(C.loadProject())).not.toContain('  court: [');
+  });
+  it('a room file whose scene has moved on is stale, and one without its four starts is refused', () => {
+    const e = entry();
+    expect(C.sceneRoom({ ...e, doc: { ...e.doc, sceneHash: '0000000000000000' } }).errors.join()).toMatch(/is stale/);
+    expect(C.sceneRoom({ ...e, doc: { ...e.doc, room: { ...e.doc.room, starts: e.doc.room.starts.slice(1) } } }).errors.join()).toMatch(/four starts/);
+  });
+  // The exporter must write the same bytes on every run and machine. CI has no shapely, so this runs where Python does.
+  const py = ['python', 'python3'].find((p) => spawnSync(p, ['-c', 'import shapely, numpy'], { stdio: 'ignore' }).status === 0);
+  it.skipIf(!py)('the exporter writes the committed file, byte for byte, twice over', () => {
+    const r = spawnSync(py!, [join(C.GAME, '..', 'tools/kit/room.py'), 'court', '--check'], { encoding: 'utf8' });
+    expect(r.stderr + r.stdout).toContain('byte-identical');
+    expect(r.status).toBe(0);
+  }, 120_000);
 });

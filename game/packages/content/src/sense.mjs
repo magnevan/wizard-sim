@@ -127,14 +127,16 @@ export function senseLint(room, ground) {
 }
 
 /** The lint over every level that compiled to a room. */
-export function senseLintAll(loaded, rooms) {
+export function senseLintAll(loaded, rooms, sceneIds = new Set()) {
   const out = [];
   loaded.levels.forEach(({ level }, i) => {
     const room = rooms[i];
-    if (!room || !layerOf(level, 'Terrain')) return;
+    if (!room || !layerOf(level, 'Terrain') || sceneIds.has(room.id)) return;
     let ground = null;
     try { ground = groundRows(loaded.project, level); } catch { ground = null; }
     out.push(...senseLint(room, ground));
   });
+  // a kit scene's room has no painted Ground layer: only the rules that need none
+  for (const room of rooms) if (sceneIds.has(room.id)) out.push(...senseLint(room, null));
   return out;
 }

@@ -78,6 +78,9 @@ export const OPTIONS = [
   { key: 'massing', group: 'View', label: 'Academy buildings', kind: 'choice', choices: () => ['on', 'off'], help: 'The academy buildings round the drill yard and the courtyard, painted (or grey boxes where no art is yet), at real size (art/massing.ts). off hides them.' },
   { key: 'structoff', group: 'View', label: 'Hide structure parts', kind: 'text', help: 'Comma list of parts not to draw: walls, waves, devices, wizards, preview, fx (for isolating a slow or broken part).' },
   { key: 'renderer', group: 'View', label: 'Renderer', kind: 'choice', choices: () => ['webgpu'], help: 'Try WebGPU instead of WebGL.' },
+  { key: 'cam', group: 'View', label: '3D view distance', kind: 'number', live: true, help: 'The 3D page (play3d.html): u of ground the view shows top to bottom (default 26; the pixel game shows about 34 at 1080p).' },
+  { key: 'fade', group: 'View', label: '3D fading walls', kind: 'flag', defaultOn: true, live: true, help: 'The 3D page: whatever stands between the camera and your wizard fades. Off to compare.' },
+  { key: 'kitart', group: 'View', label: '3D kit art', kind: 'flag', defaultOn: true, help: 'The 3D page: the kit\'s made models and textures. Off: its greybox placeholders (quick to load).' },
 
   // ---- Sound ----
   { key: 'sound', group: 'Sound', label: 'Sound', kind: 'flag', defaultOn: true, help: 'Off: no sound at all.' },
@@ -98,6 +101,7 @@ export const OPTIONS = [
   { key: 'scene', group: 'Test runs', label: 'Scene', kind: 'choice', choices: () => ['rally', 'three', 'enemyattacks'], help: 'Headless: rally / three (Survive), or enemyattacks (every enemy frozen at one beat of its attack).' },
   { key: 'phase', group: 'Test runs', label: 'Attack phase', kind: 'choice', choices: () => ['wind', 'strike', 'impact', 'recover', 'loop'], help: 'With scene=enemyattacks.' },
   { key: 'face', group: 'Test runs', label: 'Attack facing', kind: 'number', help: 'With scene=enemyattacks: facing in turns (default 0.06).' },
+  { key: 'shot', group: 'Test runs', label: '3D shot setup', kind: 'choice', choices: () => ['plaza', 'wall'], help: 'The 3D page, headless: plaza (two wizards and six goblins on the court\'s plaza) or wall (a wizard behind the great hall), standing still (scripts/play3d-shot.mjs).' },
   { key: 'pauseAt', group: 'Test runs', label: 'Pause at tick', kind: 'number', help: 'Pause the sim at tick N, as P does in the tools panel.' },
   { key: 'selftest', group: 'Test runs', label: 'Selftest', kind: 'flag', help: 'No rendering: run the golden replay and publish its hash on <html data-hash>.' },
   { key: 'ticks', group: 'Test runs', label: 'Selftest ticks', kind: 'number', help: 'How long the selftest replay runs (default 1800).' },

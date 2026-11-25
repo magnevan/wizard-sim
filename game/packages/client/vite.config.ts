@@ -133,6 +133,8 @@ export default defineConfig({
     chunkSizeWarningLimit: 600,
     // The registry's images stay files, fetched when a room needs them (art/assets.ts), however small.
     assetsInlineLimit: (file) => (file.replace(/\\/g, '/').includes('/content/assets/') ? false : undefined),
-    rolldownOptions: { output: { codeSplitting: { groups: [{ name: 'pixi', test: /node_modules[\\/](pixi\.js|@pixi)[\\/]/ }] } } },
+    // Two pages: the pixel game, and the 3D game being ported beside it (play3d.html, docs/threads/port-3d.md). The
+    // lab pages stay dev-only.
+    rolldownOptions: { input: { index: join(here, 'index.html'), play3d: join(here, 'play3d.html') }, output: { codeSplitting: { groups: [{ name: 'pixi', test: /node_modules[\\/](pixi\.js|@pixi)[\\/]/ }] } } },
   },
 });

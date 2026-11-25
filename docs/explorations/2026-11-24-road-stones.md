@@ -67,7 +67,15 @@ The user on the first try: "already quite good"; the kerb blocks should be more 
 - **Surfaces are laid whole.** Cutting a surface to the picture's rectangle makes a false edge that rows then follow.
 - **A compiler sliver.** The court's road outline runs out to a point and back near (83.4, 46.4), where the street's curve meets the grid; the kerb model shows it too. The proof closes notches under 0.4 u before laying.
 
-Open: the zones where rows from several edges meet in wide paving are still busy; colours are r6's, not yet matched to the court; nothing is in the shader yet.
+### Cut stones
+
+The user on those stills: "a many fold improvement", "probably already close to usable"; the main concern is the seams, where stones "end up having a wavy outline, which would actually be very difficult to cut": a mason cuts "straight-ish lines". They suggested straightening edges afterwards and filling what is left with mortar.
+
+Built as the mason's own rule instead of a clean-up pass (`cut_stones`): every stone is a rectangle on its row, laid in order from the edge inward; one that would overlap a stone already laid is cut along a single straight line (that stone's face) with a joint between, and a scrap is left out. Each stone is then let out until its neighbours' faces stop it, so the wedge beside a stone on a bend is taken up by a slightly larger stone, not mortar. Rooms still left get one filler stone cut to fit, or stay mortar where small. Every stone is therefore convex with straight sides only. The relaxing is no longer used for cut stones (`--cells` still draws the relaxed cells): turning each stone to the blended field tilted stones off their rows and opened gaps (`cut-stones-first-try.jpg`).
+
+Stills: `cut-stones-small.jpg`, `cut-stones-large.jpg`, and on the ground at the game camera `cut-stones-large-in-game.jpg`.
+
+Open: where rows from several edges meet, each block of rows keeps its own direction, so wide paving reads as patches at different angles with a few dark triangles of mortar between them; a border course along each edge with one calm direction inside would be quieter. Colours are r6's, not yet matched to the court; nothing is in the shader yet.
 
 ## Trade-offs and what was not done
 

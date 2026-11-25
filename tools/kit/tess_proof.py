@@ -144,12 +144,12 @@ def rows(geom, L):
             n_len = ring.length; t = rng.uniform(0, 2 * L['a'] * sc)
             while t < n_len:
                 al = L['a'] * sc * (1 + rng.uniform(-L['vary'], L['vary']))
-                pt = ring.interpolate(t + al)
-                sites.append((pt.x, pt.y)); size.append((al, bw, k))
+                pt = ring.interpolate(t + al); q0, q1 = ring.interpolate(max(t + al - 0.05, 0)), ring.interpolate(min(t + al + 0.05, n_len))
+                sites.append((pt.x, pt.y)); size.append((al, bw, k, np.arctan2(q1.y - q0.y, q1.x - q0.x)))
                 t += 2 * al
         depth += 2 * bw; k += 1
         if k > 400: break
-    return np.array(sites).reshape(-1, 2), np.array(size).reshape(-1, 3)
+    return np.array(sites).reshape(-1, 2), np.array(size).reshape(-1, 4)
 
 
 def prune(sites, size, th):
@@ -214,6 +214,99 @@ def kerb_blocks(road, strip):
     return dict(quads=quads, sites=quads.mean(1), th=np.arctan2(ax[:, 1], ax[:, 0]), a=ln / 2, b=np.full(len(quads), KERB_W / 2), name='kerb', geom=strip)
 
 
+def clip(P, n, c):
+    """The part of the convex polygon P (corners in order) where n . x <= c."""
+    if len(P) < 3: return P[:0]
+    d = P @ n - c
+    if (d <= 0).all(): return P
+    if (d > 0).all(): return P[:0]
+    out = []
+    for i in range(len(P)):
+        j = (i + 1) % len(P)
+        if d[i] <= 0: out.append(P[i])
+        if (d[i] <= 0) != (d[j] <= 0): out.append(P[i] + (P[j] - P[i]) * (d[i] / (d[i] - d[j])))
+    return np.array(out)
+
+
+def area(P):
+    return 0.5 * float(P[:, 0] @ np.roll(P[:, 1], -1) - P[:, 1] @ np.roll(P[:, 0], -1)) if len(P) > 2 else 0.0
+
+
+def faces(Q):
+    """A convex polygon's faces (corners counter-clockwise): outward normals n and offsets c (n . x = c on the face)."""
+    d = np.roll(Q, -1, 0) - Q; ln = np.hypot(d[:, 0], d[:, 1]); ok = ln > 1e-7
+    n = np.stack([d[ok, 1], -d[ok, 0]], 1) / ln[ok, None]
+    return n, (n * Q[ok]).sum(1)
+
+
+def cut_to_fit(P, Q, g):
+    """A stone cut to fit against one already laid: if P comes within a joint (g) of Q, P is cut along one straight
+    line, the face of Q that costs P least. The laid stone is never touched."""
+    n, c = faces(Q)
+    R = P
+    for k in range(len(n)):
+        R = clip(R, n[k], c[k] + g)
+        if len(R) < 3: return P                    # clear of it already
+    if area(R) < 1e-6: return P
+    best, ba = P[:0], 0.0
+    for k in range(len(n)):
+        C = clip(P, -n[k], -(c[k] + g)); a = area(C)
+        if a > ba: best, ba = C, a
+    return best
+
+
+def cut_stones(cen, th, hu, hv, L, geom):
+    """Stones as a mason cuts them. Each stone is a rectangle on its row (centre, direction, half-sizes), and they are
+    laid in order, rows from the edge inward: a stone that would overlap one already laid is cut along a straight line
+    to fit against it, and one cut down to a scrap is left out. Then every stone is let out to meet its neighbours: it
+    grows until their faces cut it, so the wedge beside a stone on a bend, or a strip left down the middle of a road,
+    is taken up by stones a little larger and not by mortar. Rooms still left get a filler stone cut to fit where they
+    are large, and are mortar where they are small. Returns the stones' corners."""
+    n = len(cen); g = L['joint']
+    c, s_ = np.cos(th), np.sin(th)
+    t, nn = np.stack([c, s_], 1), np.stack([-s_, c], 1)
+    rect = lambda i, k=1.0: np.array([cen[i] - t[i] * hu[i] * k - nn[i] * hv[i] * k, cen[i] + t[i] * hu[i] * k - nn[i] * hv[i] * k,
+                                      cen[i] + t[i] * hu[i] * k + nn[i] * hv[i] * k, cen[i] - t[i] * hu[i] * k + nn[i] * hv[i] * k])
+    GROW = 1.55
+    rad = np.hypot(hu, hv)
+    near = cKDTree(cen).query_ball_point(cen, r=rad * GROW + rad.max() * GROW + g)
+    laid = {}
+    def place(P, cands, floor, skip=-1):
+        for j in cands:
+            Q = laid.get(j)
+            if Q is None or j == skip: continue
+            P = cut_to_fit(P, Q, g)
+            if len(P) < 3: return None
+        a_ = area(P)
+        per = np.hypot(*(np.roll(P, -1, 0) - P).T).sum()
+        return P if a_ >= floor and a_ / (per * per) > 0.022 else None      # (not a scrap, not a sliver)
+    for i in range(n):                              # the order they were laid in: row by row from the edge
+        P = place(rect(i), [j for j in near[i] if j < i], 0.35 * 4 * hu[i] * hv[i])
+        if P is not None: laid[i] = P
+    def let_out():
+        for i in list(laid):
+            if i >= n: continue
+            P = place(rect(i, GROW), near[i], 0, skip=i)
+            if P is not None and area(P) > area(laid[i]): laid[i] = P
+    let_out()
+    # fillers: the larger rooms left over get one stone each, cut to fit
+    nominal = 4 * L['a'] * L['b']
+    for rnd in range(2):
+        keys = list(laid); cens = np.array([laid[k].mean(0) for k in keys]); tree = cKDTree(cens)
+        free = geom.difference(unary_union([Polygon(laid[k]).buffer(g, join_style=2) for k in keys]))
+        added = 0
+        for comp in getattr(free, 'geoms', [free]):
+            if comp.geom_type != 'Polygon' or comp.area < 0.15 * nominal: continue
+            hull = orient(comp.convex_hull, 1.0)
+            if hull.geom_type != 'Polygon': continue
+            P = np.array(hull.exterior.coords)[:-1]
+            r = np.hypot(*(P - P.mean(0)).T).max()
+            P = place(P, [keys[j] for j in tree.query_ball_point(P.mean(0), r + rad.max() * GROW + g)], 0.1 * nominal)
+            if P is not None: laid[n + 100000 * (rnd + 1) + added] = P; added += 1
+        if not added: break
+    return list(laid.values())
+
+
 def lay(name, geom, lppu=None):
     """A surface's stones: rows from the edge, then a little relaxing. Returns centres (u), row directions, half-sizes."""
     L = LAY[name]
@@ -225,8 +318,15 @@ def lay(name, geom, lppu=None):
     pts = np.stack([X0 + (xs + 0.5) / lppu, Y0 + (ys + 0.5) / lppu], 1)
     samp = lambda p: th_f[np.clip(((p[:, 1] - Y0) * lppu).astype(int), 0, mask.shape[0] - 1), np.clip(((p[:, 0] - X0) * lppu).astype(int), 0, mask.shape[1] - 1)]
     sites, size = rows(geom, L)
-    keep = prune(sites, size, samp(sites)); sites, size = sites[keep], size[keep]
+    keep = prune(sites, size, size[:, 3]); sites, size = sites[keep], size[keep]
     n = len(sites)
+    if '--cells' not in sys.argv:                 # cut stones: each on its own row, as laid
+        polys = cut_stones(sites, size[:, 3], size[:, 0], size[:, 1], L, geom)
+        cen = np.array([P.mean(0) for P in polys]); ths, aa, bb = [], [], []
+        for P in polys:                           # each stone's own frame: along its longest side
+            d = np.roll(P, -1, 0) - P; k = int(np.argmax(np.hypot(d[:, 0], d[:, 1]))); a_ = np.arctan2(d[k, 1], d[k, 0]); ths.append(a_)
+            q = P - P.mean(0); aa.append(np.abs(q @ [np.cos(a_), np.sin(a_)]).max()); bb.append(np.abs(q @ [-np.sin(a_), np.cos(a_)]).max())
+        return dict(quads=polys, cut=True, sites=cen, th=np.array(ths), a=np.array(aa), b=np.array(bb), name=name, geom=geom)
     for it in range(L.get('relax', 6)):
         th = samp(sites)
         own, _, _, _ = owners(pts, sites, th, size[:, 0], size[:, 1])
@@ -235,7 +335,7 @@ def lay(name, geom, lppu=None):
         live = cnt > 0
         sites[live] = sites[live] * 0.4 + np.stack([cx, cy], 1)[live] * 0.6
     th = samp(sites)
-    return dict(sites=sites, th=th, a=size[:, 0], b=size[:, 1], name=name, geom=geom)
+    return dict(sites=sites, th=th, a=size[:, 0], b=size[:, 1], name=name, geom=geom)   # (--cells: the relaxed cells as they are, uncut)
 
 
 def paint(layers, ppu):
@@ -250,7 +350,7 @@ def paint(layers, ppu):
         if 'quads' in S:
             lab = Image.new('I', (w, h), 0); dr = ImageDraw.Draw(lab)
             for i, q in enumerate(S['quads']): dr.polygon([((x - X0) * ppu, (y - Y0) * ppu) for x, y in q], fill=i + 1)
-            lab = np.asarray(lab); mask = mask | (lab > 0)
+            lab = np.asarray(lab) * mask if S.get('cut') else np.asarray(lab); mask = mask | (lab > 0)
             ys, xs = np.nonzero(mask)
             if not len(ys): continue
             pts = np.stack([X0 + (xs + 0.5) / ppu, Y0 + (ys + 0.5) / ppu], 1)
@@ -263,6 +363,7 @@ def paint(layers, ppu):
                 df = pad != np.roll(pad, 1, axis=0 if sy else 1); edge |= df | np.roll(df, -1, axis=0 if sy else 1)
             e = (ndimage.distance_transform_edt(~edge) / ppu)[2:-2, 2:-2] * (lab > 0)
             e = ndimage.gaussian_filter(e, 0.012 * ppu)
+            inset = 0.004 if S.get('cut') else L['joint'] / 2      # cut stones already stand a joint apart
         else:
             ys, xs = np.nonzero(mask)
             if not len(ys): continue
@@ -272,6 +373,7 @@ def paint(layers, ppu):
             e = np.full((h, w), 0.0); e[ys, xs] = (m2 - m1) / 2 * half
             e = np.minimum(e, ndimage.distance_transform_edt(np.pad(mask, 2, constant_values=True))[2:-2, 2:-2] / ppu)   # (the picture's rim is not an edge)
             e = ndimage.gaussian_filter(e, 0.02 * ppu)                  # rounds the corners where three stones meet
+            inset = L['joint'] / 2
         n = len(S['sites']); r = np.random.default_rng(SEED + len(S['name']))
         pal = np.array(L['pal'], float)[r.integers(0, len(L['pal']), n)]
         lum = 1 + r.uniform(-L['tone'], L['tone'], n); warm = r.uniform(-L['tone'], L['tone'], n) * 0.5
@@ -290,10 +392,10 @@ def paint(layers, ppu):
         grain = 1 + (tex / cmean[cell[own]] - 1) * L.get('grain', 0.7)
         col = pal[own] * grain
         ee = e[ys, xs]
-        k = np.clip((ee - L['joint'] / 2) / (1.5 / ppu), 0, 1)           # 0 in the joint, 1 on the stone
-        ao = 0.9 + 0.1 * np.clip((ee - L['joint'] / 2) / (L['bevel'] * 1.6), 0, 1)
+        k = np.clip((ee - inset) / (1.5 / ppu), 0, 1)                   # 0 in the joint, 1 on the stone
+        ao = 0.9 + 0.1 * np.clip((ee - inset) / (L['bevel'] * 1.6), 0, 1)
         img[ys, xs] = np.array(L['jointc'], float) * (1 - k[:, None]) + col * ao[:, None] * k[:, None]
-        hh = np.clip((ee - L['joint'] / 2) / L['bevel'], 0, 1); hh = hh * hh * (3 - 2 * hh)
+        hh = np.clip((ee - inset) / L['bevel'], 0, 1); hh = hh * hh * (3 - 2 * hh)
         height[ys, xs] = hh * L['bevel']
         done |= mask
     # the bevels lit from the upper left, as the court's sun falls

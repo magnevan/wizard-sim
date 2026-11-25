@@ -14,7 +14,7 @@
  * While the panel is open, K takes the enemy nearest the cursor as the puppet (or lets it go).
  */
 import { AI, ARCHETYPES, DEV_GUARDS, DEV_WEAPONS, KIND, STRUCT, atan2Turns, devConjure, devGuard, devPuppetAttack, devSpawnEnemy, devStage, devStageOff, type DevStage, type World } from '@wizard-sim/sim';
-import type { Camera } from './camera';
+import type { ViewCamera } from './game-view';
 import { h } from './debug-panel';
 
 export class StageTools {
@@ -29,7 +29,7 @@ export class StageTools {
   private kept = 0;
 
   /** `cheat` marks the run dev-edited and says whether cheats are allowed (offline). */
-  constructor(private world: World, private camera: Camera, private canvas: HTMLElement, private cheat: () => boolean, private panelOpen: () => boolean) {
+  constructor(private world: World, private camera: ViewCamera, private canvas: HTMLElement, private cheat: () => boolean, private panelOpen: () => boolean) {
     // the capture phase on window runs before the game's own listeners on the canvas (input.ts), so a held puppet
     // takes the mouse and the wizard doesn't walk or cast
     const mine = (e: Event) => e.target === this.canvas && (this.st.puppet >= 0 || this.picking);

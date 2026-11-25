@@ -6,7 +6,7 @@
  */
 import { rules, type Element } from '@wizard-sim/rules';
 import { ARCHETYPES, CELL, DEVICE, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, N_EL, SURF, TERRAIN, WALL, WARD, terrainNear, elementName, isPropWall, type World } from '@wizard-sim/sim';
-import type { Camera } from './camera';
+import type { ViewCamera } from './game-view';
 
 const HOVER = 0.9;
 const elName = (id: number) => rules.ELEMENTS[elementName(id) as Element].name;
@@ -53,7 +53,7 @@ export class Inspect {
   private sx = 0;
   private sy = 0;
 
-  constructor(private world: World, private camera: Camera) {
+  constructor(private world: World, private camera: ViewCamera) {
     const el = this.el = document.createElement('div');
     el.style.cssText = 'position:fixed;z-index:30;pointer-events:none;display:none;max-width:260px;font:12px/1.4 ui-monospace,Consolas,monospace;color:#ecebf2;background:rgba(13,11,20,.92);border:1px solid #5a5078;border-radius:6px;padding:6px 8px;box-shadow:0 2px 10px rgba(0,0,0,.4)';
     document.body.appendChild(el);

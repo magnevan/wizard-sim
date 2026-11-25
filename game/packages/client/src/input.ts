@@ -10,7 +10,7 @@
  */
 import { rules, type Element } from '@wizard-sim/rules';
 import { AIM_UNIT, BTN, elementId, quantize, type PlayerInput, type World } from '@wizard-sim/sim';
-import type { Camera } from './camera';
+import type { ViewCamera } from './game-view';
 import { liftAtWorld } from './art/heights';
 
 export class KeyboardMouse {
@@ -27,7 +27,7 @@ export class KeyboardMouse {
   private tapUse = false;
   private keyToElement = new Map<string, number>();
 
-  constructor(target: HTMLElement, private camera: Camera) {
+  constructor(target: HTMLElement, private camera: ViewCamera) {
     for (const el of rules.BASE) this.keyToElement.set('Key' + rules.ELEMENTS[el as Element].key, elementId(el));
     addEventListener('keydown', (e) => {
       if (e.repeat) return;

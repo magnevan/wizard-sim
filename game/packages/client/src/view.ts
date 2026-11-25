@@ -50,6 +50,7 @@ import { StructureView, drawTelegraphs } from './view-structures';
 import { Hud } from './hud';
 import { TutorialHud } from './tutorial-view';
 import type { SoundDirector } from './audio/director';
+import type { GameView } from './game-view';
 
 const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10, bramble: 10, sack: 9, soldier: 9 };
 /** ?lighting=0 turns the scene lighting off, to compare. */
@@ -74,7 +75,7 @@ const AIM_REACH = 0.8, AIM_SIDE = 1.2;
 const TURN_MIN = 0.001, TURN_STEPS = 2, TURN_RATE = 1.8, TURN_OWE_MAX = 1.5, TURN_START = 0.2;
 const HEAVY_MOVES =new Set(['tideslash', 'firewave', 'fissure', 'dash', 'chargedbolt']);
 const BLOW_MOVES = new Set(['strike', 'sweep', 'arrow', 'volley', 'splinter', 'dash', 'javelin', 'lash', 'tideslash', 'firewave', 'fissure', 'bolt', 'chargedbolt']);
-export class WorldView {
+export class WorldView implements GameView {
   readonly camera = new Camera();
   /** Add this to the stage: the scene, and the HUD over it. */
   readonly root = new Container();

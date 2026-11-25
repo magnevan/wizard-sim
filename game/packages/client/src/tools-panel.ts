@@ -12,7 +12,7 @@ import {
   ARCHETYPES, KIND, MAX_SEATS, TEAM, devClearEnemies, devHeal, devRefillRunes, devSkipLull, devSpawnEnemy,
   devStartWave, devStopWaves, devRestartRun, grant, EL, N_PU, PU, type World,
 } from '@wizard-sim/sim';
-import type { Camera } from './camera';
+import type { ViewCamera } from './game-view';
 import { DebugPanel, h, panelSection, renderFlags } from './debug-panel';
 import { StageTools } from './stage-tools';
 
@@ -40,7 +40,7 @@ export class ToolsPanel extends DebugPanel {
   readonly stage: StageTools;
 
   /** `stageNow`: the Stage at boot (?stage=1): the panel opens with enemies held still and God mode on. */
-  constructor(private world: World, private camera: Camera, canvas: HTMLElement, openNow = false, stageNow = false) {
+  constructor(private world: World, private camera: ViewCamera, canvas: HTMLElement, openNow = false, stageNow = false) {
     super('right', 'F3', 'Tools', 'Debug tools', 2);
     this.stage = new StageTools(world, camera, canvas, () => { if (!this.offline()) return false; this.cheat(); return true; }, () => this.isOpen);
     if (stageNow) { this.godMode = true; this.devEdited = true; this.stage.setHold(true); openNow = true; }

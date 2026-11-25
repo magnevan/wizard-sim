@@ -85,6 +85,15 @@ The user on the straightened cells (their version C; the relaxed cells before st
 
 Cause: a row's line in C is a chain of corners given by the stones above and below it in turn, and they don't lie on one line. Fix (in `straighten`): corners are shared between the stones meeting there, and wherever a joint runs on through a corner turning less than 32 degrees, the corner slides onto the line between its two neighbours along that joint; 14 passes. Rows pull straight and stay curved where they curve; corners on a surface's edge stay put. Stills: `eased-small.jpg`, `eased-large.jpg`. Known flaw: a stone that grows past its nominal size shows its painted grain smeared at the rim.
 
+The user on that (version D): some zig-zags fixed, but "a small regression on C, because some of the 'softness' went away, especially on the left sidewalk". C's stones look rounded, as if natural stones were found and smoothed a bit to fit; D's edges are so sharp that the organic pattern begs the question of why it isn't designed. Also: drop the smaller road stones ("the larger ones look better in every iteration"), and show versions side by side.
+
+Version E (`version-e.jpg`; C, D and E side by side in `compare-c-d-e.jpg`, made by `tools/kit/tess_compare.py`):
+
+- the easing is gentler (6 passes, and only where a joint turns less than 22 degrees), so it takes out a row's shallow zig-zag and leaves a stone's real corners, and so C's five- and six-sided stones, alone;
+- every stone is drawn in by half a joint with its corners rounded, each by its own amount (`--round`, a share of its shorter half-size), which leaves a small pocket of mortar where three stones meet;
+- the road's larger stones are the default (`--road 1.7`);
+- a stone's painted grain is fitted to its own extent, so it no longer smears on stones that grew.
+
 Open (written for the cut stones; the seam zones of the straightened cells are irregular polygons instead): where rows from several edges meet, each block of rows keeps its own direction, so wide paving reads as patches at different angles with a few dark triangles of mortar between them; a border course along each edge with one calm direction inside would be quieter. Colours are r6's, not yet matched to the court; nothing is in the shader yet.
 
 ## Trade-offs and what was not done

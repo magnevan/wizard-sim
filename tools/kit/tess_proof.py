@@ -35,7 +35,8 @@ OUT = sys.argv[1]
 PPU = int(opt('--ppu', 64))
 RECT = [float(v) for v in opt('--rect', '81,31.5625,111,48.4375').split(',')]
 SEED = int(opt('--seed', 1))
-ROAD_SCALE = float(opt('--road', 1))        # the road's stones this many times the usual size
+ROAD_SCALE = float(opt('--road', 1.7))
+ROUND = float(opt('--round', 0.3))            # how far a stone's corners are rounded: a share of its shorter half-size        # the road's stones this many times the usual size
 # (surfaces are laid whole, never cut to the rectangle: a cut would be an edge, and rows would follow it)
 rng = np.random.default_rng(SEED)
 
@@ -307,7 +308,7 @@ def cut_stones(cen, th, hu, hv, L, geom):
     return list(laid.values())
 
 
-def straighten(sites, th, a, b, geom, passes=14):
+def straighten(sites, th, a, b, geom, passes=int(opt('--ease', 6)), turn=float(opt('--turn', 22))):
     """The relaxed cells with their borders straightened: a border between two stones becomes the straight line between
     the two corners where it ends (the points where three stones meet, or two stones and the surface's edge), so every
     stone has straight sides, as cut stone has, and the layout is the relaxed one.
@@ -364,7 +365,8 @@ def straighten(sites, th, a, b, geom, passes=14):
             if u != w: nb[u].add(w); nb[w].add(u)
     nb = [np.array(sorted(x), int) for x in nb]
     free = [v for v in range(len(V)) if not pinned[v] and len(nb[v]) >= 2]
-    LIM = -np.cos(np.radians(32))                    # a joint runs on through a corner if it turns less than this
+    LIM = -np.cos(np.radians(turn))                  # a joint runs on through a corner if it turns less than this: only a
+    # row's shallow zig-zag is eased; a stone's real corners (and so its many-sided, dressed look) are left alone
     for _ in range(passes):
         new = V.copy()
         for v in free:
@@ -411,7 +413,12 @@ def lay(name, geom, lppu=None):
     th = samp(sites)
     if '--cells' in sys.argv: return dict(sites=sites, th=th, a=size[:, 0], b=size[:, 1], name=name, geom=geom)   # the relaxed cells as they are
     polys, idx = straighten(sites, th, size[:, 0], size[:, 1], geom)
-    return dict(quads=polys, clip=True, sites=sites[idx], th=th[idx], a=size[idx, 0], b=size[idx, 1], name=name, geom=geom)
+    cen, aa, bb = [], [], []                      # each stone's own middle and half-sizes along its row, for its painting
+    for P, ang in zip(polys, th[idx]):
+        c, s_ = np.cos(ang), np.sin(ang); u, v = P @ [c, s_], P @ [-s_, c]
+        cu, cv = (u.max() + u.min()) / 2, (v.max() + v.min()) / 2
+        cen.append([cu * c - cv * s_, cu * s_ + cv * c]); aa.append((u.max() - u.min()) / 2); bb.append((v.max() - v.min()) / 2)
+    return dict(quads=polys, clip=True, sites=np.array(cen), th=th[idx], a=np.array(aa), b=np.array(bb), name=name, geom=geom)
 
 
 def paint(layers, ppu):
@@ -425,7 +432,18 @@ def paint(layers, ppu):
         mask = raster(S['geom'], ppu, RECT)
         if 'quads' in S:
             lab = Image.new('I', (w, h), 0); dr = ImageDraw.Draw(lab)
-            for i, q in enumerate(S['quads']): dr.polygon([((x - X0) * ppu, (y - Y0) * ppu) for x, y in q], fill=i + 1)
+            rr = np.random.default_rng(SEED + 77)
+            for i, q in enumerate(S['quads']):
+                if q[:, 0].max() < X0 or q[:, 0].min() > X1 or q[:, 1].max() < Y0 or q[:, 1].min() > Y1: continue
+                if S.get('clip') and ROUND > 0:
+                    # a stone dressed to fit: drawn in by half a joint, its corners rounded, each stone by its own amount
+                    r = ROUND * rr.uniform(0.5, 1.3) * min(S['a'][i], S['b'][i])
+                    g = Polygon(q).buffer(0)
+                    shp = g.buffer(-(L['joint'] / 2 + r), join_style=1).buffer(r, join_style=1, resolution=6)
+                    if shp.is_empty: shp = g.buffer(-L['joint'] / 2)
+                    for part in getattr(shp, 'geoms', [shp]):
+                        if part.geom_type == 'Polygon' and not part.is_empty: dr.polygon([((x - X0) * ppu, (y - Y0) * ppu) for x, y in part.exterior.coords], fill=i + 1)
+                else: dr.polygon([((x - X0) * ppu, (y - Y0) * ppu) for x, y in q], fill=i + 1)
             lab = np.asarray(lab) * mask if S.get('cut') or S.get('clip') else np.asarray(lab); mask = mask | (lab > 0)
             ys, xs = np.nonzero(mask)
             if not len(ys): continue
@@ -439,7 +457,7 @@ def paint(layers, ppu):
                 df = pad != np.roll(pad, 1, axis=0 if sy else 1); edge |= df | np.roll(df, -1, axis=0 if sy else 1)
             e = (ndimage.distance_transform_edt(~edge) / ppu)[2:-2, 2:-2] * (lab > 0)
             e = ndimage.gaussian_filter(e, 0.012 * ppu)
-            inset = 0.004 if S.get('cut') else L['joint'] / 2      # cut stones already stand a joint apart
+            inset = 0.004 if S.get('cut') or (S.get('clip') and ROUND > 0) else L['joint'] / 2      # these already stand a joint apart
         else:
             ys, xs = np.nonzero(mask)
             if not len(ys): continue

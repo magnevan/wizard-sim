@@ -56,6 +56,8 @@ export class KitScene {
   loadMs = 0;
   loadedAt = 0;
   loadBytes = 0;
+  /** The last load's parts, ms: fetching the scene and its art, building it, batching it. */
+  timings = { fetch: 0, build: 0, batch: 0 };
   /** The scene built now ('' before the first load). */
   name = '';
   private heights = new Map<number, number>();
@@ -82,14 +84,19 @@ export class KitScene {
       this.art = this.art.then(() => { useKitArt(all ? null : { urls: KIT_URLS, ...kitArt(data, pieces) }); return loadKitArt(); });
     }
     await Promise.all([art ? this.art : Promise.resolve(), stones]);
+    this.timings.fetch = performance.now() - t0;
+    const t1 = performance.now();
     this.clear();
     this.name = name;
     this.data = data;
     const kit = buildKit(this.data);
     this.root.add(groundPlane(this.data), kit);
     this.index(kit);
+    this.timings.build = performance.now() - t1;
     if (optOn('kitbatch')) {
+      const t2 = performance.now();
       const b = (this.batch = batchKit(kit));
+      this.timings.batch = performance.now() - t2;
       this.root.add(b.group);
       for (const o of this.occluders) o.cut = (on) => b.cut(o.obj, on);
     }

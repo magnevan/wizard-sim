@@ -54,6 +54,8 @@ npm run audit          # inert additions in play: every queue of up to 3 runes c
 npm run scaling        # rune scaling: every form x cast at 1-5 runes, and every second rune -> tools/scaling-report.json
 npm run balance        # the balance harness: measures every common spell and bot wave runs -> tools/balance-report.json
 npm run balance:weapons # every weapon's Strike, Heavy and Sweep spammed vs the same element's spell, 10 s and 30 s -> tools/weapon-dps-report.json
+npm run perf:3d        # build, then the 3D page's weight (scripts/perf3d.mjs; --gpu for the real GPU): draw calls, triangles,
+                       # frame ms, first-load MB, time to the built scene, dist/ MB, and a shot -> shots/port-3d/weight/
 npm run perf           # build, then step() timed in node (Arena, Survive wave 12, the golden replay; prints the hashes) and busy
                        # scenes in headless Chrome: waves, the help panel, the Academy, a stress case, and spells cast for real
                        # over and over (battery-idle/-patch/-spray/-ring in the battery, spell-<name> in the Sanctum): ms per

@@ -76,7 +76,7 @@ export function batchKit(kit: THREE.Group): KitBatch {
   // repeated models: by geometry, material and shadow flags (mirrored ones are merged: an instance can't turn its faces)
   const uses = new Map<string, Src[]>();
   for (const s of srcs) {
-    if (!plain(s.mesh.material as THREE.Material) || s.m.determinant() <= 0) continue;
+    if (!plain(s.mesh.material as THREE.Material) || s.m.determinant() <= 0 || sheared(s.m)) continue;
     const k = `${s.mesh.geometry.uuid}|${(s.mesh.material as THREE.Material).uuid}|${flags(s)}`;
     let l = uses.get(k); if (!l) uses.set(k, (l = [])); l.push(s);
   }
@@ -122,6 +122,17 @@ export function batchKit(kit: THREE.Group): KitBatch {
   return { group, cut, dispose, stats };
 }
 
+const cx = new THREE.Vector3(), cy = new THREE.Vector3(), cz = new THREE.Vector3();
+/**
+ * Whether a matrix shears (a flight's balustrades follow its slope that way): a batch's instance turns normals by an
+ * approximation that is exact only without shear, so those are merged instead, with their true normal matrix.
+ */
+function sheared(m: THREE.Matrix4): boolean {
+  m.extractBasis(cx, cy, cz);
+  const lx = cx.length(), ly = cy.length(), lz = cz.length(), eps = 1e-4;
+  return Math.abs(cx.dot(cy)) > eps * lx * ly || Math.abs(cy.dot(cz)) > eps * ly * lz || Math.abs(cz.dot(cx)) > eps * lz * lx;
+}
+
 function eligible(m: THREE.Mesh): boolean {
   const mat = m.material;
   if (Array.isArray(mat) || (m as THREE.InstancedMesh).isInstancedMesh || (m as THREE.SkinnedMesh).isSkinnedMesh) return false;
@@ -148,7 +159,7 @@ function merged(list: { mesh: THREE.Mesh; piece: THREE.Object3D; m: THREE.Matrix
   for (const src of list) {
     const g = src.mesh.geometry, count = g.attributes.position.count;
     B.copy(src.m);
-    if (src.s !== 1) B.multiply(unscale.makeScale(1 / src.s, 1 / src.s, 1 / src.s));
+    if (src.s !== 1) B.premultiply(unscale.makeScale(1 / src.s, 1 / src.s, 1 / src.s));   // the mesh's scale s puts it back
     N.getNormalMatrix(B);
     const flip = B.determinant() < 0;
     for (const n of names) {

@@ -50,6 +50,7 @@
     "scaling": "vitest run --config vitest.balance.config.ts tools/scaling.balance.ts",
     "artifact": "npm run build && node scripts/make-artifact.mjs",
     "perf": "npm run build && node scripts/perf.mjs",
+    "perf:3d": "npm run build && node scripts/perf3d.mjs",
     "vfx-sheet": "node scripts/vfx-sheet.mjs",
     "shot:bodies": "node scripts/bodies-shots.mjs"
   },

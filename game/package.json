@@ -21,6 +21,7 @@
     "shot:route": "node scripts/route-shots.mjs",
     "shot:lab": "node scripts/lab-shot.mjs",
     "shot:3d": "node scripts/play3d-shot.mjs",
+    "shot:fx3d": "node scripts/fx3d-shots.mjs",
     "editor:shot": "node scripts/editor-shot.mjs",
     "editor:check": "node scripts/editor-check.mjs",
     "fps:lab": "node scripts/lab-fps.mjs",
@@ -49,7 +50,8 @@
     "scaling": "vitest run --config vitest.balance.config.ts tools/scaling.balance.ts",
     "artifact": "npm run build && node scripts/make-artifact.mjs",
     "perf": "npm run build && node scripts/perf.mjs",
-    "vfx-sheet": "node scripts/vfx-sheet.mjs"
+    "vfx-sheet": "node scripts/vfx-sheet.mjs",
+    "shot:bodies": "node scripts/bodies-shots.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

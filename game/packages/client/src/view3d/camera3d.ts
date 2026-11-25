@@ -16,8 +16,11 @@ import { sceneX, sceneZ, simX, simY } from './scene-map';
 
 export const FOV = 28;
 export const PITCH = THREE.MathUtils.degToRad(46);
-/** The default ground height in view (u). The pixel game shows about 34 u top to bottom at 1080p (scripts/play3d-shot.mjs notes). */
-export const VIEW_H = 26;
+/**
+ * The default ground height in view (u); `?cam=` overrides it. 30 u is the user's pick (2026-11-25, The Court in 3D: 26 "a
+ * little bit close"; tune it in play). The pixel game shows about 34 u top to bottom at 1080p (scripts/play3d-shot.mjs notes).
+ */
+export const VIEW_H = 30;
 
 export class Camera3D implements ViewCamera {
   readonly cam = new THREE.PerspectiveCamera(FOV, 16 / 9, 0.5, 600);

@@ -22,7 +22,7 @@ const SHOTS = [
   ...GROUPS.map((g) => ({ name: `sheet-${g}`, page: 'cast3d', q: `sheet=${g}&cols=4&tile=480x300`, w: 1920, h: 900 })),
   { name: 'sheet-telegraphs', page: 'cast3d', q: 'spells=wait/wait|0.3;wait/wait|0.5;wait/wait|0.7;wait/wait|0.9&scene=attack&cols=4&tile=480x300', w: 1920, h: 300 },
   { name: 'hit-check', page: 'cast3d', q: 'spells=water,water,water/force|0.8;arcane,arcane/force|0.8;earth,fire/force|0.12;fire,fire/area|0.15&hit=1&cols=4&tile=480x300', w: 1920, h: 300 },
-  { name: 'court-fight', page: 'play3d', q: 'shot=fight&cam=26', w: 1920, h: 1080 },
+  { name: 'court-fight', page: 'play3d', q: 'shot=fight&cam=30', w: 1920, h: 1080 },
 ].filter((s) => !only || only.split(',').includes(s.name));
 
 const ext = process.env.DEV_URL;

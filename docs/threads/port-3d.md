@@ -11,7 +11,9 @@ Branch `port-3d` (worktree `.claude/worktrees/port-3d`), not merged to main. Tea
 
 ## Next
 
-- [ ] The user's answers on The Court in 3D (camera distance, the hole, the models, fire A or B, the walk grid).
+- [ ] Fire from concept art: a Codex round of directions for the spray, floor and ring (`docs/reference/spell-concepts/fire/`), the user picks, then the build follows it.
+- [ ] A dummy model (and the yard's straw goblin): a Codex picture first, then the user's OK for Meshy.
+- [ ] Later: a profiling pass on the user's machine; an exploration of asset handling (streaming, levels of detail, keeping assets across sessions) rather than squeezing sizes.
 - [ ] Agree scene markers (the `marker` object kind, already in `court.scene.json`) and re-running `room.py` on save with the map editor's session.
 - [ ] Step 2: the HUD on a 2D canvas over the view; every spell drawn as its sim hit shape; the practice ground (a flat kit scene with dummies, replacing the Sanctum's role); casting in the court behind a dev switch; the 3D VFX Lab.
 - [ ] Weight before the swap: trim `kit-render.ts`'s eager texture glob (dist grew 40 → 217 MB; 104 MB first load), batch the kit (2,565 draw calls), load only the room's models; `play3d` shouldn't pull the Pixi chunk.
@@ -19,6 +21,8 @@ Branch `port-3d` (worktree `.claude/worktrees/port-3d`), not merged to main. Tea
 - [ ] Rollback smoothing for bodies (`Bodies3D` has none; step 3).
 
 ## Done
+
+- 2026-11-25 step 0 reviewed ([decision](../decisions/README.md#2026-11-25-the-ports-step-0-reviewed-a-30-u-camera-the-cut-out-the-models-kept-fire-back-to-concept-art-toolsport-3d-review)): camera 30 u, the cut-out kept, the models kept, both fire looks rejected, the walk grid right. Merged `p3d-hud` (the pixel HUD, bars and edge arrows over the view) and `p3d-practice` (`play3d.html#practice`, key 1: a flat kit sandbox with dummies).
 
 - 2026-11-25 step 0, four agents merged into `port-3d`: `p3d-map` (the court's room from its scene, `marker` objects, a court hash trail), `p3d-bodies` (`art/model-pose.ts` shared posing, `view3d/bodies.ts`), `p3d-fx` (`view3d/fx/`, `fx3d.html`, Fire two ways), `p3d-view` (`play3d.html`, `main3d.ts`, `View3D`, the camera, the fade). The user: bodies keep the pixel game's scale (wizard 2.7 u); the hat hiding the wizard's face at 46° is the intended look.
 - 2026-11-25 `GameView` / `ViewCamera` (`client/src/game-view.ts`): the seam the loop, input and panels use; `WorldView` implements it

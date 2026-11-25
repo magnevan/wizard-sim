@@ -6,14 +6,16 @@
  *
  * Left out, for now: the help panel (F1: its live preview is a tiny Pixi world), the Pixel scale and Lights settings,
  * the Academy's prop keys, the Sound Lab, ?scene= and ?spell= demos. The report box's picture is the 3D canvas without
- * the panels. The page starts in the court; the number keys don't switch rooms (only the court has a 3D scene).
+ * the panels. The page offers the rooms with a kit scene (scenarios.ts usePage('3d'): the court, the practice ground,
+ * #practice or ?room=practice) and starts in the court; the view loads each room's scene as the room changes.
  *
  * ?cam=26 sets the view's distance (u of ground in view), ?fade=0 turns fading off, ?kitart=0 draws the kit as
- * greybox, ?runes=1 gives every wizard the usual rune pools in any room (casting in the court), ?shot=plaza / wall / fire sets a scene for scripts/play3d-shot.mjs (window.__ready, window.__perf).
+ * greybox, ?runes=1 gives every wizard the usual rune pools in any room (casting in the court), ?shot=plaza / wall /
+ * fire / fight / practice / practice-fire sets a scene for scripts/play3d-shot.mjs (window.__ready, window.__perf).
  */
 import {
-  ARCH, DT, KEYED_EL, MAX_SEATS, NO_INPUT, RUNES, elementName, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
-  type Mode, type PartyState, type PlayerInput, type Room,
+  ARCH, DT, KEYED_EL, KIND, MAX_SEATS, PHASE, RUNES, elementId, elementName, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
+  type Mode, type PartyState, type PlayerInput, type Room, type World,
 } from '@wizard-sim/sim';
 import { demoInput, parseDemo } from './demo';
 import { PadSeats } from './gamepad';
@@ -31,22 +33,25 @@ import { EscMenu, type Setting } from './menu';
 import { ReportBox } from './report';
 import { GameAudio, loadVolumes, volumeSettings } from './audio/game-audio';
 import { MENU_SECTIONS, onOption, opt, optNum, optOn, seedOpt, setOpt } from './dev-options';
-import { fromLocation, hashFor, scenarioById, scenarioOfRoom, worldFor, type Scenario } from './scenarios';
+import { fromLocation, hashFor, scenarioById, scenarioForKey, scenarioOfRoom, usePage, worldFor, type Scenario } from './scenarios';
 import { View3D } from './view3d/view3d';
+import { VIEW_H } from './view3d/camera3d';
 import { setSceneOrigin, simX, simY } from './view3d/scene-map';
+import { hasScene } from './view3d/kit-scene';
 
+usePage('3d');
 const start = fromLocation(location.search, location.hash);
 if (start.ally) seedOpt('ally', '1');
 const hud = document.getElementById('hud')!;
 
 /**
- * A shot's scene: where the wizards and goblins stand (scene u, so it doesn't move with the offset). With `spell`, seat
- * 0 casts it (demo.ts's notation, aimed at `at`, scene u) and the sim runs `ticks` before the shot, the court's no-runes
- * rule lifted for it; with `casts`, each seat casts its own (`lag` ticks behind the clock; demoInput's own lag of 37 ticks
- * a seat is undone); otherwise nobody moves.
+ * A shot's scene: its room (default the court), where the wizards and goblins stand (scene u, so it doesn't move with
+ * the offset). With `spell`, seat 0 casts it (demo.ts's notation, aimed at `at`, scene u) and the sim runs `ticks`
+ * before the shot, the court's no-runes rule lifted for it; with `casts`, each seat casts its own (`lag` ticks behind the
+ * clock; demoInput's own lag of 37 ticks a seat is undone); otherwise nobody moves.
  */
 interface ShotCast { spell: string; at: [number, number]; lag?: number }
-const SHOTS: Record<string, { wiz: [number, number][]; gob: [number, number][]; face?: number; spell?: string; at?: [number, number]; ticks?: number; casts?: ShotCast[] }> = {
+const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [number, number][]; face?: number; spell?: string; at?: [number, number]; ticks?: number; hud?: boolean; casts?: ShotCast[] }> = {
   // the plaza, south of the armillary's dais: two wizards facing an arc of six goblins
   plaza: { wiz: [[91.5, 95.5], [98.5, 95.5]], gob: [[83, 91], [86.5, 89.5], [90.5, 88.8], [99.5, 88.8], [103.5, 89.5], [107, 91]], face: 0.75 },
   // a wizard just north of the great hall (95.5, 34; 26 x 12 u, 16 m tall), with a goblin in front of the hall to compare
@@ -63,15 +68,36 @@ const SHOTS: Record<string, { wiz: [number, number][]; gob: [number, number][]; 
       { spell: 'shield+earth/drag', at: [105, 93] },
     ],
   },
+  // the HUD (view3d/hud3d.ts) mid-fight: seat 0 has sprayed Fire and queues Water + Cold, hurt and burning; seat 1 and a goblin are off screen
+  hud: { wiz: [[95, 96], [140, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5], [50, 92]], face: 0.75, spell: 'fire+fire/force', at: [95, 89], ticks: 100, hud: true },
+  // the practice ground (54 x 40 u; its dummies stand at 18,21 / 27,19 / 36,21): two wizards in the middle of the yard
+  practice: { room: 'practice', wiz: [[23, 23.5], [31, 23.5]], gob: [], face: 0.75 },
+  // Fire spray from the yard at the middle dummy, 70 ticks in
+  'practice-fire': { room: 'practice', wiz: [[27, 25.5], [33, 28]], gob: [], face: 0.75, spell: 'fire+fire+fire/force', at: [27, 19], ticks: 70 },
 };
+
+/**
+ * The HUD shot's state after its cast: the goblins back where they stood (scene u, in spawn order), seat 0 done casting,
+ * hurt, burning and queueing Water + Cold, the east goblin chilled.
+ */
+function hudShot(w: World, gob: [number, number][]): void {
+  const b = w.bodies, s = w.seats;
+  b.hp[0] = b.maxHp[0] * 0.55; b.burn[0] = 120; b.burnPool[0] = 18;
+  s.phase[0] = PHASE.idle; s.queue[0] = elementId('water'); s.queue[1] = elementId('cold'); s.queueLen[0] = 2;
+  let k = 0;
+  for (let i = MAX_SEATS; i < b.kind.length && k < gob.length; i++) {
+    if (b.kind[i] !== KIND.enemy) continue;
+    b.x[i] = simX(gob[k][0]); b.y[i] = simY(gob[k][1]); k++;
+    if (b.x[i] > simX(98)) { b.chill[i] = 0.6; b.hp[i] = Math.min(b.hp[i], b.maxHp[i] * 0.7); }
+  }
+}
 
 async function boot(): Promise<void> {
   const shotName = opt('shot');
   const shot = shotName ? SHOTS[shotName] : undefined;
   const headless = !!shot;
-  // the court unless a room was asked for (?room=, #anchor)
-  const asked = opt('room') !== null || /\w/.test(location.hash);
-  let scenario: Scenario = asked ? start.scenario : scenarioById('court')!;
+  // the court unless a room was asked for (?room=, #anchor; scenarios.ts's default on this page), or the shot's room
+  let scenario: Scenario = shot ? scenarioById(shot.room ?? 'court')! : start.scenario;
   const room = scenario.room as Room;
   const ally = optOn('ally');
   const players = headless ? Math.max(2, shot.wiz.length) : ally ? 2 : 1;
@@ -79,11 +105,11 @@ async function boot(): Promise<void> {
 
   const view = new View3D(host, { art: optOn('kitart'), preserve: headless });
   hud.style.display = '';
-  hud.textContent = 'loading the court...';
-  const camOpt = () => { view.camera.viewH = optNum('cam', 26); };
+  hud.textContent = `loading ${scenario.name}...`;
+  const camOpt = () => { view.camera.viewH = optNum('cam', VIEW_H); };
   camOpt(); onOption('cam', camOpt);
   const fadeOpt = () => { view.fader.enabled = optOn('fade'); };
-  await view.load('court');
+  await view.load(hasScene(room) ? room : 'court');
   fadeOpt(); onOption('fade', fadeOpt);
   hud.style.display = 'none';
   if (ally && !headless) view.isLocal = (s) => s !== 1;
@@ -124,6 +150,7 @@ async function boot(): Promise<void> {
         view.beforeStep(world); step(world, inputs); view.afterStep(world);
       }
     }
+    if (shot.hud) { hudShot(world, shot.gob); view.beforeStep(world); }
   }
   const saves = new SaveWatch(() => scenario);
   const bots = [newBotMemory(), newBotMemory()];
@@ -180,7 +207,7 @@ async function boot(): Promise<void> {
     const next = scenarioOfRoom(to);
     queueMicrotask(() => switchScenario(next));
   };
-  /** Go to another scenario (the Esc menu). Only the court has a 3D scene: the others play on it as on a stand-in. */
+  /** Go to another scenario (the Esc menu). The view loads the new room's scene; a room without one plays on the last. */
   const switchScenario = (s: Scenario, checkpoint?: string, from?: PartyState) => {
     leaving = false;
     const party = s.kind === 'campaign' ? from ?? partyOf(world) : undefined;
@@ -194,6 +221,13 @@ async function boot(): Promise<void> {
     acc = 0;
     try { history.replaceState(null, '', location.pathname + location.search + hashFor(s, ally)); } catch { /* sandboxed */ }
   };
+
+  // The number keys switch scenarios (scenarios.ts, this page's: 1 the practice ground, 8 the court); not online,
+  // where one stray key would move everyone and the host uses the menu.
+  if (!headless) addEventListener('keydown', (e) => {
+    const s = scenarioForKey(e.code);
+    if (s && !e.repeat && net?.state !== 'playing') switchScenario(s);
+  });
 
   const settings: Setting[] = [...volumeSettings(audio, setOpt)];
   const report = headless ? null : new ReportBox({

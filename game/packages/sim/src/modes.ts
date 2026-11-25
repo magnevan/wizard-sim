@@ -29,7 +29,7 @@ const dummies = (w: World, opts: WorldOpts) => {
 /** The encounter waits in its lull, wave 1 next. */
 const lull = (w: World) => { w.enc.state[0] = PHASE_ENC.lull; w.enc.state[1] = 1; w.enc.state[2] = 0; };
 
-/** The Sanctum and the Academy: free play with dummies; waves only when the dev panel starts one. */
+/** The Sanctum, the Academy and the practice ground: free play with dummies; waves only when the dev panel starts one. */
 const SANDBOX: Mode = {
   id: 'sandbox',
   setup: (w, opts) => dummies(w, opts),
@@ -163,7 +163,7 @@ const INFIRMARY_MODE: Mode = {
 export const MODES: Readonly<Record<ModeId, Mode>> = { sandbox: SANDBOX, arena: ARENA_MODE, survive: SURVIVE, battery: BATTERY_MODE, tutorial: TUTORIAL, yard: YARD_MODE, court: COURT_MODE, infirmary: INFIRMARY_MODE };
 
 const ROOM_MODE: Readonly<Record<Room, ModeId>> = {
-  sanctum: 'sandbox', academy: 'sandbox', terraces: 'sandbox', arena: 'arena', survive: 'survive', battery: 'battery', tutorial: 'tutorial', yard: 'yard', court: 'court', infirmary: 'infirmary',
+  sanctum: 'sandbox', academy: 'sandbox', terraces: 'sandbox', arena: 'arena', survive: 'survive', battery: 'battery', tutorial: 'tutorial', yard: 'yard', court: 'court', infirmary: 'infirmary', practice: 'sandbox',
 };
 
 export const modeOf = (room: Room): Mode => MODES[ROOM_MODE[room]];

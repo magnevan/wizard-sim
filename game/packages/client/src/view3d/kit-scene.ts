@@ -1,5 +1,6 @@
 /**
- * The kit scene hosted in the game: the compiled court (tools/kit/compile.py court -> lab/kit-court.json), drawn by
+ * The kit scene hosted in the game: a room's compiled scene (tools/kit/compile.py <scene> -> lab/kit-<scene>.json; the
+ * court, the practice ground), drawn by
  * lab/kit-render.ts with its fitted models, tiling textures and laid stones, plus what the game asks of it: the height
  * of the ground under a point, a cursor ray dropped onto the ground, and the pieces that can stand between the camera
  * and a wizard.
@@ -11,7 +12,7 @@
 import * as THREE from 'three';
 import kitJson from '../../../../../tools/kit/kit.json';
 import { loadStones } from '../lab/kit-stones';
-import { buildKit, groundPlane, loadKitArt, setKitPieces, type KitData, type KitPiece } from '../lab/kit-render';
+import { buildKit, disposeKit, groundPlane, loadKitArt, setKitPieces, type KitData, type KitPiece } from '../lab/kit-render';
 
 /** Pieces a body stands on besides the floors: flights and steps. */
 const WALKABLE_PIECE = /^(connector\.flight|edge\.steps|sweep\.steps)/;
@@ -19,6 +20,15 @@ const WALKABLE_PIECE = /^(connector\.flight|edge\.steps|sweep\.steps)/;
 const NEVER_FADE = /^(edge\.kerb|sweep\.kerb|joint\.|setpiece\.plaza-(disc|inlay)|fall\.)/;
 /** Height (u) under which a piece can't hide a standing wizard and isn't worth testing. */
 const LOW = 1.2;
+
+/** The compiled scenes, by room id: a room made from a kit scene (tools/kit/room.py) draws the scene it was made from. */
+const SCENES: Record<string, () => Promise<unknown>> = {
+  court: () => import('../lab/kit-court.json'),
+  practice: () => import('../lab/kit-practice.json'),
+};
+
+/** Is there a compiled scene for this room? */
+export const hasScene = (room: string): boolean => Object.prototype.hasOwnProperty.call(SCENES, room);
 
 export interface Occluder { obj: THREE.Object3D; box: THREE.Box3 }
 
@@ -32,24 +42,36 @@ export class KitScene {
   /** ms the load took, and the bytes of models and textures fetched for it (from the resource timings). */
   loadMs = 0;
   loadBytes = 0;
+  /** The scene built now ('' before the first load). */
+  name = '';
   private heights = new Map<number, number>();
   private ray = new THREE.Raycaster();
+  private art: Promise<void> | null = null;
 
-  /** Load the court and build it. `art` false draws the kit's placeholders only (fast, for checks). */
+  /**
+   * Load a room's scene and build it in place of the one before. `art` false draws the kit's placeholders only (fast,
+   * for checks). The fitted models are fetched once, by the first load that wants them.
+   */
   async load(name: string, art = true): Promise<void> {
     const t0 = performance.now();
+    if (!hasScene(name)) throw new Error(`no compiled scene ${name}`);
     setKitPieces((kitJson as unknown as { pieces: Record<string, KitPiece> }).pieces);
-    const [mod] = await Promise.all([
-      name === 'court' ? import('../lab/kit-court.json') : Promise.reject(new Error(`no compiled scene ${name}`)),
-      art ? loadKitArt() : Promise.resolve(),
-      loadStones(name),
-    ]);
+    if (art) this.art ??= loadKitArt();
+    const [mod] = await Promise.all([SCENES[name](), art ? this.art : Promise.resolve(), loadStones(name)]);
+    this.clear();
+    this.name = name;
     this.data = (mod as unknown as { default: KitData }).default;
     const kit = buildKit(this.data);
     this.root.add(groundPlane(this.data), kit);
     this.index(kit);
     this.loadMs = performance.now() - t0;
     this.loadBytes = performance.getEntriesByType('resource').reduce((a, e) => a + ((e as PerformanceResourceTiming).transferSize || (e as PerformanceResourceTiming).encodedBodySize || 0), 0);
+  }
+
+  /** Take the built scene down, disposing its own geometry (the fitted models' shared geometry is kept). */
+  private clear(): void {
+    for (const o of [...this.root.children]) { this.root.remove(o); disposeKit(o); }
+    this.walkable.length = 0; this.occluders.length = 0; this.heights.clear();
   }
 
   private index(kit: THREE.Group): void {

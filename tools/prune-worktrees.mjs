@@ -14,14 +14,18 @@
 //   - nothing has it open: no process has its folder as working directory (a live Claude session or a
 //     server), and no process's command line names it
 //   - no commit or checkout in it for --min-age hours
+// Before a folder is deleted, every symlink and junction in it is removed on its own (never what it points at):
+// git and rm follow a Windows junction while deleting, so a node_modules linked to another worktree's would take
+// that worktree's node_modules, and through npm's workspace links its packages, with it (court-kit, 2026-11-25).
+// A folder whose links can't all be removed is kept.
 // Ignored files that aren't build output (screenshots, scene histories, .reference) are copied to
 // .claude/worktree-leftovers/<name>/ first. The branch is kept unless it's merged into origin/main.
 // Folders under .claude/worktrees that git no longer knows are removed when every file in them is
 // already in git. Anything with unmerged work is listed and left alone.
 
 import { execFileSync, spawn } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, openSync, readdirSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, resolve } from 'node:path';
+import { cpSync, existsSync, lstatSync, mkdirSync, openSync, readdirSync, realpathSync, renameSync, rmdirSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const args = process.argv.slice(2);
@@ -117,6 +121,41 @@ function saveIgnored(path, name) {
   return keep;
 }
 
+/** Every symlink and junction under a folder, found without following any (Node reports a junction as a symlink). */
+function linksIn(root) {
+  const out = [];
+  const walk = (d) => {
+    let es; try { es = readdirSync(d, { withFileTypes: true }); } catch { return; }
+    for (const e of es) {
+      const p = join(d, e.name);
+      if (e.isSymbolicLink()) out.push(p); else if (e.isDirectory() && e.name !== '.git') walk(p);
+    }
+  };
+  walk(root);
+  return out;
+}
+const isLink = (p) => { try { return lstatSync(p).isSymbolicLink(); } catch { return false; } };
+/** Where a link points, and whether that is outside root. */
+function linkTarget(root, l) {
+  let t = ''; try { t = realpathSync(l); } catch { /* dangling */ }
+  return { t, outside: !!t && !(norm(t) + '/').startsWith(norm(root) + '/') };
+}
+/**
+ * Remove the links themselves, so deleting the folder can't reach through one into another worktree. Returns the
+ * links that point outside it (for the report) and the ones that couldn't be removed (then the folder must stay).
+ */
+function cutLinks(root) {
+  const links = linksIn(root), outside = [], stuck = [];
+  for (const l of links) {
+    const { t, outside: out } = linkTarget(root, l);
+    if (out) outside.push(`${relative(root, l).replace(/\\/g, '/')} -> ${t}`);
+    try { unlinkSync(l); } catch { try { rmdirSync(l); } catch { /* checked below */ } }
+    if (isLink(l)) stuck.push(l);
+  }
+  return { count: links.length, outside, stuck };
+}
+const linkNote = (c) => c.outside.length && `${c.outside.length} link(s) to elsewhere cut first (${c.outside.slice(0, 2).join('; ')}${c.outside.length > 2 ? '; ...' : ''})`;
+
 const rows = [];
 const say = (name, verdict, why) => rows.push({ name, verdict, why });
 
@@ -144,8 +183,14 @@ for (const w of listing.slice(1)) {
   if (busy) { say(name, 'keep', `merged into ${into[0]}, but ${busy}`); continue; }
 
   const dropBranch = w.branch && isAncestor(w.head, 'origin/main');
-  if (!APPLY) { say(name, 'prune', `merged into ${into[0]}${dropBranch ? ', branch too' : ''}`); continue; }
+  if (!APPLY) {
+    const outside = linksIn(w.path).filter((l) => linkTarget(w.path, l).outside).length;
+    say(name, 'prune', `merged into ${into[0]}${dropBranch ? ', branch too' : ''}${outside ? `, ${outside} link(s) to elsewhere would be cut first` : ''}`);
+    continue;
+  }
   const saved = saveIgnored(w.path, name);
+  const cut = cutLinks(w.path);
+  if (cut.stuck.length) { say(name, 'keep', `merged into ${into[0]}, but ${cut.stuck.length} link(s) in it couldn't be removed (${cut.stuck[0]}): not deleting through them`); continue; }
   try { git(ROOT, 'worktree', 'remove', '--force', '--force', w.path); } catch {
     git(ROOT, 'worktree', 'prune');
     try { rmSync(w.path, { recursive: true, force: true }); } catch { /* reported below */ }
@@ -153,7 +198,7 @@ for (const w of listing.slice(1)) {
   const left = existsSync(w.path);
   if (dropBranch) tryGit(ROOT, 'branch', '-D', w.branch);
   say(name, 'pruned', [`merged into ${into[0]}`, dropBranch && `branch ${w.branch} deleted`, saved.length && `${saved.length} ignored item(s) saved to leftovers`,
-    left && 'folder partly left (locked)'].filter(Boolean).join(', '));
+    linkNote(cut), left && 'folder partly left (locked)'].filter(Boolean).join(', '));
 }
 
 // Folders git no longer knows: left by a failed removal or a deleted session.
@@ -178,8 +223,10 @@ for (const name of existsSync(WT_DIR) ? readdirSync(WT_DIR) : []) {
   const busy = inUse(path);
   if (busy) { say(name, 'keep', `orphan folder, ${busy}`); continue; }
   if (!APPLY) { say(name, 'prune', `orphan folder, all ${files.length} file(s) already in git`); continue; }
+  const cut = cutLinks(path);
+  if (cut.stuck.length) { say(name, 'keep', `orphan folder, but ${cut.stuck.length} link(s) in it couldn't be removed (${cut.stuck[0]})`); continue; }
   try { rmSync(path, { recursive: true, force: true }); } catch { /* reported */ }
-  say(name, 'pruned', existsSync(path) ? 'orphan folder, partly left (locked)' : 'orphan folder');
+  say(name, 'pruned', [existsSync(path) ? 'orphan folder, partly left (locked)' : 'orphan folder', linkNote(cut)].filter(Boolean).join(', '));
 }
 
 const width = Math.max(...rows.map((r) => r.name.length), 4);

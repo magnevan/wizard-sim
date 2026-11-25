@@ -157,8 +157,10 @@ Clips: `npm run clip:fx` (`scripts/fx-clip.mjs`: a live lab page on a virtual cl
 - One wide tube over a 96° cone reads as a paper fan or cloth: the outline needs lobes and tongues, not just a noisy edge.
 - Noise stretched across the stream (fine along it) reads as marble; stretched along it (fine round it), as flame tongues streaming out.
 - Pale yellow is the floor's own colour: the body has to sit mostly in yellow-orange and orange, with white only near the staff, or it sinks into the stone (as look A did).
+- Height moves a volume up the screen at this camera: with the body's axis at the staff's height all the way out and a tall section, it drew about 2 u past the far edge of the sim's cone and left its near half empty (`fx3d.html?hit=1`). It now comes down to rest on the floor by mid-way, with a lower section, and covers the cone.
+- When the channel stops, the tail running out after the head left a thin crescent at the far end for a second; the body now fades over 0.4 s as its tail goes.
 
-**Still different from the painting:** the sim's three-rune cone is 96° (the painting's about 65°), so the spray is wider and shorter. The body is a little flat and even in value next to the painting's deep rolling forms; more height and a stronger light-side band are the next knobs. The floor's flames read as a low burning mass, not yet as the painting's distinct short licks.
+**Still different from the painting:** the sim's three-rune cone is 96° (the painting's about 65°), so the spray is wider and shorter. The body is flatter and more even in value than the painting's deep rolling forms, with less fine detail inside; a stronger light-side band and a third, finer noise layer are the next knobs. Painted noise (a Codex flame texture scrolled through the mesh) is the step after that, if procedural bands stay too plain. The floor's flames read as a low burning mass, not yet as the painting's distinct short licks.
 
 ### For a spell-look guide
 

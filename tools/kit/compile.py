@@ -904,6 +904,8 @@ def compile_layout(name):
 
 
 def main():
+    want_room = '--room' in sys.argv     # also export the room the sim walks on (tools/kit/room.py)
+    if want_room: sys.argv.remove('--room')
     name = sys.argv[1]
     out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, '..', '..', 'game', 'packages', 'client', 'src', 'lab', f'kit-{name}.json')
     r = compile_layout(name)
@@ -915,6 +917,8 @@ def main():
     print(f'{name}: {len(r["instances"])} instances of {len(r["pieces"])} pieces, 0 problems, {len(r["warnings"])} warning(s) -> {os.path.relpath(out)}')
     for w in r['warnings']: print('  ! ' + w)
     for p, n in sorted(r['pieces'].items()): print(f'  {n:4d} {p}')
+    if want_room:
+        import room; room.write(name, r)
 
 
 if __name__ == '__main__':

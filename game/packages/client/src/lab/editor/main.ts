@@ -11,7 +11,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildKit, disposeKit, floorMats, groundPlane, kitPiece, loadKitArt, setKitPieces, setupStage, spinKit, yOf, type Inst, type KitData, type KitPiece } from '../kit-render';
 import { eachPoint, type Obj, type Op, type Scene, type Terrace } from '../../../map-editor/ops';
 import type { Compiled, Finding } from '../../../map-editor/compile-worker';
-import type { Pin } from '../../../map-editor/store';
+import type { Draft, Pin } from '../../../map-editor/store';
 import { Concepts } from './concepts';
 import { angleOf, roundFrom, roundHandles, roundPoints, roundThrough, type RoundShape } from './round';
 import { apexOf, arcPoints, edgeAt, fromSag, lineOf, runOn, sagFor, sagOf, type CurveShape, type EdgeLine, type Pt } from './curve';
@@ -46,6 +46,7 @@ type Sel = { type: 'edge'; e: [number, number]; p: string } | { type: 'obj'; id:
 type Tool = 'select' | 'brush' | 'rect' | 'stair' | 'curve' | 'round' | 'line' | 'prop' | 'pin';
 let rev = 0, sc: Scene | null = null, comp: Compiled | null = null, shown: KitData | null = null;
 let pins: Pin[] = [];
+let draft: Draft | null = null, showChanges = false, discardArmed = false;
 let sel: Sel = null, tool: Tool = 'select';
 let brushG = '', brushN = 1, cornersOn = false, showMarkers = true;
 let propPiece = 'vignette.lamp', propFront = 'S';
@@ -76,6 +77,7 @@ let cornerMesh = instanced(1, 0.9);
 const preview = instanced(6000, 0.5);
 const selMesh = instanced(6000, 0.35);
 const flashMesh = instanced(6000, 0.8);
+const changesMesh = instanced(20000, 0.45);
 const markers = new THREE.Group(); world.add(markers);
 const hiGroup = new THREE.Group(); world.add(hiGroup);
 const hoverBox = new THREE.BoxHelper(new THREE.Object3D(), 0xffffff);
@@ -174,7 +176,7 @@ const near = (a?: [number, number], b?: [number, number]) => !!a && !!b && Math.
 function highlightSel() {
   rebuildHandles();
   setSquares(selMesh, []);
-  if (!sel || !sc) return highlight(() => false);
+  if (!sel || !sc) return showChanges ? highlightChanges() : highlight(() => false);
   if (sel.type === 'edge') { const s = sel; return highlight((it) => near(it.e, s.e) && it.p === s.p); }
   if (sel.type === 'obj') { const id = sel.id; return highlight((it) => it.src === id || it.o === id); }
   if (sel.type === 'terrace') {
@@ -184,6 +186,17 @@ function highlightSel() {
     setSquares(selMesh, pts);
   }
   highlight(() => false);
+}
+
+/** Show on map: every corner and thing that differs from the saved scene, until it is turned off or saved. */
+function rebuildChanges() {
+  const keys = showChanges && draft?.dirty && sc ? draft.keys : [];
+  setSquares(changesMesh, keys.filter((k) => k.startsWith('c:')).map((k) => { const [x, y] = k.slice(2).split(',').map(Number); return { x, y, h: heightAt(x, y), c: 0xff9f1c, s: 1 }; }));
+  if (!sel) highlightSel();
+}
+function highlightChanges() {
+  const ids = new Set((draft?.dirty ? draft.keys : []).filter((k) => k.startsWith('o:')).map((k) => k.slice(2)));
+  highlight((it) => ids.has(it.src ?? '') || ids.has(it.o ?? ''), 0xff9f1c);
 }
 
 let flashUntil = 0;
@@ -239,19 +252,25 @@ function rebuildKit() {
   hoverBox.visible = false; hover = null;   // its piece index belonged to the old kit
 }
 
-type Update = { name: string; rev: number; scene: Scene; compiled: Compiled; change: { author: string; label: string; keys: string[] } | null };
+type Update = { name: string; rev: number; scene: Scene; compiled: Compiled; change: { author: string; label: string; keys: string[] } | null; draft?: Draft };
 function onUpdate(d: Update) {
   if (d.name !== name) return;
   $('err').style.display = 'none';
-  rev = d.rev; sc = d.scene; comp = d.compiled;
+  rev = d.rev; sc = d.scene; comp = d.compiled; if (d.draft) setDraft(d.draft);
   if (!terrace(brushG)) brushG = sc.terraces.find((t) => t.edge !== 'wall')?.glyph ?? sc.terraces[0]?.glyph ?? '';
-  rebuildKit(); rebuildCorners(); rebuildMarkers(); highlightSel();
+  rebuildKit(); rebuildCorners(); rebuildMarkers(); highlightSel(); rebuildChanges();
   if (!framed && shown) { framed = true; setTimeout(() => { (window as unknown as { __ready: boolean }).__ready = true; }, 300); frameAll(); }
   if (d.change && d.change.author !== 'user') { toast(`${d.change.author === 'claude' ? 'Claude' : d.change.author}: ${d.change.label}`); flash(d.change.keys); }
   renderUI();
   adoptNewTerrace();
 }
 hot.on('map:update', onUpdate);
+function setDraft(d: Draft) { draft = d; if (!d.dirty) { showChanges = false; discardArmed = false; } }
+hot.on('map:draft', (d: { name: string; draft: Draft; notice?: string }) => {
+  if (d.name !== name) return;
+  setDraft(d.draft); rebuildChanges(); renderTop(); renderLists();
+  if (d.notice) toast(d.notice, true);
+});
 hot.on('map:pins', (d: { name: string; pins: Pin[] }) => { if (d.name === name) { pins = d.pins; rebuildMarkers(); renderLists(); concepts.renderPins(); } });
 hot.on('map:error', (d: { name: string; error: string }) => { if (d.name === name) { $('err').style.display = 'flex'; $('err').textContent = d.error; } });
 
@@ -267,9 +286,18 @@ async function call(path: string, body?: unknown) {
 const apply = (ops: Op[], label: string) => call('apply', { name, ops, author: 'user', label });
 const pinOp = (b: Record<string, unknown>) => call('pins', { name, ...b });
 async function undo() { const r = await call('undo', { name }); if (r?.undone) toast(`Undid: ${r.undone.label}${r.undone.author === 'claude' ? ' (Claude)' : ''}`); }
+async function save() {
+  if (!draft?.dirty) { toast('Nothing to save'); return; }
+  const r = await call('save', { name });
+  if (r?.saved) toast(`Saved ${r.edits} edit${r.edits === 1 ? '' : 's'} to ${name}.scene.json`);
+}
+async function discard() {
+  const r = await call('discard', { name, author: 'user' });
+  if (r?.discarded) toast('Back to the saved scene: Ctrl+Z brings the changes back');
+}
 async function redo() { const r = await call('redo', { name }); if (r?.redone) toast(`Redid: ${r.redone.label}`); }
 async function open(n: string) {
-  name = n; framed = false; sel = null; shown = null;
+  name = n; framed = false; sel = null; shown = null; draft = null; showChanges = false; discardArmed = false;
   history.replaceState(null, '', `?scene=${n}${q.get('art') === '0' ? '&art=0' : ''}`);
   const p = await call(`pins?name=${n}&status=all`); pins = p?.pins ?? [];
   await concepts.load();
@@ -1039,6 +1067,7 @@ addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
   if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); redo(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === 's') { e.preventDefault(); save(); return; }
   if ((e.ctrlKey || e.metaKey) && k === 'c' && region) { e.preventDefault(); copyRegion(); return; }
   if ((e.ctrlKey || e.metaKey) && k === 'v' && clip) { clearTimeout(pasteTimer); pasteTimer = window.setTimeout(pasteRegion, 120); return; }
   if (e.ctrlKey || e.metaKey) return;
@@ -1093,7 +1122,12 @@ const typingIn = (id: string) => { const a = document.activeElement as HTMLEleme
 let sceneNames: string[] = [];
 function renderStatus() {
   const el = document.getElementById('status');
-  if (el) el.textContent = pending ? 'saving…' : `saved · rev ${rev}`;
+  if (!el) return;
+  const n = draft?.edits.length ?? 0;
+  el.textContent = pending ? 'working…' : draft?.dirty ? `● unsaved${n ? `: ${n} edit${n > 1 ? 's' : ''}` : ''}` : '✓ saved';
+  el.className = `chip ${draft?.dirty ? 'warn' : 'ok'}`;
+  el.title = draft?.dirty ? `Edits go to a draft (${name}.draft.json); ${name}.scene.json changes only when you save (Ctrl+S). The list on the right shows what changed` : `${name}.scene.json is up to date · rev ${rev}`;
+  const sv = document.getElementById('b-save') as HTMLButtonElement | null; if (sv) sv.disabled = !draft?.dirty;
 }
 function renderTop() {
   if (typingIn('top')) return;
@@ -1103,6 +1137,7 @@ function renderTop() {
     <select id="scene">${sceneNames.map((n) => `<option ${n === name ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
     <button id="b-new" title="A new scene: blank, or a copy of this one">New…</button>
     <span class="chip" id="status"></span>
+    <button id="b-save" title="Save the draft to the scene file (Ctrl+S)">Save</button>
     ${errs ? `<span class="chip err">${errs} error${errs > 1 ? 's' : ''}</span>` : '<span class="chip ok">✓ compiles</span>'}
     ${warns ? `<span class="chip warn">${warns} warning${warns > 1 ? 's' : ''}</span>` : ''}
     <span class="chip" title="pieces · compile time">${c ? Object.values(c.pieces).reduce((a, b) => a + b, 0) : 0} pieces · ${c?.ms ?? '?'} ms</span>
@@ -1128,6 +1163,7 @@ function renderTop() {
     $('nf-blank').onclick = () => make(); $('nf-copy').onclick = () => make(name); $('nf-x').onclick = () => { (document.activeElement as HTMLElement)?.blur(); renderTop(); };
     $('nf-name').focus();
   };
+  $('b-save').onclick = () => save();
   $('b-undo').onclick = () => undo();
   $('b-redo').onclick = () => redo();
   $('b-top').onclick = () => dispatchEvent(new KeyboardEvent('keydown', { key: 't' }));
@@ -1411,7 +1447,14 @@ function renderLists() {
   const el = $('lists');
   const fs = shownFindings();
   const open = pins.filter((p) => p.status === 'open'), done = pins.filter((p) => p.status !== 'open').slice(-5);
-  el.innerHTML = `<h3>Problems (${fs.length})</h3>
+  const ago = (t: string) => { const m = Math.round((Date.now() - Date.parse(t)) / 60000); return m < 1 ? 'now' : m < 60 ? `${m} min` : m < 1440 ? `${Math.round(m / 60)} h` : `${Math.round(m / 1440)} d`; };
+  const ch = draft?.changed, all = draft?.edits ?? [], edits = all.slice(-12).reverse();
+  const unsaved = draft?.dirty && ch ? `<div class="unsaved"><h3>Unsaved changes</h3>
+    <div class="meta">${[ch.corners ? `${ch.corners} corner${ch.corners > 1 ? 's' : ''}` : '', ch.ids.length ? `${ch.ids.length} thing${ch.ids.length > 1 ? 's' : ''}: ${esc(ch.ids.slice(0, 8).join(', '))}${ch.ids.length > 8 ? '…' : ''}` : '', ch.resized ? 'the map resized' : ''].filter(Boolean).join(' · ')}</div>
+    ${edits.map((e) => `<div class="edit"><span>${e.author === 'user' ? '' : `<b>${esc(e.author === 'claude' ? 'Claude' : e.author)}:</b> `}${esc(e.label)}</span><span class="meta">${ago(e.time)}</span></div>`).join('')}
+    ${all.length > 12 ? `<div class="meta">and ${all.length - 12} earlier</div>` : ''}
+    <div class="row"><button class="btn" id="ch-show">${showChanges ? '◉' : '○'} Show on map</button><button class="btn" id="ch-save">Save</button><button class="btn ${discardArmed ? 'danger' : ''}" id="ch-discard">${discardArmed ? 'Discard all?' : 'Discard…'}</button></div></div>` : '';
+  el.innerHTML = `${unsaved}<h3>Problems (${fs.length})</h3>
     ${fs.map((f, i) => `<div class="item ${f.severity === 'error' ? 'err' : 'warn'}" data-f="${i}">${esc(named(f.msg))}${f.more ? `<div class="meta">and ${f.more} broken run${f.more > 1 ? 's' : ''} beside it</div>` : ''}<div class="meta">${f.code}${f.at ? ` · (${f.at[0]}, ${f.at[1]})` : ''}</div></div>`).join('') || '<div class="meta">None.</div>'}
     <h3 style="margin-top:12px">Pins (${open.length} open)</h3>
     ${open.map(pinHtml).join('') || '<div class="meta">Pin a note on anything (N); Claude sees new pins with your next message in the terminal.</div>'}
@@ -1421,6 +1464,10 @@ function renderLists() {
     if (p.anchor.ref) { if (concepts.title(p.anchor.ref.id)) concepts.show(p.anchor.ref.id, p.anchor.ref); } else if (p.anchor.x != null && p.anchor.y != null) focus(p.anchor.x, p.anchor.y);
     concepts.renderPins(); }; });
   bindPinButtons(el);
+  const b = (id: string) => document.getElementById(id);
+  if (b('ch-show')) b('ch-show')!.onclick = () => { showChanges = !showChanges; rebuildChanges(); renderLists(); };
+  if (b('ch-save')) b('ch-save')!.onclick = () => save();
+  if (b('ch-discard')) b('ch-discard')!.onclick = () => { if (discardArmed) { discardArmed = false; discard(); } else { discardArmed = true; renderLists(); setTimeout(() => { if (discardArmed) { discardArmed = false; renderLists(); } }, 4000); } };
 }
 
 function renderUI() { renderTop(); renderTools(); renderBrushbar(); renderPalette(); renderInspect(); renderLists(); info(hover); }

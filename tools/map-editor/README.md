@@ -3,7 +3,7 @@
 The 3D map editor for the modular kit, shared by the user and Claude ([spec](../../docs/explorations/2026-11-23-map-editor.md), [thread](../../docs/threads/map-editor.md)). The user edits in the browser; Claude edits the same live scene through `cli.mjs`; both see each other's changes at once.
 
 - **Start it:** `npm run dev` in `game/`, then open http://localhost:5187/editor.html (`?scene=patch-b`). The scene server is a dev-only Vite plugin (`game/packages/client/map-editor/`), so there is nothing else to start. It runs a long-lived Python compile worker (`tools/kit/worker.py`; needs Python with shapely). The page is `game/packages/client/src/lab/editor/main.ts`; it never reaches the build.
-- **The scenes** are `tools/kit/scenes/<name>.scene.json` (format: [the kit's README](../kit/README.md)). Beside each: `<name>.pins.json` (the pins) and `<name>.history.jsonl` (the undo history; not in git). **New…** in the top bar (or `cli.mjs new`) makes a blank scene or a copy.
+- **The scenes** are `tools/kit/scenes/<name>.scene.json` (format: [the kit's README](../kit/README.md)). Beside each: `<name>.draft.json` (unsaved edits; not in git), `<name>.pins.json` (the pins) and `<name>.history.jsonl` (the undo history; not in git). **New…** in the top bar (or `cli.mjs new`) makes a blank scene or a copy.
 - **Claude's side:** `node tools/map-editor/cli.mjs help`. The `UserPromptSubmit` hook (`hook.mjs`, in `.claude/settings.json`) prints new pins into the session whenever the user sends a message. Claude's pictures (`cli.mjs view`) come from the open editor page; with none open, the server renders them in a hidden headless page (about 15 s the first time, 10 s after).
 - **Checks:** `npm run editor:check` in `game/` (a smoke test of the page against the running dev server, on a throwaway scene) and `npm run editor:shot` (a screenshot); `packages/client/test/map-editor-ops.test.ts` tests the ops.
 
@@ -27,6 +27,8 @@ Everything happens in the 3D view. In Select, **left-drag** orbits (in the other
 
 **A new level:** **+ level** in the palette adds one a metre above the highest, opens it to be named, and switches to painting with it. **Ctrl+Z** and **Ctrl+Y** undo and redo anything, Claude's edits included. Problems show as red (error) and amber (warning) markers at their place and in the list on the right (a stray railing end beside an ambiguous cell folds under it); clicking one goes there. When Claude edits, a note says what it did and the changed corners glow for a moment.
 
+**Saving:** edits (yours and Claude's) go to a draft, `<name>.draft.json`, which survives a restart; the scene file in git changes only when you **Save** (the button beside the status, or **Ctrl+S**). The status chip says **● unsaved: N edits** until then, and the list on the right opens with **Unsaved changes**: how many corners and which things differ from the saved scene, each edit since the save (who made it, how long ago), **Show on map** (outlines everything that differs, in orange), **Save** and **Discard…** (click twice; it puts the saved scene back as one edit, so Ctrl+Z brings the draft back). Undoing back to the saved scene leaves nothing unsaved. If the scene file changes on disk while there are unsaved edits (a git checkout, a merge), the draft is kept and a note says so: Save writes the draft over the file, Discard takes the file. Pins and concept images are saved at once, as before.
+
 ## HTTP API
 
 The dev server (default `http://127.0.0.1:5187`, or `$MAP_EDITOR_URL`) serves these under `/__map/`. Every reply is JSON unless noted; errors are `{error}` with status 400, 404, 409 or 503.
@@ -41,6 +43,9 @@ The dev server (default `http://127.0.0.1:5187`, or `$MAP_EDITOR_URL`) serves th
 | `POST /__map/apply` | Body `{name, ops: [...], author: "claude", label?, base?, dry?}`. Applies the ops as one undo group. `base`: the rev the ops were written against; if anything they touch changed since, `409 {error, conflicts}`. `dry`: compile without saving. Reply: `{rev, minted: [ids], changed: {corners, ids, resized}, diff: {added: [findings], resolved: [findings], pieces: {piece: delta}}, summary}` |
 | `POST /__map/undo` | Body `{name, author?}`. Undoes the latest group (by `author` if given). Reply `{rev, undone: {label, author}}` |
 | `POST /__map/redo` | Body `{name}` |
+| `GET /__map/draft?name=N` | What is unsaved: `{rev, dirty, changed: {corners, ids, resized}, edits: [{author, label, time}], savedAt}` |
+| `POST /__map/save` | Body `{name}`. Writes the draft to `<name>.scene.json`: `{saved, edits, changed, draft}`; pages get `map:draft` |
+| `POST /__map/discard` | Body `{name, author?}`. The saved scene back, as one undoable edit: `{discarded, rev, draft}` |
 | `GET /__map/history?name=N&n=20` | `{groups: [{group, author, label, rev, time}]}`, newest first |
 | `GET /__map/pins?name=N&status=open` | `{pins: [...]}`; `status` is `open`, `new` (open and not yet seen by Claude), `resolved` or `all` (default `open`) |
 | `POST /__map/pins` | Body `{name, op, ...}`: `add {note, anchor}`, `reply {id, text, author}`, `resolve {id, outcome: scene/rule/piece, text?}`, `seen {ids}`, `delete {id}` |

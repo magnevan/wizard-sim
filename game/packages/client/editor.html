@@ -35,6 +35,12 @@
   .seg button { font: inherit; padding: 3px 9px; border: 1px solid var(--line); background: var(--paper2); cursor: pointer; }
   .seg button:first-child { border-radius: 7px 0 0 7px; } .seg button:last-child { border-radius: 0 7px 7px 0; } .seg button + button { border-left: none; }
   .seg button.on { background: var(--slate); color: #fff; border-color: var(--slate); }
+  #top button:disabled { opacity: .45; cursor: default; }
+  #status.warn { cursor: help; font-weight: 600; }
+  .unsaved { background: #fbecd0; border: 1px solid var(--amber); border-radius: 8px; padding: 8px; margin-bottom: 12px; }
+  .unsaved .edit { display: flex; justify-content: space-between; gap: 8px; padding: 1px 0; }
+  .unsaved .meta { color: var(--mute); font-size: 11px; }
+  .btn.danger { background: var(--red); color: #fff; border-color: var(--red); }
   .item { padding: 6px 8px; border-radius: 7px; cursor: pointer; margin: 2px 0; }
   .item:hover { background: var(--paper2); }
   .item .meta { color: var(--mute); font-size: 11px; }

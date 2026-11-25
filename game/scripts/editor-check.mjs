@@ -1,7 +1,7 @@
 // usage: node scripts/editor-check.mjs [--url http://127.0.0.1:5187] [--out shots/editor-check]
 // A smoke test of the map editor (editor.html) against a running dev server (npm run dev): on a throwaway copy of
 // patch B (tools/kit/scenes/zz-check.scene.json, removed afterwards) it sets a wall section to a door, paints a bed
-// with the brush, drops a pin, undoes, draws a curve and drags its bulge, pins a note on a concept image, and asks for Claude's pictures (/__map/view), checking the server after each
+// with the brush, drops a pin, undoes, draws a curve and drags its bulge, saves the draft (Ctrl+S), pins a note on a concept image, and asks for Claude's pictures (/__map/view), checking the server after each
 // step. Screenshots go to --out. Exits 1 if a step fails or the page logs an error.
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -97,6 +97,19 @@ try {
   check(!(f.findings ?? []).some((x) => x.code === 'curve-ends'), `the compiler takes the curve (${(f.findings ?? []).map((x) => x.code).join(', ')})`);
   await page.screenshot({ path: `${OUT}/4c-semicircle.png` });
 
+  // 4d. edits so far are a draft: the scene file is untouched until Ctrl+S
+  const onDisk = () => JSON.parse(readFileSync(`${SC}.scene.json`, 'utf8'));
+  const chip = () => page.$eval('#status', (e) => e.textContent);
+  check(!onDisk().objects.some((o) => o.id === cv?.id) && existsSync(`${SC}.draft.json`), 'edits go to the draft, not the scene file');
+  check(/unsaved/.test(await chip()) && !!(await page.$('#lists .unsaved')), `the top bar and the list say what is unsaved (${await chip()})`);
+  await page.click('#ch-show'); await sleep(300);
+  await page.screenshot({ path: `${OUT}/4d-unsaved.png` });
+  await page.keyboard.down('Control'); await page.keyboard.press('s'); await page.keyboard.up('Control');
+  for (let i = 0; i < 30 && existsSync(`${SC}.draft.json`); i++) await sleep(100);
+  check(onDisk().objects.some((o) => o.id === cv?.id) && !existsSync(`${SC}.draft.json`), 'Ctrl+S writes the draft to the scene file');
+  await sleep(300);
+  check(/saved/.test(await chip()) && !/unsaved/.test(await chip()) && !(await page.$('#lists .unsaved')), `after saving the top bar says saved (${await chip()})`);
+
   // 4e. a round: three clicks on a circle (centre 14, 15, r 4: east, south, west) fit it, arc 0 to 180; then its radius handle
   await page.keyboard.press('Escape'); await page.keyboard.press('o');
   for (const [x, y] of [[18, 15], [14, 19], [10, 15]]) { [sx, sy] = await scr(x, y); await page.mouse.move(sx, sy); await page.mouse.click(sx, sy); await sleep(150); }
@@ -188,7 +201,7 @@ try {
   check(!errors.length, `no page errors${errors.length ? `: ${errors.join(' | ')}` : ''}`);
 } finally {
   await browser.close();
-  for (const ext of ['scene.json', 'pins.json', 'history.jsonl', 'refs.json']) if (existsSync(`${SC}.${ext}`)) rmSync(`${SC}.${ext}`);
+  for (const ext of ['scene.json', 'draft.json', 'pins.json', 'history.jsonl', 'refs.json']) if (existsSync(`${SC}.${ext}`)) rmSync(`${SC}.${ext}`);
   rmSync(`${ROOT}/tools/kit/scenes/refs/zz-check`, { recursive: true, force: true });
 }
 console.log(fails.length ? `${fails.length} failed` : 'all passed');

@@ -1,10 +1,12 @@
 /**
  * One scene as the map editor's server holds it: the scene, its revision, the undo history and the pins, with the
- * files beside it in tools/kit/scenes/ (<name>.scene.json, .history.jsonl, .pins.json). Every change goes through
- * here, one at a time: it is applied, checked for conflicts, written, compiled and broadcast to the open pages.
+ * files beside it in tools/kit/scenes/ (<name>.scene.json, .draft.json, .history.jsonl, .pins.json). Every change goes
+ * through here, one at a time: it is applied, checked for conflicts, written, compiled and broadcast to the open pages.
+ * Edits (the user's and Claude's) go to the draft (<name>.draft.json, not in git); the scene file changes only on
+ * save(). discard() puts the saved scene back as one undoable edit.
  */
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { applyOps, changedKeys, dumpScene, OpError, revert, shiftPoint, type Op, type Scene } from './ops';
 import type { CompileWorker, Compiled, Finding } from './compile-worker';
@@ -21,6 +23,10 @@ export type Ref = { id: string; title: string; file: string; time: string };
 const IMAGE: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
 export const imageType = (file: string) => IMAGE[file.split('.').pop()!.toLowerCase()];
 export type Broadcast = (event: string, data: unknown) => void;
+/** One edit made since the last save, for the page's list of unsaved changes. */
+export type Edit = { author: string; label: string; time: string };
+/** How the live scene differs from the saved file: the changed keys (c:x,y corners, o:id objects, t:id terraces, size, meta) and the edits made since. */
+export type Draft = { dirty: boolean; keys: string[]; changed: { corners: number; ids: string[]; resized: boolean }; edits: Edit[]; savedAt: string };
 
 export class HttpError extends Error { constructor(public status: number, msg: string, public extra: Record<string, unknown> = {}) { super(msg); } }
 
@@ -37,6 +43,10 @@ function atomicWrite(file: string, text: string) {
 
 export class SceneStore {
   scene!: Scene;
+  /** The scene file as last saved (or read): the draft is compared with it. */
+  saved!: Scene;
+  savedAt = '';
+  private sinceSave: Edit[] = [];
   rev = 0;
   compiled: Compiled | null = null;
   history: Group[] = [];
@@ -52,6 +62,7 @@ export class SceneStore {
   constructor(public name: string, private dir: string, private worker: CompileWorker, private broadcast: Broadcast) {}
 
   get file() { return join(this.dir, `${this.name}.scene.json`); }
+  private get draftFile() { return join(this.dir, `${this.name}.draft.json`); }
   private get historyFile() { return join(this.dir, `${this.name}.history.jsonl`); }
   private get pinsFile() { return join(this.dir, `${this.name}.pins.json`); }
   private get refsFile() { return join(this.dir, `${this.name}.refs.json`); }
@@ -66,8 +77,13 @@ export class SceneStore {
 
   async load() {
     const text = readFileSync(this.file, 'utf8');
-    this.scene = JSON.parse(text) as Scene;
+    this.saved = this.scene = JSON.parse(text) as Scene;
     this.lastWritten = hash(text);
+    this.savedAt = statSync(this.file).mtime.toISOString();
+    if (existsSync(this.draftFile)) {   // unsaved changes from before the server stopped
+      try { const d = JSON.parse(readFileSync(this.draftFile, 'utf8')) as { edits?: Edit[]; scene: Scene }; this.scene = d.scene; this.sinceSave = d.edits ?? []; }
+      catch { /* a broken draft is ignored: the saved file stands */ }
+    }
     if (existsSync(this.historyFile)) {
       this.history = readFileSync(this.historyFile, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l) as Group).slice(-HISTORY_MAX);
       const last = this.history[this.history.length - 1];
@@ -98,10 +114,48 @@ export class SceneStore {
   private saveHistory() { writeFileSync(this.historyFile, this.history.map((g) => JSON.stringify(g)).join('\n') + (this.history.length ? '\n' : '')); }
   private savePins() { atomicWrite(this.pinsFile, `${JSON.stringify({ next: this.nextPin, pins: this.pins }, null, 1)}\n`); this.broadcast('map:pins', { name: this.name, pins: this.pins }); }
 
-  private writeScene() {
-    const text = dumpScene(this.scene);
-    this.lastWritten = hash(text);
-    atomicWrite(this.file, text);
+  /** Note an edit and write the draft; with the scene back as saved (undone, discarded), the draft goes. */
+  private writeDraft(edit?: { author: string; label: string }) {
+    if (!changedKeys(this.saved, this.scene).length) { this.sinceSave = []; if (existsSync(this.draftFile)) rmSync(this.draftFile); return; }
+    if (edit) this.sinceSave.push({ ...edit, time: new Date().toISOString() });
+    atomicWrite(this.draftFile, `${JSON.stringify({ edits: this.sinceSave, scene: this.scene })}\n`);
+  }
+
+  draft(): Draft {
+    const keys = changedKeys(this.saved, this.scene);
+    return { dirty: keys.length > 0, keys, changed: changedSummary(keys), edits: keys.length ? this.sinceSave : [], savedAt: this.savedAt };
+  }
+
+  /** Write the draft to the scene file (the one in git). */
+  save() {
+    return this.serial(async () => {
+      const d = this.draft();
+      if (!d.dirty) return { saved: false, draft: d };
+      const text = dumpScene(this.scene);
+      this.lastWritten = hash(text);
+      atomicWrite(this.file, text);
+      this.saved = this.scene; this.savedAt = new Date().toISOString();
+      this.writeDraft();
+      const now = this.draft();
+      this.broadcast('map:draft', { name: this.name, draft: now });
+      return { saved: true, edits: d.edits.length, changed: d.changed, draft: now };
+    });
+  }
+
+  /** Put the saved scene back, as one edit (so Ctrl+Z brings the draft back). */
+  discard(author = 'user') {
+    return this.serial(async () => {
+      const d = this.draft();
+      if (!d.dirty) return { discarded: false, draft: d };
+      const prev = this.scene, label = `discard ${d.edits.length || 'the'} unsaved edit${d.edits.length === 1 ? '' : 's'}`;
+      this.scene = this.saved;
+      this.record(prev, this.scene, author, label);
+      this.redoStack = [];
+      this.writeDraft();
+      await this.recompile();
+      this.publish({ author, label, keys: d.keys });
+      return { discarded: true, rev: this.rev, draft: this.draft() };
+    });
   }
 
   private async recompile(): Promise<Compiled> {
@@ -119,7 +173,7 @@ export class SceneStore {
   }
 
   private publish(change: { author: string; label: string; keys: string[] }) {
-    this.broadcast('map:update', { name: this.name, rev: this.rev, scene: this.scene, compiled: this.compiled, change });
+    this.broadcast('map:update', { name: this.name, rev: this.rev, scene: this.scene, compiled: this.compiled, change, draft: this.draft() });
   }
 
   private diff(before: Compiled | null, after: Compiled) {
@@ -157,7 +211,7 @@ export class SceneStore {
       this.record(prev, this.scene, author, label);
       this.redoStack = [];
       if (res.shifts.length) { for (const p of this.pins) if (p.anchor.x != null && p.anchor.y != null) [p.anchor.x, p.anchor.y] = shiftPoint([p.anchor.x, p.anchor.y], res.shifts); this.savePins(); }
-      this.writeScene();
+      this.writeDraft({ author, label });
       const c = await this.recompile();
       this.publish({ author, label, keys });
       return { rev: this.rev, minted: res.minted, changed: changedSummary(keys), diff: this.diff(before, c), summary: this.summary() };
@@ -177,7 +231,7 @@ export class SceneStore {
       this.history.splice(i, 1); this.saveHistory();
       this.redoStack.push(g);
       this.scene = next; this.rev++;
-      this.writeScene();
+      this.writeDraft({ author: g.author, label: `undo: ${g.label}` });
       const before = this.compiled, c = await this.recompile();
       this.publish({ author: g.author, label: `undo: ${g.label}`, keys });
       return { rev: this.rev, undone: { label: g.label, author: g.author }, diff: this.diff(before, c), summary: this.summary() };
@@ -193,20 +247,30 @@ export class SceneStore {
       const prev = this.scene;
       this.scene = next;
       this.record(prev, next, g.author, g.label);
-      this.writeScene();
+      this.writeDraft({ author: g.author, label: `redo: ${g.label}` });
       const before = this.compiled, c = await this.recompile();
       this.publish({ author: g.author, label: `redo: ${g.label}`, keys: changedKeys(prev, next) });
       return { rev: this.rev, redone: { label: g.label, author: g.author }, diff: this.diff(before, c), summary: this.summary() };
     });
   }
 
-  /** The scene file changed on disk, not through us (Claude's Edit, a git checkout). */
+  /**
+   * The scene file changed on disk, not through us (Claude's Edit, a git checkout). With no unsaved changes the editor
+   * takes it; with some, the draft is kept (Save writes it over the file, Discard takes the file) and the pages are told.
+   */
   external(text: string) {
     return this.serial(async () => {
       if (hash(text) === this.lastWritten) return;
       let next: Scene;
       try { next = JSON.parse(text) as Scene; } catch { return; }   // half-written: the next change event brings the rest
       this.lastWritten = hash(text);
+      const dirty = changedKeys(this.saved, this.scene).length > 0;
+      this.saved = next; this.savedAt = new Date().toISOString();
+      if (dirty) {
+        this.writeDraft();
+        this.broadcast('map:draft', { name: this.name, draft: this.draft(), notice: 'The scene file changed on disk. Your unsaved changes are kept: Save writes them over it, Discard takes the file' });
+        return;
+      }
       const keys = changedKeys(this.scene, next);
       if (!keys.length) return;
       const prev = this.scene;

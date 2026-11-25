@@ -18,5 +18,6 @@ Branch `port-3d` (worktree `.claude/worktrees/port-3d`), not merged. Team agents
 
 ## Done
 
+- 2026-11-25 step 0 merged: `p3d-map` (the court's room from its scene), `p3d-bodies` (`art/model-pose.ts`, `view3d/bodies.ts`), `p3d-fx` (`view3d/fx/`, `fx3d.html`). The user: bodies keep the pixel game's scale (wizard 2.7 u); the hat hiding the wizard's face at 46° is the intended look.
 - 2026-11-25 `GameView` / `ViewCamera` (`client/src/game-view.ts`): the seam the loop, input and panels use; `WorldView` implements it
 - 2026-11-25 the plan, from three code sweeps; the user's answers, and what a 2D sim does and doesn't rule out (height, knock-offs, bridges)

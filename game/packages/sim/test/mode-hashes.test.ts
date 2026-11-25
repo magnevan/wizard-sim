@@ -109,6 +109,8 @@ const RUNS: Record<string, () => Trail> = {
   yard: () => trail(createWorld(7, 2, { room: 'yard' }), 2400, bots(2)),
   // two bots walking the courtyard, the room made from its kit scene (tools/kit/room.py)
   court: () => trail(createWorld(7, 2, { room: 'court' }), 2400, bots(2)),
+  // two bots in the practice ground (a kit scene, sandbox mode): its three dummies, the platform and the dais
+  practice: () => trail(createWorld(7, 2, { room: 'practice' }), 2400, bots(2)),
   tutorial: () => {
     const m = newTutorialBot();
     return trail(createWorld(3, 1, { room: 'tutorial' }), 3000, (w) => [tutorialBotInput(w, 0, m), NO_INPUT, NO_INPUT, NO_INPUT]);

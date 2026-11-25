@@ -6,6 +6,8 @@
  *   id     the URL's word: ?room=<id> or #<id> (artifact links carry only the #anchor)
  *   key    the number key that switches to it (1 / 2 / 3 ...), matched on KeyboardEvent.code Digit<key>
  *   room   the sim room it builds (createWorld's opts.room)
+ *   pages  the pages that offer it (default the pixel game only): during the port to 3D, play3d.html offers only the
+ *          rooms it has a kit scene for, and calls usePage('3d') before reading anything here
  *
  * This will be redesigned closer to a beta (a campaign map, not a list); for now it is how you move
  * between the tutorial, the sandbox and the modes.
@@ -21,20 +23,41 @@ export interface Scenario {
   /** campaign: a chapter (it has checkpoints, and is saved as you pass them); arcade: a mode played for itself; sandbox: dev and tests. */
   kind: 'campaign' | 'arcade' | 'sandbox';
   key?: string;
+  /** The pages that offer it; without it, the pixel game only. */
+  pages?: readonly Page[];
 }
 
-export const SCENARIOS: readonly Scenario[] = [
+/** The two pages during the port to 3D: the pixel game (index.html) and the 3D one (play3d.html). */
+export type Page = 'pixel' | '3d';
+
+const ALL: readonly Scenario[] = [
   { id: 'infirmary', name: 'The opening: the infirmary', blurb: 'Outside the main gate on the battery road: the wounded under tents round a failing well (grey-box).', room: 'infirmary', kind: 'campaign' },
-  { id: 'court', name: 'The opening: the courtyard', blurb: 'The academy\'s central court and its great armillary: the hub every road leaves from.', room: 'court', kind: 'campaign', key: '8' },
+  { id: 'court', name: 'The opening: the courtyard', blurb: 'The academy\'s central court and its great armillary: the hub every road leaves from.', room: 'court', kind: 'campaign', key: '8', pages: ['pixel', '3d'] },
   { id: 'yard', name: 'The opening: the drill yard', blurb: 'The crash course in fighting, through a corner of the academy (beats 2 and 3).', room: 'yard', kind: 'campaign', key: '7' },
   { id: 'battery', name: 'The opening: the battery', blurb: 'The wall, its four defences and the failing well (beats 4 to 7).', room: 'battery', kind: 'campaign', key: '6' },
   { id: 'survive', name: 'Survive', blurb: 'Endless waves in a walled arena; pick a power-up between them.', room: 'survive', kind: 'arcade', key: '3' },
   { id: 'tutorial', name: 'Tutorial (prototype)', blurb: 'Learn the runes, the casts and your hands, one step at a time.', room: 'tutorial', kind: 'sandbox', key: '4' },
+  { id: 'practice', name: 'The practice ground', blurb: 'The sandbox in 3D: three practice dummies, a platform and a dais, the tuning panel (F2).', room: 'practice', kind: 'sandbox', key: '1', pages: ['3d'] },
   { id: 'sanctum', name: 'Sanctum', blurb: 'The sandbox: three practice dummies and the tuning panel (F2).', room: 'sanctum', kind: 'sandbox', key: '1' },
   { id: 'academy', name: 'Academy (art test)', blurb: 'A mock room for judging art: O swaps the props, I the wizard.', room: 'academy', kind: 'sandbox', key: '5' },
   { id: 'terraces', name: 'Terraces (height test)', blurb: 'Two tiers and a balcony joined by stairs: cliffs stop you, stairs take you up.', room: 'terraces', kind: 'sandbox', key: '9' },
   { id: 'arena', name: 'Arena (legacy)', blurb: 'Waves from portals, with lulls and breathers. Kept for tests; Survive replaces it.', room: 'arena', kind: 'sandbox', key: '2' },
 ];
+
+const onPage = (p: Page) => ALL.filter((s) => (s.pages ?? ['pixel']).includes(p));
+
+/** The scenarios this page offers, in menu order (the pixel game's until usePage says otherwise). */
+export const SCENARIOS: readonly Scenario[] = onPage('pixel');
+
+/** Where each page starts when the URL names nothing (or something it doesn't offer). */
+const DEFAULTS: Record<Page, string> = { pixel: 'sanctum', '3d': 'court' };
+let defaultId = DEFAULTS.pixel;
+
+/** Offer the scenarios of page `p` from here on (play3d.html calls it first thing, before fromLocation). */
+export function usePage(p: Page): void {
+  (SCENARIOS as Scenario[]).splice(0, SCENARIOS.length, ...onPage(p));
+  defaultId = DEFAULTS[p];
+}
 
 /** The menu's groups, in order. */
 export const KINDS: readonly { kind: Scenario['kind']; title: string }[] = [
@@ -44,8 +67,8 @@ export const KINDS: readonly { kind: Scenario['kind']; title: string }[] = [
 /** Where a scenario can be started from part-way: its room's mode's checkpoints (the first is its beginning). */
 export const checkpointsOf = (s: Scenario): readonly Checkpoint[] => (isPlayable(s) ? modeOf(s.room as Room).checkpoints ?? [] : []);
 
-/** Where you start when the URL names nothing (or something that isn't playable yet). */
-export const DEFAULT_SCENARIO = 'sanctum';
+/** Where you start when the URL names nothing (or something that isn't playable yet), on this page. */
+export const defaultScenario = (): Scenario => scenarioById(defaultId)!;
 
 /** Does the sim have this scenario's room yet? */
 export const isPlayable = (s: Scenario): boolean => Object.prototype.hasOwnProperty.call(ROOM_DIMS, s.room);
@@ -55,7 +78,7 @@ export const scenarioById = (id: string | null | undefined): Scenario | undefine
 /** The playable scenario for a room name from the network or the URL (unknown -> the default). */
 export function scenarioOfRoom(room: string | null | undefined): Scenario {
   const s = SCENARIOS.find((x) => x.room === room);
-  return s && isPlayable(s) ? s : scenarioById(DEFAULT_SCENARIO)!;
+  return s && isPlayable(s) ? s : defaultScenario();
 }
 
 /** A room name that is safe to hand createWorld. */
@@ -79,7 +102,7 @@ export function fromLocation(search: string, hash: string): { scenario: Scenario
     if (tok === 'ally') ally = true;
   }
   const s = scenarioById(id);
-  return { scenario: s && isPlayable(s) ? s : scenarioById(DEFAULT_SCENARIO)!, ally };
+  return { scenario: s && isPlayable(s) ? s : defaultScenario(), ally };
 }
 
 /**

@@ -6,7 +6,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { BODY, CELL, CONTENT_HASH, NO_INPUT, N_ALTARS, ROOM_HASH, ROOMS, STRUCT, createTerrain, createWorld, firstCliff, isPropWall, roomHash as simRoomHash, snapshot, step } from '@wizard-sim/sim';
+import { BODY, CELL, CONTENT_HASH, KIND, NO_INPUT, N_ALTARS, ROOM_HASH, ROOMS, STRUCT, createTerrain, createWorld, firstCliff, isPropWall, roomHash as simRoomHash, snapshot, step } from '@wizard-sim/sim';
 import * as C from '../src/index.mjs';
 import { agreement } from '../src/scene.mjs';
 
@@ -249,7 +249,7 @@ describe('height tiers', () => {
     const def = ROOMS.terraces, hd = def.height!;
     expect(hd.metres).toEqual([0, 3, 6]);
     expect(firstCliff(def)).toBe(def.rock.length - hd.cliffs.length);
-    for (const id of Object.keys(ROOMS) as (keyof typeof ROOMS)[]) expect('height' in ROOMS[id]).toBe(id === 'terraces' || id === 'court' || id === 'infirmary' || id === 'yard'); // court, infirmary, yard: written from their plans (tools/place-plans/to_ldtk.py)
+    for (const id of Object.keys(ROOMS) as (keyof typeof ROOMS)[]) expect('height' in ROOMS[id]).toBe(id === 'terraces' || id === 'court' || id === 'infirmary' || id === 'yard' || id === 'practice'); // court, infirmary, yard: written from their plans (tools/place-plans/to_ldtk.py); court, practice: from kit scenes
     // the terrace's edge (y = -1), west of the stair: a body standing on it is pushed off, and the wall is terrain
     const k = def.rock.findIndex((s, i) => i >= firstCliff(def) && s[1] === -1 && s[3] === -1 && s[0] < 0);
     expect(hd.cliffs[k - firstCliff(def)]).toEqual([1, 0]);
@@ -434,6 +434,18 @@ describe('rooms from kit scenes (tools/kit/room.py)', () => {
     expect(ROOMS.court).toEqual(room);
     expect([ROOMS.court.w, ROOMS.court.h]).toEqual([e.doc.toScene[0] * 2, e.doc.toScene[1] * 2]);
     expect(C.emitGrounds(C.loadProject())).not.toContain('  court: [');
+  });
+  it('the practice ground: the room its scene exported, sandbox mode, a dummy on each of its dummy markers', () => {
+    const e = C.loadSceneRooms().find((x: any) => x.doc.scene === 'practice');
+    expect(e, 'game/content/generated/rooms/practice.room.json').toBeDefined();
+    const { room, errors } = C.sceneRoom(e);
+    expect(errors).toEqual([]);
+    expect(ROOMS.practice).toEqual(room);
+    expect([ROOMS.practice.w, ROOMS.practice.h]).toEqual([e.doc.toScene[0] * 2, e.doc.toScene[1] * 2]);
+    expect(ROOMS.practice.dummies).toHaveLength(3);
+    const w = createWorld(7, 1, { room: 'practice' });
+    expect(w.mode.id).toBe('sandbox');
+    expect(Array.from(w.bodies.kind).filter((k) => k === KIND.dummy)).toHaveLength(3);
   });
   it('a room file whose scene has moved on is stale, and one without its four starts is refused', () => {
     const e = entry();

@@ -77,7 +77,7 @@ def lay_scene(name, data, force=False, log=print):
     if not ps:
         if os.path.exists(out): os.remove(out)
         return None
-    code = b''.join(open(os.path.join(HERE, f), 'rb').read() for f in ('tess_proof.py', 'tess_layout.py'))
+    code = b''.join(open(os.path.join(HERE, f), 'rb').read().replace(b'\r\n', b'\n') for f in ('tess_proof.py', 'tess_layout.py'))   # (line endings differ between checkouts)
     fp = hashlib.md5(code + ''.join(f'{m}|{h}|{poly.wkt}' for m, h, poly in ps).encode()).hexdigest()
     if not force and os.path.exists(out):
         with open(out, encoding='utf-8') as f:

@@ -13,7 +13,7 @@ Branch `port-3d` (worktree `.claude/worktrees/port-3d`), not merged to main. Tea
 
 - [ ] **Spell effects, how (agreed with the user 2026-11-25):** four tone pieces here (Fire spray and floor, Arcane beam, Earth rock and impact, Cold nova), each concept → build → the user's verdict; then a spell-look guide from them and a critic calibrated on it; then a dedicated effects thread works through every family in batches, one review page per batch. Stand-ins keep the game playable meanwhile; the swap doesn't wait.
   - [ ] Fire: the user picked toon volume without streaks (`fire2`; [record](../explorations/2026-11-25-spell-concepts-fire.md)); `fx/fire.ts` being rebuilt to it (`p3d-fire`).
-  - [ ] Arcane beam, Earth rock, Cold nova: a Codex concept round in the same toon family, plus a family sheet (`docs/explorations/2026-11-25-spell-concepts-tone.md`).
+  - [ ] Arcane beam, Earth rock, Cold nova: concepts done in the toon family, plus a family sheet and draft rules ([record](../explorations/2026-11-25-spell-concepts-tone.md)); on the review page (`tone-*`), waiting for the user; then build them.
 - No art for the practice ground: it's a temporary space and keeps placeholder dummies (the user, 2026-11-25). Practice dummies and the straw goblin get made with the yard ([opening thread](opening.md)).
 - [ ] Later: a profiling pass on the user's machine; an exploration of asset handling (streaming, levels of detail, keeping assets across sessions) rather than squeezing sizes.
 - [ ] Agree scene markers (the `marker` object kind, already in `court.scene.json`) and re-running `room.py` on save with the map editor's session.

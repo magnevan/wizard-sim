@@ -130,3 +130,12 @@ Four images for the [road stones](../../docs/explorations/2026-11-24-road-stones
 - Naming a cone's angle and length against the wizard's height gave roughly the right fan; the model makes the far end lobed (a heart shape) unless the style names straight streaks running to the cone's edges.
 - The breakdown sheet (five parts in a row, four below, the assembled effect wide across the bottom, a tiny wizard for scale, on flat dark grey) came back exactly as laid out with no labels, from the scene image alone.
 - Two runs of one prompt into the same folder overwrite each other's log; give each take its own folder.
+
+### 2026-11-25, spell tone
+
+17 images for the [spell tone concepts](../../docs/explorations/2026-11-25-spell-concepts-tone.md): the Arcane beam, the Earth rock in flight and its impact, and the Cold nova in the chosen toon family, one alternative each (crisper or chunkier), and a family sheet with all four spells. `make.py` writes the prompts; every scene repaints `plaza-26.jpg` with the chosen `fire/toon-spray-2.jpg` attached second as "the style every spell in the game is drawn in". All saved; four at a time, about four minutes each.
+
+- The second reference carried the family well: bright core, toon body, rim and floor light came back on every element without restating them per element.
+- "A thick, white-hot core... surges... halo" gave thin lasers and a wide pink wash. Saying what it must not be ("not a thin laser: a thick, heavy rope of plasma about as wide as the wizard's hat") and where the light goes ("in a narrow strip under the beam only") fixed both; "swellings racing along it" can turn into a string of beads.
+- Earth dust disappears on the warm floor unless asked for "darker ochre-brown than the floor"; name the value, not just the colour.
+- "Chunkier" barely changes a rock, and on an impact turned the shards into floor slabs (reads as a quake). "Crisper" gave a real alternative on the nova.

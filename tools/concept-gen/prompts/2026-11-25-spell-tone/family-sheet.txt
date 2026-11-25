@@ -1,0 +1,11 @@
+Generate one image with your image generation tool, then save it as family-sheet.png in the current directory. Reply with just the file name.
+
+The first attached image is a screenshot of our game: a stylised 3D action game seen from a steep camera about 46 degrees down, looking north over a warm sandstone courtyard in morning sun, two small wizards in front of a row of goblins. The other four attached images are concept art for four of our spells in that courtyard: a Fire spray, an Arcane beam, an Earth rock missile and a Cold nova.
+
+Repaint the first image as one finished frame of a four-player game with the same camera, framing, courtyard, light and sizes, with four wizards in the same robes and pointed hats (red, blue, green and yellow) spread across the open floor in front of the goblins, each casting one of the four spells, drawn exactly as in its concept art, so the four read side by side:
+- far left, the red wizard: the Fire spray, a cone of volumetric toon flame with a white-hot core at the staff and dark smoke off its far end, into the goblins on the left;
+- left of middle, the green wizard: an Earth rock missile, a tumbling brown-grey boulder in flight with a dust wake, about to hit a goblin;
+- right of middle, the yellow wizard: an Arcane beam, a straight magenta-violet beam with a white-hot core from the staff to a goblin;
+- far right, the blue wizard: a Cold nova, a serrated ring of pale cyan and white ice rolling out from his feet with frost left on the stone inside it.
+
+Every spell is in the same style: volumetric toon effects with a bright core, a saturated body, a darker rim, residue where the element has any and coloured light on the floor. Each must stand out clearly against the warm, pale orange stone floor and not overlap the others. No text, no labels, no UI.

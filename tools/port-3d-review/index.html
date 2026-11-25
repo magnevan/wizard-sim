@@ -72,7 +72,7 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
   <header>
     <div class="eyebrow">Port to 3D · step 0 · 2026-11-25</div>
     <h1>The Court in 3D</h1>
-    <p class="lede"><b>New since your pass: <a href="#fire2">Fire, round 2</a>, concept art to pick a direction from.</b> The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
+    <p class="lede"><b>New: <a href="#tone">the tone pieces</a>, the beam, rock and ring in your toon fire's style.</b> The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
     <div class="hero"><img src="img/plaza-26.jpg" alt="Two wizards and six goblins on the court's sunk plaza, seen from the 3D game camera"></div>
   </header>
 
@@ -151,6 +151,83 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
     <div class="shots wide">
       <figure><img src="img/bodies-attack-26.jpg" alt="Wizard and the six warband models mid-attack at 26 units"><figcaption><b>The band attacking</b> · 26 u, the game's distance</figcaption></figure>
       <figure><img src="img/bodies-wizard-10.jpg" alt="Four wizards close up: casting, flame sword, carried and raised guards"><figcaption><b>Close up</b> · casting Force, the flame sword, the Mirror carried, the Ember raised</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="tone">
+    <div class="top">
+      <div>
+        <h2>The tone pieces: beam, rock and ring</h2>
+        <p>Your toon fire, carried to one of each other kind of effect: a line of energy (the Arcane beam), a solid (the Earth rock and its impact) and an area wave (the Cold ring). Once these four are right, they become a short spell-look guide, and a dedicated effects session does every other spell from it in batches.</p>
+        <p>The four together read as one family: the same toon shading, a bright core, a darker rim, residue on the floor. Their weight differs: fire and the ring are loud, the beam is slimmer, and the rock is the quiet one, the only effect with no light of its own, so its weight has to come from the impact and dark dust. Each will be sized to the sim, not the painting; the painted ring is wider than its 4 u.</p>
+        <p>Draft rules from them:</p>
+        <ul>
+          <li>Layers: a bright core, a saturated body, a thin darker rim, the element's residue, then light on the floor.</li>
+          <li>Stand out on pale stone by value: each effect brings a white or a dark the floor lacks.</li>
+          <li>Light follows the shape and stays small: a strip, a pool or a ring, never a wash over the court.</li>
+          <li>Scale against the wizard: a spray about two wizards long, a beam about a hat wide, a rock about a goblin tall, a ring's front knee-high.</li>
+          <li>More runes add layers (a halo, a hotter core, a crater), not only size.</li>
+          <li>No streaks or outlines added to explain a shape.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="tone-family" data-rec="yes">
+        <div class="q">Is this the family and are these the rules?</div>
+        <div class="choices" role="group" aria-label="Tone family">
+          <button type="button" data-v="yes">Yes</button><button type="button" data-v="adjust">Yes, with changes</button><button type="button" data-v="no">No</button>
+        </div>
+        <div class="rec">Recommended: <b>yes</b>.</div>
+        <textarea id="note-tone-family" aria-label="Note on the family and rules" placeholder="A rule to add, change or drop"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="shots wide">
+      <figure><img src="img/tone-family-toon-sheet-2.jpg" alt="Fire, Earth, Arcane and Cold side by side in the court"><figcaption><b>The four together</b> · fire, the rock, the beam, the ring</figcaption></figure>
+    </div>
+    <div class="top">
+      <div class="shots">
+        <figure><img src="img/tone-arcane-toon-beam-3.jpg" alt="Arcane beam, toon"><figcaption><b>Beam, toon</b> · a violet rope with white-hot beads, a narrow strip of light</figcaption></figure>
+        <figure><img src="img/tone-arcane-crisp-beam-1.jpg" alt="Arcane beam, crisp"><figcaption><b>Beam, crisp</b> · the alternative</figcaption></figure>
+      </div>
+      <div class="answer" data-id="tone-arcane" data-rec="toon">
+        <div class="q">The Arcane beam</div>
+        <div class="choices" role="group" aria-label="Arcane beam">
+          <button type="button" data-v="toon">Toon</button><button type="button" data-v="crisp">Crisp</button><button type="button" data-v="redo">Neither</button>
+        </div>
+        <div class="rec">Recommended: <b>toon</b>.</div>
+        <textarea id="note-tone-arcane" aria-label="Note on the beam" placeholder="Thicker, thinner, the light"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="top">
+      <div class="shots">
+        <figure><img src="img/tone-earth-toon-rock-3.jpg" alt="Earth rock in flight"><figcaption><b>Rock in flight</b> · dark ochre dust behind it</figcaption></figure>
+        <figure><img src="img/tone-earth-toon-impact-2.jpg" alt="Earth rock impact"><figcaption><b>Its impact</b> · shards, a dust ring, cracks, the goblin thrown</figcaption></figure>
+        <figure><img src="img/tone-earth-chunky-impact-1.jpg" alt="Chunky earth eruption"><figcaption><b>Chunky</b> · reads as the floor erupting; kept for the Earthquake</figcaption></figure>
+      </div>
+      <div class="answer" data-id="tone-earth" data-rec="toon">
+        <div class="q">The Earth rock</div>
+        <div class="choices" role="group" aria-label="Earth rock">
+          <button type="button" data-v="toon">Toon</button><button type="button" data-v="chunky">Chunky</button><button type="button" data-v="redo">Neither</button>
+        </div>
+        <div class="rec">Recommended: <b>toon</b>, the chunky one saved for the quake.</div>
+        <textarea id="note-tone-earth" aria-label="Note on the rock" placeholder="Weight, dust, the impact"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="top">
+      <div class="shots">
+        <figure><img src="img/tone-cold-toon-nova-1.jpg" alt="Cold ring, toon"><figcaption><b>Ring, toon</b> · a jagged cyan-white wall, mist outside, rime inside</figcaption></figure>
+        <figure><img src="img/tone-cold-crisp-nova-1.jpg" alt="Cold ring, crisp"><figcaption><b>Ring, crisp</b> · a thinner glassy front that sweeps</figcaption></figure>
+      </div>
+      <div class="answer" data-id="tone-cold" data-rec="toon">
+        <div class="q">The Cold ring</div>
+        <div class="choices" role="group" aria-label="Cold ring">
+          <button type="button" data-v="toon">Toon</button><button type="button" data-v="crisp">Crisp</button><button type="button" data-v="redo">Neither</button>
+        </div>
+        <div class="rec">Recommended: <b>toon</b>; the crisp front is a real alternative if a wall feels too heavy.</div>
+        <textarea id="note-tone-cold" aria-label="Note on the ring" placeholder="Wall or sweep, the frost left behind"></textarea>
+        <div class="status"></div>
+      </div>
     </div>
   </section>
 

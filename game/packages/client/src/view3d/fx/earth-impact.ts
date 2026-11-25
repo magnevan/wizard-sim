@@ -176,7 +176,7 @@ export class EarthImpacts {
       this.dustAt(D, i, age, g, R);
       // cracks
       const cr = 0.75 + 0.28 * i.n + i.r;
-      (dc.u.uC0.value as THREE.Vector4).set(i.x, i.z, cr, age);
+      (dc.u.uC0.value as THREE.Vector4).set(i.x + i.ux * cr * 0.3, i.z + i.uz * cr * 0.3, cr, age);
       (dc.u.uC1.value as THREE.Vector4).set(Math.floor(h01(i.seed, 1) * 4), h01(i.seed, 2) * Math.PI * 2, i.n, 0);
       if (i.pass) dc.cover(null); else dc.cover({ x0: i.x - cr * 1.3, z0: i.z - cr * 1.3, x1: i.x + cr * 1.3, z1: i.z + cr * 1.3 });
       k = this.drawShards(i, age, g, k);
@@ -188,18 +188,19 @@ export class EarthImpacts {
 
   /** Impact i's dust at `age` s: the ring on the floor (not for a pass-through), the burst, the shock ring from four runes. */
   private dustAt(D: DustSet, i: Impact, age: number, g: number, R: number): void {
-    const set = (d: DustMesh, on: boolean, life: number, o: Record<string, number>, y: number): void => {
+    // directional (the user, round 4: "rock ground impact should be more directional"): the floor's dust is thrown forward
+    const set = (d: DustMesh, on: boolean, life: number, o: Record<string, number>, y: number, fwd = 0): void => {
       d.mesh.visible = on && age < life;
       if (!d.mesh.visible) return;
       const u = d.u;
-      (u.uC.value as THREE.Vector3).set(i.x, y, i.z); (u.uDir.value as THREE.Vector2).set(i.ux, i.uz);
+      (u.uC.value as THREE.Vector3).set(i.x + i.ux * fwd, y, i.z + i.uz * fwd); (u.uDir.value as THREE.Vector2).set(i.ux, i.uz);
       u.uT.value = age; u.uLife.value = life; u.uR.value = R; u.uSeed.value = i.seed % 997; u.uSalt.value = (i.seed % 61) * 1.7; u.uClock.value = age;
       for (const [k, v] of Object.entries(o)) u[k].value = v;
     };
-    set(D.ring, !i.pass, 1.5 + 0.08 * i.n, { uTube: 0.22 + 0.04 * i.n, uRate: 5.5, uR0: 0.2 }, g);
+    set(D.ring, !i.pass, 1.5 + 0.08 * i.n, { uTube: 0.22 + 0.04 * i.n, uRate: 5.5, uR0: 0.2 }, g, R * 0.55);
     set(D.shock, !i.pass && i.n >= 4, 0.5, { uTube: 0.1, uRate: 7, uR0: 0.4 }, g);
     D.shock.u.uR.value = R * 2;
-    set(D.blob, true, 0.85, { uB: i.r * 0.7 + 0.18 }, i.pass ? i.y : (i.y + g) * 0.5);
+    set(D.blob, true, 0.85, { uB: i.r * 0.7 + 0.18 }, i.pass ? i.y : (i.y + g) * 0.5, i.pass ? 0 : R * 0.3);
   }
 
   /** The rock's shards at `age` s after impact i, from instance k; returns the next free instance. */
@@ -207,7 +208,8 @@ export class EarthImpacts {
     const count = i.pass ? 4 + 2 * i.n : shardCount(i.n);
     for (let s = 0; s < count && k < SHARD_CAP; s++) {
       const big = !i.pass && s < BIG, sd = i.seed + s * 13;
-      const a = h01(sd, 1) * Math.PI * 2, fwd = big ? 0.6 + h01(sd, 2) : 1.5 + 3 * h01(sd, 2);
+      // a forward cone round the rock's travel, not a ring
+      const a = Math.atan2(i.uz, i.ux) + (h01(sd, 1) - 0.5) * 2.2, fwd = big ? 1.0 + h01(sd, 2) : 2.0 + 3 * h01(sd, 2);
       const sp = big ? 0.6 + 1.2 * h01(sd, 3) : (2.2 + 4.5 * h01(sd, 3)) * (0.85 + 0.08 * i.n);
       const vx = Math.cos(a) * sp + i.ux * fwd, vz = Math.sin(a) * sp + i.uz * fwd, vy = big ? 1 + 2 * h01(sd, 4) : 2.5 + 5 * h01(sd, 4);
       const size = big ? i.r * (0.42 + 0.14 * h01(sd, 5)) : i.r * (0.13 + 0.17 * h01(sd, 5)) + 0.03;

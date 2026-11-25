@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as plasma-core-1.png in the current directory. Reply with just the file name.
+
+The attached image is a screenshot of our stylised 3D co-op wizard game: a warm sandstone courtyard seen from the game's high camera, two small wizards and a row of goblins. Repaint exactly this scene, same camera, same layout, same soft stylised 3D look, and add one spell: the left wizard is channelling an Arcane beam, a straight continuous beam of raw magenta-violet magical energy from the tip of the staff to the nearest goblin, which it is hitting. The beam is about as wide as a wizard's hat at its widest glow; it stays straight from staff to goblin. Arcane is raw energy, magenta, violet and white; it must not look like fire, lightning or a laser pointer.
+
+The look: a blazing white-hot core line with no hard edge, falling off sharply into a soft magenta glow, and around it a loose, wispy cloud of violet plasma that is slowly peeling away from the beam and drifting off and down, like smoke from something burning too hot. Bright pulses of light race along the beam from the staff to the goblin: show two or three of them in this frozen moment, each lighting up the plasma cloud around it. Where it hits, the goblin is lit magenta and the plasma splashes and curls off it.
+
+Keep the rest of the scene as in the screenshot. No text, no UI.

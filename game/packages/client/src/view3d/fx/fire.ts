@@ -44,6 +44,13 @@ export interface FireSheets { wisps: THREE.Texture | null; tongues: THREE.Textur
 /** How the spray sits on the caster: forward offset of the staff's tip from the middle, its height, the far end's height (u). */
 export const NOZZLE = { forward: 0.55, height: 1.3, endHeight: 0.6 };
 
+/**
+ * The body mesh (fire-body.ts): off since round 5. The user, round 4: "there are fire particles that spit out, but
+ * there's also an animated sheet under. I think the sheet has problems. It bends in a way that looks weird, it ends
+ * abruptly, the holes don't look realistic." The tongues now fill the cone over a soft glow; true draws the mesh again.
+ */
+const BODY_MESH = false;
+
 const SPRAY_HEAD = /* glsl */ `
 ${AIM_GLSL}
 uniform float uN, uHalf, uHot;
@@ -64,7 +71,8 @@ const RATE = {
   core: (n: number) => 240 + 40 * n, coreLife: 0.16,
   smoke: (n: number) => 9 + 4 * n, smokeLife: 1.3,
   ember: (n: number) => (14 + 8 * n) * (n >= 5 ? 1.6 : 1), emberLife: 0.9,
-  tongue: (n: number) => 260 + 60 * n, tongueLife: 0.26,
+  tongue: (n: number) => 380 + 120 * n, tongueLife: 0.32,
+  glow: (n: number) => 90 + 20 * n, glowLife: 0.5,
 };
 
 /** The core: soft white-hot glows from the staff's tip, out to uCore of the way (0.3 at one rune to 0.46 at five). */
@@ -118,16 +126,30 @@ Particle particle(float k, float age, float ts) {
 const TONGUE = streamMotion(/* glsl */ `${SPRAY_HEAD}
 Particle particle(float k, float age, float ts) {
   vec4 A = aimAt(uTime - ts);
-  float s0 = 0.08 + 0.72 * rnd(k, 41.0), s = s0 + age * (0.32 + 0.2 * rnd(k, 42.0));
-  if (s > 1.02) return P0();
-  float side = (rnd(k, 43.0) * 2.0 - 1.0) * uHalf * 0.85 * smoothstep(0.0, 0.3, s), w = fanW(A, s);
+  float s0 = 0.04 + 0.8 * rnd(k, 41.0), s = s0 + age * (0.3 + 0.22 * rnd(k, 42.0));
+  if (s > 1.06) return P0();
+  // across the whole cone (they are the body now), denser toward the middle
+  float sd = rnd(k, 43.0) * 2.0 - 1.0, side = sign(sd) * pow(abs(sd), 1.3) * uHalf * 0.95 * smoothstep(0.0, 0.25, s), w = fanW(A, s);
   Particle p = P0(); p.alive = true;
   p.pos = sprayAt(A, s, side, 0.0, mix(axisH(s), w * 0.3 + 0.15, smoothstep(0.0, 0.6, s)) + (rnd(k, 44.0) - 0.3) * (0.2 + w * 0.35) + age * age * 0.3);
-  p.size = (0.12 + w * 0.09) * (0.7 + 0.5 * rnd(k, 45.0)) * sin(min(age, 0.999) * 3.14159);
+  p.size = (0.15 + w * 0.15) * (0.7 + 0.5 * rnd(k, 45.0)) * sin(min(age, 0.999) * 3.14159) * (1.0 - 0.6 * smoothstep(0.85, 1.06, s));
   p.aspect = 0.55; p.stretch = 0.035;
   // its picture re-picked 12 times a second: the stepped flicker of the pixel flames
   p.col = vec4(s, age, 0.0, 1.0);
   p.data = vec4(rnd(k * 7.0 + floor(uTime * 12.0), 46.0), rnd(k, 47.0), 0.0, 0.0);
+  return p;
+}`);
+
+const GLOW = streamMotion(/* glsl */ `${SPRAY_HEAD}
+Particle particle(float k, float age, float ts) {
+  vec4 A = aimAt(uTime - ts);
+  float s = 0.1 + 0.75 * rnd(k, 61.0) + age * 0.3;
+  if (s > 1.02) return P0();
+  float side = (rnd(k, 62.0) * 2.0 - 1.0) * uHalf * 0.6 * smoothstep(0.0, 0.3, s), w = fanW(A, s);
+  Particle p = P0(); p.alive = true;
+  p.pos = sprayAt(A, s, side, 0.0, mix(axisH(s), w * 0.3 + 0.2, smoothstep(0.0, 0.6, s)));
+  p.size = 0.25 + w * 0.4;
+  p.col = vec4(s, age, 0.0, 1.0);
   return p;
 }`);
 
@@ -142,8 +164,15 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   float lum = max(t.r, max(t.g, t.b)), m = smoothstep(0.08, 0.45, lum);
   // the painting's own colour, pushed past white at its hottest and cooled to red toward the far end
   vec3 c = t * mix(vec3(2.4, 1.9, 1.4), vec3(1.5, 0.7, 0.4), smoothstep(0.3, 1.0, col.x));
-  float a = m * 0.55;
+  float a = m * 0.7;
   return vec4(c * a, a);
+}`;
+
+/** The glow under the tongues: soft warm light riding out with them, the body's warmth without a surface. */
+const LOOK_GLOW = /* glsl */ `
+vec4 look(vec2 uv, vec4 col, vec4 data) {
+  float m = exp(-dot(uv, uv) * 2.6) * sin(min(col.y, 0.999) * 3.14159);
+  return vec4(fireRamp(0.3 + col.x * 0.5) * 0.55 * m, 0.22 * m);
 }`;
 
 /** The core: a soft white-hot glow, mostly added light, cooling to pale gold where it hands over to the body. */
@@ -232,7 +261,9 @@ export class FireSpray {
     };
     add(SMOKE, LOOK_SMOKE, RATE.smoke, RATE.smokeLife, 0, { uSheet: { value: FIRE_TEX.smoke } });
     // the body: one volume, a mesh (fire-body.ts), its deep-red outline shell first, then the flame
+    add(GLOW, LOOK_GLOW, RATE.glow, RATE.glowLife, 2, {}, 7);
     this.body = new FireBody(SPRAY_HEAD, this.U, seed);
+    this.body.group.visible = BODY_MESH;
     this.group.add(this.body.group);
     add(TONGUE, LOOK_TONGUE, RATE.tongue, RATE.tongueLife, 4, { uSheet: { value: FIRE_TEX.licks } }, 6);
     add(CORE, LOOK_CORE, RATE.core, RATE.coreLife, 4);

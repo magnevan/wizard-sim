@@ -75,9 +75,73 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
   <header>
     <div class="eyebrow">Port to 3D · step 0 · 2026-11-25</div>
     <h1>The Court in 3D</h1>
-    <p class="lede"><b>New: <a href="#r4">round 4</a>, your round 3 notes (and the white cloud fixed).</b> Below it, <a href="#r3">round 3</a>, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
+    <p class="lede"><b>New: <a href="#r5">round 5</a>, fire without the sheet, a directional rock, and five beam concepts to pick from.</b> Below it, <a href="#r4">round 4</a>, <a href="#r3">round 3</a>, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
     <div class="hero"><img src="img/plaza-26.jpg" alt="Two wizards and six goblins on the court's sunk plaza, seen from the 3D game camera"></div>
   </header>
+
+  <section id="r5">
+    <div class="top">
+      <div>
+        <h2>Round 5: fire without the sheet, a directional rock, and beam concepts</h2>
+        <p><b>Fire.</b> You spotted that the particles work and the sheet under them doesn't, so the sheet is gone. The painted licks now fill the whole cone (about 740 a second at three runes, a third of a second each) over a soft warm glow that gives the body its mass. Its end can't blink out any more: each lick finishes its short life, so the fire dies down. As you suggested, it's shown at two and three runes side by side. (Every earlier clip was three runes.)</p>
+      </div>
+      <div class="answer" data-id="r5-fire" data-rec="keep">
+        <div class="q">Fire, particles only</div>
+        <div class="choices" role="group" aria-label="Fire, particles only">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r5-fire" aria-label="Note: Fire, particles only" placeholder="Mass, speed, the end"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+      <figure><video src="vid/r5-fire2-30.mp4" muted loop playsinline autoplay></video><figcaption><b>2 runes</b> · the game camera, 30 u</figcaption></figure>
+      <figure><video src="vid/r5-fire3-30.mp4" muted loop playsinline autoplay></video><figcaption><b>3 runes</b> · 30 u</figcaption></figure>
+      <figure><video src="vid/r5-fire2-14.mp4" muted loop playsinline autoplay></video><figcaption><b>2 runes</b> · closer, 14 u</figcaption></figure>
+      <figure><video src="vid/r5-fire3-14.mp4" muted loop playsinline autoplay></video><figcaption><b>3 runes</b> · 14 u</figcaption></figure>
+    </div>
+
+    <div class="top">
+      <div>
+        <p><b>Earth rock.</b> "More directional": the chips now fly in a forward cone round the rock's travel instead of a full circle, the dust ring and burst are thrown forward, and the crack star sits ahead of the contact. A rock only meets bare ground at the end of its 28 u flight or at a wall, so the impacts you've been judging are on goblins; this clip is a tapped rock, the usual cast. The big goblin's knockdown is filed as #25.</p>
+      </div>
+      <div class="answer" data-id="r5-earth" data-rec="keep">
+        <div class="q">Earth rock, directional</div>
+        <div class="choices" role="group" aria-label="Earth rock, directional">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r5-earth" aria-label="Note: Earth rock, directional" placeholder="The impact, the chips"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+      <figure><video src="vid/r5-earth-tap-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Tapped rock</b> · 14 u</figcaption></figure>
+    </div>
+
+    <div class="top">
+      <div>
+        <p><b>Arcane beam: new concepts.</b> After your redo, Codex painted your two directions into the court: option 1 (a strong glowing core with no defined border, fading into wispy plasma falling off it, with pulses racing down that light the plasma) and option 2 (a ray made of countless tiny plasma particles moving very fast), two takes each, plus one that mixes them. I'd build <b>plasma core take 2</b>, the closest to your Disintegrate description, and borrow particles take 2's fan of sparks at the goblin. Pick, or say what to mix. Prompts are in <span class="mono">tools/concept-gen/prompts/2026-11-25-arcane-beam-2/</span>.</p>
+      </div>
+      <div class="answer" data-id="r5-arcane" data-rec="plasma-core-2">
+        <div class="q">Which beam to build?</div>
+        <div class="choices" role="group" aria-label="Which beam to build?">
+          <button type="button" data-v="plasma-core-2">Plasma core 2</button><button type="button" data-v="plasma-core-1">Plasma core 1</button><button type="button" data-v="particles-2">Particles 2</button><button type="button" data-v="particles-1">Particles 1</button><button type="button" data-v="hybrid-1">Hybrid</button><button type="button" data-v="other">None, more concepts</button>
+        </div>
+        <div class="rec">Recommended: <b>plasma core 2, with particles 2's sparks at the hit</b></div>
+        <textarea id="note-r5-arcane" aria-label="Note: Which beam to build?" placeholder="What to keep or mix from each"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="shots">
+      <figure><img src="img/r5-arcane-plasma-core-2.jpg" alt="Arcane beam concept: plasma-core-2"><figcaption><b>Plasma core, take 2</b> · recommended: a blazing core with no border, fading into a wispy violet cloud that thickens round the goblin</figcaption></figure>
+      <figure><img src="img/r5-arcane-plasma-core-1.jpg" alt="Arcane beam concept: plasma-core-1"><figcaption><b>Plasma core, take 1</b> · a white-hot core wrapped in crackling tendrils; strong, but close to lightning</figcaption></figure>
+      <figure><img src="img/r5-arcane-particles-2.jpg" alt="Arcane beam concept: particles-2"><figcaption><b>Particles, take 2</b> · a torrent of fast streaks and a fan of sparks at the goblin; cleaner, but a thin line</figcaption></figure>
+      <figure><img src="img/r5-arcane-particles-1.jpg" alt="Arcane beam concept: particles-1"><figcaption><b>Particles, take 1</b> · a glittering stream; reads as a sparkler</figcaption></figure>
+      <figure><img src="img/r5-arcane-hybrid-1.jpg" alt="Arcane beam concept: hybrid-1"><figcaption><b>Hybrid</b> · core, haze and particles with a spark burst at the hit; a heavy pink wash on the floor</figcaption></figure>
+    </div>
+  </section>
 
   <section id="r4">
     <div class="top">

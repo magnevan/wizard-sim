@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as particles-2.png in the current directory. Reply with just the file name.
+
+The attached image is a screenshot of our stylised 3D co-op wizard game: a warm sandstone courtyard seen from the game's high camera, two small wizards and a row of goblins. Repaint exactly this scene, same camera, same layout, same soft stylised 3D look, and add one spell: the left wizard is channelling an Arcane beam, a straight continuous beam of raw magenta-violet magical energy from the tip of the staff to the nearest goblin, which it is hitting. The beam is about as wide as a wizard's hat at its widest glow; it stays straight from staff to goblin. Arcane is raw energy, magenta, violet and white; it must not look like fire, lightning or a laser pointer.
+
+The look: a torrent of countless tiny plasma motes, magenta and violet with white-hot ones in the middle, racing along the beam's line so fast each is a short streak; the stream is dense and bright in its middle and frays into scattered sparks at its edges, with a faint glow haze around the whole stream. A few motes spiral loosely around the main stream. At the goblin, the stream breaks against it in a fan of sparks.
+
+Keep the rest of the scene as in the screenshot. No text, no UI.

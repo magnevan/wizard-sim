@@ -672,6 +672,7 @@ function sides(rings: number[][][], top: number, bottom: number): THREE.Mesh | n
 const EMBLEM: Record<string, number> = { fire: 0xd8553a, cold: 0xdcecf4, water: 0x3f7fc8, life: 0x5aa851, shield: 0xd8b24a, arcane: 0x8a5ac8, earth: 0x8a6a44 };
 const bannerUrls = import.meta.glob<string>('../../../../content/generated/textures/banner-*.png', { eager: true, query: '?url', import: 'default' });
 const bannerTex: Record<string, THREE.Texture> = {};
+const BANNER_ASPECT = 2.32;   // the cut banners' height over width (256 x ~594 px)
 function bannerMap(emblem: string): THREE.Texture | null {
   const url = bannerUrls[`../../../../content/generated/textures/banner-${emblem}.png`];
   if (!url) return null;
@@ -709,9 +710,20 @@ function dressPiece(it: Inst, kind: string): THREE.Group {
       if (map) g.traverse((c) => { const m = c as THREE.Mesh; if (m.isMesh) { const mm = (m.material as THREE.MeshStandardMaterial).clone(); mm.map = map; mm.needsUpdate = true; m.material = mm; } });
       return g;
     }
-    box(g, MAT.dark, -0.04, 0.04, 0, H, -0.04, 0.04);                                         // its pole
-    const cloth = map ? new THREE.MeshStandardMaterial({ map, roughness: 0.9, side: THREE.DoubleSide }) : mat(EMBLEM[String(parts.emblem)] ?? 0xb0a090);
-    box(g, cloth, -w / 2, w / 2, H * 0.35, H * 0.95, 0.05, 0.1);
+    box(g, MAT.dark, -0.05, 0.05, 0, H, -0.05, 0.05);                                         // its pole
+    if (map) {
+      // the painted banner (Codex, textures/banner-<emblem>.png, cut by tools/kit/banners.py) as a cut-out hung
+      // from a crossbar in front of the pole, at the painting's own aspect (its rod and fringe are painted)
+      const tall = w * BANNER_ASPECT, top = H * 0.97;
+      box(g, MAT.dark, -w * 0.55, w * 0.55, top - 0.04, top + 0.04, -0.04, 0.04);
+      const cloth = new THREE.MeshStandardMaterial({ map, roughness: 0.9, side: THREE.DoubleSide, alphaTest: 0.5 });
+      const pl = new THREE.Mesh(new THREE.PlaneGeometry(w, tall), cloth);
+      pl.position.set(0, top - tall / 2, 0.09); pl.castShadow = true; pl.receiveShadow = true;
+      pl.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map, alphaTest: 0.5 });
+      g.add(pl);
+      return g;
+    }
+    box(g, mat(EMBLEM[String(parts.emblem)] ?? 0xb0a090), -w / 2, w / 2, H * 0.35, H * 0.95, 0.05, 0.1);
     return g;
   }
   if (stack.length) {

@@ -983,7 +983,7 @@
    "note": "instead of a decal that spans across the ground, this could be a raised platform embedded in the ground. The colored stripes could be replaced by a lowered section filled with a magical, slowly flowing field",
    "author": "user",
    "rev": 35,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T22:22:05.117Z",
    "anchor": {
@@ -1012,8 +1012,14 @@
      "author": "claude",
      "text": "Built as real stone: a slab set into the sunk plaza inside the ring of steps (r 14.9 u), 0.12 m proud within a low pale rim (0.06 m higher), the flagstone picture on its top. The seven stripes are now channels cut 0.1 m into the slab, with stone sides, running out from under the dais, each filled with the painted magic-flow field tinted its stripe's colour (read from the picture), glowing softly and drifting slowly outward. The channels stop at the slab's rim rather than climbing the steps; the compass medallions moved in (a little smaller) to sit at each channel's end, so the steps and the upper ring are plain stone. The painted stripes are gone from the decal (the original kept as src/tex-plaza-disc-striped.png). New kit feature: class 'inlay' in kit.json (setpiece.plaza-inlay), reusable for any recessed channels in a floor. Left open for you to judge: depth, glow, and whether the medallions should go back out past the steps.",
      "time": "2026-11-24T22:50:05.636Z"
+    },
+    {
+     "author": "claude",
+     "text": "The user, 2026-11-25: looks ok for now.",
+     "time": "2026-11-25T12:13:22.000Z"
     }
-   ]
+   ],
+   "outcome": "scene"
   },
   {
    "id": "p35",
@@ -1088,7 +1094,7 @@
    "note": "road texture has obvious repeats when zoomed out. Ideally it would be composed of stones that follow the path the same way the concept images have it. This may be a concept we should prompt a more advanced model about to see if we can have some procedural solution.",
    "author": "user",
    "rev": 35,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T22:25:58.028Z",
    "anchor": {
@@ -1110,8 +1116,14 @@
      "author": "claude",
      "text": "Handed to the texture agent the user is briefing (repeating ground, road and cliff textures; stones that follow the path). Left open for it.",
      "time": "2026-11-24T22:31:03.754Z"
+    },
+    {
+     "author": "claude",
+     "text": "The user, 2026-11-25: much better after the shader work (road laid stone by stone).",
+     "time": "2026-11-25T12:13:22.117Z"
     }
-   ]
+   ],
+   "outcome": "scene"
   }
  ]
 }

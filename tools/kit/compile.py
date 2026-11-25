@@ -645,7 +645,8 @@ def compile_scene(sc):
                 v['at'], [v['id']]); continue
         zones = fl_paths if v['kind'] == 'setpiece' else fl_zones      # a set piece may flank a flight (gateway piers); never stand in its path
         if any(z.intersects(box) for z in zones): err('vignette-flight', f"{v['piece']} at {v['at']}: in a flight or its landing", v['at'], [v['id']])
-        inst.append(dict(p=v['piece'], x=v['at'][0] * G, y=v['at'][1] * G, h=T[on[0]]['h'], rot=math.atan2(dy, dx), src=v['id']))
+        inst.append(dict(p=v['piece'], x=v['at'][0] * G, y=v['at'][1] * G, h=T[on[0]]['h'], rot=math.atan2(dy, dx), src=v['id'],
+                         **({'parts': v['parts']} if v.get('parts') else {})))     # a dress piece placed by hand names its parts (a banner's emblem)
 
     # ---- scatter: a level filled with pieces at a spacing (the woods' trees), jittered and seeded, so a scene always
     # gives the same woods: {kind: scatter, terrace, pieces: [...], spacing (u, default 7), margin (cells, default 1), seed}
@@ -807,6 +808,22 @@ def compile_scene(sc):
                         if ok_at(px, py): put(rule['put'], px, py, T[s[2]]['h'], math.atan2(-ny_, -nx_), on_floor=True)
                         t += step
                     acc = t - L
+            elif rule.get('along') == 'view':    # benches behind a parapet over a drop, facing out over it
+                # {along: view, edges: [edge kinds], min_drop (m), spacing (u), inset (cells), min_run (cells)}: one per
+                # 'spacing' along each straight run long enough to hold it, centred on the run, clear of flights
+                on_ = rule.get('edges', ['parapet']); step = rule.get('spacing', 20) / G; inset = rule.get('inset', 1.0)
+                taken = []
+                for s in allsegs:
+                    if s[4] not in on_ or T[s[2]]['h'] - s[3] < rule.get('min_drop', 2.0) or not T[s[2]].get('walk', True): continue
+                    (ax, ay), (bx, by) = s[0], s[1]; L = math.hypot(bx - ax, by - ay)
+                    if L < rule.get('min_run', 0.9): continue
+                    nx_, ny_ = (by - ay) / L, -(bx - ax) / L          # toward the upper (walkable) side
+                    px, py = (ax + bx) / 2 + nx_ * inset, (ay + by) / 2 + ny_ * inset
+                    if any(math.hypot(px - tx, py - ty) < step for tx, ty in taken) or not ok_at(px, py): continue
+                    if any(z.contains(Point(px, py)) for z in fl_zones): continue
+                    n0 = len(inst)
+                    put(rule['put'], px, py, T[s[2]]['h'], math.atan2(-ny_, -nx_), on_floor=True)
+                    if len(inst) > n0: taken.append((px, py))
 
     # ---- reachability: cells by terrace, joined where steps are small, plus flights ----
     walk = {c for c in T if T[c].get('edge') != 'wall' and T[c].get('walk', True)}

@@ -10,6 +10,17 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/tools/prune-worktrees.mjs\" --detach 2>/dev/null || true"
+          }
+        ]
+      }
     ]
   }
 }

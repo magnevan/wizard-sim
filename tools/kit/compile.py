@@ -26,6 +26,8 @@ from shapely.ops import unary_union
 HERE = os.path.dirname(os.path.abspath(__file__))
 KIT = json.load(open(os.path.join(HERE, 'kit.json'), encoding='utf-8'))
 RISE, GOING = 0.15, 0.5          # m per step, u per tread (kit.json connector.flight)
+CLIFF_MIN = 2.0                  # m: an open edge this far over the sea (water, or the rock and sand at its edge) is a sea cliff (cliff.face)
+CLIFF_FOOT = ('water', 'plinth', 'rock', 'sand')
 FALL_MIN = 0.5                   # m: water this far above lower water pours into it as a fall (fall.curtain)
 OUT = {'S': (0, 1), 'N': (0, -1), 'E': (1, 0), 'W': (-1, 0)}
 VARIANTS = {'wall': ('plain', 'window', 'door'), 'retain': ('plain', 'niche'), 'parapet': ('plain', 'niche')}
@@ -550,6 +552,32 @@ def compile_scene(sc):
                                 src=gid[ter]))
         return out
     inst += falls(allsegs)
+
+    # ---- cliffs: an open edge dropping CLIFF_MIN or more into water is a sea cliff, laid by the renderer (kit-cliff.ts)
+    # from the cliff kit (Meshy, one sheet: runs, a fissured run, an outside corner, a buttress), scaled to its drop ----
+    def cliffs(allsegs):
+        """One cliff.face per unbroken run of open edge over water: pts (the top's line in u, the water on its right),
+        h (the top) and low (the water). The flat rock side stays behind it, so a gap between pieces shows rock."""
+        lowt = lambda s: low_of.get((round(s[0][0], 4), round(s[0][1], 4), round(s[1][0], 4), round(s[1][1], 4)))
+        k4 = lambda p: (round(p[0], 4), round(p[1], 4))
+        groups, out = {}, []
+        for s in allsegs:
+            up, lg = T[s[2]], lowt(s); lo = T.get(lg, {})
+            if s[4] != 'open' or up.get('mat') == 'water' or lo.get('mat') not in CLIFF_FOOT or up['h'] - lo['h'] < CLIFF_MIN: continue
+            groups.setdefault((s[2], lg), []).append(s)
+        for (ter, lg), ss in groups.items():
+            start = {k4(s[0]): s for s in ss}; ends = {k4(s[1]) for s in ss}; used = set()
+            for h0 in [s for s in ss if k4(s[0]) not in ends] + ss:
+                if id(h0) in used: continue
+                chain, s = [], h0
+                while s is not None and id(s) not in used:
+                    used.add(id(s)); chain.append(s); s = start.get(k4(s[1]))
+                pts = [chain[0][0]] + [c[1] for c in chain]
+                closed = k4(pts[0]) == k4(pts[-1])
+                out.append(dict(p='cliff.face', x=pts[0][0] * G, y=pts[0][1] * G, pts=[[round(x * G, 4), round(y * G, 4)] for x, y in pts],
+                                closed=closed, h=T[ter]['h'], low=T[lg]['h'], rot=0, src=gid[ter]))
+        return out
+    inst += cliffs(allsegs)
     inst += list(joints.values())
     for f in flights:
         inst.append(dict(p='connector.flight', x=f['a'][0] * G, y=f['a'][1] * G, x2=f['b'][0] * G, y2=f['b'][1] * G,

@@ -490,6 +490,7 @@ function piece(it: Inst): THREE.Group | null {
   if (isDecal(it.p)) return null;   // a decal draws as a picture on the ground (setDecal), not as a piece
   if (KIT_PIECES[it.p]?.class === 'inlay') return inlay(it);
   if (cls === 'fall') return it.pts && it.low != null ? fallMesh(it.pts, yOf(it.h), yOf(it.low), TP_TIME) : null;   // water pouring into lower water (kit-fall.ts)
+  if (cls === 'cliff') return it.pts && it.low != null ? cliffFace(it.pts, it.h, it.low) : null;   // a sea cliff laid from the cliff kit
   if (cls === 'edge' || cls === 'sweep') {
     const g = edgeFrame(it), L = it.len!, low = it.low!;
     const drop = it.h - low;
@@ -665,6 +666,46 @@ function sides(rings: number[][][], top: number, bottom: number): THREE.Mesh | n
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
   const m = new THREE.Mesh(g, SIDE_TEX() ?? SIDE); m.castShadow = m.receiveShadow = true;
   return m;
+}
+
+// ---- sea cliffs: the cliff kit's run (Meshy, fitted 26 u long, 6 m tall, base centre at its pivot) laid along an
+// open edge over water (cliff.face), stretched to fill each straight stretch and scaled to the drop ----
+const CLIFF = { len: 26, tall: 6, deep: 9.3, depth: 3.2, sink: 0.8, lip: 0.15 };   // the model's u/m, and how it is laid: depth u out, m under the water, m under the top
+/**
+ * Copies of the cliff run along each straight stretch of the line (the water on its right): as many as fit at their
+ * scaled length, stretched to fill the stretch exactly, every other one mirrored. The face stands mostly in front of
+ * the edge (its back a little behind, inside the level's rock side) with its depth held to CLIFF.depth u, so a tall
+ * drop gets a tall face, not one pushed metres out to sea. Each stretch runs on past its ends by that depth, so an
+ * outside corner closes. Its top sits just under the level's floor.
+ */
+function cliffFace(pts: number[][], h: number, low: number): THREE.Group | null {
+  if (!ART['cliff-run']) return null;
+  const g = new THREE.Group(), drop = h - low;
+  const sh = (drop - CLIFF.lip + CLIFF.sink) / CLIFF.tall, sd = CLIFF.depth / CLIFF.deep, y0 = yOf(low - CLIFF.sink);
+  // straight stretches (the grid cuts the line per cell)
+  const runs: [number[], number[]][] = [];
+  let a = pts[0];
+  for (let i = 1; i < pts.length; i++) {
+    const b = pts[i], c = pts[i + 1];
+    const turn = c ? Math.abs((b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0])) > 0.05 * Math.hypot(b[0] - a[0], b[1] - a[1]) * Math.hypot(c[0] - b[0], c[1] - b[1]) : true;
+    if (turn) { runs.push([a, b]); a = b; }
+  }
+  let n0 = 0;
+  for (const [p, q] of runs) {
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]); if (L < 0.5) continue;
+    const dx = (q[0] - p[0]) / L, dy = (q[1] - p[1]) / L, ext = CLIFF.depth * 0.8, full = L + ext * 2;
+    const n = Math.max(1, Math.round(full / (CLIFF.len * sh))), each = full / n;
+    for (let k = 0; k < n; k++, n0++) {
+      const o = ART['cliff-run'].clone(), t = -ext + each * (k + 0.5), flip = n0 % 2 ? -1 : 1;
+      const f = new THREE.Group(); f.matrixAutoUpdate = false;
+      f.matrix.makeBasis(new THREE.Vector3(dx, 0, dy), new THREE.Vector3(0, 1, 0), new THREE.Vector3(-dy, 0, dx))
+        .setPosition(p[0] + dx * t, y0, p[1] + dy * t);
+      o.position.set(0, 0, CLIFF.depth * 0.5 - 0.4); o.scale.set(flip * each / CLIFF.len, sh, sd);
+      f.add(o); g.add(f);
+    }
+  }
+  g.traverse((m) => { if ((m as THREE.Mesh).isMesh) m.castShadow = m.receiveShadow = true; });
+  return g;
 }
 
 // ---- a timber quay: a deck floor's edges over water get a fascia beam and piles, drawn to size in the deck's paint ----

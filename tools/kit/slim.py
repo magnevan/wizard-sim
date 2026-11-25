@@ -16,7 +16,7 @@ from PIL import Image
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 KIT = os.path.join(ROOT, 'game', 'content', 'generated', 'meshy', 'kit')
 FULL = os.path.join(ROOT, 'game', 'content', 'generated', 'meshy', 'kit-full')
-BIG = {'great-hall', 'library', 'workshops', 'hall-half', 'battery-tower', 'bell-tower', 'armillary', 'gate-tower'}
+BIG = {'great-hall', 'library', 'workshops', 'hall-half', 'battery-tower', 'bell-tower', 'armillary', 'gate-tower', 'cliff-run'}
 
 
 def roles(j):

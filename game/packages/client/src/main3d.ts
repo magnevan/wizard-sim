@@ -14,7 +14,7 @@
  * fire / fight / practice / practice-fire sets a scene for scripts/play3d-shot.mjs (window.__ready, window.__perf).
  */
 import {
-  ARCH, DT, KEYED_EL, KIND, MAX_SEATS, PHASE, RUNES, elementId, elementName, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
+  ARCH, DT, KEYED_EL, KIND, MAX_SEATS, PHASE, RUNES, elementId, elementName, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStage, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
   type Mode, type PartyState, type PlayerInput, type Room, type World,
 } from '@wizard-sim/sim';
 import { demoInput, parseDemo } from './demo';
@@ -48,16 +48,18 @@ const hud = document.getElementById('hud')!;
  * A shot's scene: its room (default the court), where the wizards and goblins stand (scene u, so it doesn't move with
  * the offset). With `spell`, seat 0 casts it (demo.ts's notation, aimed at `at`, scene u) and the sim runs `ticks`
  * before the shot, the court's no-runes rule lifted for it; with `casts`, each seat casts its own (`lag` ticks behind the
- * clock; demoInput's own lag of 37 ticks a seat is undone); otherwise nobody moves.
+ * clock; demoInput's own lag of 37 ticks a seat is undone); otherwise nobody moves. With `hold`, the goblins stand
+ * where they were put (sim dev.ts devStage) instead of walking at the caster.
  */
 interface ShotCast { spell: string; at: [number, number]; lag?: number }
-const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [number, number][]; face?: number; spell?: string; at?: [number, number]; ticks?: number; hud?: boolean; casts?: ShotCast[] }> = {
+const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [number, number][]; face?: number; spell?: string; at?: [number, number]; ticks?: number; hud?: boolean; hold?: boolean; casts?: ShotCast[] }> = {
   // the plaza, south of the armillary's dais: two wizards facing an arc of six goblins
   plaza: { wiz: [[91.5, 95.5], [98.5, 95.5]], gob: [[83, 91], [86.5, 89.5], [90.5, 88.8], [99.5, 88.8], [103.5, 89.5], [107, 91]], face: 0.75 },
   // a wizard just north of the great hall (95.5, 34; 26 x 12 u, 16 m tall), with a goblin in front of the hall to compare
   wall: { wiz: [[95.5, 25.5], [104, 46]], gob: [[90, 44], [100, 45]], face: 0.25 },
-  // Fire spray (three runes) at the goblins, look B, 70 ticks in: the spray, and the floor it set burning
-  fire: { wiz: [[95, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5]], face: 0.75, spell: 'fire+fire+fire/force', at: [95, 89], ticks: 70 },
+  // Fire spray (three runes) at the goblins, 70 ticks in: the spray at its full length (the goblins held where they
+  // stand, as the VFX Lab's crowd is), and the floor it set burning
+  fire: { wiz: [[95, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5]], face: 0.75, spell: 'fire+fire+fire/force', at: [95, 89], ticks: 70, hold: true },
   // a fight on the plaza, every spell a stand-in but the Fire: an arc, a beam, ice shards and a rock wall drawn, at a warband
   fight: {
     wiz: [[87, 97], [93, 98.5], [99, 98.5], [105, 97]], gob: [[84, 89], [88, 88], [92, 88.5], [97, 88], [101, 88.5], [106, 89], [95, 85]], face: 0.75, ticks: 92,
@@ -144,8 +146,9 @@ async function boot(): Promise<void> {
     if (casts.length) {
       world.mode = { ...world.mode, runeMax: () => 5 };   // the court (and the party's pools) give no runes: five each, for this shot only
       casts.forEach((_, p) => devRefillRunes(world, p));
+      if (shot.hold) devStage(world, { hold: true, puppet: -1, goal: null, aim: 0 });
       const ds = casts.map((c) => parseDemo(`${c.spell}@${simX(c.at[0])},${simY(c.at[1])}`)!);
-      for (let k = 0; k < (shot.ticks ?? 60); k++) {
+      for (let k = 0, end = optNum('ticks', shot.ticks ?? 60); k < end; k++) {
         const inputs = Array.from({ length: MAX_SEATS }, (_, p) => (ds[p] && k >= (casts[p].lag ?? 0) ? demoInput(world, k - (casts[p].lag ?? 0) + p * 37, p, ds[p]) : NO_INPUT));
         view.beforeStep(world); step(world, inputs); view.afterStep(world);
       }

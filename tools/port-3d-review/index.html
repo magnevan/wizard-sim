@@ -72,7 +72,7 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
   <header>
     <div class="eyebrow">Port to 3D · step 0 · 2026-11-25</div>
     <h1>The Court in 3D</h1>
-    <p class="lede">The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
+    <p class="lede"><b>New since your pass: <a href="#fire2">Fire, round 2</a>, concept art to pick a direction from.</b> The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
     <div class="hero"><img src="img/plaza-26.jpg" alt="Two wizards and six goblins on the court's sunk plaza, seen from the 3D game camera"></div>
   </header>
 
@@ -154,10 +154,46 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
     </div>
   </section>
 
+  <section id="fire2">
+    <div class="top">
+      <div>
+        <h2>Fire, round 2: from concept art</h2>
+        <p>You turned down both built looks, so this round started from pictures. Codex repainted the court shot with a Fire spray in seven styles, then a burning floor and a fire ring for the strongest. 24 images in all are in <span class="mono">docs/reference/spell-concepts/fire/</span>; these are the best of each.</p>
+        <ul>
+          <li><b>Toon volume:</b> the best-looking fire. A white-hot core leaves the staff and swells into a rolling flame body with a red rim, dark smoke at the far end.</li>
+          <li><b>Hybrid:</b> the toon body with straight white streaks fanning from the staff to the cone's edges. The most readable cone.</li>
+          <li><b>Magicka jets:</b> a crisp fan of streaks from one point, close to a sparkler.</li>
+          <li><b>Painted ribbons, dragon breath, cel:</b> flat like a decal, lava rather than fire, or a comic sticker pasted on the court.</li>
+        </ul>
+        <p>The floor that works is a low carpet of short flames on charred stone, not a campfire. All of them show that on the court's pale stone, fire needs a white core, a dark rim, smoke or char to stand out.</p>
+      </div>
+      <div class="answer" data-id="fire2" data-rec="hybrid">
+        <div class="q">Which direction to build?</div>
+        <div class="choices" role="group" aria-label="Fire direction">
+          <button type="button" data-v="toon">Toon volume</button><button type="button" data-v="hybrid">Hybrid</button><button type="button" data-v="jets">Magicka jets</button><button type="button" data-v="other">Other</button>
+        </div>
+        <div class="rec">Recommended: <b>hybrid</b>. Streaks over the first third of the cone give it its shape, painted toon flame cells give the body, smoke only off the far end. The current effects base can build it with a new painted flame sheet. Its risk: too many streaks and it reads as orange energy.</div>
+        <textarea id="note-fire2" aria-label="Note on the fire direction" placeholder="What to keep or change from the pictures"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="shots">
+      <figure><img src="img/concept-hybrid-spray-1.jpg" alt="Hybrid fire spray concept"><figcaption><b>Hybrid</b> · recommended</figcaption></figure>
+      <figure><img src="img/concept-toon-spray-2.jpg" alt="Toon volume fire spray concept"><figcaption><b>Toon volume</b></figcaption></figure>
+      <figure><img src="img/concept-jets-spray-1.jpg" alt="Magicka jets fire spray concept"><figcaption><b>Magicka jets</b></figcaption></figure>
+      <figure><img src="img/concept-ribbons-spray-2.jpg" alt="Painted ribbons fire spray concept"><figcaption><b>Painted ribbons</b></figcaption></figure>
+      <figure><img src="img/concept-breath-spray-1.jpg" alt="Dragon breath fire spray concept"><figcaption><b>Dragon breath</b></figcaption></figure>
+      <figure><img src="img/concept-cel-spray-2.jpg" alt="Cel shaded fire spray concept"><figcaption><b>Cel, hard edges</b></figcaption></figure>
+      <figure><img src="img/concept-toon-floor-3.jpg" alt="Burning floor concept"><figcaption><b>The floor</b> · a low carpet of flame on char</figcaption></figure>
+      <figure><img src="img/concept-hybrid-ring-1.jpg" alt="Fire ring concept"><figcaption><b>The ring</b> · hybrid</figcaption></figure>
+      <figure><img src="img/concept-hybrid-sheet-1.jpg" alt="Hybrid fire layer sheet"><figcaption><b>The layers</b> · core, body, licks, embers, smoke, scorch, light</figcaption></figure>
+    </div>
+  </section>
+
   <section id="fire">
     <div class="top">
       <div>
-        <h2>Fire, two ways</h2>
+        <h2>Fire, round 1: two built looks (you chose neither)</h2>
         <p>The first spell family on the new effects base. Every particle is worked out from time and a seed alone, so rollback and freezing a moment still work, and the drawn fan is the sim's own hit cone. Two looks with the same motion:</p>
         <ul>
           <li><b>A</b>: soft particles shaped and coloured by code. It reads as orange smoke on sunlit stone.</li>

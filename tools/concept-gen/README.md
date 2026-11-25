@@ -119,3 +119,14 @@ Four images for the [road stones](../../docs/explorations/2026-11-24-road-stones
 - "About thirty stones across the image" gave a tile that can cover 9 u, and it tiled as drawn with no visible seam. It came back as coursed rows, not the scattered cobbles of the first tile, and pinker than the court; the game re-tones it.
 - "A sheet of sixteen separate kerb stones on a plain flat magenta background, in four rows of four, each seen from straight above" came back exactly as laid out, every stone different, and cuts cleanly (`tools/kit/stones.py`).
 - "Repaint the first image with the same camera, the same buildings... changing only how the cobbled road is laid" kept the whole scene and changed only the road: a good way to get a target picture for one material in place.
+
+### 2026-11-25, spell fire
+
+24 images for the [Fire spell concepts](../../docs/explorations/2026-11-25-spell-concepts-fire.md): the Fire spray in seven styles, floors and rings for the leaders, two layer sheets. `make.py` writes the prompts (a fixed scene paragraph plus one "Style:" paragraph); every scene prompt repaints `tools/port-3d-review/img/plaza-26.jpg`.
+
+- One "Style:" paragraph in a fixed scene gave seven clearly different fires with the court, camera, wizards and goblins held in every image, as the waterfall batch found. About four minutes each.
+- The first five in parallel all failed to save ("the file tool stalled"), but every image was in `~/.codex/generated_images/<session>/`, and each log names its session id, so they map back to prompts without guessing. Four at a time then saved normally.
+- "A burning patch... one connected patch, not a pile of separate fires" still came back as a campfire with one tall flame. Describing the wanted shape instead ("a low, wide carpet of flame covering the whole patch evenly, like burning oil spilled on the stone: many short flame tongues of similar height, knee-high at most") fixed it.
+- Naming a cone's angle and length against the wizard's height gave roughly the right fan; the model makes the far end lobed (a heart shape) unless the style names straight streaks running to the cone's edges.
+- The breakdown sheet (five parts in a row, four below, the assembled effect wide across the bottom, a tiny wizard for scale, on flat dark grey) came back exactly as laid out with no labels, from the scene image alone.
+- Two runs of one prompt into the same folder overwrite each other's log; give each take its own folder.

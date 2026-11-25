@@ -1,0 +1,9 @@
+Generate one image with your image generation tool, then save it as toon-floor.png in the current directory. Reply with just the file name.
+
+The attached image is a screenshot of our game: a stylised 3D action game seen from a steep camera about 46 degrees down, looking north over a warm sandstone courtyard in morning sun. The wizards are small (the red and the blue wizard in robes and pointed hats); goblins stand in a row behind them.
+
+Repaint it as a finished frame of the game with the same camera, framing, courtyard, light and sizes, and add one spell effect, which is the subject of the picture. A Fire spray has just swept across the floor and left a burning patch: a single patch of burning ground, roughly round and a little wider than the wizard is tall, on the open floor in front of the red wizard, between him and the goblins. It is one connected patch of flame on the stone, low flames licking up from a scorched, glowing floor, not a pile of separate fires. The wizards and goblins stand clear of it.
+
+Style: volumetric toon fire. The stream is a thick rolling body of fire that looks three dimensional, with a blazing white-hot core running down its middle, billowing orange flame around it with soft round toon shading, a thin bright red-orange rim where it meets the air, and dark grey-brown smoke curling off its far end and its tips. It casts strong orange light on the floor and on the goblins.
+
+The fire must stand out clearly against the warm, pale orange stone floor: it is a spell in a game, and a player must read its exact shape at a glance from this high camera. Keep the courtyard, the stairs, the balustrades and the goblins as they are. No text, no labels, no UI.

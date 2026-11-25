@@ -1,0 +1,9 @@
+Generate one image with your image generation tool, then save it as hybrid-spray.png in the current directory. Reply with just the file name.
+
+The attached image is a screenshot of our game: a stylised 3D action game seen from a steep camera about 46 degrees down, looking north over a warm sandstone courtyard in morning sun. The wizards are small (the red and the blue wizard in robes and pointed hats); goblins stand in a row behind them.
+
+Repaint it as a finished frame of the game with the same camera, framing, courtyard, light and sizes, and add one spell effect, which is the subject of the picture. The red wizard is casting a Fire spray: a continuous flamethrower stream that leaves the tip of his staff and blasts forward (north, up the picture) toward the goblins, widening into a cone about 65 degrees wide and about twice as long as the wizard is tall, so its far end reaches the nearest goblins. It is one stream pouring out of one point, fierce and fast, hottest where it leaves the staff. Two goblins at the far end are caught in it. The blue wizard stands aside, watching.
+
+Style: volumetric toon fire driven like a high-pressure jet. Right at the staff tip a blazing white-hot core shoots out as a tight bundle of straight, fast streaks that fan out to exactly the cone's edges, so the cone's straight sides are crisp; within the first third the streaks swell into one thick, rolling body of orange flame with soft round toon shading and a thin bright red-orange rim, filling the whole cone with no gaps, and at the far end it billows up and curls into dark grey-brown smoke. Strong orange light on the floor under it and on the goblins.
+
+The fire must stand out clearly against the warm, pale orange stone floor: it is a spell in a game, and a player must read its exact shape at a glance from this high camera. Keep the courtyard, the stairs, the balustrades and the goblins as they are. No text, no labels, no UI.

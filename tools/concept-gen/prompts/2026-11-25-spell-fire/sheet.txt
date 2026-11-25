@@ -1,0 +1,9 @@
+Generate one image with your image generation tool, then save it as sheet.png in the current directory. Reply with just the file name.
+
+The attached image is concept art for a Fire spray in our stylised 3D game: a flamethrower stream from a wizard's staff, seen from a steep high camera. Make an effects breakdown sheet for building this effect, in exactly this style, on a plain flat dark grey background.
+
+Top row, left to right, each part alone on its own, in the same camera and at the same size, evenly spaced: (1) the core stream, the narrow white-hot jet leaving the staff; (2) the flame body, the main mass of fire filling the cone; (3) the edge licks, the separate flame tongues peeling off its sides and far end; (4) the embers and sparks; (5) the smoke.
+
+Middle row, left to right: (6) the ground scorch the spray leaves on pale stone; (7) the warm light it throws on the ground, as a soft glow shape on pale stone; (8) a single flame tongue drawn large, showing its colour bands from core to edge; (9) the colour ramp of the fire as five flat swatches from hottest to coolest.
+
+Bottom row: the whole effect assembled from those parts, wide across the sheet, with a tiny wizard in a red robe and pointed hat at its narrow end for scale. No text, no labels, no numbers.

@@ -1,0 +1,9 @@
+Generate one image with your image generation tool, then save it as toon-ring.png in the current directory. Reply with just the file name.
+
+The attached image is a screenshot of our game: a stylised 3D action game seen from a steep camera about 46 degrees down, looking north over a warm sandstone courtyard in morning sun. The wizards are small (the red and the blue wizard in robes and pointed hats); goblins stand in a row behind them.
+
+Repaint it as a finished frame of the game with the same camera, framing, courtyard, light and sizes, and add one spell effect, which is the subject of the picture. The red wizard has just cast a Fire ring: a single wave of flame rolling outward from his feet in a full circle across the floor, caught at the moment it is about one and a half wizard heights out from him, a moving wall of fire knee- to waist-high that is about to hit the goblins. It is one connected ring of flame with a hot leading edge and a scorched, smouldering floor left inside it. The blue wizard stands well back, outside the ring.
+
+Style: volumetric toon fire. The stream is a thick rolling body of fire that looks three dimensional, with a blazing white-hot core running down its middle, billowing orange flame around it with soft round toon shading, a thin bright red-orange rim where it meets the air, and dark grey-brown smoke curling off its far end and its tips. It casts strong orange light on the floor and on the goblins.
+
+The fire must stand out clearly against the warm, pale orange stone floor: it is a spell in a game, and a player must read its exact shape at a glance from this high camera. Keep the courtyard, the stairs, the balustrades and the goblins as they are. No text, no labels, no UI.

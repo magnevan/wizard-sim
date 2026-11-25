@@ -11,7 +11,7 @@ Branch `port-3d` (worktree `.claude/worktrees/port-3d`), not merged to main. Tea
 
 ## Next
 
-- [ ] Fire from concept art: a Codex round of directions for the spray, floor and ring (`docs/reference/spell-concepts/fire/`), the user picks, then the build follows it.
+- [ ] Fire from concept art: 24 Codex images in seven directions are on the review page (`fire2`; [record](../explorations/2026-11-25-spell-concepts-fire.md)); the user picks, then fire.ts is rebuilt to it (recommended: the hybrid).
 - No art for the practice ground: it's a temporary space and keeps placeholder dummies (the user, 2026-11-25). Practice dummies and the straw goblin get made with the yard ([opening thread](opening.md)).
 - [ ] Later: a profiling pass on the user's machine; an exploration of asset handling (streaming, levels of detail, keeping assets across sessions) rather than squeezing sizes.
 - [ ] Agree scene markers (the `marker` object kind, already in `court.scene.json`) and re-running `room.py` on save with the map editor's session.

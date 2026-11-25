@@ -1,0 +1,9 @@
+Generate one image with your image generation tool, then save it as cel-spray.png in the current directory. Reply with just the file name.
+
+The attached image is a screenshot of our game: a stylised 3D action game seen from a steep camera about 46 degrees down, looking north over a warm sandstone courtyard in morning sun. The wizards are small (the red and the blue wizard in robes and pointed hats); goblins stand in a row behind them.
+
+Repaint it as a finished frame of the game with the same camera, framing, courtyard, light and sizes, and add one spell effect, which is the subject of the picture. The red wizard is casting a Fire spray: a continuous flamethrower stream that leaves the tip of his staff and blasts forward (north, up the picture) toward the goblins, widening into a cone about 65 degrees wide and about twice as long as the wizard is tall, so its far end reaches the nearest goblins. It is one stream pouring out of one point, fierce and fast, hottest where it leaves the staff. Two goblins at the far end are caught in it. The blue wizard stands aside, watching.
+
+Style: cel-shaded fire with hard edges, like a toon-shaded anime game. The flame is one bold shape split into three or four flat colour bands with crisp hard borders: a white-yellow core, a yellow band, an orange band and a dark red outline band, with sharp pointed flame tongues along its outer edge. No soft gradients and no smoke, just clean graphic shapes, plus a few sharp diamond-shaped sparks.
+
+The fire must stand out clearly against the warm, pale orange stone floor: it is a spell in a game, and a player must read its exact shape at a glance from this high camera. Keep the courtyard, the stairs, the balustrades and the goblins as they are. No text, no labels, no UI.

@@ -81,6 +81,10 @@ The user on cut stones: "a regression from last iteration. This looks more like 
 
 What the user first suggested: keep the relaxed cells and straighten their edges (`straighten`). A border between two stones becomes the straight line between the two corners where it ends (where three stones meet, or two stones and the surface's edge). The layout is exactly the relaxed one; only the wavy borders change, and joints stay one width with no gaps. Stills: `straightened-small.jpg`, `straightened-large.jpg`, `straightened-large-in-game.jpg`.
 
+The user on the straightened cells (their version C; the relaxed cells before straightening are version A): the stones look better overall, "generally realistic, at least from a cartoony perspective", but where A had "very nice straight lines that flowed with the curve" (bottom right), C's rows went zig-zag. They suggested a relaxation that shifts rows to be more parallel.
+
+Cause: a row's line in C is a chain of corners given by the stones above and below it in turn, and they don't lie on one line. Fix (in `straighten`): corners are shared between the stones meeting there, and wherever a joint runs on through a corner turning less than 32 degrees, the corner slides onto the line between its two neighbours along that joint; 14 passes. Rows pull straight and stay curved where they curve; corners on a surface's edge stay put. Stills: `eased-small.jpg`, `eased-large.jpg`. Known flaw: a stone that grows past its nominal size shows its painted grain smeared at the rim.
+
 Open (written for the cut stones; the seam zones of the straightened cells are irregular polygons instead): where rows from several edges meet, each block of rows keeps its own direction, so wide paving reads as patches at different angles with a few dark triangles of mortar between them; a border course along each edge with one calm direction inside would be quieter. Colours are r6's, not yet matched to the court; nothing is in the shader yet.
 
 ## Trade-offs and what was not done

@@ -307,11 +307,14 @@ def cut_stones(cen, th, hu, hv, L, geom):
     return list(laid.values())
 
 
-def straighten(sites, th, a, b, geom):
+def straighten(sites, th, a, b, geom, passes=14):
     """The relaxed cells with their borders straightened: a border between two stones becomes the straight line between
     the two corners where it ends (the points where three stones meet, or two stones and the surface's edge), so every
-    stone has straight sides, as cut stone has, and the layout is the relaxed one. Returns each stone's corners and
-    the index of its cell."""
+    stone has straight sides, as cut stone has, and the layout is the relaxed one.
+    Corners are shared between the stones that meet there, and are then eased into line: where a joint runs on
+    straight-ish through a corner (a row's line passing the end of a cross-joint), the corner slides onto the line
+    between its two neighbours along that joint. Repeated, a row's line pulls straight, and stays curved where the row
+    curves. Corners on the surface's edge stay put. Returns each stone's corners and the index of its cell."""
     res = int(np.clip(round(5 / b.min()), 16, 28))
     bx = geom.bounds; X0, Y0 = bx[0] - 0.5, bx[1] - 0.5
     mask = raster(geom, res, (X0, Y0, bx[2] + 0.5, bx[3] + 0.5))
@@ -319,32 +322,63 @@ def straighten(sites, th, a, b, geom):
     pts = np.stack([X0 + (xs + 0.5) / res, Y0 + (ys + 0.5) / res], 1)
     own = np.concatenate([owners(pts[i:i + 200000], sites, th, a, b)[0] for i in range(0, len(pts), 200000)])
     lab = np.zeros(mask.shape, np.int64); lab[ys, xs] = own + 1
-    # corners: where a 2 x 2 block of pixels holds three labels or more (outside the surface counts as one)
+    # corners: where a 2 x 2 block of pixels holds three labels or more (outside the surface counts as one); blocks
+    # that touch are one corner
     S = np.sort(np.stack([lab[:-1, :-1], lab[:-1, 1:], lab[1:, :-1], lab[1:, 1:]], -1), -1)
-    jy, jx = np.nonzero((S[..., 1:] != S[..., :-1]).sum(-1) >= 2)
-    L_, X_, Y_ = [], [], []
-    for k in range(4):
-        l = S[jy, jx, k]; ok = l > 0
-        L_.append(l[ok]); X_.append(X0 + (jx[ok] + 1) / res); Y_.append(Y0 + (jy[ok] + 1) / res)
+    J = (S[..., 1:] != S[..., :-1]).sum(-1) >= 2
+    comp, nv = ndimage.label(J, structure=np.ones((3, 3)))
+    jy, jx = np.nonzero(J); cid = comp[jy, jx] - 1
+    cnt = np.bincount(cid, minlength=nv)
+    V = np.stack([X0 + (np.bincount(cid, jx, nv) / cnt + 1) / res, Y0 + (np.bincount(cid, jy, nv) / cnt + 1) / res], 1)
+    pairs = np.unique(np.concatenate([np.stack([cid, S[jy, jx, k]], 1) for k in range(4)]), axis=0)     # (corner, label)
+    pinned = np.zeros(nv, bool); pinned[pairs[pairs[:, 1] == 0, 0]] = True
+    pairs = pairs[pairs[:, 1] > 0]
     # and the surface's own corners, each given to the stone lying on it
     near = ndimage.distance_transform_edt(lab == 0, return_distances=False, return_indices=True)
+    extra, epairs = [], []
     for g in getattr(geom, 'geoms', [geom]):
         if g.geom_type != 'Polygon': continue
         for ring in [g.exterior, *g.interiors]:
             c = np.array(ring.coords)[:-1]
             iy = np.clip(((c[:, 1] - Y0) * res).astype(int), 0, lab.shape[0] - 1); ix = np.clip(((c[:, 0] - X0) * res).astype(int), 0, lab.shape[1] - 1)
             l = lab[near[0][iy, ix], near[1][iy, ix]]
-            L_.append(l); X_.append(c[:, 0]); Y_.append(c[:, 1])
-    L_, X_, Y_ = np.concatenate(L_), np.concatenate(X_), np.concatenate(Y_)
-    o = np.argsort(L_, kind='stable'); L_, X_, Y_ = L_[o], X_[o], Y_[o]
-    cut = np.r_[0, np.nonzero(np.diff(L_))[0] + 1, len(L_)]
-    polys, idx = [], []
+            for k in range(len(c)):
+                epairs.append((nv + len(extra), l[k])); extra.append(c[k])
+    if extra:
+        V = np.concatenate([V, np.array(extra)]); pinned = np.concatenate([pinned, np.ones(len(extra), bool)])
+        pairs = np.concatenate([pairs, np.array(epairs)])
+    # each stone: its corners in order round it
+    o = np.argsort(pairs[:, 1], kind='stable'); pairs = pairs[o]
+    cut = np.r_[0, np.nonzero(np.diff(pairs[:, 1]))[0] + 1, len(pairs)]
+    cells, idx = [], []
     for i in range(len(cut) - 1):
-        P = np.unique(np.round(np.stack([X_[cut[i]:cut[i + 1]], Y_[cut[i]:cut[i + 1]]], 1) * res / 2) / (res / 2), axis=0)   # corners a pixel apart are one
-        if len(P) < 3: continue
-        c = P.mean(0); P = P[np.argsort(np.arctan2(P[:, 1] - c[1], P[:, 0] - c[0]))]
-        polys.append(P); idx.append(L_[cut[i]] - 1)
-    return polys, np.array(idx)
+        vs = pairs[cut[i]:cut[i + 1], 0]
+        if len(vs) < 3: continue
+        P = V[vs]; c = P.mean(0)
+        cells.append(vs[np.argsort(np.arctan2(P[:, 1] - c[1], P[:, 0] - c[0]))]); idx.append(pairs[cut[i], 1] - 1)
+    # which corners a joint joins
+    nb = [set() for _ in range(len(V))]
+    for vs in cells:
+        for k in range(len(vs)):
+            u, w = int(vs[k]), int(vs[(k + 1) % len(vs)])
+            if u != w: nb[u].add(w); nb[w].add(u)
+    nb = [np.array(sorted(x), int) for x in nb]
+    free = [v for v in range(len(V)) if not pinned[v] and len(nb[v]) >= 2]
+    LIM = -np.cos(np.radians(32))                    # a joint runs on through a corner if it turns less than this
+    for _ in range(passes):
+        new = V.copy()
+        for v in free:
+            d = V[nb[v]] - V[v]; ln = np.hypot(d[:, 0], d[:, 1])
+            if (ln < 1e-6).any(): continue
+            dots = (d / ln[:, None]) @ (d / ln[:, None]).T
+            np.fill_diagonal(dots, 1)
+            i, j = np.unravel_index(np.argmin(dots), dots.shape)
+            if dots[i, j] > LIM: continue
+            pa, pb = V[nb[v][i]], V[nb[v][j]]; ab = pb - pa
+            t = np.clip(((V[v] - pa) @ ab) / (ab @ ab), 0.15, 0.85)
+            new[v] = V[v] + 0.6 * (pa + ab * t - V[v])
+        V = new
+    return [V[vs] for vs in cells], np.array(idx)
 
 
 def lay(name, geom, lppu=None):

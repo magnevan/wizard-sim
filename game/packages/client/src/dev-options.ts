@@ -108,7 +108,7 @@ export const OPTIONS = [
   { key: 'clip', group: 'Test runs', label: 'Shot as a film', kind: 'flag', help: 'With ?shot= and a spell: window.__seek(t) steps the shot on to t s after the spell went off and draws it (scripts/cold3d-clips.mjs).' },
   { key: 'pauseAt', group: 'Test runs', label: 'Pause at tick', kind: 'number', help: 'Pause the sim at tick N, as P does in the tools panel.' },
   { key: 'selftest', group: 'Test runs', label: 'Selftest', kind: 'flag', help: 'No rendering: run the golden replay and publish its hash on <html data-hash>.' },
-  { key: 'ticks', group: 'Test runs', label: 'Selftest ticks', kind: 'number', help: 'How long the selftest replay runs (default 1800).' },
+  { key: 'ticks', group: 'Test runs', label: 'Selftest ticks', kind: 'number', help: 'How long the selftest replay runs (default 1800). With ?shot on the 3D page: how many ticks the shot\'s casts run before it (its own by default), for a clip made of shots.' },
   { key: 'perf', group: 'Test runs', label: 'Record frame times', kind: 'flag', help: 'Record each frame\'s sim, draw and render time on wizardSim.perf (scripts/perf.mjs).' },
   { key: 'timerloop', group: 'Test runs', label: 'Timer loop', kind: 'flag', help: 'Timers instead of animation frames, so a background tab keeps running.' },
   { key: 'rafloop', group: 'Test runs', label: 'Frame loop', kind: 'flag', help: 'Animation frames even in a headless run.' },

@@ -5,8 +5,9 @@
  *
  * - **The bed** (a decal): the stone charred dark with a ragged rim, glowing cracks (the painted fire-cracks.png, tiled)
  *   bright under the flames and flickering. When a cell goes out its char stays and fades over CHAR_LIFE.
- * - **The carpet**: three low clusters of short flames (the painted fire-carpet.png) standing on every burning cell,
- *   overlapping; tallest where the patch is solid, lower, sparser and redder at its ragged edge.
+ * - **The flames**: one low sheet draped over the burning cells whose points rise into tongues (noise rising through it),
+ *   cut into toon bands (hot at the base, deep red at the tips) and eroded at its tips and ragged edge; tallest where
+ *   the patch is solid. (It was a carpet of painted flame sprites, fire-carpet.png, which read as sprites.)
  * - **Embers** rising.
  *
  * Its life: a cell flares up over its first ~0.4 s (grow-in), burns, then over its last second (the sim's FLOOR_FADE)
@@ -22,11 +23,12 @@ import * as THREE from 'three';
 import { CELL_GLSL, MAX_BURNING, type SurfGrid } from './from-sim';
 import { GroundDecal } from './decal';
 import { ParticleBatch } from './particles';
-import { FIRE_TEX, SHEET_GLSL } from './fire-sheets';
+import { FIRE_TEX } from './fire-sheets';
+import { HASH, NOISE } from './glsl';
 import type { SpellLights } from './lights';
 
-/** Flame clusters standing on a burning cell at once, and embers rising off it. */
-const PER_CELL = 3, EMBERS_PER_CELL = 2;
+/** Embers rising off a burning cell at once. */
+const EMBERS_PER_CELL = 2;
 /** Seconds a cell's char lingers after it goes out; seconds a lit cell takes to flare up. */
 const CHAR_LIFE = 3, GROW = 0.4;
 
@@ -38,29 +40,54 @@ vec4 burnAt(float ci) { return texelFetch(uBurn, ivec2(int(mod(ci, 64.0)), int(c
 float litFor(float ci) { return texelFetch(uAge, ivec2(int(mod(ci, 64.0)), int(ci / 64.0)), 0).r; }
 `;
 
-const CARPET = /* glsl */ `${FLOOR_HEAD}
-Particle emitParticle(float slot, float back) {
-  float ci = floor(slot / ${PER_CELL}.0), j = slot - ci * ${PER_CELL}.0;
-  vec4 B = burnAt(ci);
-  float cell = B.x, life = 0.7 + 0.35 * rnd(cell * 3.0 + j, 91.0), ph = rnd(cell * 3.0 + j, 90.0);
-  float kk = floor(uClock / life + ph), age = (uClock - back - (kk - ph) * life) / life;
-  if (back > 0.0) age = max(age, 0.0);
-  if (age < 0.0 || age >= 1.0) return P0();
-  float id = kk * 4099.0 + cell * 3.0 + j;
-  vec3 c = cellAt(cell, B.w);
-  Particle p = P0(); p.alive = true;
-  p.pos = c + vec3((rnd(id, 1.0) - 0.5) * 0.9, 0.0, (rnd(id, 2.0) - 0.5) * 0.9);
-  // solid in the middle of a patch, low and ragged at its edge (some edge flames missing)
-  float inner = smoothstep(0.45, 0.98, surfAt(p.pos.xz).r);
-  if (inner < 0.25 && rnd(id, 10.0) < 0.35) return P0();
-  float grow = smoothstep(0.0, ${GROW.toFixed(2)}, litFor(ci) - rnd(cell, 8.0) * 0.12);
-  float h = (0.2 + 0.42 * inner + 0.3 * rnd(id, 3.0) * rnd(id, 11.0)) * (0.85 + 0.3 * B.z) * mix(0.15, 1.0, B.y) * grow;
-  p.size = 0.5 * h * (0.6 + 0.4 * sin(3.14159 * pow(age, 0.7)));
-  p.aspect = 1.1 + 0.5 * rnd(id, 4.0);
-  p.rot = sin(uClock * 2.1 + cell * 0.37) * 0.1 + (rnd(id, 5.0) - 0.5) * 0.16;
-  p.col = vec4(age, inner, B.y, smoothstep(0.0, 0.15, age) * smoothstep(1.0, 0.75, age));
-  p.data = vec4(rnd(id, 6.0), rnd(id, 7.0), 0.0, 0.0);
-  return p;
+/**
+ * The flames as one low sheet over the burning cells: a fine grid draped over the floor whose points rise into
+ * tongues where the patch burns (noise rising through it), tallest in the patch's middle, low and ragged at its edge,
+ * growing as a cell flares up and sinking as it dies.
+ */
+const SHEET_VERT = /* glsl */ `
+${HASH}
+${NOISE}
+${CELL_GLSL}
+uniform sampler2D uChar; uniform float uClock;
+out vec3 vWp; out float vH; out float vBurn;
+void main() {
+  vec4 w = modelMatrix * vec4(position, 1.0);
+  vec2 guv = (w.xz - uSurfDims.xy) / (uSurfDims.z * uSurfSize);
+  vec4 s = texture(uSurf, guv); vec2 ch = texture(uChar, guv).rg;
+  float life = s.r > 0.01 ? clamp(s.g / s.r, 0.0, 1.0) : 0.0;
+  float burn = smoothstep(0.3, 0.85, s.r) * clamp(ch.r, 0.0, 1.0) * mix(0.25, 1.0, life);
+  // tongues: peaks of a noise that rises through the sheet, sharpened
+  float n = fbm3(vec3(w.x * 3.0, w.z * 3.0, -uClock * 1.9));
+  float tongue = pow(clamp(n * 1.9 - 0.55, 0.0, 1.0), 1.6);
+  float h = burn * (0.04 + 1.0 * tongue) * (0.85 + 0.3 * s.b);
+  w.y += h;
+  vWp = w.xyz; vH = h; vBurn = burn;
+  gl_Position = projectionMatrix * viewMatrix * w;
+}`;
+
+/** The sheet's colour: toon bands, hot at its base, deep red at its tips, eroded at the tips and the patch's edge. */
+const SHEET_LOOK = /* glsl */ `
+uniform float uClock;
+in float vH; in float vBurn;
+vec4 decal(vec3 wp) {
+  if (vBurn < 0.03) return vec4(0.0);
+  float n2 = fbm3(vec3(wp.xz * 4.5, uClock * 2.6 - wp.y * 5.0));
+  float k = vH / max(vBurn * 0.8, 0.05);
+  // the low ground between tongues thins out, so the charred bed and its glowing cracks show through
+  float a = smoothstep(0.03, 0.12, vBurn) * (1.0 - smoothstep(0.62, 0.8, k + (n2 - 0.5) * 0.6)) * smoothstep(0.02, 0.14, k + (n2 - 0.5) * 0.15);
+  if (a <= 0.0) return vec4(0.0);
+  float h = 0.26 + k * 0.7 + (0.5 - n2) * 0.45 + (1.0 - vBurn) * 0.3;
+  vec3 white = vec3(2.6, 2.3, 1.6), yellow = vec3(2.0, 1.05, 0.12), orange = vec3(1.25, 0.3, 0.03), red = vec3(0.6, 0.07, 0.015);
+  float e = 0.02;
+  vec3 c = mix(white, yellow, smoothstep(0.2 - e, 0.2 + e, h));
+  c = mix(c, orange, smoothstep(0.48 - e, 0.48 + e, h));
+  c = mix(c, red, smoothstep(0.74 - e, 0.74 + e, h));
+  // toon shading from the sheet's own slope: flanks turned from the camera's light are darker, so tongues read as forms
+  vec3 N = normalize(cross(dFdx(wp), dFdy(wp)));
+  c *= mix(0.72, 1.08, smoothstep(0.2, 0.9, abs(N.y)));
+  float cover = 0.92 * a;
+  return vec4(c * cover, cover);
 }`;
 
 const FLOOR_EMBER = /* glsl */ `${FLOOR_HEAD}
@@ -77,17 +104,6 @@ Particle emitParticle(float slot, float back) {
   p.size = 0.026; p.stretch = 0.05;
   p.col = vec4(0.1 + age * 0.4, 0.0, age, 1.0 - age);
   return p;
-}`;
-
-/** One painted cluster (its cell from data.x), its base on the quad's base, redder at the patch's edge and as it dies. */
-const LOOK_CARPET = /* glsl */ `
-uniform sampler2D uSheet;
-${SHEET_GLSL}
-vec4 look(vec2 uv, vec4 col, vec4 data) {
-  vec3 t = sheetCell(uSheet, vec2(uv.x * 0.5 + 0.5, uv.y), data.x, data.y, 4.0, 4.0);
-  float lum = max(t.r, max(t.g, t.b)), a = smoothstep(0.05, 0.4, lum);
-  vec3 tint = mix(vec3(1.25, 0.7, 0.5), vec3(1.9, 1.6, 1.25), col.y * col.z);
-  return vec4(t * tint * 1.2, a * 0.95) * col.w;
 }`;
 
 /** An ember (as the spray's). */
@@ -127,7 +143,8 @@ vec4 decal(vec3 wp) {
 export class FireFloor {
   readonly group = new THREE.Group();
   readonly bed: GroundDecal;
-  private carpet: ParticleBatch;
+  /** The flames: one low sheet of tongues (SHEET_VERT), not a carpet of sprites. */
+  readonly flames: GroundDecal;
   private embers: ParticleBatch;
   private U: Record<string, THREE.IUniform>;
   /** Seconds each burning cell (in the burning list's order) has been lit. */
@@ -149,26 +166,24 @@ export class FireFloor {
       uClock: { value: 0 }, uBurn: { value: grid.burning }, uAge: { value: this.ages }, uSurf: { value: null }, uSurfDims: { value: grid.dims }, uSurfSize: { value: grid.gridSize },
     };
     this.bed = new GroundDecal({ look: BED, uniforms: { ...this.U, uChar: { value: null }, uCracks: { value: FIRE_TEX.cracks } } }, grid.heightAt);
-    this.carpet = new ParticleBatch({
-      motion: CARPET, look: LOOK_CARPET, cap: MAX_BURNING * PER_CELL, upright: true, soft: 0.12, order: 1,
-      uniforms: { ...this.U, uSheet: { value: FIRE_TEX.carpet } },
-    });
+    this.flames = new GroundDecal({ look: SHEET_LOOK, vertex: SHEET_VERT, step: 0.1, lift: 0.03, order: 1, uniforms: { ...this.U, uChar: { value: null } } }, grid.heightAt);
+    this.flames.material.polygonOffset = false;
     this.embers = new ParticleBatch({ motion: FLOOR_EMBER, look: LOOK_EMBER, cap: MAX_BURNING * EMBERS_PER_CELL, order: 2, uniforms: this.U });
-    this.carpet.u.uSeed.value = seed; this.embers.u.uSeed.value = seed + 7; this.bed.u.uSeed.value = seed + 3;
-    this.group.add(this.bed.mesh, this.carpet.mesh, this.embers.mesh);
+    this.flames.u.uSeed.value = seed; this.embers.u.uSeed.value = seed + 7; this.bed.u.uSeed.value = seed + 3;
+    this.group.add(this.bed.mesh, this.flames.mesh, this.embers.mesh);
   }
 
   /** Quads drawn this frame. */
-  get drawn(): number { return this.carpet.count + this.embers.count; }
+  get drawn(): number { return this.embers.count; }
 
   /** One frame at time t (sim seconds): the grid must have been updated from the sim this frame. */
   update(t: number, lights: SpellLights | null): void {
     const g = this.grid;
     this.U.uClock.value = t; this.U.uSurf.value = g.grid;
     const box = this.noteAges(t);
-    this.bed.u.uChar.value = this.char;
-    this.bed.cover(box);
-    this.carpet.count = g.count * PER_CELL; this.embers.count = g.count * EMBERS_PER_CELL;
+    this.bed.u.uChar.value = this.char; this.flames.u.uChar.value = this.char;
+    this.bed.cover(box); this.flames.cover(box);
+    this.embers.count = g.count * EMBERS_PER_CELL;
     this.group.visible = !!box;
     if (!lights || !g.count) return;
     // light: the burning cells binned 3 u square, the biggest few bins each a light at their middle
@@ -231,5 +246,5 @@ export class FireFloor {
     return x0 === Infinity ? null : { x0: x0 - 1.5, z0: z0 - 1.5, x1: x1 + 1.5, z1: z1 + 1.5 };
   }
 
-  dispose(): void { this.bed.dispose(); this.carpet.dispose(); this.embers.dispose(); this.ages.dispose(); this.char?.dispose(); }
+  dispose(): void { this.bed.dispose(); this.flames.dispose(); this.embers.dispose(); this.ages.dispose(); this.char?.dispose(); }
 }

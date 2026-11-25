@@ -50,7 +50,8 @@ const hud = document.getElementById('hud')!;
  * A shot's scene: its room (default the court), where the wizards and goblins stand (scene u, so it doesn't move with
  * the offset). With `spell`, seat 0 casts it (demo.ts's notation, aimed at `at`, scene u) and the sim runs `ticks`
  * before the shot, the court's no-runes rule lifted for it; with `casts`, each seat casts its own (`lag` ticks behind the
- * clock; demoInput's own lag of 37 ticks a seat is undone); otherwise nobody moves.
+ * clock; demoInput's own lag of 37 ticks a seat is undone); otherwise nobody moves. With `hold`, the goblins stand
+ * where they were put (sim dev.ts devStage) instead of walking at the caster.
  */
 interface ShotCast { spell: string; at: [number, number]; lag?: number }
 const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [number, number][]; face?: number; spell?: string; at?: [number, number]; ticks?: number; hud?: boolean; casts?: ShotCast[]; hold?: boolean }> = {
@@ -58,8 +59,9 @@ const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [numb
   plaza: { wiz: [[91.5, 95.5], [98.5, 95.5]], gob: [[83, 91], [86.5, 89.5], [90.5, 88.8], [99.5, 88.8], [103.5, 89.5], [107, 91]], face: 0.75 },
   // a wizard just north of the great hall (95.5, 34; 26 x 12 u, 16 m tall), with a goblin in front of the hall to compare
   wall: { wiz: [[95.5, 25.5], [104, 46]], gob: [[90, 44], [100, 45]], face: 0.25 },
-  // Fire spray (three runes) at the goblins, look B, 70 ticks in: the spray, and the floor it set burning
-  fire: { wiz: [[95, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5]], face: 0.75, spell: 'fire+fire+fire/force', at: [95, 89], ticks: 70 },
+  // Fire spray (three runes) at the goblins, 70 ticks in: the spray at its full length (the goblins held where they
+  // stand, as the VFX Lab's crowd is), and the floor it set burning
+  fire: { wiz: [[95, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5]], face: 0.75, spell: 'fire+fire+fire/force', at: [95, 89], ticks: 70, hold: true },
   // the Arcane beam (three runes) along a file of goblins, 50 ticks in: it lands on the first, and moves on as each falls
   arcane: { wiz: [[91, 97]], gob: [[96, 93.25], [99, 91], [102, 88.75], [105, 86.5], [108, 84.25], [111, 82], [93, 88.5], [100, 95]], face: 0.9, spell: 'arcane+arcane+arcane/force', at: [96, 93.25], ticks: 38, hold: true },
   // a fight on the plaza, every spell a stand-in but the Fire: an arc, a beam, ice shards and a rock wall drawn, at a warband
@@ -165,7 +167,7 @@ async function boot(): Promise<void> {
         k++;
       };
       // ?clip=1: the tick seat 0's spell goes off (found on a scratch run), and __seek(t) to step on to t s after it
-      let end = shot.ticks ?? 60;
+      let end = optNum('ticks', shot.ticks ?? 60);
       if (optOn('clip')) {
         const start = snapshot(world);
         let castAt = -1;

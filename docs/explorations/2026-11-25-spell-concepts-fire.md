@@ -95,7 +95,7 @@ The cost: the core streaks push toward "orange energy" if they dominate. Keep th
 
 The user picked **toon volume** ([toon-spray-2](../reference/spell-concepts/fire/toon-spray-2.jpg)), without the hybrid's streaks ("I don't think it's necessary to clarify the cone to this degree"), and [toon-floor-3](../reference/spell-concepts/fire/toon-floor-3.jpg) over [jets-floor-2](../reference/spell-concepts/fire/jets-floor-2.jpg)'s cracks for the floor. Built on branch `p3d-fire`: `view3d/fx/fire.ts` (the spray), `fire-floor.ts`, `fire-sheets.ts`. Shots: `npm run shot:fire3d` (`game/shots/port-3d/fire/`).
 
-**Painted sheets** (Codex, `game/content/generated/fx/`, prompts in `prompts/`, originals in `raw/`, `prep.py` makes the game sheets): `fire-rolls` (16 rolling flame masses), `fire-smoke` (16 pale puffs, tinted dark in the shader), `fire-carpet` (16 low clusters of short flames, cut to 2:1 cells), `fire-cracks` (a tileable char bed with glowing cracks). The edge licks reuse look B's `fire-wisps`. Each sheet came back usable on the first take.
+**Painted sheets** (Codex, `game/content/generated/fx/`, prompts in `prompts/`, originals in `raw/`, `prep.py` makes the game sheets): `fire-rolls` (16 rolling flame masses), `fire-smoke` (16 pale puffs, tinted dark in the shader), `fire-carpet` (16 low clusters of short flames, cut to 2:1 cells), `fire-cracks` (a tileable char bed with glowing cracks). The edge licks reused look B's `fire-wisps`. Since the mesh round below, only `fire-smoke` and `fire-cracks` are drawn; the flame sheets (and `fire-licks`, 16 long tongues from the sprite tuning pass) stay on disk. Each sheet came back usable on the first take.
 
 ### The spec
 
@@ -106,9 +106,9 @@ The user picked **toon volume** ([toon-spray-2](../reference/spell-concepts/fire
 | **Movement** | Fast and stretched near the staff (masses trail 0.06 s of travel), slowing and turning (rolling) as they billow out. Each particle keeps its birth aim, so a sweep bends like a hose. Floor flames flicker in place and never travel. |
 | **Colour** | Core cream-white; body cream-yellow near the staff, orange, deep orange-red at the far end; rim deep red; smoke warm near-black brown; floor char near black with orange cracks. Contrast on pale stone comes from the rim, the smoke and the char, not from more orange. |
 | **Timing** | Full length in about 0.4 s; masses live 0.65 to 0.8 s, smoke 1.3 s. After the channel stops, what's in flight finishes. Floor: a lit cell flares up over 0.4 s, burns, sinks over its last second (the sim's `FLOOR_FADE`), and its char lingers 3 s. |
-| **Layers** (back to front) | smoke; rim (the body's own particles drawn 10% bigger in deep red, so only the outline shows); edge licks (tongues on the fan's sides, behind the body); body; core; embers; the light: a warm pool and fan decal on the floor plus two spell lights. |
+| **Layers** (back to front) | smoke; the outline (the body's tubes again, bigger, deep red); the body (five overlapping tubes, a mesh, since the mesh round below; before it, sprites); core; embers; the light: a warm pool and fan decal on the floor plus two spell lights. |
 | **Runes** | The sim's wider, longer fan; more masses (290 a second at 1 rune, 530 at 5); a longer core (0.3 to 0.46 of the way); more smoke and embers. Five is a wall of fire with a smoke plume. No blue-white birth any more (the spike's pink smudges). |
-| **Budget** | Five runes: about 1,100 quads in 6 draw calls (body and rim 2 × 410, core 72, licks 72, smoke 40, embers 80) plus the fan. Floor: 3 clusters and 2 embers a burning cell. Cut first in a crowd: the rim and licks (they're the same as the body), then smoke. |
+| **Budget** | Since the mesh round: the body is 10 draw calls of a 56 × 40 tube (about 45k triangles, 5 tubes × 2 shells), plus core 72, smoke 40, embers 80 quads and the fan. Floor: one sheet at 0.1 u over the burning box, and 2 embers a burning cell. Cut first in a crowd: the side tubes' outlines, then the side tubes. |
 | **Not** | Not orange smoke (A), not a bonfire of separate flames (B), not streaks. |
 
 **A floor cell's age.** The sim keeps only a burning cell's life left, and its starting life depends on the caster's linger, so it can't be worked back. `FireFloor` notes the sim time it first saw each cell lit and the time it saw one go out. A cell new since the previous frame (under 0.25 s ago) is lit now and grows in; one the view finds after a gap (its first frame, a frozen shot, a jump) is treated as burning for a while and drawn grown. Notes later than the clock (a rewind) are dropped and noted again.
@@ -130,6 +130,37 @@ The user picked **toon volume** ([toon-spray-2](../reference/spell-concepts/fire
 - The white core hides behind the caster from the game camera when he faces north; it shows facing any other way.
 - The top edge is still a little lumpy (a row of puffs) where the painting has flame licks; the licks only show while the stream grows.
 - The warm light on the floor is weaker than the painting's.
+
+### The body as one volume: a mesh, not sprites (2026-11-25, branch `p3d-fire2`)
+
+The user on the sprite build (`court-n3-vs-concept`): "It's a very obvious cluster of opaque sprites, not at all similar to the concept." That's the method, not the tuning: stacked sprites can't make the painting's one continuous volume however they're shaped. A first tuning pass on branch `p3d-fire2` (a new Codex sheet of long tongues, `fire-licks`, stretched along their flight and lifting at the tips) made the body read as flame tongues, but still as many of them (its shots are kept in `game/shots/port-3d/tone/fire/sprites/`). It was replaced the same day by the standard stylised-VFX build:
+
+- **The body is a mesh** (`view3d/fx/fire-body.ts`): five overlapping closed tubes from the staff's tip to where the sim's channel stops, a broad middle one and narrower ones fanning out to the cone's sides (one wide tube read as a paper fan; the lobes give the painting's swelling "heart" with tongues at its sides). Each ring is placed in the vertex shader: it widens with the sim's cone, is flattened over the floor, narrow at the staff and swelling toward a rounded head, and follows the aim the flame at that distance left the staff with (`aimAt`), so a sweep bends it like a hose. Noise flowing outward pushes the surface in and out (billows), and a finer noise lifts the top toward the far end (tongues licking up; heat rises).
+- **Its shader** scrolls two layers of value noise outward along the length, finer round the tube than along it, so the grain streaks outward. Toon bands with hard-ish steps (white-hot, yellow, orange, deep red) come from the distance out, the view angle (surfaces turning away are cooler) and the noise. Where the noise is low on grazing surfaces, at the head and at the tail, it erodes away, so tongues break the silhouette. Covering in the middle, translucent toward the edges.
+- **The outline** is each tube again, 16% bigger, deep red and eroded a little less, drawn before all the flame shells, so a dark red edge shows round the whole mass.
+- **Stateless:** a pure function of the channel's time and end, runes, the aim trail and a seed, so frozen frames and rollback draw it exactly. Its length runs out over 0.4 s; it swells over the first second; when the channel stops, its tail leaves the staff and follows the head out.
+- **Particles only for the secondary layers:** the white-hot core of soft glows at the staff, embers, and the smoke off the far end (now softer and more translucent). The sprite rim, masses, tongues and edge licks are gone.
+- **The floor** (`fire-floor.ts`, against [toon-floor-3](../reference/spell-concepts/fire/toon-floor-3.jpg)) had the same problem (a carpet of painted flame sprites). Its flames are now one sheet: a fine grid (0.1 u) draped over the burning cells whose points rise into tongues where a noise rising through it peaks, tallest in the patch's middle, cut into the same toon bands (hot at the base, deep red at the tips), shaded by its own slope, eroded at the tips, and thinned between tongues so the charred bed and its glowing cracks show through. `GroundDecal` takes an optional vertex shader for it (`decal.ts`, `vertex`).
+
+The rest of the brief:
+
+1. **The core behind a caster facing away** (the court shot faces north): the core is drawn 1.1 u nearer the camera along its own line of sight (it stays put on screen), so the staff's white-hot start shows over the caster's hat and back.
+2. **Stronger floor light:** the fan decal is a glaze (it takes a little of the stone's colour away and adds saturated firelight), spills about a cell past the flames' outline and no further, and runs out with the flames over 0.45 s instead of lighting the whole cone at once. The two spell lights are brighter, the far one lower.
+3. **The court shot** (`play3d.html?shot=fire`) holds the goblins where they stand (`hold`, sim `devStage`), so the spray shows at its full length. `?ticks=` sets how many ticks a shot's casts run, which makes a court clip out of shots.
+4. **The sim's cone and reach are untouched.**
+
+Clips: `npm run clip:fx` (`scripts/fx-clip.mjs`: a live lab page on a virtual clock, one frame at a time, so it plays at real speed; or `--ticks` for a clip made of shots), in `game/shots/port-3d/tone/fire/clips/`.
+
+**What the rounds taught:**
+
+- A mesh with eroded toon bands reads as one volume at once; the work moves from "how big is each piece" to "what's the silhouette", which the lobes and the erosion carry.
+- One wide tube over a 96° cone reads as a paper fan or cloth: the outline needs lobes and tongues, not just a noisy edge.
+- Noise stretched across the stream (fine along it) reads as marble; stretched along it (fine round it), as flame tongues streaming out.
+- Pale yellow is the floor's own colour: the body has to sit mostly in yellow-orange and orange, with white only near the staff, or it sinks into the stone (as look A did).
+- Height moves a volume up the screen at this camera: with the body's axis at the staff's height all the way out and a tall section, it drew about 2 u past the far edge of the sim's cone and left its near half empty (`fx3d.html?hit=1`). It now comes down to rest on the floor by mid-way, with a lower section, and covers the cone.
+- When the channel stops, the tail running out after the head left a thin crescent at the far end for a second; the body now fades over 0.4 s as its tail goes.
+
+**Still different from the painting:** the sim's three-rune cone is 96° (the painting's about 65°), so the spray is wider and shorter. The body is flatter and more even in value than the painting's deep rolling forms, with less fine detail inside; a stronger light-side band and a third, finer noise layer are the next knobs. Painted noise (a Codex flame texture scrolled through the mesh) is the step after that, if procedural bands stay too plain. The floor's flames read as a low burning mass, not yet as the painting's distinct short licks.
 
 ### For a spell-look guide
 

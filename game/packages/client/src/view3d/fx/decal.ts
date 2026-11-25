@@ -22,6 +22,11 @@ export interface DecalSpec {
   /** GLSL: `vec4 decal(vec3 wp)`, with any uniforms it declares. */
   look: string;
   uniforms?: Record<string, THREE.IUniform>;
+  /**
+   * GLSL: the whole vertex shader, when the sheet's points move (it must write `out vec3 vWp`, the world point, and
+   * gl_Position); by default each point stays where cover() put it.
+   */
+  vertex?: string;
   /** Grid spacing, u (default 0.5: the sim's floor cell). */
   step?: number;
   /** Height over the floor, u (default 0.02). */
@@ -52,7 +57,7 @@ export class GroundDecal {
 
   constructor(readonly spec: DecalSpec, public heightAt: HeightAt = flatFloor) {
     this.u = { uSeed: { value: 0 }, uOpacity: { value: 1 }, ...spec.uniforms };
-    this.material = premulMaterial(new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, uniforms: this.u, vertexShader: VERT, fragmentShader: FRAG(spec.look) }));
+    this.material = premulMaterial(new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, uniforms: this.u, vertexShader: spec.vertex ?? VERT, fragmentShader: FRAG(spec.look) }));
     Object.assign(this.material, { polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
     this.mesh = new THREE.Mesh(new THREE.BufferGeometry(), this.material);
     this.mesh.frustumCulled = false;

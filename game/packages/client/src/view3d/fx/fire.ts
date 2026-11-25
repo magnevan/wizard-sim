@@ -5,19 +5,20 @@
  *
  * One stream from one point. From the back to the front, the layers are:
  *
- * 1. **Smoke**, dark warm grey-brown puffs (painted, fire-smoke.png) off the far end only, rising: the contrast on pale stone.
- * 2. **The rim**: the body's own particles drawn again a little bigger in deep red, before the body, so only a thin dark
- *    red edge shows round the whole mass (the concept's outline, which keeps the fire off the warm floor).
- * 3. **The body**: big overlapping rolling flame masses (painted, fire-rolls.png), each a sizeable part of the fan's
- *    width where it flies, spread evenly across the fan so the middle is full; they turn as they fly (rolling), hot
- *    cream-yellow near the staff, cooling to orange and red.
- * 4. **The core**: a white-hot stream of soft glows from the staff's tip, the first third of the way out.
+ * 1. **Smoke**, soft translucent warm grey-brown puffs (painted, fire-smoke.png) off the far end only, rising: the
+ *    contrast on pale stone.
+ * 2. **The outline**: a slightly bigger deep-red shell of the body (fire-body.ts), so a dark red edge shows round the
+ *    flame (the concept's rim, which keeps the fire off the warm floor).
+ * 3. **The body**: one volume, a mesh from the staff to where the channel stops (fire-body.ts), with noise flowing
+ *    outward through it cut into toon bands (white-hot, yellow, orange, deep red) and eroded into tongues at its edges.
+ * 4. **The core**: a white-hot stream of soft glows from the staff's tip, the first third of the way out, drawn a little
+ *    nearer the camera so it shows over a caster who faces away.
  * 5. **Embers**, a few, carrying past the end and falling.
  * 6. **Light**: a warm pool and fan on the floor (a decal) and two spell lights.
  *
- * The fan is the sim's: every particle flies along the aim it was born with (AimTrail, so a sweep bends like a hose),
- * inside the sim's half-angle and out to where the channel stops (a wall cuts it short, and the cells shrink with it).
- * More runes: the sim's wider, longer fan, more and bigger masses, a longer and hotter core.
+ * The fan is the sim's: the body and every particle follow the aim the flame left the staff with (AimTrail, so a sweep
+ * bends like a hose), inside the sim's half-angle and out to where the channel stops (a wall cuts it short).
+ * More runes: the sim's wider, longer fan, a hotter body, a longer core, more smoke and embers.
  *
  * Everything is a pure function of the clock, the sim's state and seeds, as the pixel effects are.
  */
@@ -27,6 +28,7 @@ import { type SprayIn } from './from-sim';
 import { GroundDecal } from './decal';
 import { ParticleBatch, streamMotion } from './particles';
 import { FIRE_TEX, SHEET_GLSL } from './fire-sheets';
+import { FireBody } from './fire-body';
 import type { SpellLights } from './lights';
 
 export { FireFloor } from './fire-floor';
@@ -58,8 +60,6 @@ float fanW(vec4 A, float s) { return (uNoz.x + s * max(A.w - uNoz.x, 0.0)) * sin
 /** Each layer's births a second and life (s) at n runes. */
 const RATE = {
   core: (n: number) => 240 + 40 * n, coreLife: 0.16,
-  body: (n: number) => 230 + 60 * n, bodyLife: (n: number) => 0.62 + 0.03 * n,
-  lick: (n: number) => 60 + 16 * n, lickLife: 0.5,
   smoke: (n: number) => 9 + 4 * n, smokeLife: 1.3,
   ember: (n: number) => (14 + 8 * n) * (n >= 5 ? 1.6 : 1), emberLife: 0.9,
 };
@@ -72,55 +72,12 @@ Particle particle(float k, float age, float ts) {
   float s = age * uCore, side = rnd(k, 31.0) * 2.0 - 1.0;
   Particle p = P0(); p.alive = true;
   p.pos = sprayAt(A, s, side * uHalf * 0.3 * smoothstep(0.0, 0.4, s), 0.0, axisH(s) + (rnd(k, 35.0) - 0.5) * 0.12 * s);
-  p.size = 0.07 + fanW(A, s) * 0.2;
+  // drawn as if 1.1 u nearer the camera (along its own line of sight, so it stays where it is on screen): the staff's
+  // white-hot start shows over the caster's own hat and back when he faces away from the camera
+  p.pos += normalize(cameraPosition - p.pos) * 1.1;
+  p.size = 0.08 + fanW(A, s) * 0.22 + 0.1 * (1.0 - smoothstep(0.0, 0.3, s / uCore));
   p.stretch = 0.035;
   p.col = vec4(s / uCore, 0.0, age, 1.0);
-  return p;
-}`);
-
-/** The body (and, drawn bigger, its rim): rolling masses spread evenly across the fan, growing as they slow. */
-const BODY = streamMotion(/* glsl */ `${SPRAY_HEAD}
-uniform float uSizeK, uSizeAdd, uStretch;
-Particle particle(float k, float age, float ts) {
-  float life = 0.8 + 0.2 * rnd(k, 1.0), a = age / life;
-  if (a >= 1.0) return P0();
-  vec4 A = aimAt(uTime - ts);
-  float reach = 0.88 + 0.16 * rnd(k, 2.0), s = 0.06 + (reach - 0.06) * (1.0 - pow(1.0 - a, 1.35));
-  float side = rnd(k, 3.0) * 2.0 - 1.0, w = fanW(A, s);
-  float ang = side * uHalf * mix(0.7, 0.88, smoothstep(0.0, 0.6, s));
-  float r = (0.08 + w * (0.16 + 0.12 * rnd(k, 5.0))) * (1.0 + 0.15 * smoothstep(0.7, 1.0, s)) * (0.55 + 0.45 * smoothstep(0.0, 0.25, a));
-  if (a > 0.78) r *= 1.0 - (a - 0.78) * 1.6;
-  // low along the fan; the floor fades it softly where it dips in (soft depth), and it rises a little as it cools
-  float h = axisH(s) + a * a * 0.35 + sin(a * 8.0 + k * 1.3) * 0.05 * w;
-  Particle p = P0(); p.alive = true;
-  p.pos = sprayAt(A, s, ang, sin(a * 7.0 + k * 0.7) * 0.06 * w, h);
-  p.size = r * uSizeK + uSizeAdd;
-  p.stretch = uStretch;
-  p.rot = rnd(k, 7.0) * 6.2832 + a * (rnd(k, 8.0) > 0.5 ? 1.8 : -1.8);
-  float heat = s * 0.8 + abs(side) * 0.22 * s + a * 0.15 - uHot;
-  p.col = vec4(heat, abs(side), a, smoothstep(1.0, 0.82, a) * smoothstep(0.0, 0.06, a));
-  p.data = vec4(rnd(k, 6.0), rnd(k, 9.0), 0.0, 0.0);
-  return p;
-}`);
-
-/**
- * Edge licks: flame tongues (fire-wisps.png) thrown along the fan's sides and off its far end, stretched along their
- * flight with their tips forward, so the mass has pointed, flowing edges instead of a lumpy outline.
- */
-const LICK = streamMotion(/* glsl */ `${SPRAY_HEAD}
-Particle particle(float k, float age, float ts) {
-  vec4 A = aimAt(uTime - ts);
-  float a = age, edge = rnd(k, 41.0) < 0.6 ? 1.0 : 0.0, side = rnd(k, 42.0) * 2.0 - 1.0;
-  float s = 0.2 + (0.95 + 0.2 * rnd(k, 43.0) - 0.2) * (1.0 - pow(1.0 - a, 1.4));
-  if (edge > 0.5) side = sign(side) * (0.78 + 0.22 * abs(side));
-  float w = fanW(A, s);
-  Particle p = P0(); p.alive = true;
-  p.pos = sprayAt(A, s, side * uHalf * 0.92, 0.0, axisH(s) + a * 0.3);
-  p.size = (0.06 + w * (0.12 + 0.08 * rnd(k, 44.0))) * smoothstep(0.0, 0.2, a) * (1.0 - smoothstep(0.7, 1.0, a) * 0.6);
-  p.aspect = 0.6;
-  p.stretch = 0.07;
-  p.col = vec4(s * 0.9 + 0.15 - uHot, 0.0, a, smoothstep(1.0, 0.75, a));
-  p.data = vec4(rnd(k, 45.0), rnd(k, 46.0), 0.0, 0.0);
   return p;
 }`);
 
@@ -163,48 +120,15 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   return vec4(c * a * 0.3, a * 0.3);
 }`;
 
-/** The body: one painted mass (its cell from data.x), hot cream-yellow near the staff, cooling to deep orange. */
-const LOOK_BODY = /* glsl */ `
-uniform sampler2D uSheet;
-${SHEET_GLSL}
-vec4 look(vec2 uv, vec4 col, vec4 data) {
-  vec3 t = sheetCell(uSheet, uv * 0.5 + 0.5, data.x, data.y, 4.0, 4.0);
-  float lum = max(t.r, max(t.g, t.b)), a = smoothstep(0.05, 0.42, lum);
-  float heat = clamp(col.x, 0.0, 1.0);
-  vec3 tint = mix(vec3(2.2, 1.9, 1.45), vec3(1.35, 0.62, 0.4), smoothstep(0.0, 0.85, heat));
-  return vec4(t * tint * 1.25, a * 0.96) * col.w;
-}`;
-
-/** A lick: one painted tongue, its tip forward, warm orange going deep red. */
-const LOOK_LICK = /* glsl */ `
-uniform sampler2D uSheet;
-${SHEET_GLSL}
-vec4 look(vec2 uv, vec4 col, vec4 data) {
-  vec3 t = sheetCell(uSheet, uv * 0.5 + 0.5, data.x, data.y, 4.0, 4.0);
-  float lum = max(t.r, max(t.g, t.b)), a = smoothstep(0.05, 0.42, lum);
-  vec3 tint = mix(vec3(1.9, 1.5, 1.1), vec3(1.2, 0.5, 0.32), clamp(col.x, 0.0, 1.0));
-  return vec4(t * tint * 1.2, a * 0.95) * col.w;
-}`;
-
-/** The rim: the same mass's shape in deep red (drawn bigger, behind the body), so only the outer edge shows. */
-const LOOK_RIM = /* glsl */ `
-uniform sampler2D uSheet;
-${SHEET_GLSL}
-vec4 look(vec2 uv, vec4 col, vec4 data) {
-  vec3 t = sheetCell(uSheet, uv * 0.5 + 0.5, data.x, data.y, 4.0, 4.0);
-  float lum = max(t.r, max(t.g, t.b)), a = smoothstep(0.04, 0.3, lum) * smoothstep(0.1, 0.45, col.x) * 0.9;
-  return vec4(vec3(0.42, 0.045, 0.012) * a, a) * col.w;
-}`;
-
 /** Smoke: a painted puff's shape and shading, tinted dark warm grey-brown, capped so what's behind it still shows. */
 const LOOK_SMOKE = /* glsl */ `
 uniform sampler2D uSheet;
 ${SHEET_GLSL}
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   vec3 t = sheetCell(uSheet, uv * 0.5 + 0.5, data.x, data.y, 4.0, 4.0);
-  float lum = max(t.r, max(t.g, t.b)), m = smoothstep(0.05, 0.5, lum);
+  float lum = max(t.r, max(t.g, t.b)), m = smoothstep(0.03, 0.7, lum);
   vec3 c = mix(vec3(0.018, 0.014, 0.012), vec3(0.075, 0.06, 0.05), smoothstep(0.4, 0.95, lum));
-  float a = m * 0.62 * col.w;
+  float a = m * 0.42 * col.w;
   return vec4(c * a, a);
 }`;
 
@@ -227,17 +151,17 @@ vec4 decal(vec3 wp) {
   if (r > uFan.w + 1.5 || uFanOn <= 0.0) return vec4(0.0);
   vec2 dir = vec2(cos(uFan.z), sin(uFan.z));
   float a = atan(d.y, d.x) - uFan.z; a = mod(a + 3.14159265, 6.2831853) - 3.14159265;
-  float side = 1.0 - smoothstep(uHalf * 0.75, uHalf * 1.05, abs(a)), end = 1.0 - smoothstep(uFan.w - 0.8, uFan.w + 0.6, r);
+  // the light spills a little past the flames' outline (about a cell), never further
+  float side = 1.0 - smoothstep(uHalf * 0.85, uHalf * 1.25, abs(a)), end = 1.0 - smoothstep(uFan.w - 0.4, uFan.w + 1.2, r);
   float n = fbm3(vec3(wp.xz * 1.1 - dir * uClock * 3.0, uClock * 0.7));
-  float fan = side * end * smoothstep(0.2, 1.0, r) * (0.55 + 0.45 * n);
-  float pool = exp(-dot(wp.xz - uFan.xy - dir * uNozF, wp.xz - uFan.xy - dir * uNozF) / 2.2);
-  float k = (fan * 0.8 + pool * 0.7) * uFanOn;
-  vec3 c = mix(vec3(1.0, 0.62, 0.2), vec3(1.0, 0.32, 0.06), clamp(r / max(uFan.w, 1.0), 0.0, 1.0));
-  return vec4(c * k * 1.1, k * 0.08);
+  float fan = side * end * smoothstep(0.2, 1.0, r) * (0.7 + 0.3 * n);
+  float pool = exp(-dot(wp.xz - uFan.xy - dir * uNozF, wp.xz - uFan.xy - dir * uNozF) / 3.0);
+  float k = (fan * 1.0 + pool * 0.9) * uFanOn;
+  // a warm glaze: it takes a little of the pale stone's own colour away (alpha) and puts saturated firelight back, so the
+  // floor under the fire turns orange rather than just brighter (which the tone map would wash to cream)
+  vec3 c = mix(vec3(1.0, 0.45, 0.1), vec3(1.0, 0.24, 0.04), clamp(r / max(uFan.w, 1.0), 0.0, 1.0));
+  return vec4(c * k * 1.1, k * 0.3);
 }`;
-
-/** Seconds of travel a body mass trails behind it: long tongues near the staff where it's fast, round billows at the far end where it has slowed. */
-const BODY_STRETCH = { value: 0.06 };
 
 /** Its runes' heat: shifts the colours hotter (art/spray-jet.ts: hot = 0.035 per rune past the first). */
 const hotOf = (n: number): number => 0.035 * (n - 1);
@@ -254,6 +178,8 @@ export class FireSpray {
   private layers: { b: ParticleBatch; rate: (n: number) => number; life: (n: number) => number }[] = [];
   /** The warm pool and fan on the floor (FAN). */
   readonly fan: GroundDecal;
+  /** The body: the flame as one volume (fire-body.ts). */
+  private body: FireBody;
   private F = { uFan: { value: new THREE.Vector4() }, uFanOn: { value: 0 }, uClock: { value: 0 }, uNozF: { value: NOZZLE.forward + 0.6 } };
 
   /** `look` and `sheets` are the spike's and are ignored (see FxLook, FireSheets). */
@@ -262,17 +188,15 @@ export class FireSpray {
     const L = (life: number | ((n: number) => number)) => (typeof life === 'number' ? () => life : life);
     const add = (motion: string, lookSrc: string, rate: (n: number) => number, life: number | ((n: number) => number), order: number, extra: Record<string, THREE.IUniform> = {}, seedOf = order) => {
       const cap = Math.ceil(rate(5) * L(life)(5)) + 2;
-      const b = new ParticleBatch({ motion, look: lookSrc, cap, order, soft: order >= 1 && order <= 3 ? 0.9 : undefined, uniforms: { ...this.U, uRate: { value: 1 }, uLife: { value: 1 }, ...extra } });
+      const b = new ParticleBatch({ motion, look: lookSrc, cap, order, soft: order >= 1 && order < 4 ? 0.9 : undefined, uniforms: { ...this.U, uRate: { value: 1 }, uLife: { value: 1 }, ...extra } });
       b.u.uSeed.value = seed + seedOf * 101;
       this.layers.push({ b, rate, life: L(life) });
       this.group.add(b.mesh);
     };
     add(SMOKE, LOOK_SMOKE, RATE.smoke, RATE.smokeLife, 0, { uSheet: { value: FIRE_TEX.smoke } });
-    // the rim and the body are the same particles (same seed), the rim a little bigger and drawn first
-    add(BODY, LOOK_RIM, RATE.body, RATE.bodyLife, 1, { uSheet: { value: FIRE_TEX.rolls }, uSizeK: { value: 1.1 }, uSizeAdd: { value: 0.05 }, uStretch: BODY_STRETCH }, 2);
-    // the licks stand out of the body's outline only (drawn behind it)
-    add(LICK, LOOK_LICK, RATE.lick, RATE.lickLife, 2, { uSheet: { value: FIRE_TEX.wisps } }, 6);
-    add(BODY, LOOK_BODY, RATE.body, RATE.bodyLife, 3, { uSheet: { value: FIRE_TEX.rolls }, uSizeK: { value: 1 }, uSizeAdd: { value: 0 }, uStretch: BODY_STRETCH }, 2);
+    // the body: one volume, a mesh (fire-body.ts), its deep-red outline shell first, then the flame
+    this.body = new FireBody(SPRAY_HEAD, this.U, seed);
+    this.group.add(this.body.group);
     add(CORE, LOOK_CORE, RATE.core, RATE.coreLife, 4);
     add(EMBER, LOOK_EMBER, RATE.ember, RATE.emberLife, 5);
     this.fan = new GroundDecal({ look: FAN, uniforms: { ...this.F, uHalf: this.U.uHalf } });
@@ -303,10 +227,15 @@ export class FireSpray {
     const n = r.n;
     this.trail.fill(t);
     this.U.uTime.value = t - r.t0; this.U.uEnd.value = r.end === Infinity ? 1e9 : r.end - r.t0;
+    // the body swells over the channel's first second, and once it stops, fades as its tail runs out after the head
+    this.body.uGrow.value = Math.min(1, (t - r.t0) / 1.0);
+    this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - (t - r.end) / 0.4);
     this.U.uN.value = n; this.U.uHot.value = hotOf(n); this.U.uCore.value = 0.26 + 0.04 * n; this.U.uNoz.value.w = groundY;
     for (const l of this.layers) { l.b.u.uRate.value = l.rate(n); l.b.u.uLife.value = l.life(n); }
     const now = this.trail.at(t), on = t <= r.end ? Math.min(1, (t - r.t0) / 0.15) : Math.max(0, 1 - (t - r.end) / 0.3);
-    this.F.uFan.value.set(now.x, now.z, now.ang, now.reach); this.F.uFanOn.value = on * (0.75 + 0.07 * n); this.F.uClock.value = t;
+    // the light on the floor runs out with the flames (full length in about 0.45 s), not ahead of them
+    const grown = Math.min(1, (t - r.t0) / 0.45);
+    this.F.uFan.value.set(now.x, now.z, now.ang, NOZZLE.forward + (now.reach - NOZZLE.forward) * grown); this.F.uFanOn.value = on * (0.75 + 0.07 * n); this.F.uClock.value = t;
     this.fan.heightAt = () => groundY;
     this.fan.cover({ x0: now.x - now.reach - 1.5, z0: now.z - now.reach - 1.5, x1: now.x + now.reach + 1.5, z1: now.z + now.reach + 1.5 });
     // light: the staff's flare and the stream, brighter with more runes, only while it's running
@@ -314,10 +243,10 @@ export class FireSpray {
       const A = now, cs = Math.cos(A.ang), sn = Math.sin(A.ang), on2 = Math.min(1, (t - r.t0) / 0.12);
       const at = (f: number) => NOZZLE.forward + f * Math.max(0, A.reach - NOZZLE.forward);
       const flick = 0.85 + 0.15 * Math.sin(t * 23) * Math.sin(t * 7.3);
-      lights.add(A.x + cs * at(0.1), groundY + NOZZLE.height, A.z + sn * at(0.1), 0xffc070, (1.6 + 0.4 * n) * on2 * flick, 5 + n);
-      lights.add(A.x + cs * at(0.65), groundY + 1.4, A.z + sn * at(0.65), 0xff7a2a, (2.4 + 0.8 * n) * on2 * flick, 7 + 1.5 * n);
+      lights.add(A.x + cs * at(0.1), groundY + NOZZLE.height, A.z + sn * at(0.1), 0xffc070, (2.2 + 0.5 * n) * on2 * flick, 5 + n);
+      lights.add(A.x + cs * at(0.6), groundY + 1.1, A.z + sn * at(0.6), 0xff7a2a, (3.4 + 1.0 * n) * on2 * flick, 6 + 1.5 * n);
     }
   }
 
-  dispose(): void { for (const l of this.layers) l.b.dispose(); this.fan.dispose(); }
+  dispose(): void { for (const l of this.layers) l.b.dispose(); this.body.dispose(); this.fan.dispose(); }
 }

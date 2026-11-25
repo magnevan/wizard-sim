@@ -36,7 +36,7 @@ PPU = int(opt('--ppu', 64))
 RECT = [float(v) for v in opt('--rect', '81,31.5625,111,48.4375').split(',')]
 SEED = int(opt('--seed', 1))
 ROAD_SCALE = float(opt('--road', 1.7))
-SQUARE = float(opt('--square', 25))           # cross-joints within this many degrees of square to their row are squared (0: off)
+SQUARE = float(opt('--square', 0))            # cross-joints within this many degrees of square to their row are squared (0: off, the default: at 25 it only reshuffled stones and made a few thin ones)
 ROUND = float(opt('--round', 0.3))            # how far a stone's corners are rounded: a share of its shorter half-size        # the road's stones this many times the usual size
 # (surfaces are laid whole, never cut to the rectangle: a cut would be an edge, and rows would follow it)
 rng = np.random.default_rng(SEED)

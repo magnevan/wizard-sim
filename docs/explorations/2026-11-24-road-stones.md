@@ -96,7 +96,7 @@ Version E (`version-e.jpg`; C, D and E side by side in `compare-c-d-e.jpg`, made
 
 The user on E: "the best version so far"; from here versions are compared with E only. The trapezoids (joints that nearly line up but don't) are "not such a problem", worth one try at a fix.
 
-Version F (`version-f.jpg`, beside E in `compare-e-f.jpg`): where a cross-joint ends on a row's line within 25 degrees of square, its end slides along the line until the joint stands square to it (`--square`, 0 turns it off); a true diagonal stays. Not yet judged by the user; E stays the default look until it is (run with `--square 0` for E).
+Version F (`version-f.jpg`, beside E in `compare-e-f.jpg`): where a cross-joint ends on a row's line within 25 degrees of square, its end slides along the line until the joint stands square to it (`--square`, 0 turns it off); a true diagonal stays. The user couldn't see an improvement. Zoomed in on the four spots that differ most (`zoom-e-f.jpg`), F only reshuffles sizes, and in two of them squeezes a stone into a thin slab. Dropped: `--square` is off by default, so the script draws E.
 
 Open (written for the cut stones; the seam zones of the straightened cells are irregular polygons instead): where rows from several edges meet, each block of rows keeps its own direction, so wide paving reads as patches at different angles with a few dark triangles of mortar between them; a border course along each edge with one calm direction inside would be quieter. Colours are r6's, not yet matched to the court; nothing is in the shader yet.
 

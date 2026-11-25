@@ -181,6 +181,7 @@ export function stoneMaterial(atlas: THREE.Texture): THREE.MeshStandardMaterial 
   return new THREE.MeshStandardMaterial({ map: atlas, vertexColors: true, roughness: 0.9 });
 }
 
+const KERB_OUT = 0.05;         // u: how far a kerb block stands out past the edge, over the road
 export const KERB_W = 0.32;   // u: a kerb's width, back from the edge onto the upper floor
 /** A kerb piece as the renderer needs it: its edge from (x, y) to (x2, y2) (u), the upper floor (h, m) on its left. */
 export type KerbSeg = { x: number; y: number; x2: number; y2: number; h: number; low: number };
@@ -189,7 +190,8 @@ export type KerbSeg = { x: number; y: number; x2: number; y2: number; h: number;
  * one row of blocks about a u long, from the lower floor up to the upper and a hair proud of it, so the blocks run on
  * across pieces and are mitred where the kerb turns.
  */
-export function kerbRows(segs: KerbSeg[], yOf: (m: number) => number, sheet: StoneSheet): THREE.BufferGeometry {
+export function kerbRows(segs: KerbSeg[], yOf: (m: number) => number, width = KERB_W, round = 0.24): THREE.BufferGeometry {
+  const sheet: StoneSheet = { cols: 1, rows: 1, n: 1 };   // (kerb blocks wear a world-mapped stone, not a sheet: their uvs go unused)
   const B = new Buf(), key = (x: number, y: number, s: KerbSeg) => `${Math.round(x * 100)},${Math.round(y * 100)},${s.h},${s.low}`;
   const from = new Map<string, KerbSeg>(), ends = new Set<string>();
   for (const s of segs) { from.set(key(s.x, s.y, s), s); ends.add(key(s.x2, s.y2, s)); }
@@ -198,7 +200,9 @@ export function kerbRows(segs: KerbSeg[], yOf: (m: number) => number, sheet: Sto
     const line = [[s0.x, s0.y]]; let s: KerbSeg | undefined = s0;
     while (s && !used.has(s)) { used.add(s); line.push([s.x2, s.y2]); s = from.get(key(s.x2, s.y2, s)); }
     const y = yOf(s0.h);
-    layRow(B, line, 0, KERB_W, { mean: 0.95, vary: 0.22, gap: 0.03, y0: yOf(s0.low) - 0.1, y1: y + 0.02, lift: 0.016, bevel: 0.045, round: 0.16, wobble: 0.008, tone: 0.07 }, sheet, seedAt(s0.x, s0.y));
+    // regular blocks, as a kerb is cut: equal lengths along each straight run, straight sides, corners rounded a little
+    // (they stand a little out over the road, in front of the floor's own side, which would otherwise hide their faces)
+    layRow(B, line, -KERB_OUT, width, { mean: 0.95, vary: 0.04, gap: 0.04, y0: yOf(s0.low) - 0.1, y1: y + 0.025, lift: 0.008, bevel: 0.06, round, wobble: 0, tone: 0.06 }, sheet, seedAt(s0.x, s0.y));
   };
   for (const s of segs) if (!ends.has(key(s.x, s.y, s))) chain(s);     // open lines, from their starts
   for (const s of segs) if (!used.has(s)) chain(s);                    // then the rings

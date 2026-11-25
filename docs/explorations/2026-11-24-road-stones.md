@@ -104,6 +104,14 @@ The user agreed E is the pattern and asked for the painting experiments. `--styl
 
 A target: Codex repainted the E still from above with r6 as the style (`stones-paint-target.txt`; `paint-target-a.jpg`, `-b.jpg`; beside our storybook in `paint-target-compare.jpg`). Both tries kept every stone where it was. What its stones have that ours lack: brush-stroke texture inside each stone, a thin light line just inside the edge on the lit side, and deeper, cooler joints. Not yet judged by the user.
 
+The user on the painting: "the existing color was fine" (the `base` style stays). "The biggest lift possible now is the curb": top and sides should both look good, corners rounded a bit, and thicknesses tried.
+
+### Kerbs as blocks in the game
+
+A kerb's sides only exist in 3D, so the kerb is now real blocks in the renderer (`kerbRows` in `kit-road.ts`, on by default; kit3d `?kerb=0` for the plain strip): one row of near-equal blocks along each whole kerb, mitred at its corners, each a slab with rounded corners (`?kerbr=`, 0.24 of its width) and a bevelled top edge. They wear the court's smooth stone mapped by world position on top and sides alike, so nothing drags down a side, with each block's own tone and a darker foot, and they take no ground painting. Mortar shows in the joints. Two things the first try got wrong: the floor's own rock side hid the blocks' road faces (they now stand 0.05 u out over the road), and the joints showed the floor (the bed of mortar now sits a hair above it).
+
+Widths tried: 0.24, 0.32 and 0.45 u (14, 19 and 27 cm), close up and at the game camera: `kerb-widths.jpg`; `kerb-blocks-close.jpg` is 0.32. `?kerbw=` in kit3d and `--kerb` in `tess_proof.py` (the paving is laid up to the kerb's back) must agree. Not yet judged by the user.
+
 Open (written for the cut stones; the seam zones of the straightened cells are irregular polygons instead): where rows from several edges meet, each block of rows keeps its own direction, so wide paving reads as patches at different angles with a few dark triangles of mortar between them; a border course along each edge with one calm direction inside would be quieter. Colours are r6's, not yet matched to the court; nothing is in the shader yet.
 
 ## Trade-offs and what was not done

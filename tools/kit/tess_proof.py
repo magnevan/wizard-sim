@@ -65,7 +65,7 @@ LAY = {
                    pal=[(214, 168, 150), (224, 180, 158), (204, 158, 146), (230, 190, 166), (210, 172, 160), (196, 152, 140)],
                    jointc=(142, 104, 96), tone=0.06, sheet='sett'),
 }
-KERB_W = 0.32
+KERB_W = float(opt('--kerb', 0.32))           # u: the kerb's width, as the renderer draws it (kit3d ?kerbw=)
 LAY['road']['a'] *= ROAD_SCALE; LAY['road']['b'] *= ROAD_SCALE
 
 

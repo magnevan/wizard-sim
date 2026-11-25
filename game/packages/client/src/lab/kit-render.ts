@@ -161,7 +161,7 @@ const TILE: Record<string, number> = { paving: 4, plaza: 6, road: 9, lawn: 4, ro
 /** Textures that drift on floors (tiles a second): water flows slowly. */
 const FLOW: Record<string, [number, number]> = { water: [0.012, 0.007] };
 /** Switches for trying things out (kit3d's URL): `stones` lays kerbs and road courses stone by stone (kit-road.ts). */
-export const KIT_OPTS = { stones: true };
+export const KIT_OPTS = { stones: false, kerb: true, kerbW: KERB_W, kerbRound: 0.24 };   // stones: a road's laid courses (the user turned those down); kerb: kerbs as blocks, kerbW u wide
 /**
  * A ground painting (docs/explorations/2026-11-24-road-stones.md, approach 4): one picture of the ground seen from
  * straight above, covering the rectangle ptRect (x0, z0, x1, z1 in u; its top edge is north), which replaces the
@@ -188,7 +188,7 @@ const TONE: Record<string, number> = { road: 0xf4d9b0 };
 const stoneSheets = import.meta.glob<Record<string, StoneSheet>>('../../../../content/generated/textures/stones.json', { eager: true, import: 'default' });
 const SHEETS: Record<string, StoneSheet> = Object.values(stoneSheets)[0] ?? {};
 const STONE: Record<string, THREE.MeshStandardMaterial> = {};
-const JOINT = mat(0x7d6a52);   // the sand between laid stones
+const JOINT = mat(0x6a584a);   // the sand between laid stones
 const TEX: Record<string, THREE.MeshStandardMaterial> = {}, RAW: Record<string, THREE.Texture> = {};
 async function loadTextures() {
   const loader = new THREE.TextureLoader();
@@ -203,7 +203,7 @@ async function loadTextures() {
   if (TEX['smooth-stone']) { TEX.tread ??= TEX['smooth-stone']; TEX.kerb ??= TEX['smooth-stone']; }
 }
 /** A material that samples tex by world position, blended over the three axes by the surface's facing. */
-function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0, 0], decal = true, macro = 0): THREE.MeshStandardMaterial {
+function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0, 0], decal = true, macro = 0, paint = true): THREE.MeshStandardMaterial {
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: flow[0] || flow[1] ? 0.35 : 0.92 });
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tpMap = { value: tex }; sh.uniforms.tpScale = { value: 1 / tile };
@@ -217,16 +217,24 @@ function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0
         tpC.rgb *= clamp(1.0 + (dot(tpFar, vec3(0.333)) / max(dot(tpMean, vec3(0.333)), 0.02) - 1.0) * ${macro.toFixed(2)}, 0.8, 1.2);` : ''}
         diffuseColor *= tpC;
         vec2 ptUv = (vTpPos.xz - ptRect.xy) / (ptRect.zw - ptRect.xy);
-        if (ptOn > 0.5 && ptUv.x > 0.0 && ptUv.x < 1.0 && ptUv.y > 0.0 && ptUv.y < 1.0) {
+        if (${paint ? 'ptOn > 0.5' : 'false'} && ptUv.x > 0.0 && ptUv.x < 1.0 && ptUv.y > 0.0 && ptUv.y < 1.0) {
           // faded in over the rectangle's rim, so the painting has no hard border on the ground
           float ptK = tpW.y * smoothstep(0.0, 0.03, min(min(ptUv.x, 1.0 - ptUv.x), min(ptUv.y, 1.0 - ptUv.y)));
           diffuseColor.rgb = mix(diffuseColor.rgb, texture2D(ptTex, vec2(ptUv.x, 1.0 - ptUv.y)).rgb * ptGain, ptK);
         }`);
   };
-  m.customProgramCacheKey = () => `tp${tile}m${macro}`;
+  m.customProgramCacheKey = () => `tp${tile}m${macro}p${paint}`;
   return decalable(m);
 }
 /** A tiling texture's world-mapped material by name (paving, ashlar, smooth-stone...), once loadKitArt has run. */
+let KERB_BLOCK: THREE.MeshStandardMaterial | undefined;
+/** What kerb blocks wear: the smooth stone mapped by world position on top and sides alike (so nothing drags down a side), each block's own tone in its vertices, and no ground painting over it. Undefined without the texture, or with ?kerb=0. */
+function kerbMat(): THREE.MeshStandardMaterial | undefined {
+  const stone = RAW['smooth-stone'];
+  if (!stone || !KIT_OPTS.kerb) return undefined;
+  if (!KERB_BLOCK) { KERB_BLOCK = triplanar(stone, TILE['smooth-stone'] ?? 2, undefined, true, 0, false); KERB_BLOCK.vertexColors = true; }
+  return KERB_BLOCK;
+}
 export const kitMat = (name: string): THREE.Material | undefined => TEX[name];
 /** The material for a floor of this mat: its texture if made, else its tone. */
 const floorMat = (mat: string): THREE.Material => TEX[mat] ?? FLOOR[mat] ?? MAT.paving;
@@ -511,7 +519,7 @@ function piece(it: Inst): THREE.Group | null {
     else if (kind === 'kerb') {
       // laid stone by stone, all a scene's kerbs at once (buildKit, kit-road.ts): the piece itself is the bed of sand
       // that shows in the joints, and what a click on its stones finds
-      if (STONE.kerb && KIT_OPTS.stones) box(g, JOINT, 0, L, yOf(low) - 0.1, yOf(it.h) - 0.07, -KERB_W + 0.03, -0.03);
+      if (kerbMat()) box(g, JOINT, 0, L, yOf(low) - 0.1, yOf(it.h) + 0.006, -KIT_OPTS.kerbW + 0.03, 0.025);   // (a hair above the floor, so the joints show mortar and not the floor)
       else if (TEX.kerb || !art(g, 'kerb', 0, yOf(it.h), L / 2)) box(g, TEX.kerb ?? MAT.kerb, 0, L, yOf(low) - 0.1, yOf(it.h), -KERB_W, 0);
     }
     else if (kind === 'wall') wall(g, L, it.h, low, it.v, shape === 'door');
@@ -925,9 +933,9 @@ export function buildKit(data: KitData): THREE.Group {
     }
   }
   // the kerbs' stones, laid along each whole kerb so they run on across its pieces and are cut to its turns
-  if (STONE.kerb && KIT_OPTS.stones) {
+  if (kerbMat()) {
     const kerbs = data.instances.filter((it) => /^(edge|sweep)\.kerb/.test(it.p) && it.x2 != null && it.low != null) as KerbSeg[];
-    const m = new THREE.Mesh(kerbRows(kerbs, yOf, SHEETS.kerb), STONE.kerb);
+    const m = new THREE.Mesh(kerbRows(kerbs, yOf, KIT_OPTS.kerbW, KIT_OPTS.kerbRound), kerbMat()!);
     m.castShadow = m.receiveShadow = true; m.raycast = () => undefined;
     root.add(m);
   }

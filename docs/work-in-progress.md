@@ -16,6 +16,13 @@ The opening is a chain of eight stops, Life first; the yard and the battery are 
 
 [The Morning Everything Breaks](https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews) · [Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) · [Saved marks](archive/claude-review-feedback-2026-11-16.md#opening-segment) · [Playable battery](current-state.md#rooms)
 
+## The port to 3D
+
+> [!in-review] Pick the camera, the fire and the rest
+> On The Court in 3D, answer its five boxes: the camera distance, how a wizard behind a building shows, whether the unfiltered models are the way forward, fire look A or B, and whether the walk grid matches the court. An empty box means the recommendation stands.
+
+[The Court in 3D](https://claude.ai/artifact/3dWPYc5ZxZqgrYfpksnegu) · [Thread](threads/port-3d.md) · [Plan](explorations/2026-11-25-port-3d-plan.md)
+
 ## Goblin warband art
 
 > [!in-review] Judge the band in play

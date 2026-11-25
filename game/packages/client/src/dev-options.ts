@@ -12,9 +12,8 @@
  * options went undocumented before. Separate pages (the labs in lab/) keep their own params.
  */
 import { BATTERY_CHECKPOINTS, YARD_CHECKPOINTS } from '@wizard-sim/sim';
-import { MOODS } from './art/lighting';
+import { MOODS, PROP_SETS } from './art/moods';
 import { PATH_STYLES } from './art/glyph-path';
-import { PROP_SETS } from './art/assets';
 import { SCENARIOS } from './scenarios';
 
 export type OptionGroup = 'Start' | 'Panels' | 'View' | 'Sound' | 'Network' | 'Test runs';
@@ -82,6 +81,8 @@ export const OPTIONS = [
   { key: 'cam', group: 'View', label: '3D view distance', kind: 'number', live: true, help: 'The 3D page (play3d.html): u of ground the view shows top to bottom (default 30; the pixel game shows about 34 at 1080p).' },
   { key: 'fade', group: 'View', label: '3D fading walls', kind: 'flag', defaultOn: true, live: true, help: 'The 3D page: whatever stands between the camera and your wizard gets a dithered hole round it. Off to compare.' },
   { key: 'kitart', group: 'View', label: '3D kit art', kind: 'flag', defaultOn: true, help: 'The 3D page: the kit\'s made models and textures. Off: its greybox placeholders (quick to load).' },
+  { key: 'kitbatch', group: 'View', label: '3D kit batching', kind: 'flag', defaultOn: true, help: 'The 3D page: the kit\'s static pieces drawn in batches, a few hundred draws instead of thousands (view3d/kit-batch.ts). Off to compare.' },
+  { key: 'kitall', group: 'View', label: '3D kit: all art', kind: 'flag', help: 'The 3D page: load every kit model and texture at the first load (dev server only), not just what the room uses, to compare.', devOnly: true },
 
   // ---- Sound ----
   { key: 'sound', group: 'Sound', label: 'Sound', kind: 'flag', defaultOn: true, help: 'Off: no sound at all.' },

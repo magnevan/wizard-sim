@@ -8,11 +8,18 @@
  * The compiled scene is imported (a chunk of its own, about 0.5 MB, 80 kB gzipped), not fetched from the map editor's
  * server, so a build carries it. It's committed for that reason: CI never runs Python (the plan's decision 1 does the
  * same for the room). The pieces' sizes come from tools/kit/kit.json the same way.
+ *
+ * Weight (step 6): a room loads only the art its scene uses and the rooms before it haven't (kit-assets.ts), and once
+ * built its static pieces are drawn in batches (kit-batch.ts); the pieces themselves stay, hidden, for raycasts and
+ * fading.
  */
 import * as THREE from 'three';
 import kitJson from '../../../../../tools/kit/kit.json';
 import { loadStones } from '../lab/kit-stones';
-import { buildKit, disposeKit, groundPlane, loadKitArt, setKitPieces, type KitData, type KitPiece } from '../lab/kit-render';
+import { buildKit, disposeKit, groundPlane, loadKitArt, setKitPieces, useKitArt, type KitData, type KitPiece } from '../lab/kit-render';
+import { optOn } from '../dev-options';
+import { KIT_URLS, kitArt } from './kit-assets';
+import { batchKit, type KitBatch } from './kit-batch';
 
 /** Pieces a body stands on besides the floors: flights and steps. */
 const WALKABLE_PIECE = /^(connector\.flight|edge\.steps|sweep\.steps)/;
@@ -21,7 +28,10 @@ const NEVER_FADE = /^(edge\.kerb|sweep\.kerb|joint\.|setpiece\.plaza-(disc|inlay
 /** Height (u) under which a piece can't hide a standing wizard and isn't worth testing. */
 const LOW = 1.2;
 
-/** The compiled scenes, by room id: a room made from a kit scene (tools/kit/room.py) draws the scene it was made from. */
+/**
+ * The compiled scenes, by room id: a room made from a kit scene (tools/kit/room.py) draws the scene it was made from.
+ * (The build reads these imports to ship each scene's art: vite.config.ts kitGameArt.)
+ */
 const SCENES: Record<string, () => Promise<unknown>> = {
   court: () => import('../lab/kit-court.json'),
   practice: () => import('../lab/kit-practice.json'),
@@ -30,7 +40,8 @@ const SCENES: Record<string, () => Promise<unknown>> = {
 /** Is there a compiled scene for this room? */
 export const hasScene = (room: string): boolean => Object.prototype.hasOwnProperty.call(SCENES, room);
 
-export interface Occluder { obj: THREE.Object3D; box: THREE.Box3 }
+/** A piece that can hide a wizard: its box, and (when batched) how to show it on its own while fade.ts cuts it. */
+export interface Occluder { obj: THREE.Object3D; box: THREE.Box3; cut?: (on: boolean) => void }
 
 export class KitScene {
   readonly root = new THREE.Group();
@@ -39,37 +50,65 @@ export class KitScene {
   readonly walkable: THREE.Object3D[] = [];
   /** Everything that might stand between the camera and a wizard, with its box. */
   readonly occluders: Occluder[] = [];
-  /** ms the load took, and the bytes of models and textures fetched for it (from the resource timings). */
+  /** The batches drawing the static pieces (null with ?kitbatch=0). */
+  batch: KitBatch | null = null;
+  /** ms the load took, the page's time (performance.now) when it was done, and the bytes fetched by then (resource timings). */
   loadMs = 0;
+  loadedAt = 0;
   loadBytes = 0;
+  /** The last load's parts, ms: fetching the scene and its art, building it, batching it. */
+  timings = { fetch: 0, build: 0, batch: 0 };
   /** The scene built now ('' before the first load). */
   name = '';
   private heights = new Map<number, number>();
   private ray = new THREE.Raycaster();
-  private art: Promise<void> | null = null;
+  /** The art loads so far, in order (each loads only what the ones before didn't). */
+  private art: Promise<void> = Promise.resolve();
 
   /**
    * Load a room's scene and build it in place of the one before. `art` false draws the kit's placeholders only (fast,
-   * for checks). The fitted models are fetched once, by the first load that wants them.
+   * for checks). The art comes per scene, what it uses and no earlier scene did; ?kitall=1 loads every original at the
+   * first load instead (dev server only: the build ships the scenes' art only), and ?kitbatch=0 leaves the pieces
+   * unbatched, to compare.
    */
   async load(name: string, art = true): Promise<void> {
     const t0 = performance.now();
     if (!hasScene(name)) throw new Error(`no compiled scene ${name}`);
-    setKitPieces((kitJson as unknown as { pieces: Record<string, KitPiece> }).pieces);
-    if (art) this.art ??= loadKitArt();
-    const [mod] = await Promise.all([SCENES[name](), art ? this.art : Promise.resolve(), loadStones(name)]);
+    const pieces = (kitJson as unknown as { pieces: Record<string, KitPiece> }).pieces;
+    setKitPieces(pieces);
+    const stones = loadStones(name);
+    const mod = await SCENES[name]();
+    const data = (mod as unknown as { default: KitData }).default;
+    if (art) {
+      const all = optOn('kitall');
+      this.art = this.art.then(() => { useKitArt(all ? null : { urls: KIT_URLS, ...kitArt(data, pieces) }); return loadKitArt(); });
+    }
+    await Promise.all([art ? this.art : Promise.resolve(), stones]);
+    this.timings.fetch = performance.now() - t0;
+    const t1 = performance.now();
     this.clear();
     this.name = name;
-    this.data = (mod as unknown as { default: KitData }).default;
+    this.data = data;
     const kit = buildKit(this.data);
     this.root.add(groundPlane(this.data), kit);
     this.index(kit);
-    this.loadMs = performance.now() - t0;
+    this.timings.build = performance.now() - t1;
+    if (optOn('kitbatch')) {
+      const t2 = performance.now();
+      const b = (this.batch = batchKit(kit));
+      this.timings.batch = performance.now() - t2;
+      this.root.add(b.group);
+      for (const o of this.occluders) o.cut = (on) => b.cut(o.obj, on);
+    }
+    this.loadedAt = performance.now();
+    this.loadMs = this.loadedAt - t0;
     this.loadBytes = performance.getEntriesByType('resource').reduce((a, e) => a + ((e as PerformanceResourceTiming).transferSize || (e as PerformanceResourceTiming).encodedBodySize || 0), 0);
   }
 
   /** Take the built scene down, disposing its own geometry (the fitted models' shared geometry is kept). */
   private clear(): void {
+    this.batch?.dispose();
+    this.batch = null;
     for (const o of [...this.root.children]) { this.root.remove(o); disposeKit(o); }
     this.walkable.length = 0; this.occluders.length = 0; this.heights.clear();
   }

@@ -123,6 +123,7 @@ export class Fader {
       mats.set(m, m.material);
       m.material = Array.isArray(m.material) ? m.material.map(cut) : cut(m.material);
     });
+    o.cut?.(true);   // a batched piece: drawn on its own (with these materials) while it's cut (kit-batch.ts)
     return { o, k, mats };
   }
 
@@ -131,5 +132,6 @@ export class Fader {
       for (const mt of Array.isArray(m.material) ? m.material : [m.material]) mt.dispose();
       m.material = orig;
     }
+    f.o.cut?.(false);
   }
 }

@@ -7,8 +7,9 @@
  * the footprint, compiled into the room, and every set shares it.
  */
 import { Texture } from 'pixi.js';
+import { PROP_SETS } from './moods';
 
-export const PROP_SETS = ['lean', 'simple', 'code'] as const;
+export { PROP_SETS };
 export type PropSet = (typeof PROP_SETS)[number];
 
 export interface PropImage { file: string; /** The image pixel that stands on the prop's spot. */ foot: readonly [number, number] }

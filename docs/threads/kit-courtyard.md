@@ -1,6 +1,6 @@
 # The courtyard on the kit (growing the kit by building a map)
 
-Status: active; textured, paved in cobble, models slimmed (53 MB), 0 errors; now: the sea edge's quay and cliff, then the yard · Last touched: 2026-11-24
+Status: active; road and paving laid stone by stone, plaza inlay built, dressing parts modelled; now: the user judges p34 and p37, then dressing placed, the sea edge's quay and cliff, the yard · Last touched: 2026-11-25
 Record: [flexible building](../explorations/2026-11-23-flexible-building.md) (the kit, the grid) · the kit: `tools/kit/` ([README](../../tools/kit/README.md)) · [court read](../campaign/01-opening/court-read.md) · plan D: `tools/place-plans/plans/court-d.py` · [the opening thread](opening.md) (the places it's for) · [the map-editor thread](map-editor.md) (editor changes go there, not here)
 
 ## Where it stands
@@ -12,7 +12,8 @@ How things are made: pictures in Codex (free), models through the Meshy API (sta
 ## Next
 
 - [ ] **Foliage** (plants, flowers, vines, paving): moved to its own thread, [foliage](foliage.md), handed to a fresh session (2026-11-24).
-- [ ] **Dressing from the paint-overs**: flower boxes, banners, small trees in planters, lamps along the balcony road, violet cracks; these are vignettes or set pieces.
+- [ ] **The user's verdict on p34 and p37** (both built, left open): the plaza inlay's depth, glow and drift (p34); the road and paving laid stone by stone (p37). Look in the editor or `#court`; `?stones=0` shows the old tiles for comparison.
+- [ ] **Dressing placed from the paint-overs**: the parts are modelled and fitted (`dress.bench`, `dress.urn`, `dress.lamp`, `dress.cap-lantern`, `dress.planter`, `dress.banner`) but none stand in `court.scene.json` yet; place them per the paint-overs (lamps along the balcony road, urns and planters at the terraces, benches on the plaza ring, banners on the hall). Violet cracks still to make.
 - [ ] **Animated water** (the user, 2026-11-24): a water shader (scrolling layers of the painted water texture, ripple normals derived from it, a gentle swell, fresnel, foam at the shoreline, the stream flowing), asked of the Map Editor session; the painted texture carries the look (no code-drawn art).
 - [ ] **Later: the arch's keystone and trim** (the user, 2026-11-24). Either painted into the voussoir ring's texture (free; a keystone is a few pixels at the game camera), or as one of several small ornaments bundled into a single Meshy call: one Codex sheet (keystone, urn, finial, lantern, ball topper) → one model → split into loose parts in Blender → `fit.py` each. Bundling suits small ornaments, not buildings.
 - [ ] **The sea edge, still to do**: a quay edge and a cliff piece.
@@ -20,6 +21,8 @@ How things are made: pictures in Codex (free), models through the Meshy API (sta
 
 ## Done
 
+- 2026-11-25: road and paving laid stone by stone (from the road-flow worktree via `kit-clean`): `tess_layout.py` bakes each scene's stones (the court: 11,709) to `game/content/generated/layouts/<scene>-stones.json` after each compile, the floor shader paints them live (`kit-stones.ts`), and the editor lays touched pieces again in the background; kerbs are rounded blocks with a mortar bed. Answers p37 (left open for the user).
+- 2026-11-24: the plaza's radial floor as an inlaid slab with seven recessed channels of tinted, flowing magic (p34, the new `inlay` class, `setpiece.plaza-inlay`); dressing from two bundled Meshy calls (60 credits): urn, lanterns, pots, keystone, lamp posts, bench.
 - 2026-11-24: the stream's falls, from their own thread ([waterfall](waterfall.md), branch `waterfall`, merged): the compiler finds water over lower water and the renderer pours it as a ribbon drawn to size. The bundled dressing call: eight small parts from one Meshy model (30 credits, `split_sheet.py`).
 - 2026-11-24: arches as a kit feature, not models (the user: a bridge model "bakes in the exact width, length, railing"): the compiler places `arch.through` where a level crosses water (the stream bridge, its deck paved as road) and blind arches over three-section bays on the tall sea walls; the Map Editor session draws them to size in the painted stone. No credits. The full-size fitted models are kept in `meshy/kit-full/` (for LoD later); `slim.py` writes the game's copies.
 - 2026-11-24: foliage merged in from its thread; the terraces and the 3 m plaza ring paved in `cobble` (the paint-over's warm flags; roads and the sunk plaza unchanged); the models slimmed, 198 to 53 MB (`slim.py`: textures re-encoded, no visible change at the game camera; run it after every `fit.py`); the sea walls' foot (the rock band at -5.5 m) is now `plinth`, dark weathered blocks with moss (Codex, free), and `ashlar` tiles at 5 u so its courses read at the game camera.

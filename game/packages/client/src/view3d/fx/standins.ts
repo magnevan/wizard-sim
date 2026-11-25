@@ -95,6 +95,8 @@ export class Standins {
    * volume look the user picked from the Codex concept round, 2026-11-25).
    */
   drawFire = false;
+  /** True: the Arcane beam draws as its stand-in. False: as arcane.ts draws it (the crisp concept, 2026-11-25). */
+  drawArcane = false;
 
   get group(): THREE.Group { return this.batch.group; }
 
@@ -407,6 +409,7 @@ export class Standins {
           }
           f.lights?.add(x + Math.cos(face) * reach * 0.5, g + 1, y + Math.sin(face) * reach * 0.5, new THREE.Color(...P.mid), 3, 6);
         } else if (spec.shape === 'beam') {
+          if (!spec.heal && (spec.look || spec.form) === EL.arcane && !this.drawArcane) continue;   // arcane.ts
           const sx = x + Math.cos(ang) * 0.6, sy = y + Math.sin(ang) * 0.6;
           this.beam(sx, g + BEAM_H, sy, ex, ey, P, SHAPES.beamWidth * (0.8 + 0.1 * spec.power), t);
           f.lights?.add(ex, this.ground(ex, ey) + 1, ey, new THREE.Color(...P.mid), 4, 6);

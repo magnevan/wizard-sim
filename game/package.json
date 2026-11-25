@@ -24,6 +24,7 @@
     "shot:fx3d": "node scripts/fx3d-shots.mjs",
     "shot:cast3d": "node scripts/cast3d-shots.mjs",
     "shot:fire3d": "node scripts/fire3d-shots.mjs",
+    "shot:arcane3d": "node scripts/arcane3d-clips.mjs",
     "editor:shot": "node scripts/editor-shot.mjs",
     "editor:check": "node scripts/editor-check.mjs",
     "fps:lab": "node scripts/lab-fps.mjs",

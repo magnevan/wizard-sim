@@ -64,6 +64,7 @@ export const OPTIONS = [
 
   // ---- View ----
   { key: 'scale', group: 'View', label: 'Pixel scale', kind: 'choice', choices: () => ['1', '2', '3', '4'], live: true, help: 'Force the integer pixel scale (the Esc menu\'s Pixel scale). Absent: auto.' },
+  { key: 'impact', group: 'View', label: 'Arcane beam impact', kind: 'choice', choices: () => ['a', 'b'], live: true, help: 'The 3D page: the Arcane beam\'s impact, a (restrained: a small splash, a few sparks; the default) or b (fuller: the concept\'s burst), for the user to pick from motion (view3d/fx/arcane.ts).' },
   { key: 'lights', group: 'View', label: 'Lights', kind: 'flag', defaultOn: true, live: true, help: 'The glow of spells and fire (the Esc menu\'s Lights).' },
   { key: 'lighting', group: 'View', label: 'Scene lighting', kind: 'flag', defaultOn: true, help: 'The scene lighting as a whole; off to compare.' },
   { key: 'mood', group: 'View', label: 'Mood', kind: 'choice', choices: () => Object.keys(MOODS), live: true, help: 'A lighting mood instead of the room\'s own.' },

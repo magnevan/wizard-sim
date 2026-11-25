@@ -22,6 +22,34 @@ Images: [`docs/reference/spell-concepts/`](../reference/spell-concepts/) `arcane
 - The hit: an additive burst of short stretched sparks (the kit's stretched quads), a flare quad at the staff and at the hit.
 - Light: two or three pool lights along the beam, and an additive strip decal under it. Not one big light: that's the pink wash.
 
+### The build: the crisp beam (2026-11-25)
+
+The user picked **crisp** ([crisp-beam-1](../reference/spell-concepts/arcane/crisp-beam-1.jpg)) over toon-beam-3: "I think the thinner version looks a bit more elegant. I'm not quite sure about the impact effect, I'd have to see how it looks in motion." Built on branch `p3d-arcane`: `game/packages/client/src/view3d/fx/arcane.ts` (the beam), `fx/beam-strip.ts` (the straight strip and its floor twin, for the Life beam too). Shots and clips: `npm run shot:arcane3d` (`game/shots/port-3d/tone/arcane/`). No painted sheets: a beam is light and sparks, which the art rules leave to code.
+
+| Field | |
+|---|---|
+| **Job** | Who is pouring raw energy into what: one line from the staff to exactly where the sim stops it, following the aim as the caster turns. |
+| **Silhouette** | A thin straight line (the body about 0.12 u across at one rune, 0.22 at five; a wizard is 2.7 u), round-capped, ending in a four-point star where it's stopped. Nothing where it runs out in the air at 30 u. |
+| **Movement** | The line itself is still; surges race along it from the staff (16 + 3n u/s, 6 to 18 a second), each a sharp head with a fading tail. A slow shimmer scrolls along the body. It grows to full length in 0.1 s and thins away in 0.14 s. Sparks fly from where the beam was when they were born, so a sweep leaves them behind. |
+| **Colour** | Core violet-white (pure white from four runes); body saturated magenta-violet, paling toward the core only close to it; a dark violet rim at least a pixel wide at any distance; halo and floor strip magenta added light. |
+| **Layers** (back to front) | floor strip (narrow, with the surges and a pool at the impact); halo; rim; body; core; surges in the core and body; a few shed sparks (from three runes); a few impact sparks; flares (a flash disc and small star at the staff, the impact's flash disc and star, rings). Two small spell lights, staff and impact. |
+| **Runes** | Thicker body and core; more and faster surges; the halo from three; sparks shed off the sides from three; the core white and wider from four; rings pulsing off the staff at five; the impact star grows with n. |
+| **Impact** | Two variants, `?impact=a` (default) and `b`, in the lab (`cast3d.html`) and on the 3D page (Tune › URL options › Arcane beam impact). **a, restrained:** a small star (0.8 u across at three runes) over a small flash disc, and 21 short sparks a second in a narrow splash back toward the caster. **b, fuller:** the concept's burst: a big star (1.8 u across at three runes) with a second one turning inside it, a bigger flash disc, two shockwave rings pulsing out, 44 sparks a second flung wide, a brighter pool and light. Every impact shape is one surface drawn by a shader, never a cluster of sprites (the rule after the user's verdict on the built fire): the flash disc is toon bands (white, pale pink, magenta, a thin dark violet rim) whose edge is eroded by moving noise, with a soft translucent fringe; the rings have a white leading edge and break up through the same noise as they thin; each star is one procedural shape. Particles are only the few sparks. |
+| **Budget** | Per beam: 2 strips (one quad; the floor strip up to 160 triangles, heights read from the kit's cache), 8 flare quads, up to 26 impact sparks and 11 shed sparks; 5 draw calls. A pool of 8 slots (4 seats and their Doubles). |
+| **Not** | Not a rope of plasma (toon-beam-3, passed over), not beads (toon-beam-4), not a pink wash on the floor. |
+
+**Lab options** added for it (`cast3d.html`): `&impact=a|b`, `&sweep=1` (the aim swings either way after the cast), `&undying=1` (goblins never die, so a held beam stays on its target: a three-rune beam kills a swarmer in a fraction of a second), and `window.__seek(t)` for frame-by-frame clips. The court shot `play3d.html?shot=arcane` has its goblins held still (`hold`) along a file, and `window.__advance(n)` steps it on.
+
+**What the rounds taught**
+1. **Widths in pixels, not only in u.** At the game camera a u is about 36 px, so a 0.02 u rim vanishes. The rim's width is the larger of 0.018 u and 1.3 pixels (the shader's `fwidth`), so the line keeps its dark edge at any zoom.
+2. **Surges brighten, they don't widen.** Widening the body by a fifth in a surge read as a stepped bulge in a still; widening only the core (the body by 8 %) keeps one line. Same lesson as toon-beam-4's beads.
+3. **A glow with a sharp head reads as a box.** The halo swelled with the surge's sharp-headed profile and drew a rectangle; it now swells with a soft bump of its own.
+4. **Saturation lives in the body's outer half.** Paling the body toward the core across its whole width turned it white-pink after the tone map; pale only right beside the core.
+5. **The floor strip must be wider than what it draws.** The impact pool was cut by the strip's edges into a rectangle.
+6. **Start the line at the hand.** The staff is held at the side, not 0.6 u forward; at 0.6 the staff star bridged a gap and read as a second, brighter segment. 0.4 u.
+
+**Against the concept.** The line, the white core, the magenta and the four-point star read as crisp-beam-1. Differences: the concept's light floods the floor pink around the caster; this keeps it to a strip under the line, as the family rules ask (a wider wash is a one-number change). The beam runs level at hand height, as the sim is flat, so it meets a goblin at the chest, not the head. In the court a three-rune beam kills a swarmer in well under a second, so most of its life it's moving from one goblin to the next, and the impact is a short flash per goblin: the variant choice matters most on tougher enemies.
+
 ## Earth rock missile and impact
 
 | Take | Read |

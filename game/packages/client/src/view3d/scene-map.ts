@@ -3,12 +3,16 @@
  * sim's y (kit-render.ts: three's y is height, metres * M). Only the origin moves: a sim point (x, y) is drawn at
  * scene (x + ox, y + oy).
  *
- * TODO(port-3d, decision 1): the offset is to come from the room the map agent's exporter writes
- * (`toScene: [ox, oy]`, branch p3d-map). Until it lands, the sim still walks today's LDtk court (261 x 260 u, plan D),
- * a different map from the kit's court (204 x 162 u), and this constant lines the two up on the armillary: the sim's
- * at (-5.75, 4.75), the scene's at (95, 80). Walls and terraces only roughly agree away from the plaza.
+ * A room made from a kit scene (tools/kit/room.py -> content/generated/rooms/<scene>.room.json) covers the scene
+ * exactly, centred on the sim's origin, so its `toScene` is half its size ([102, 81] for the court; the content tests
+ * check that it is). The view sets it from the world's room with setSceneOrigin.
  */
-export const TO_SCENE: readonly [number, number] = [100.75, 75.25];
+import type { RoomDef } from '@wizard-sim/sim';
+
+const TO_SCENE: [number, number] = [102, 81];
+
+/** The scene origin for a room made from a kit scene: its size halved (the room file's toScene). */
+export function setSceneOrigin(def: Pick<RoomDef, 'w' | 'h'>): void { TO_SCENE[0] = def.w / 2; TO_SCENE[1] = def.h / 2; }
 
 /** Sim x, y -> scene x, z (u). */
 export const sceneX = (x: number): number => x + TO_SCENE[0];

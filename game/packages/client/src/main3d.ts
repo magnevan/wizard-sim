@@ -32,7 +32,7 @@ import { GameAudio, loadVolumes, volumeSettings } from './audio/game-audio';
 import { MENU_SECTIONS, onOption, opt, optNum, optOn, seedOpt, setOpt } from './dev-options';
 import { fromLocation, hashFor, scenarioById, scenarioOfRoom, worldFor, type Scenario } from './scenarios';
 import { View3D } from './view3d/view3d';
-import { simX, simY } from './view3d/scene-map';
+import { setSceneOrigin, simX, simY } from './view3d/scene-map';
 
 const start = fromLocation(location.search, location.hash);
 if (start.ally) seedOpt('ally', '1');
@@ -79,6 +79,7 @@ async function boot(): Promise<void> {
   loadSaved();
   const world = createWorld(7, players, { room, checkpoint: opt('at') ?? undefined });
   if (shot) {
+    setSceneOrigin(world.def);
     shot.wiz.forEach(([x, y], s) => { world.bodies.x[s] = simX(x); world.bodies.y[s] = simY(y); world.bodies.face[s] = shot.face ?? 0.75; });
     for (const [x, y] of shot.gob) { const i = devSpawnEnemy(world, ARCH.swarmer, simX(x), simY(y)); if (i >= 0) world.bodies.face[i] = ((shot.face ?? 0.75) + 0.5) % 1; }
     view.beforeStep(world);

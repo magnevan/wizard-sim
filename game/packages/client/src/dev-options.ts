@@ -79,7 +79,7 @@ export const OPTIONS = [
   { key: 'structoff', group: 'View', label: 'Hide structure parts', kind: 'text', help: 'Comma list of parts not to draw: walls, waves, devices, wizards, preview, fx (for isolating a slow or broken part).' },
   { key: 'renderer', group: 'View', label: 'Renderer', kind: 'choice', choices: () => ['webgpu'], help: 'Try WebGPU instead of WebGL.' },
   { key: 'cam', group: 'View', label: '3D view distance', kind: 'number', live: true, help: 'The 3D page (play3d.html): u of ground the view shows top to bottom (default 26; the pixel game shows about 34 at 1080p).' },
-  { key: 'fade', group: 'View', label: '3D fading walls', kind: 'flag', defaultOn: true, live: true, help: 'The 3D page: whatever stands between the camera and your wizard fades. Off to compare.' },
+  { key: 'fade', group: 'View', label: '3D fading walls', kind: 'flag', defaultOn: true, live: true, help: 'The 3D page: whatever stands between the camera and your wizard gets a dithered hole round it. Off to compare.' },
   { key: 'kitart', group: 'View', label: '3D kit art', kind: 'flag', defaultOn: true, help: 'The 3D page: the kit\'s made models and textures. Off: its greybox placeholders (quick to load).' },
 
   // ---- Sound ----

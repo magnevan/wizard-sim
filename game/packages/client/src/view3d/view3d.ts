@@ -7,14 +7,14 @@
  * Spell effects, the HUD, deaths and statuses aren't drawn yet; the rollback hooks keep bodies smooth and feed sound.
  */
 import * as THREE from 'three';
-import { KIND, MAX_BODIES, MAX_SEATS, type World } from '@wizard-sim/sim';
+import { KIND, MAX_BODIES, MAX_SEATS, type RoomDef, type World } from '@wizard-sim/sim';
 import type { GameView } from '../game-view';
 import type { SoundDirector } from '../audio/director';
 import { setupStage, spinKit } from '../lab/kit-render';
 import { Camera3D } from './camera3d';
 import { Fader } from './fade';
 import { KitScene } from './kit-scene';
-import { sceneX, sceneZ } from './scene-map';
+import { sceneX, sceneZ, setSceneOrigin } from './scene-map';
 import { StandInBodies, type BodiesLayer } from './stand-in-bodies';
 
 export interface View3DOptions {
@@ -50,6 +50,8 @@ export class View3D implements GameView {
   private preX = new Float64Array(MAX_BODIES);
   private preY = new Float64Array(MAX_BODIES);
   private lastDraw = 0;
+  private def: RoomDef | null = null;
+  private bufSize = new THREE.Vector2();
   /** The last frame's render time (ms) and renderer.info. */
   renderMs = 0;
   info = { calls: 0, triangles: 0 };
@@ -118,6 +120,8 @@ export class View3D implements GameView {
   draw(w: World, alpha: number, now = performance.now()): void {
     const dt = this.lastDraw ? (now - this.lastDraw) / 1000 : 0;
     this.lastDraw = now;
+    // a new room: the scene origin is its toScene (scene-map.ts), and the camera jumps
+    if (w.def !== this.def) { this.def = w.def; setSceneOrigin(w.def); this.camera.reset(); }
     // rollback corrections ease out over ~100 ms
     const ease = Math.exp(-Math.max(0, dt) / 0.1);
     for (let i = 0; i < MAX_BODIES; i++) { this.smoothX[i] *= ease; this.smoothY[i] *= ease; }
@@ -134,11 +138,11 @@ export class View3D implements GameView {
       return { x: X, y: Number.isNaN(g) ? this.camera.target.y : g, z: Z, face: b.face[i] };
     };
     this.bodies.draw(w, at, now);
-    // hidden wizards: fade what stands between the camera and each local one
+    // hidden wizards: a hole through what stands between the camera and each local one (fade.ts)
     const targets: { x: number; y: number; z: number; h: number }[] = [];
     for (let s = 0; s < MAX_SEATS; s++) if (b.kind[s] === KIND.wizard && w.seats.active[s] && this.isLocal(s)) targets.push({ ...at(s), h: this.bodies.heightOf(w, s) });
     if (targets[0]) this.camera.fallbackY = targets[0].y;
-    this.fader.update(this.camera.cam, targets, dt);
+    this.fader.update(this.camera.cam, targets, dt, this.renderer.getDrawingBufferSize(this.bufSize));
     // the sun and its shadow box ride along with the view
     const t = this.camera.target;
     this.sun.position.set(t.x - 30, t.y + 40, t.z + 22); this.sun.target.position.copy(t);

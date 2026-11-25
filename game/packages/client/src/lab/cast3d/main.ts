@@ -16,16 +16,20 @@
  *   &hit=1                   the sim's hit shapes dotted over it in white (spray cones, beam lines, missiles and their
  *                            flight, zones, area rings), to check the stand-ins against
  *   &view=16                 ground in view top to bottom, u (the game shows 26)
- *   &standins=all            Fire's spray and floor as stand-ins too (they're look B otherwise)
+ *   &standins=all            Fire's spray and floor and the Arcane beam as stand-ins too (else fire.ts, arcane.ts)
+ *   &impact=b                the Arcane beam's impact variant: a (restrained, the default) or b (the fuller burst)
+ *   &undying=1               the goblins take hits but never die (a held beam stays on its target)
+ *   &sweep=1                 the aim swings either way of its target after the cast (a beam following a turning caster)
  *   &sheet=channels          a contact sheet instead: one tile per spell of a group (channels, missiles, areas, places,
  *                            walls, self, sigil, weapons, previews, all), or &spells=a;b;c (a recipe each, `|t` after it
  *                            for its own moment); &cols=4, &tile=480x300
  * Live (no ?t= and no sheet): the cast loops every 4 s. window.__ready is set once a frozen frame or sheet is drawn;
- * window.__lab holds the stand-ins' triangle counts.
+ * window.__lab holds the stand-ins' triangle counts. A frozen frame also sets window.__seek(t): the same cast drawn at t
+ * (stepping on from the frame shown, or again from the start for an earlier t), for scripts/arcane3d-clips.mjs's clips.
  */
 import * as THREE from 'three';
 import {
-  ARCH, KEYED_EL, MAX_SEATS, NO_INPUT, PHASE, QUEUE_MAX, SHAPES, atan2Turns, createWorld, devRefillRunes, devSpawnEnemy, devStage, restore, snapshot, specOf, step,
+  AIM_UNIT, ARCH, KIND, KEYED_EL, MAX_SEATS, NO_INPUT, PHASE, QUEUE_MAX, SHAPES, atan2Turns, createWorld, devRefillRunes, devSpawnEnemy, devStage, restore, quantize, snapshot, specOf, step,
   type World,
 } from '@wizard-sim/sim';
 import { rules, type Element } from '@wizard-sim/rules';
@@ -43,6 +47,10 @@ const HIT = q.get('hit') === '1';
 const VIEW_H = Number(q.get('view') ?? 16);
 const SCENE = q.get('scene') ?? 'crowd';
 const ALL_FIRE = q.get('standins') === 'all';
+const IMPACT = q.get('impact') === 'b' ? 'b' : 'a';
+const SWEEP = q.get('sweep') === '1', UNDYING = q.get('undying') === '1';
+/** ?sweep=1: the aim swings this far either way (rad), this fast (rad/s of the sine), from the cast on. */
+const SWEEP_AMP = 0.55, SWEEP_RATE = 2.4;
 const COLS = Math.max(1, Number(q.get('cols') ?? 4) | 0);
 const [TW, TH] = (q.get('tile') ?? '480x300').split('x').map(Number);
 
@@ -121,6 +129,8 @@ pending.push(...liveSlugs().map((s) => liveModel(s).catch(() => null)));
 setSceneOrigin({ w: 0, h: 0 });
 const spells = new Spells3D(scene, () => 0);
 spells.standins.drawFire = ALL_FIRE;
+spells.standins.drawArcane = ALL_FIRE;
+spells.arcane.impact = IMPACT;
 pending.push(spells.load());
 
 // ?hit=1: the sim's own shapes, as white dots on the floor
@@ -143,7 +153,20 @@ function makeWorld(): World {
   return w;
 }
 
-const inputs = (w: World, k: number, d: Demo) => Array.from({ length: MAX_SEATS }, (_, p) => (p === 0 ? demoInput(w, k, 0, d) : NO_INPUT));
+/** Tick of the cast in the run being stepped (for ?sweep), set by runTo before it steps. */
+let sweepFrom = 0;
+/** One sim step of the lab's run (?undying: the goblins healed whole after it). */
+function stepLab(w: World, k: number, d: Demo): void {
+  step(w, inputs(w, k, d));
+  if (UNDYING) for (let i = MAX_SEATS; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy) w.bodies.hp[i] = w.bodies.maxHp[i];
+}
+const inputs = (w: World, k: number, d: Demo) => Array.from({ length: MAX_SEATS }, (_, p) => {
+  if (p !== 0) return NO_INPUT;
+  const i = demoInput(w, k, 0, d);
+  if (!SWEEP || k < sweepFrom) return i;
+  const a = SWEEP_AMP * Math.sin(((k - sweepFrom) / 60) * SWEEP_RATE), c = Math.cos(a), s = Math.sin(a), ax = i.aimX * AIM_UNIT, ay = i.aimY * AIM_UNIT;
+  return quantize({ ...i, aimX: (ax * c - ay * s) / AIM_UNIT, aimY: (ax * s + ay * c) / AIM_UNIT });
+});
 
 /** The tick whose step casts the spell (its cast event, or a hands move), found on a scratch run. */
 function findCast(d: Demo): number {
@@ -161,10 +184,11 @@ function findCast(d: Demo): number {
 function runTo(r: Recipe): Run {
   const w = makeWorld(), bodies = new Bodies3D(scene), bursts: Run['bursts'] = [];
   const t0 = findCast(r.demo), end = Math.max(0, t0 + Math.round(r.t * 60));
+  sweepFrom = t0;
   spells.reset();
   for (let k = 0; k < end; k++) {
     bodies.beforeStep(w);
-    step(w, inputs(w, k, r.demo));
+    stepLab(w, k, r.demo);
     bodies.afterStep(w);
     spells.afterStep(w);
     for (const e of w.events) if (e.kind === 'burst' && e.who >= 0) bursts.push({ x: e.x, y: e.y, r: e.amount ?? 0, tick: w.clock[0] });
@@ -246,6 +270,16 @@ if (SHEET) {
   draw(run);
   info.textContent = `${recipes[0].label} · t = ${T_AT} s · stand-ins: ${stats.glow + stats.tint + stats.solid} tris`;
   label(0, 0, recipes[0].label);
+  // window.__seek(t): the same cast at t s after it went off
+  let cur = run, curT = T_AT, tick = run.t0 + Math.round(T_AT * 60);
+  (window as unknown as { __seek: (t: number) => void }).__seek = (t: number) => {
+    const end = cur.t0 + Math.round(t * 60);
+    if (t < curT) { scene.remove(cur.bodies.group); cur = runTo({ ...recipes[0], t }); tick = end; }
+    for (; tick < end; tick++) { cur.bodies.beforeStep(cur.w); stepLab(cur.w, tick, recipes[0].demo); cur.bodies.afterStep(cur.w); spells.afterStep(cur.w); }
+    curT = t;
+    draw(cur);
+    info.textContent = `${recipes[0].label} · t = ${t.toFixed(2)} s`;
+  };
   (window as unknown as { __ready: boolean }).__ready = true;
 } else {
   // live: the cast loops; the effects' clock is the sim's
@@ -257,7 +291,7 @@ if (SHEET) {
     while (acc >= 1 / 60) {
       acc -= 1 / 60;
       if (tick >= run.t0 + LOOP) { scene.remove(run.bodies.group); run = runTo({ ...r, t: -99 }); tick = 0; }
-      run.bodies.beforeStep(run.w); step(run.w, inputs(run.w, tick, r.demo)); run.bodies.afterStep(run.w); spells.afterStep(run.w);
+      run.bodies.beforeStep(run.w); stepLab(run.w, tick, r.demo); run.bodies.afterStep(run.w); spells.afterStep(run.w);
       for (const e of run.w.events) if (e.kind === 'burst' && e.who >= 0) run.bursts.push({ x: e.x, y: e.y, r: e.amount ?? 0, tick: run.w.clock[0] });
       tick++;
     }

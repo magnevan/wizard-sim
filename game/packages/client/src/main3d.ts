@@ -11,10 +11,11 @@
  *
  * ?cam=26 sets the view's distance (u of ground in view), ?fade=0 turns fading off, ?kitart=0 draws the kit as
  * greybox, ?runes=1 gives every wizard the usual rune pools in any room (casting in the court), ?shot=plaza / wall /
- * fire / fight / practice / practice-fire sets a scene for scripts/play3d-shot.mjs (window.__ready, window.__perf).
+ * fire / arcane / fight / practice / practice-fire sets a scene for scripts/play3d-shot.mjs (window.__ready, window.__perf);
+ * a shot's window.__advance(n) steps it on n ticks with the same casts and draws (scripts/arcane3d-clips.mjs's clips).
  */
 import {
-  ARCH, DT, KEYED_EL, KIND, MAX_SEATS, PHASE, RUNES, elementId, elementName, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
+  ARCH, DT, KEYED_EL, KIND, MAX_SEATS, PHASE, RUNES, elementId, elementName, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStage, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
   type Mode, type PartyState, type PlayerInput, type Room, type World,
 } from '@wizard-sim/sim';
 import { demoInput, parseDemo } from './demo';
@@ -51,13 +52,15 @@ const hud = document.getElementById('hud')!;
  * clock; demoInput's own lag of 37 ticks a seat is undone); otherwise nobody moves.
  */
 interface ShotCast { spell: string; at: [number, number]; lag?: number }
-const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [number, number][]; face?: number; spell?: string; at?: [number, number]; ticks?: number; hud?: boolean; casts?: ShotCast[] }> = {
+const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [number, number][]; face?: number; spell?: string; at?: [number, number]; ticks?: number; hud?: boolean; casts?: ShotCast[]; hold?: boolean }> = {
   // the plaza, south of the armillary's dais: two wizards facing an arc of six goblins
   plaza: { wiz: [[91.5, 95.5], [98.5, 95.5]], gob: [[83, 91], [86.5, 89.5], [90.5, 88.8], [99.5, 88.8], [103.5, 89.5], [107, 91]], face: 0.75 },
   // a wizard just north of the great hall (95.5, 34; 26 x 12 u, 16 m tall), with a goblin in front of the hall to compare
   wall: { wiz: [[95.5, 25.5], [104, 46]], gob: [[90, 44], [100, 45]], face: 0.25 },
   // Fire spray (three runes) at the goblins, look B, 70 ticks in: the spray, and the floor it set burning
   fire: { wiz: [[95, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5]], face: 0.75, spell: 'fire+fire+fire/force', at: [95, 89], ticks: 70 },
+  // the Arcane beam (three runes) along a file of goblins, 50 ticks in: it lands on the first, and moves on as each falls
+  arcane: { wiz: [[91, 97]], gob: [[96, 93.25], [99, 91], [102, 88.75], [105, 86.5], [108, 84.25], [111, 82], [93, 88.5], [100, 95]], face: 0.9, spell: 'arcane+arcane+arcane/force', at: [96, 93.25], ticks: 38, hold: true },
   // a fight on the plaza, every spell a stand-in but the Fire: an arc, a beam, ice shards and a rock wall drawn, at a warband
   fight: {
     wiz: [[87, 97], [93, 98.5], [99, 98.5], [105, 97]], gob: [[84, 89], [88, 88], [92, 88.5], [97, 88], [101, 88.5], [106, 89], [95, 85]], face: 0.75, ticks: 92,
@@ -109,6 +112,8 @@ async function boot(): Promise<void> {
   const camOpt = () => { view.camera.viewH = optNum('cam', VIEW_H); };
   camOpt(); onOption('cam', camOpt);
   const fadeOpt = () => { view.fader.enabled = optOn('fade'); };
+  const impactOpt = () => { view.spells.arcane.impact = opt('impact') === 'b' ? 'b' : 'a'; };
+  impactOpt(); onOption('impact', impactOpt);
   await view.load(hasScene(room) ? room : 'court');
   fadeOpt(); onOption('fade', fadeOpt);
   hud.style.display = 'none';
@@ -135,6 +140,8 @@ async function boot(): Promise<void> {
     for (let s = 0; s < MAX_SEATS; s++) if (world.seats.active[s]) devRefillRunes(world, s);
   };
   grantRunes();
+  /** A cast shot's next tick (its casts' inputs), for window.__advance. */
+  let shotStep: (() => void) | null = null;
   if (shot) {
     setSceneOrigin(world.def);
     shot.wiz.forEach(([x, y], s) => { world.bodies.x[s] = simX(x); world.bodies.y[s] = simY(y); world.bodies.face[s] = shot.face ?? 0.75; });
@@ -144,11 +151,15 @@ async function boot(): Promise<void> {
     if (casts.length) {
       world.mode = { ...world.mode, runeMax: () => 5 };   // the court (and the party's pools) give no runes: five each, for this shot only
       casts.forEach((_, p) => devRefillRunes(world, p));
+      if (shot.hold) devStage(world, { hold: true, puppet: -1, goal: null, aim: 0 });   // `hold`: the goblins stand where they were put
       const ds = casts.map((c) => parseDemo(`${c.spell}@${simX(c.at[0])},${simY(c.at[1])}`)!);
-      for (let k = 0; k < (shot.ticks ?? 60); k++) {
+      let k = 0;
+      shotStep = () => {
         const inputs = Array.from({ length: MAX_SEATS }, (_, p) => (ds[p] && k >= (casts[p].lag ?? 0) ? demoInput(world, k - (casts[p].lag ?? 0) + p * 37, p, ds[p]) : NO_INPUT));
         view.beforeStep(world); step(world, inputs); view.afterStep(world);
-      }
+        k++;
+      };
+      while (k < (shot.ticks ?? 60)) shotStep();
     }
     if (shot.hud) { hudShot(world, shot.gob); view.beforeStep(world); }
   }
@@ -340,6 +351,10 @@ async function boot(): Promise<void> {
     new Worker(src).onmessage = pump;
   } catch { window.setInterval(pump, 16); }
 
+  if (shotStep) {
+    const next = shotStep;
+    (window as unknown as { __advance: (n: number) => void }).__advance = (n: number) => { for (let i = 0; i < n; i++) next(); view.draw(world, 0, performance.now()); };
+  }
   (window as unknown as { __perf: unknown }).__perf = {
     get frame() { return perf.frame; }, get render() { return perf.render; },
     info: () => ({ ...view.info, programs: view.renderer.info.programs?.length ?? 0, geometries: view.renderer.info.memory.geometries, textures: view.renderer.info.memory.textures }),

@@ -1,6 +1,6 @@
 /**
  * The spell effects in the game view: the effects kit (fx/) hosted on the court. Fire's spray and its burning floor are
- * drawn in look B (painted Codex sheets, the chosen direction); every other spell, and everything else the sim makes
+ * drawn in look B (painted Codex sheets, the chosen direction), the Arcane beam as fx/arcane.ts; every other spell, and everything else the sim makes
  * (walls, devices, wards, telegraphs, previews), draws as its stand-in (fx/standins.ts: the sim's hit shape in the
  * element's colour) until its family gets a real effect.
  *
@@ -12,6 +12,7 @@
  */
 import * as THREE from 'three';
 import { MAX_SEATS, type World } from '@wizard-sim/sim';
+import { ArcaneBeams } from './fx/arcane';
 import { FireFloor, FireSpray, type FireSheets } from './fx/fire';
 import { SurfGrid, sprays } from './fx/from-sim';
 import { SpellLights } from './fx/lights';
@@ -45,6 +46,8 @@ export class Spells3D {
   private spraysBy: FireSpray[] = [];
   private grid: SurfGrid | null = null;
   private floor: FireFloor | null = null;
+  /** Every Arcane beam (fx/arcane.ts); `.impact` picks its impact variant. */
+  readonly arcane: ArcaneBeams;
 
   /** `heightAt(x, z)`: the scene's ground height (u) at scene point x, z. */
   constructor(world: THREE.Scene, private heightAt: (x: number, z: number) => number) {
@@ -52,6 +55,8 @@ export class Spells3D {
     world.add(this.lightRoot);
     this.standins.ground = (x, y) => this.simHeight(x, y);
     this.stage.scene.add(this.standins.group);
+    this.arcane = new ArcaneBeams((x, z) => this.simHeight(x, z));
+    this.stage.scene.add(this.arcane.group);
   }
 
   /** The floor's height (u) under sim point (x, z); 0 off the scene. */
@@ -80,6 +85,8 @@ export class Spells3D {
   /** After each shown step: the sprays' aim trails keep every tick, and the step's events become stand-ins. */
   afterStep(w: World): void {
     this.standins.afterStep(w);
+    // the beams' trails keep every tick too, so sparks fly from where the beam was even in a frozen frame
+    if (!this.standins.drawArcane) this.arcane.update(w, w.clock[0] / 60, null);
     if (!this.spraysBy.length) return;
     const t = w.clock[0] / 60, all = sprays(w);
     for (let s = 0; s < MAX_SEATS; s++) this.spraysBy[s].update(t, all.find((p) => p.seat === s && p.kind === 'fire') ?? null, this.groundUnder(w, s), null);
@@ -106,6 +113,9 @@ export class Spells3D {
       this.grid.update(w);
       this.floor.update(t, this.lights);
     }
+    // the Arcane beam as its stand-in too: the lab's ?standins=all
+    this.arcane.group.visible = !this.standins.drawArcane;
+    if (this.arcane.group.visible) this.arcane.update(w, t, this.lights);
     this.standins.draw(w, { t, alpha: o.alpha ?? 0, localSeat: o.localSeat ?? -1, cam: this.fxCam, lights: this.lights, bodyAt: o.bodyAt });
     this.lights.end();
   }

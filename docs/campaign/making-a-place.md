@@ -73,6 +73,7 @@ Mistakes a script can catch go in `content:check`. A rule goes there as soon as 
 | A building is drawn in front of what stands behind it and behind what stands in front (sorted by footprint) | engine |
 | Stairs and ramps join two tiers at both ends; a cliff edge has a lip or a wall | `content:check`, error, for painted stairs; `to_ldtk.py --report` for a plan's flights; lips: critic |
 | Plants grow on soil, not on paving, unless they're in a planter | critic |
+| Nothing critical (a fight, a station, a prompt, a device you use) happens where a building or wall hides it from the 3D camera; a hidden stretch is fine for walking through, where the cut-out round your wizard is enough (the user, 2026-11-25, [port to 3D](../threads/port-3d.md)) | critic; later a lint from the scene's heights and the camera's 46° |
 
 ## Improving the cycle
 

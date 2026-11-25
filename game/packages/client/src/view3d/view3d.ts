@@ -2,7 +2,7 @@
  * The 3D view (the port to 3D, docs/explorations/2026-11-25-port-3d-plan.md): implements GameView with a three.js
  * renderer on its own canvas, hosting the kit scene (kit-scene.ts), the game camera (camera3d.ts), the characters
  * (bodies.ts), the spell effects (spells3d.ts: Fire's spray and floor so far) and holes for hidden wizards (fade.ts).
- * A transparent 2D canvas sits over the 3D one for the HUD (a later step: nothing draws on it yet).
+ * A transparent 2D canvas sits over the 3D one for the HUD (hud3d.ts: the pixel HUD's look, in whole art pixels).
  *
  * The camera follows the local wizards with rollback corrections eased; the bodies themselves don't take that easing
  * yet (Bodies3D interpolates on its own), which matters once two players are online (step 3).
@@ -18,6 +18,7 @@ import { KitScene } from './kit-scene';
 import { sceneX, sceneZ, setSceneOrigin } from './scene-map';
 import { Bodies3D } from './bodies';
 import { Spells3D } from './spells3d';
+import { Hud3D } from './hud3d';
 
 export interface View3DOptions {
   /** Draw the kit's fitted models and textures (false: its greybox placeholders, quick to load). */
@@ -40,6 +41,8 @@ export class View3D implements GameView {
   readonly fader: Fader = new Fader([]);
   readonly bodies: Bodies3D;
   readonly spells: Spells3D;
+  /** The rune HUD and the marks over the world, on hudCanvas. */
+  readonly hud: Hud3D;
   sound: SoundDirector | null = null;
   isLocal: (seat: number) => boolean = () => true;
   catchUp = true;
@@ -74,6 +77,7 @@ export class View3D implements GameView {
     this.scene.add(this.kit.root);
     this.bodies = new Bodies3D(this.scene);
     this.spells = new Spells3D(this.scene, (x, z) => this.kit.heightAt(x, z));
+    this.hud = new Hud3D(this.hudCanvas);
   }
 
   /** The 3D canvas (input listens on it). */
@@ -89,9 +93,10 @@ export class View3D implements GameView {
     this.renderer.setSize(screenW, screenH, false);
     this.hudCanvas.width = screenW; this.hudCanvas.height = screenH;
     this.camera.resize(screenW, screenH);
+    this.hud.resize(screenW, screenH);
   }
 
-  setLocalSeat(seat: number): void { this.localSeat = seat; this.isLocal = (s) => s === seat; }
+  setLocalSeat(seat: number): void { this.localSeat = seat; this.hud.seat = seat; this.isLocal = (s) => s === seat; }
 
   beforeStep(w: World): void {
     this.prevX.set(w.bodies.x); this.prevY.set(w.bodies.y); this.prevKind.set(w.bodies.kind);
@@ -104,6 +109,7 @@ export class View3D implements GameView {
     for (let i = 0; i < MAX_BODIES; i++) if (b.kind[i] && this.prevKind[i] !== b.kind[i]) { this.prevX[i] = b.x[i]; this.prevY[i] = b.y[i]; }
     this.bodies.afterStep(w);
     this.spells.afterStep(w);
+    this.hud.afterStep(w);
     this.sound?.afterStep(w, this.isLocal);
   }
 
@@ -163,6 +169,7 @@ export class View3D implements GameView {
     this.sun.position.set(t.x - 30, t.y + 40, t.z + 22); this.sun.target.position.copy(t);
     spinKit(now / 1000);
     this.render();
+    this.hud.draw(w, alpha, now, this.camera, (i) => this.drawnAt(w, i, alpha), (x, y) => ground(x, y));
     this.ready = true;
     const me = this.localSeat;
     this.sound?.frame(w, { cx: t.x - sceneX(0), cy: t.z - sceneZ(0), halfW: this.camera.halfWidth(), earX: b.x[me], earY: b.y[me] }, now / 1000);

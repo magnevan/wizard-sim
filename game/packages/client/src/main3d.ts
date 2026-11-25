@@ -12,8 +12,8 @@
  * greybox, ?shot=plaza / wall / fire sets a scene for scripts/play3d-shot.mjs (window.__ready, window.__perf).
  */
 import {
-  ARCH, DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
-  type PartyState, type PlayerInput, type Room,
+  ARCH, DT, KIND, MAX_SEATS, PHASE, elementId, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
+  type PartyState, type PlayerInput, type Room, type World,
 } from '@wizard-sim/sim';
 import { demoInput, parseDemo } from './demo';
 import { PadSeats } from './gamepad';
@@ -44,14 +44,32 @@ const hud = document.getElementById('hud')!;
  * 0 casts it (demo.ts's notation, aimed at `at`, scene u) and the sim runs `ticks` before the shot, the court's no-runes
  * rule lifted for it; otherwise nobody moves.
  */
-const SHOTS: Record<string, { wiz: [number, number][]; gob: [number, number][]; face?: number; spell?: string; at?: [number, number]; ticks?: number }> = {
+const SHOTS: Record<string, { wiz: [number, number][]; gob: [number, number][]; face?: number; spell?: string; at?: [number, number]; ticks?: number; hud?: boolean }> = {
   // the plaza, south of the armillary's dais: two wizards facing an arc of six goblins
   plaza: { wiz: [[91.5, 95.5], [98.5, 95.5]], gob: [[83, 91], [86.5, 89.5], [90.5, 88.8], [99.5, 88.8], [103.5, 89.5], [107, 91]], face: 0.75 },
   // a wizard just north of the great hall (95.5, 34; 26 x 12 u, 16 m tall), with a goblin in front of the hall to compare
   wall: { wiz: [[95.5, 25.5], [104, 46]], gob: [[90, 44], [100, 45]], face: 0.25 },
   // Fire spray (three runes) at the goblins, look B, 70 ticks in: the spray, and the floor it set burning
   fire: { wiz: [[95, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5]], face: 0.75, spell: 'fire+fire+fire/force', at: [95, 89], ticks: 70 },
+  // the HUD (view3d/hud3d.ts) mid-fight: seat 0 has sprayed Fire and queues Water + Cold, hurt and burning; seat 1 and a goblin are off screen
+  hud: { wiz: [[95, 96], [140, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5], [50, 92]], face: 0.75, spell: 'fire+fire/force', at: [95, 89], ticks: 100, hud: true },
 };
+
+/**
+ * The HUD shot's state after its cast: the goblins back where they stood (scene u, in spawn order), seat 0 done casting,
+ * hurt, burning and queueing Water + Cold, the east goblin chilled.
+ */
+function hudShot(w: World, gob: [number, number][]): void {
+  const b = w.bodies, s = w.seats;
+  b.hp[0] = b.maxHp[0] * 0.55; b.burn[0] = 120; b.burnPool[0] = 18;
+  s.phase[0] = PHASE.idle; s.queue[0] = elementId('water'); s.queue[1] = elementId('cold'); s.queueLen[0] = 2;
+  let k = 0;
+  for (let i = MAX_SEATS; i < b.kind.length && k < gob.length; i++) {
+    if (b.kind[i] !== KIND.enemy) continue;
+    b.x[i] = simX(gob[k][0]); b.y[i] = simY(gob[k][1]); k++;
+    if (b.x[i] > simX(98)) { b.chill[i] = 0.6; b.hp[i] = Math.min(b.hp[i], b.maxHp[i] * 0.7); }
+  }
+}
 
 async function boot(): Promise<void> {
   const shotName = opt('shot');
@@ -99,6 +117,7 @@ async function boot(): Promise<void> {
         view.beforeStep(world); step(world, inputs); view.afterStep(world);
       }
     }
+    if (shot.hud) { hudShot(world, shot.gob); view.beforeStep(world); }
   }
   const saves = new SaveWatch(() => scenario);
   const bots = [newBotMemory(), newBotMemory()];

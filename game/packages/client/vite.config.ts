@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import { parseKnobValues } from './src/art/fx-knobs-check';
 import { mapEditor } from './map-editor/plugin';
+import { kitArtFor, kitArtPaths } from './src/view3d/kit-art-for';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -117,10 +118,54 @@ function buildInfo(): Plugin {
   };
 }
 
+/**
+ * The 3D game's kit art in the build: lab/kit-render.ts globs every original model and texture (the map editor wants
+ * them all), and a glob's files land in dist/ whether or not they're ever loaded (over 170 MB, with the textures'
+ * source pictures). The game hands kit-render its own URLs instead (view3d/kit-assets.ts, useKitArt), so here the
+ * build drops kit-render's URL globs and narrows kit-assets' two globs to the files the shipped scenes use
+ * (view3d/kit-art-for.ts: the same choice the page makes when it loads). It fails loudly if a glob it expects isn't
+ * there, so a changed glob can't quietly bring the weight back.
+ */
+function kitGameArt(): Plugin {
+  const RENDER_GLOB = /import\.meta\.glob<string>\('\.\.\/\.\.\/\.\.\/\.\.\/content\/generated\/(?:textures|meshy\/kit)\/[^']*',\s*\{[^}]*query: '\?url'[^}]*\}\)/g;
+  const ASSET_GLOB = /'\.\.\/\.\.\/\.\.\/\.\.\/content\/generated\/(meshy\/kit|textures)\/[^']*'/g;
+  const gen = join(here, '../../content/generated');
+  /** The paths under content/generated/ that the shipped scenes' art comes from. */
+  const used = (): string[] => {
+    const pieces = JSON.parse(readFileSync(join(here, '../../../tools/kit/kit.json'), 'utf8')).pieces;
+    const out = new Set<string>();
+    for (const scene of ['court']) {
+      const data = JSON.parse(readFileSync(join(here, `src/lab/kit-${scene}.json`), 'utf8'));
+      for (const p of kitArtPaths(kitArtFor(data, pieces, (f) => existsSync(join(gen, f))))) out.add(p);
+    }
+    return [...out].sort();
+  };
+  return {
+    name: 'kit-game-art', apply: 'build', enforce: 'pre',
+    transform(code, id) {
+      if (/[\\/]lab[\\/]kit-render\.ts$/.test(id)) {
+        let n = 0;
+        const out = code.replace(RENDER_GLOB, () => { n++; return '({} as Record<string, string>)'; });
+        if (!n) this.error('kit-render.ts: found no art globs to leave out of the build; has their form changed? (vite.config.ts kitGameArt)');
+        return { code: out, map: null };
+      }
+      if (/[\\/]view3d[\\/]kit-assets\.ts$/.test(id)) {
+        const files = used();
+        const list = (dir: string) => `[${files.filter((f) => f.startsWith(`${dir}/`)).map((f) => `'../../../../content/generated/${f}'`).join(', ')}]`;
+        let n = 0;
+        const out = code.replace(ASSET_GLOB, (_m, dir: string) => { n++; return list(dir); });
+        if (n !== 2) this.error('view3d/kit-assets.ts: expected its two art globs (vite.config.ts kitGameArt)');
+        return { code: out, map: null };
+      }
+      return undefined;
+    },
+  };
+}
+
 // base './' so the built dist/ works from any path (the artifact, itch.io, a file server).
 export default defineConfig({
   base: './',
-  plugins: [soundLab(), fxKnobs(), mapEditor(join(here, '../../..')), buildInfo()],
+  plugins: [soundLab(), fxKnobs(), mapEditor(join(here, '../../..')), buildInfo(), kitGameArt()],
   define: { __SIM_BUILD__: JSON.stringify(simBuild()), __BUILD_COMMIT__: JSON.stringify(gitCommit()) },
   server: { port: 5187 },
   preview: { port: 4187 },
@@ -134,7 +179,11 @@ export default defineConfig({
     // The registry's images stay files, fetched when a room needs them (art/assets.ts), however small.
     assetsInlineLimit: (file) => (file.replace(/\\/g, '/').includes('/content/assets/') ? false : undefined),
     // Two pages: the pixel game, and the 3D game being ported beside it (play3d.html, docs/threads/port-3d.md). The
-    // lab pages stay dev-only.
-    rolldownOptions: { input: { index: join(here, 'index.html'), play3d: join(here, 'play3d.html') }, output: { codeSplitting: { groups: [{ name: 'pixi', test: /node_modules[\\/](pixi\.js|@pixi)[\\/]/ }] } } },
+    // lab pages stay dev-only. Vite's preload helper gets a chunk of its own: left to itself it lands in the Pixi
+    // chunk, and the 3D page (which draws nothing with Pixi) would download all of Pixi for it.
+    rolldownOptions: {
+      input: { index: join(here, 'index.html'), play3d: join(here, 'play3d.html') },
+      output: { codeSplitting: { groups: [{ name: 'preload', test: /preload-helper/, priority: 2 }, { name: 'pixi', test: /node_modules[\\/](pixi\.js|@pixi)[\\/]/, priority: 1 }] } },
+    },
   },
 });

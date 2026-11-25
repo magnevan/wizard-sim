@@ -94,8 +94,8 @@ const decalTex: Record<string, Promise<THREE.Texture | null>> = {};
 /** A decal's picture: kit.json's texture path (under content/generated/), or until it is made, textures/src/tex-<name>.png. */
 function loadDecal(path: string): Promise<THREE.Texture | null> {
   return (decalTex[path] ??= (async () => {
-    const base = '../../../../content/generated/', alt = path.replace(/^textures\/([^/]+)$/, 'textures/src/tex-$1');
-    const url = decalUrls[base + path] ?? decalUrls[base + alt];
+    const alt = path.replace(/^textures\/([^/]+)$/, 'textures/src/tex-$1');
+    const url = urlOf(path, decalUrls) ?? urlOf(alt, decalUrls);
     if (!url) return null;
     const t = await new THREE.TextureLoader().loadAsync(url).catch(() => null);
     if (t) { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; }
@@ -126,10 +126,22 @@ export const kitPiece = (p: string): KitPiece | undefined => KIT_PIECES[p];
 // ---- made models: a fitted model (tools/kit/fit.py) replaces its placeholder wherever one exists ----
 const artUrls = import.meta.glob<string>('../../../../content/generated/meshy/kit/*.glb', { eager: true, query: '?url', import: 'default' });
 let ART: Record<string, THREE.Object3D> = {};
+/**
+ * Art handed in by a page that ships its own copies (the 3D game, view3d/kit-assets.ts): `urls` by path under
+ * content/generated/ as the originals are named ('meshy/kit/pier.glb', 'textures/ashlar.png'), and the models and
+ * tiling textures loadKitArt loads (by name), so a scene loads only what it uses. Unset (the editor, the labs): every
+ * original, as before.
+ */
+let GIVEN: { urls: Record<string, string>; models: string[]; textures: string[] } | null = null;
+/** Hand in a page's own copies of the art (see GIVEN), before loadKitArt; null goes back to the originals. */
+export function useKitArt(given: typeof GIVEN) { GIVEN = given; }
+/** A URL by its path under content/generated/: the given copy, or (nothing given) the original from `globbed`. */
+const urlOf = (path: string, globbed: Record<string, string>) => (GIVEN ? GIVEN.urls[path] : globbed[`../../../../content/generated/${path}`]);
 /** Load the fitted models once (skip it for pure greybox). */
 export async function loadKitArt(): Promise<void> {
   const out: Record<string, THREE.Object3D> = {};
-  await Promise.all(Object.entries(artUrls).map(([p, url]) => new GLTFLoader().loadAsync(url).then((g) => {
+  const models = GIVEN ? GIVEN.models.flatMap((n) => (GIVEN!.urls[`meshy/kit/${n}.glb`] ? [[`${n}.glb`, GIVEN!.urls[`meshy/kit/${n}.glb`]]] : [])) : Object.entries(artUrls);
+  await Promise.all(models.map(([p, url]) => new GLTFLoader().loadAsync(url).then((g) => {
     g.scene.traverse((c) => { if ((c as THREE.Mesh).isMesh) c.castShadow = c.receiveShadow = true; });
     out[p.split('/').pop()!.replace('.glb', '')] = g.scene;
   })));
@@ -175,7 +187,8 @@ const JOINT = mat(0x6a584a);   // a kerb piece under its blocks (a click target 
 const TEX: Record<string, THREE.MeshStandardMaterial> = {}, RAW: Record<string, THREE.Texture> = {};
 async function loadTextures() {
   const loader = new THREE.TextureLoader();
-  await Promise.all(Object.entries(texUrls).map(([p, url]) => loader.loadAsync(url).then((t) => {
+  const texs = GIVEN ? GIVEN.textures.flatMap((n) => (GIVEN!.urls[`textures/${n}.png`] ? [[`${n}.png`, GIVEN!.urls[`textures/${n}.png`]]] : [])) : Object.entries(texUrls);
+  await Promise.all(texs.map(([p, url]) => loader.loadAsync(url).then((t) => {
     const name = p.split('/').pop()!.replace('.png', '');
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
     TEX[name] = triplanar(t, TILE[name] ?? 4, FLOW[name], true, MACRO[name] ?? 0, STONE_MATS.indexOf(name)); RAW[name] = t;
@@ -777,7 +790,7 @@ const bannerUrls = import.meta.glob<string>('../../../../content/generated/textu
 const bannerTex: Record<string, THREE.Texture> = {};
 const BANNER_ASPECT = 2.32;   // the cut banners' height over width (256 x ~594 px)
 function bannerMap(emblem: string): THREE.Texture | null {
-  const url = bannerUrls[`../../../../content/generated/textures/banner-${emblem}.png`];
+  const url = urlOf(`textures/banner-${emblem}.png`, bannerUrls);
   if (!url) return null;
   if (!bannerTex[emblem]) { const t = new THREE.TextureLoader().load(url); t.colorSpace = THREE.SRGBColorSpace; bannerTex[emblem] = t; }
   return bannerTex[emblem];
@@ -887,7 +900,7 @@ const vineTex: Record<string, THREE.Texture | null> = {};
 function vineTexture(path?: string): THREE.Texture | null {
   if (!path) return null;
   if (!(path in vineTex)) {
-    const url = vineUrls[`../../../../content/generated/${path}`];
+    const url = urlOf(path, vineUrls);
     vineTex[path] = url ? new THREE.TextureLoader().load(url) : null;
     if (vineTex[path]) { vineTex[path]!.colorSpace = THREE.SRGBColorSpace; vineTex[path]!.wrapS = THREE.RepeatWrapping; vineTex[path]!.anisotropy = 4; }
   }

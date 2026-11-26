@@ -44,16 +44,19 @@ FIXES = {
         ('paint', 'paving at 5 m', 15, 18, 20, 19),
         ('paint', 'paving at 3.5 m', 15, 20, 20, 24), ('paint', 'paving at 3.5 m', 25, 20, 42, 25),
         ('disc', 'dais at 4 m', 23.0, 21.5, 2.4),
-        ('paint', 'paving at 5 m', 27, 20, 28, 22), ("paint", "the east flight's landing", 29, 20, 34, 22),   # the ledge keeps a cell clear of the dais's round edge
+        # (round 2's critic: two flights and a fenced landing read as a pen; one run along the wall face instead)
+        ('paint', 'paving at 5 m', 27, 20, 30, 21),         # the ledge keeps a cell clear of the dais's round edge
         ('paint', 'stills', 39, 21, 44, 24),
+        ('paint', 'road at 3.5 m', 26, 25, 36, 28),          # the cobbles start beside the dais, so the way out shows from the well
         ('flight', 'west flight', [[16.0, 19.5], [19.0, 19.5]]),
-        ('flight', 'east flight, upper', [[28.5, 20.0], [28.5, 22.0]]), ('flight', 'east flight, lower', [[34.5, 20.0], [34.5, 22.0]]),
+        ('flight', 'east flight', [[30.5, 20.0], [30.5, 21.0]]),
         # the shore: sand, the walk, the flight down by the greenhouse and the way back up along the cliff, west to east
         ('paint', 'sand at 0 m', 6, 35, 48, 36), ('paint', 'sand at 0 m', 6, 37, 21, 37),
         ('paint', 'the shore walk', 16, 30, 19, 36), ('paint', 'the shore walk', 15, 35, 20, 37), ('paint', 'the shore walk', 20, 35, 32, 37), ('paint', 'the shore walk', 24, 32, 32, 34),
         ('flight', 'shore flight down', [[16.0, 29.5], [19.0, 29.5]]), ('flight', 'shore flight up', [[32.5, 32.0], [32.5, 34.0]]),
         ('paint', 'the sea', 20, 38, 30, 39),              # a woods tongue the plan left under the bath, out into the sea
         ('paint', 'the shore walk', 21, 33, 27, 34),       # a bay cut into the bluff, so the bath has room
+        ('paint', 'grass at 3.5 m', 20, 29, 23, 32),       # the bluff over the bay is lawn with a parapet: a built wall behind the bath, a lookout above
         ('disc', 'the bath', 22.5, 35.0, 1.5),             # west of the climbing flight's landing             # a row of the walk between it and the sea, or it pours over as a fall            # a pool sunk into the shore walk, not a raised rim against the cliff
         # markers: the seats start on the road in, on the well's axis (the read: arrive from the north, the cots first)
         ('object', dict(kind='marker', id='start-0', at=[23, 9], name="seat 0 starts on the road in from the main gate")),

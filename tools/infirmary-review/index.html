@@ -59,6 +59,10 @@ figcaption b { color: var(--fg); font-weight: 600; }
 .choices button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 textarea { width: 100%; box-sizing: border-box; min-height: 64px; font: 14px/1.5 var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); resize: vertical; }
 .status { font: 12px var(--mono); color: var(--muted); min-height: 1em; }
+.pieces { display: grid; gap: 18px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pair img { background: #c9c9c9; object-fit: contain; aspect-ratio: 4 / 3; }
+.pair figcaption { text-align: center; font: 500 13px var(--mono); }
 dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 94vh; }
 dialog::backdrop { background: rgb(0 0 0 / .8); }
 dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6px; }
@@ -93,7 +97,8 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
       <ol>
         <li class="done"><span class="mark"></span><span>Trace plan D into a kit scene, 0 errors <span class="when">(today)</span></span></li>
         <li class="done"><span class="mark"></span><span>Walkable in the 3D game <span class="when">(today, on its branch)</span></span></li>
-        <li class="now"><span class="mark"></span><span><b>Your look at this draft</b>, then the new pieces: Codex pictures for your OK before any Meshy model</span></li>
+        <li class="done"><span class="mark"></span><span>Layout round 2: the stills moved, the east flight, the bath; a fresh critic <b>approved</b> it at 7.5/10, and its fixes are in</span></li>
+        <li class="now"><span class="mark"></span><span><b>The new pieces:</b> Codex pictures are below; pick a take for each before any Meshy model is bought</span></li>
         <li><span class="mark"></span><span>Surfaces: tiling textures from Codex</span></li>
         <li><span class="mark"></span><span>Paint-over of the grey-box, as the dressing target</span></li>
         <li><span class="mark"></span><span>Dressing: lamps, beds, cots, pipes, vines</span></li>
@@ -124,9 +129,9 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
     <div class="stop"><span class="num">3 · West: the greenhouse</span>
       <figure><img src="img/west.jpg" alt="The west flight down beside the greenhouse's grey box, and two garden beds"><figcaption>The west flight comes down beside the greenhouse (a grey box for now), with two garden beds.</figcaption></figure></div>
     <div class="stop"><span class="num">4 · East: the stills</span>
-      <figure><img src="img/east.jpg" alt="The east flight down beside the stills' grey box, the paved road leaving east"><figcaption>The east flight comes down by the stills. In plan D it was a long run along the drop; on the kit it's a short flight like the west one (question below).</figcaption></figure></div>
+      <figure><img src="img/east.jpg" alt="The east flight down beside the stills' grey box, the paved road leaving east"><figcaption>New: the east side runs along the drop: a ledge off the top terrace, then one flight down the wall face, open on its downhill side. The stills moved east to make room (your pick), and the cobbled road now starts beside the dais, so the way out shows from the well.</figcaption></figure></div>
     <div class="stop"><span class="num">5 · Down to the shore, the bath</span>
-      <figure><img src="img/shore.jpg" alt="A straight flight down the cliff to the shore walk, the small bath, and a second flight climbing along the cliff"><figcaption>The fix loop goes down the straight flight to the shore. The bath sits on the sand at the foot of the cliff. It's cramped and untidy here, the roughest corner of the draft.</figcaption></figure></div>
+      <figure><img src="img/shore.jpg" alt="A straight flight down the cliff to the shore walk, the small bath, and a second flight climbing along the cliff"><figcaption>New: the fix loop goes down the straight flight to the shore walk. The bath is now a balustraded pool in a bay cut into the bluff, with a built wall behind it and a low sea wall along the walk.</figcaption></figure></div>
     <div class="stop"><span class="num">6 · Back up along the cliff</span>
       <figure><img src="img/cliff.jpg" alt="The flight climbing east along the cliff face back to the well's tier"><figcaption>The way back up runs along the cliff face, west to east, so the loop's two flights look different.</figcaption></figure></div>
     <div class="stop"><span class="num">7 · Out to the battery</span>
@@ -138,41 +143,82 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
   <h2>What's off in this draft</h2>
   <ul class="gaps">
     <li><b>Everything is a stand-in.</b> Tents are posts, the well and smokestack are round piers, the greenhouse and stills are grey boxes. They're the piece list for the next step.</li>
-    <li><b>The east flight</b> lost plan D's long run along the drop (no room on the kit grid), so the two overlook flights look alike again, which the flow critic marked down before.</li>
-    <li><b>The conduit walkways</b> (raised paths from the well to what it feeds) mostly didn't survive where the flights land. They may come back as dressing: brass pipes with vines.</li>
-    <li><b>The bath corner</b> at the shore is cramped and messy.</li>
-    <li><b>Woods</b> are drawn as plain lawn: the kit has no woods floor yet.</li>
+    <li><b>The conduit walkways</b> (raised paths from the well to what it feeds) are gone from the layout; they come back in dressing as the brass pipes below.</li>
+    <li><b>The two big paved tiers</b> look alike: they need different floors (the read asked for it) and the pipes to break them up. That's for the surfaces and dressing steps.</li>
+    <li><b>Woods</b> are drawn as plain lawn: the kit has no woods floor yet. East of the stills, the top tier's wall ends in an earth bank where the woods start.</li>
   </ul>
 </section>
 
 <section>
-  <h2>Questions</h2>
-  <p>Answers save as you go. Leaving a box blank is fine; I'll ask again rather than assume.</p>
+  <h2>The layout review</h2>
+  <p>You said a reviewer's approval would do for the layout. A fresh critic, given only the read, the principles, the plan and these renders, walked each pass as a first-time player.</p>
+  <ul class="gaps">
+    <li><b>Verdict: approve, 7.5/10</b> (the flat grey-box had 8). "Everything else carried over or got better, especially the shore bay."</li>
+    <li><b>Its one structural change:</b> the first two-flight east descent "reads as a pen" and is "overbuilt" for a 1.5 m drop; make it one run along the wall face. Done: the render above is the fixed version.</li>
+    <li><b>Smaller fixes, done:</b> the cobbles start at the well, the bath bay has a built back wall. <b>Left for dressing:</b> the tents need real footprints before the top tier's emptiness can be judged.</li>
+  </ul>
+</section>
 
-  <div class="answer" data-id="q-code-rule">
-    <h3>Did I get the code-drawn art rule right this time?</h3>
-    <p>As written in the process doc: <b>code is fine for procedural pieces</b>, alone or mixed with painted sprites and textures: the stone-by-stone floors, plants, water, waterfalls. <b>Buildings, facades and other large set pieces aren't drawn in code</b>; they come from Codex pictures made into Meshy models. My summary in the terminal ("narrowed to buildings…") read the wrong way round.</p>
-    <div class="choices"><button type="button" data-v="right">That's right</button><button type="button" data-v="wrong">Still wrong</button></div>
-    <textarea id="n-code-rule" aria-label="Note on the code-drawn art rule" placeholder="What it should say…"></textarea>
-    <div class="status"></div>
+<section>
+  <h2>The new pieces</h2>
+  <p>Fourteen Codex pictures, two takes per piece, in the courtyard pieces' style (sandstone, blue and gold, brass). Each one becomes a Meshy model only after you pick it. Click any picture to enlarge it.</p>
+  <p class="rec">Cost if all seven go ahead: one Meshy call each at about 30 credits, about <b>210 credits</b> in all. The two sheets (pipes, bath dressing) are one call each and get split into parts afterwards, as the courtyard's dressing was.</p>
+  <div class="pieces">
+    <div class="answer" data-id="pc-well">
+      <h3>The well: the landmark and the fix</h3>
+      <div class="pair"><figure><img src="img/pc-well-a.jpg" alt="Take a: brass cage with a glass dome on a two-step plinth, vines with white and yellow flowers"><figcaption>a</figcaption></figure><figure><img src="img/pc-well-b.jpg" alt="Take b: open octagonal brass cage, thick vines coiled round the green crystal, pipe stubs on the plinth"><figcaption>b</figcaption></figure></div>
+      <p class="rec">My pick: <b>b</b>. The vines visibly choke the crystal, which is the fix; the open cage models cleanly; its pipe stubs are where the conduits join.</p>
+      <div class="choices"><button type="button" data-v="a">a</button><button type="button" data-v="b">b</button><button type="button" data-v="redo">Redo</button></div>
+      <textarea id="n-pc-well" aria-label="Note on the well" placeholder="Changes…"></textarea><div class="status"></div>
+    </div>
+    <div class="answer" data-id="pc-greenhouse">
+      <h3>The greenhouse</h3>
+      <div class="pair"><figure><img src="img/pc-greenhouse-a.jpg" alt="Take a: barrel-vaulted brass and glass greenhouse, broken panes, wisteria"><figcaption>a</figcaption></figure><figure><img src="img/pc-greenhouse-b.jpg" alt="Take b: pitched-roof greenhouse with Gothic cresting and a porch door"><figcaption>b</figcaption></figure></div>
+      <p class="rec">My pick: <b>a</b>, closest to the concept and best from our camera. It's about twice as long as it is wide; the fit step squashes it to its 7 × 6 m footprint.</p>
+      <div class="choices"><button type="button" data-v="a">a</button><button type="button" data-v="b">b</button><button type="button" data-v="redo">Redo</button></div>
+      <textarea id="n-pc-greenhouse" aria-label="Note on the greenhouse" placeholder="Changes…"></textarea><div class="status"></div>
+    </div>
+    <div class="answer" data-id="pc-stills">
+      <h3>The stills</h3>
+      <div class="pair"><figure><img src="img/pc-stills-a.jpg" alt="Take a: open-sided shed with a blue slate roof, pot stills over brick furnaces, drying herbs"><figcaption>a</figcaption></figure><figure><img src="img/pc-stills-b.jpg" alt="Take b: closed sandstone building with an arched opening and a copper chimney"><figcaption>b</figcaption></figure></div>
+      <p class="rec">My pick: <b>a</b>, the open shed from the concept, with more depth. Its banners carry a leaf, not the academy star; a quick Codex edit can swap that before modelling.</p>
+      <div class="choices"><button type="button" data-v="a">a</button><button type="button" data-v="b">b</button><button type="button" data-v="redo">Redo</button></div>
+      <textarea id="n-pc-stills" aria-label="Note on the stills" placeholder="Changes…"></textarea><div class="status"></div>
+    </div>
+    <div class="answer" data-id="pc-tent">
+      <h3>A tent with cots (four of them, in an arc)</h3>
+      <div class="pair"><figure><img src="img/pc-tent-a.jpg" alt="Take a: open-sided cream canvas tent on brass poles, four striped cots, a lantern and an instrument table"><figcaption>a</figcaption></figure><figure><img src="img/pc-tent-b.jpg" alt="Take b: tent with a canvas back wall, three cots and star hangings"><figcaption>b</figcaption></figure></div>
+      <p class="rec">My pick: <b>a</b>: four cots and open sides. b's closed back would hide the cots from some camera angles.</p>
+      <div class="choices"><button type="button" data-v="a">a</button><button type="button" data-v="b">b</button><button type="button" data-v="redo">Redo</button></div>
+      <textarea id="n-pc-tent" aria-label="Note on the tent" placeholder="Changes…"></textarea><div class="status"></div>
+    </div>
+    <div class="answer" data-id="pc-conduit">
+      <h3>The conduit pipes (one sheet, split into parts)</h3>
+      <div class="pair"><figure><img src="img/pc-conduit-sheet-a.jpg" alt="Take a: brass pipe straight, elbow, T-junction and stone support, with vines"><figcaption>a</figcaption></figure><figure><img src="img/pc-conduit-sheet-b.jpg" alt="Take b: flanged straight, elbow, valve-wheel pipe and stone support"><figcaption>b</figcaption></figure></div>
+      <p class="rec">My pick: <b>a</b>: it has a real T-junction and splits cleanly. b's valve wheel could join it as a fifth part.</p>
+      <div class="choices"><button type="button" data-v="a">a</button><button type="button" data-v="b">b</button><button type="button" data-v="redo">Redo</button></div>
+      <textarea id="n-pc-conduit" aria-label="Note on the conduit pipes" placeholder="Changes…"></textarea><div class="status"></div>
+    </div>
+    <div class="answer" data-id="pc-smokestack">
+      <h3>The battery's smokestack (the cue on the way out)</h3>
+      <div class="pair"><figure><img src="img/pc-smokestack-a.jpg" alt="Take a: round red-brick chimney with brass bands and an iron crown"><figcaption>a</figcaption></figure><figure><img src="img/pc-smokestack-b.jpg" alt="Take b: square stack, sandstone below and brick above, a blue band of stars"><figcaption>b</figcaption></figure></div>
+      <p class="rec">My pick: <b>b</b>: blue and gold tie it to the academy and its outline reads from afar. The smoke becomes an effect, not part of the model.</p>
+      <div class="choices"><button type="button" data-v="a">a</button><button type="button" data-v="b">b</button><button type="button" data-v="redo">Redo</button></div>
+      <textarea id="n-pc-smokestack" aria-label="Note on the smokestack" placeholder="Changes…"></textarea><div class="status"></div>
+    </div>
+    <div class="answer" data-id="pc-bath">
+      <h3>Bath dressing (one sheet: urns, stair, planter, towels)</h3>
+      <div class="pair"><figure><img src="img/pc-bath-sheet-a.jpg" alt="Take a: urns with brass basins, a walled stair, a lavender planter and a towel shelf"><figcaption>a</figcaption></figure><figure><img src="img/pc-bath-sheet-b.jpg" alt="Take b: urn on a pedestal, lilac planter, small stair and a towel stand with a jug, star motifs"><figcaption>b</figcaption></figure></div>
+      <p class="rec">My pick: <b>b</b>: the academy star throughout. a's urns are closer to the concept but carry other emblems.</p>
+      <div class="choices"><button type="button" data-v="a">a</button><button type="button" data-v="b">b</button><button type="button" data-v="redo">Redo</button></div>
+      <textarea id="n-pc-bath" aria-label="Note on the bath dressing" placeholder="Changes…"></textarea><div class="status"></div>
+    </div>
   </div>
+</section>
 
-  <div class="answer" data-id="q-east-flight">
-    <h3>The east flight: keep it short, or make room for the long run?</h3>
-    <p>Plan D's east flight ran along the drop toward the stills so it wouldn't mirror the west one. Getting it back means moving the well's dais west a few metres, or the stills east.</p>
-    <p class="rec">My pick: move the stills east. It keeps the well on the road's axis and costs nothing but a few cells.</p>
-    <div class="choices"><button type="button" data-v="move-stills">Move the stills</button><button type="button" data-v="move-dais">Move the dais</button><button type="button" data-v="keep">Keep it short</button></div>
-    <textarea id="n-east-flight" aria-label="Note on the east flight" placeholder="Anything else about it…"></textarea>
-    <div class="status"></div>
-  </div>
-
-  <div class="answer" data-id="q-layout">
-    <h3>Is the layout good enough to start on the pieces?</h3>
-    <p>The next step is Codex pictures of the new pieces: the caged well, the greenhouse, the stills, tents with cots, conduit pipes, the bath, the smokestack. You OK each picture before any Meshy model.</p>
-    <div class="choices"><button type="button" data-v="go">Start on the pieces</button><button type="button" data-v="layout-first">Fix the layout first</button></div>
-    <textarea id="n-layout" aria-label="Note on the layout" placeholder="What to change first…"></textarea>
-    <div class="status"></div>
-  </div>
+<section>
+  <h2>Anything else</h2>
+  <p>Answers save as you go. A blank box means I'll ask again, not assume. Earlier answers, kept: the code-drawn rule is right; move the stills; layout and pieces in parallel, with the reviewer's approval enough for the layout.</p>
 
   <div class="answer" data-id="general">
     <h3>Anything else</h3>

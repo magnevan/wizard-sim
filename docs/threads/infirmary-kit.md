@@ -1,6 +1,6 @@
 # The infirmary on the kit
 
-Status: active; plan D traced to a clean scene (0 errors) and walkable in the 3D game; next: the user walks it, then the piece list · Last touched: 2026-11-26
+Status: active; layout round 2 approved by a fresh critic (7.5/10) with its fixes in; Codex pictures of the seven new pieces wait for the user's picks on the review page before any Meshy model (about 210 credits) · Last touched: 2026-11-26
 Record: [the read](../campaign/01-opening/infirmary-read.md) (stages 0 to 3: plan D rev 9, flow 8/10, sense 9/10) · plan: `tools/place-plans/plans/inf-d.py` · scene: `tools/kit/scenes/infirmary.scene.json` · [building it on the kit](../campaign/making-a-place.md#building-it-on-the-kit) (the steps) · [the opening thread](opening.md) · [the courtyard on the kit](kit-courtyard.md) (the first place built this way)
 
 ## Where it stands
@@ -20,6 +20,8 @@ Branch `worktree-infirmary-kit`.
 - [ ] Dressing notes carried from the read: tents lighter than buildings, the walkways on posts, a different floor on the top tier and the well's tier so the 1.5 m step reads, different beds in the two gardens, the bath's rim on the sand or behind a sea wall, a kerb at the north gate.
 
 ## Done
+
+- 2026-11-26: layout round 2 and the pieces' pictures, in parallel (the user: "If the reviewer approves it, it's ok with me"). The user's picks on the page: the code-drawn rule is right; move the stills. The stills moved east; the east side a ledge and one flight down the wall face (the critic's one structural change: the first two-flight try "reads as a pen", "overbuilt" for 1.5 m); the cobbled road starts beside the dais; the bath a balustraded pool in a bay cut into the bluff, a walled back and a low sea wall along the walk; the conduit walks dropped (pipes in dressing). Critic, fresh, on the renders: 7.5/10, APPROVE. Fourteen Codex pictures (two per piece: well, greenhouse, stills, tent, conduit sheet, smokestack, bath sheet) in `docs/reference/infirmary-kit/`, with my picks on the page. No Meshy spent.
 
 - 2026-11-26: traced and walkable. `trace_plan.py inf-d infirmary` drew plan D's plain `stairs()` as terrace steps (30 errors), so its `FIXES['infirmary']` writes the four flights (two from the overlook, the shore flight down by the greenhouse, the way back up along the cliff), the shore and its walk, the bath on the sand behind a retaining rim, and the markers (starts on the road in, `gate-court`, `gate-battery`, the well). New FIXES ops: `terrace` (rename or re-level), `flight`, `object`. `compile.py`: 427 pieces, 0 errors. `room.py infirmary` replaces the LDtk grey-box as the sim's `infirmary` room; the 3D page offers it.
 - 2026-11-26: the thread started; the courtyard parked for a polish pass.

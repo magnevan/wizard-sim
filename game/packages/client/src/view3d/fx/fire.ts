@@ -78,7 +78,7 @@ float fanW(vec4 A, float s) { return dropW(uNoz.x + s * max(A.w - uNoz.x, 0.0));
 const RATE = {
   core: () => 90, coreLife: 0.18,
   smoke: (n: number) => 5 + 2 * n, smokeLife: 1.0,
-  puff: (n: number) => 36 + 8 * n, puffLife: 0.72,
+  puff: (n: number) => 26 + 6 * n, puffLife: 0.72,
   ember: (n: number) => (24 + 6 * n) * (n >= 5 ? 1.6 : 1), emberLife: 1.1,
   glow: (n: number) => 12 + 3 * n, glowLife: 0.3,
 };
@@ -156,7 +156,8 @@ Particle particle(float k, float age, float ts) {
   p.pos = sprayAt(A, s, side, 0.0, axisH(s) + age * age * 0.5 + (rnd(k, 74.0) - 0.5) * w * 0.1);
   // swells fast and keeps growing as it slows: a blotch that pulses large, then fades
   // grows about three times over its life
-  p.size = (0.2 + w * 0.14) * (0.7 + 1.2 * (1.0 - pow(1.0 - age, 2.0)));
+  // larger (the user, round 11: "I think larger sprites will look better"), and fewer so they don't pile up
+  p.size = (0.3 + w * 0.22) * (0.7 + 1.2 * (1.0 - pow(1.0 - age, 2.0)));
   p.stretch = 0.025;
   p.rot = rnd(k, 75.0) * 6.2832 + age * (rnd(k, 76.0) > 0.5 ? 0.35 : -0.35);
   p.col = vec4(age, s, 0.0, 1.0);

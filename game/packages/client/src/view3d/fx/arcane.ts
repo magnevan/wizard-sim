@@ -97,7 +97,10 @@ vec4 look(float along, float across, float len) {
   // pulses: fast packets racing out from the staff; one in seven skipped so they don't tick like a clock
   float ph = (along - uClock * uSurgeV) / uSurgeSp, f = fract(ph), L = min(uSurgeL / uSurgeSp, 0.9);
   // a long, soft pulse: a bright head and a long tail of light behind it
-  float pulse = (f > 1.0 - L ? pow((f - (1.0 - L)) / L, 1.4) * smoothstep(1.0, 0.82, f) : 0.0) * step(0.14, rnd(floor(ph) + 4096.0, 5.0)) * ends;
+  // soft at both ends: it rises along its tail and fades over its front 40 %, so no sharp line runs through the wisps
+  // (the user, round 11: "a very sharp starting line in the whisps for the traveling glows")
+  float px = clamp((f - (1.0 - L)) / L, 0.0, 1.0);
+  float pulse = pow(smoothstep(0.0, 0.6, px), 1.3) * (1.0 - smoothstep(0.6, 1.0, px)) * step(1.0 - L, f) * step(0.14, rnd(floor(ph) + 4096.0, 5.0)) * ends;
   // the core and the body: gaussian falloffs, no edge to read as a border
   // a bulging glow where it leaves the staff (Diablo 3's Disintegrate), swelling core, body and plasma there
   float bulge = exp(-along * along / 0.35);

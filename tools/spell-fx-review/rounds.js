@@ -356,4 +356,37 @@ window.ROUNDS = [
     ],
     general: 'Anything else about the dressing',
   },
+  {
+    id: 'fire-6',
+    group: 'Fire',
+    tab: 'Take 6: burst and embers',
+    el: 'fire',
+    date: '2026-11-26',
+    title: 'Fire, round 6: a bigger opening burst, Magicka-like embers',
+    lead: 'Your notes on take 5: the opening burst blended into the wave; the embers should be like Magicka 1’s (your spray clip: tiny red-orange glowing points flung outward, slowing, drifting and going out in about a second, no ash).',
+    items: [
+      {
+        id: 'ring',
+        title: 'Fire ring',
+        text: 'The burst is now its own beat before the wave: a fireball pop at the feet, then a hollow ring of fire racing out low over the floor well ahead of the wave (to about 2.5 u in a quarter of a second) with twice the spark streaks, a hot shock line racing over the floor with it, and a stronger flash and light. (A first try made it the hottest white and a filled shell: a cream disc that hid the caster.) The embers: tiny glowing points thrown off the front as it passes, outward fast with some to the side and up, streaked while fast, slowed by the air, drifting on the heat and going out over about a second.',
+        vid: ['f6-ring-14.mp4'],
+        ask: 'Is the burst significant enough now, and are these the embers?',
+      },
+      {
+        id: 'burst',
+        title: 'Fire burst',
+        text: 'The same burst thrown forward from the hands, and the same embers.',
+        vid: ['f6-burst-14.mp4'],
+        ask: 'And on the burst?',
+      },
+      {
+        id: 'game',
+        title: 'At the game’s distance',
+        text: 'The ring at 30 u among the crowd.',
+        vid: ['f6-ring-30.mp4'],
+        ask: 'Does it read at play distance?',
+      },
+    ],
+    general: 'Anything else',
+  },
 ];

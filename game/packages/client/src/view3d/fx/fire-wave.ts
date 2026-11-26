@@ -54,7 +54,7 @@ export const FIRE_WAVE = {
   /** The sheet: its depth behind the front (u), how high its crest stands (u), how fast its billows roll back (1/s). */
   width: 1.3, lift: 1.0, roll: 3.0,
   /** Smoke puffs a unit of the front's arc; trail embers a unit of it; a spitting fire's cell (u of arc). */
-  smokePerU: 1.3, embersPerU: 4.5, spitEvery: 1.0,
+  smokePerU: 1.3, embersPerU: 8, spitEvery: 1.0,
 };
 
 /** Seconds a wave is drawn for, scorch included. */
@@ -63,7 +63,7 @@ const lifeOf = (): number => FIRE_WAVE.scorchEnd + 0.1;
 /** A burst's or a ring's wave: a ring is a fan of half-angle π. */
 interface Wave { rec: RingRec; face: number; half: number; ring: boolean }
 
-const SMOKE_CAP = 90, SPARK_CAP = 48, EMBER_CAP = 420;
+const SMOKE_CAP = 90, SPARK_CAP = 96, EMBER_CAP = 700;
 
 /** Shared GLSL: where the front is and how tall it stands at a moment, and the fan's edges. */
 const WAVE_GLSL = /* glsl */ `
@@ -146,14 +146,19 @@ float angD(float a, float b) { return atan(sin(a - b), cos(a - b)); }
 // the same gas thrown out from the feet (a ring) or the hands (a burst, forward only), gone in a fifth of a second
 float burstBase(vec3 p) {
   float a = uAge;
-  if (a > 0.2) return -1.0;
+  if (a > 0.3) return -1.0;
   vec2 f = vec2(cos(uFace), sin(uFace));
-  vec3 c = isRing() ? vec3(gC.x, uGy + 0.4, gC.y) : vec3(gC.x + f.x * 0.45, uGy + 0.9, gC.y + f.y * 0.45);
-  vec3 v = (p - c) * vec3(1.0, isRing() ? 2.2 : 1.4, 1.0);
-  float d = length(v), R = 0.25 + 4.5 * a;
-  float s = 1.0 - abs(d - R) / (0.18 + 0.6 * a);
-  if (!isRing()) s -= 0.6 * (1.0 - smoothstep(-0.1, 0.5, dot(normalize(v.xz + 1e-4), f)));
-  return s - 1.3 * smoothstep(0.07, 0.2, a);
+  vec3 c = isRing() ? vec3(gC.x, uGy + 0.35, gC.y) : vec3(gC.x + f.x * 0.45, uGy + 0.9, gC.y + f.y * 0.45);
+  // a hollow ring of fire racing out low over the floor, well ahead of the wave (to about 2.5 u), torn apart as it goes
+  vec2 rel = p.xz - c.xz;
+  float R = 0.3 + 2.0 * (1.0 - exp(-a * 9.0)) * (1.0 + 1.8 * a);
+  vec2 v = vec2(length(rel) - R, (p.y - c.y) * (isRing() ? 1.3 : 1.0));
+  float s = 1.0 - length(v) / (0.22 + 0.4 * a);
+  if (!isRing()) s -= 0.8 * (1.0 - smoothstep(-0.1, 0.5, dot(normalize(rel + 1e-4), f)));
+  // and a fireball pop where it starts, gone in a tenth of a second
+  float pop = 1.0 - length((p - c) * vec3(1.0, 1.1, 1.0)) / (0.35 + 3.0 * a);
+  s = max(s, pop * 1.1 - 2.0 * smoothstep(0.03, 0.11, a));
+  return s * 1.2 - 1.4 * smoothstep(0.12, 0.3, a);
 }
 // fires spitting out of the front (the user, take 4: "individual fires that spit alongside the wave, slightly in front
 // of it, and reaching out a bit beyond the wave"): the arc is cut into cells about a unit wide; some cells throw a
@@ -196,7 +201,7 @@ vec2 gas(vec3 p) {
     tube = max(tube, (1.0 - smoothstep(0.0, 1.0, (b - bc) / max(gW - bc, 0.05))) * step(bc, b) * (0.35 - 1.6 * y / max(gH, 0.05)));
     tube = tube * 1.15 - mix(0.0, 1.25, smoothstep(0.6, 1.6, gQ)) - (1.0 - e) * 1.1;
   }
-  float extra = max(burstBase(p), b < 0.6 ? spitBase(r, th, y) : -1.0) * 1.3;
+  float bu = burstBase(p), extra = max(bu, b < 0.6 ? spitBase(r, th, y) : -1.0) * 1.3;
   float base = max(tube, extra);
   if (base < -0.55) return vec2(0.0, 1.0);
   // the noise turns round the tube's axis (rolling forward over the top): a lobe rolls over from frame to frame
@@ -209,7 +214,7 @@ vec2 gas(vec3 p) {
   float d = base + (n - 0.5) * 1.9;
   if (d <= 0.0) return vec2(0.0, 1.0);
   // hot in the dense core and near the front, cooling toward the tail and as it dies; the burst and the spits young and hot
-  float heat = 1.0 - clamp(d * 1.6, 0.0, 1.0) + (tube >= extra ? 0.25 * clamp(b / gW, 0.0, 1.0) + gHot : -0.05);
+  float heat = 1.0 - clamp(d * 1.6, 0.0, 1.0) + (tube >= extra ? 0.25 * clamp(b / gW, 0.0, 1.0) + gHot : (bu * 1.3 >= extra ? -0.12 : -0.05));
   return vec2(d, heat);
 }
 void main() {
@@ -294,19 +299,19 @@ const FLASH = /* glsl */ `
 ${WAVE_GLSL}
 Particle emitParticle(float k, float back) {
   float a = uAge - back;
-  if (k > 0.5 || a < 0.0 || a > 0.16) return P0();
+  if (k > 0.5 || a < 0.0 || a > 0.22) return P0();
   vec2 c = centerAt(0.0), d = isRing() ? vec2(0.0) : vec2(cos(uFace), sin(uFace)) * 0.45;
   Particle p = P0(); p.alive = true;
   p.pos = vec3(c.x + d.x, uGy + (isRing() ? 0.25 : 1.0), c.y + d.y);
-  p.size = (isRing() ? 1.1 : 0.7) * (0.6 + 2.5 * a);
-  p.col = vec4(a / 0.16, 0.0, 0.0, 1.0);
+  p.size = (isRing() ? 1.3 : 0.9) * (0.6 + 2.5 * a);
+  p.col = vec4(a / 0.22, 0.0, 0.0, 1.0);
   return p;
 }`;
 
 const LOOK_FLASH = /* glsl */ `
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   float m = exp(-dot(uv, uv) * 3.0) * (1.0 - col.x);
-  return vec4(vec3(3.2, 2.6, 1.8) * m, 0.0);
+  return vec4(vec3(2.8, 1.5, 0.45) * m, 0.0);
 }`;
 
 /**
@@ -315,12 +320,15 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
  */
 const GROUND = /* glsl */ `
 uniform vec2 uC0, uCn;
-uniform float uRn, uRmax, uFront, uScorch, uHot, uFace, uHalf, uN;
+uniform float uRn, uRmax, uFront, uScorch, uHot, uFace, uHalf, uN, uShock, uShockA;
 vec4 decal(vec3 wp) {
   vec2 v = wp.xz - uC0; float d = length(v), th = atan(v.y, v.x);
   float inArc = 1.0;
   if (uHalf < 3.1) inArc = 1.0 - smoothstep(uHalf * 0.75, uHalf * 1.08, abs(atan(sin(th - uFace), cos(th - uFace))));
   vec4 o = vec4(0.0);
+  // the opening burst's shock: a bright ring racing over the floor ahead of the wave
+  float sk = length(wp.xz - uCn) - uShock;
+  o.rgb += vec3(2.6, 1.0, 0.15) * exp(-sk * sk / 0.012) * uShockA * inArc;
   // the hot line on the floor under the front
   float dn = abs(length(wp.xz - uCn) - uRn);
   float sd = length(wp.xz - uCn) - uRn;
@@ -359,7 +367,7 @@ Particle emitParticle(float k, float back) {
   if (edgeOf(th) < 0.5) return P0();
   float tb = 0.03 * rnd(k, 72.0), life = 0.22 + 0.2 * rnd(k, 73.0), a = uAge - back - tb;
   if (a < 0.0 || a > life) return P0();
-  float t = a / life, v = 6.0 + 6.0 * rnd(k, 74.0), drag = 5.0;
+  float t = a / life, v = 8.0 + 8.0 * rnd(k, 74.0), drag = 5.0;
   float dist = v * (1.0 - exp(-drag * a)) / drag;
   vec2 c = centerAt(0.0), d = vec2(cos(th), sin(th));
   vec2 o = isRing() ? c + d * 0.25 : c + vec2(cos(uFace), sin(uFace)) * 0.45;
@@ -373,8 +381,10 @@ Particle emitParticle(float k, float back) {
 
 /**
  * The ember trail (the user, take 4: "a trail of embers following the wave, that is noticed primarily after the effect
- * is over"): specks left just behind the front as it passes, lifted on the heat and drifting, glowing while the gas
- * burns and still glowing after it's gone, then cooling to ash and settling.
+ * is over"; take 5, after Magicka 1's spray: "more of an orange glow, that float aside more rapidly in the air (imagine
+ * they have some velocity radially to the blast)"). Tiny glowing points thrown off the front as it passes: fast and
+ * outward at first (a little sideways and up, streaked while fast), slowed by the air, then drifting on the heat and
+ * fading out, still glowing for a second or so after the gas is gone. No ash: they go out.
  */
 const EMBERS = /* glsl */ `
 ${WAVE_GLSL}
@@ -382,21 +392,25 @@ Particle emitParticle(float k, float back) {
   if (k >= uCount) return P0();
   float th = angleOf(k, 81.0), e = edgeOf(th);
   if (e < 0.3) return P0();
-  float tb = (0.1 + 1.15 * rnd(k, 82.0)) * uTr, life = 1.6 + 1.4 * rnd(k, 83.0), a = uAge - back - tb;
+  float tb = (0.05 + 1.15 * rnd(k, 82.0)) * uTr, life = 0.8 + 1.1 * rnd(k, 83.0), a = uAge - back - tb;
   if (a < 0.0 || a > life) return P0();
-  float t = a / life, ph = rnd(k, 84.0) * 6.2832, fr = 1.3 + 1.2 * rnd(k, 85.0);
+  float t = a / life, ph = rnd(k, 84.0) * 6.2832;
   vec2 c = centerAt(tb), d = vec2(cos(th), sin(th)), s = vec2(-d.y, d.x);
-  float r = frontAt(tb) - 0.15 - 0.5 * rnd(k, 86.0) + 0.25 * (1.0 - exp(-a * 2.0));
-  // lifted on the heat, then settling; a sway that grows as it slows
-  float lift = 0.25 + 0.5 * rnd(k, 87.0), y = 0.15 + lift * (1.0 - exp(-a * 1.8)) - 0.06 * a * a;
-  float sway = sin(a * fr + ph) * 0.18 * smoothstep(0.0, 0.6, a);
+  // thrown off the front: outward fast, a little to the side, slowed by the air (closed form of a velocity under drag)
+  float drag = 2.6, go = (1.0 - exp(-drag * a)) / drag;
+  float vr = 1.6 + 3.2 * rnd(k, 85.0), vs = (rnd(k, 86.0) - 0.5) * 2.4, vy = 0.6 + 1.6 * rnd(k, 87.0);
+  float r = frontAt(tb) - 0.2 * rnd(k, 88.0) + vr * go;
+  float side = vs * go + sin(a * 2.3 + ph) * 0.08 * smoothstep(0.2, 0.8, a);
+  // up on the throw, then floating on the heat (a slow rise that settles)
+  float y = 0.2 + 0.4 * rnd(k, 89.0) + vy * go + 0.12 * a;
   Particle p = P0(); p.alive = true;
-  p.pos = vec3(c.x + d.x * r + s.x * sway, uGy + max(0.03, y + sin(a * fr * 2.0 + ph) * 0.04), c.y + d.y * r + s.y * sway);
-  p.size = 0.085 + 0.06 * rnd(k, 88.0);
-  p.rot = ph + a * (rnd(k, 89.0) > 0.5 ? 1.7 : -1.7);
-  float turn = abs(cos(a * (2.2 + 2.0 * rnd(k, 90.0)) + ph));
-  p.col = vec4(0.3 + 0.25 * rnd(k, 91.0), turn, t, smoothstep(0.0, 0.04, t) * (1.0 - smoothstep(0.8, 1.0, t)) * e);
-  p.data = vec4(rnd(k, 92.0), rnd(k, 93.0), 0.0, 0.0);
+  p.pos = vec3(c.x + d.x * r + s.x * side, uGy + y, c.y + d.y * r + s.y * side);
+  p.size = 0.05 + 0.04 * rnd(k, 90.0);
+  // streaked while fast (the kit lays a stretched quad along its motion)
+  p.stretch = 0.035 * exp(-drag * a);
+  // heat 0..1, flicker, life, fade
+  float fl = 0.75 + 0.25 * sin(a * (14.0 + 10.0 * rnd(k, 91.0)) + ph);
+  p.col = vec4(0.25 + 0.5 * t, fl, t, smoothstep(0.0, 0.03, t) * (1.0 - smoothstep(0.55, 1.0, t)) * e);
   return p;
 }`;
 
@@ -409,22 +423,14 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
 }`;
 
 /**
- * An ember of the trail: a glowing speck with a faint halo while hot (it reads after the gas is gone), cooling to a dark
- * ragged flake that turns as it drifts.
+ * An ember of the trail: a tiny red-orange point with a soft glow round it (light added, as Magicka's are), its hot
+ * centre covering a little so the colour holds on the pale stone; reddening as it cools, flickering.
  */
 const LOOK_EMBERS = /* glsl */ `
 vec4 look(vec2 uv, vec4 col, vec4 data) {
-  float cool = smoothstep(0.35, 0.8, col.z), turn = mix(1.0, 0.3 + 0.7 * col.y, cool);
-  vec2 q = vec2(uv.x, uv.y / turn);
-  float an = atan(q.y, q.x);
-  // round while it glows; a gently irregular flake once it has cooled to ash (stronger lobes read as stars)
-  float edge = 0.5 + (0.03 * sin(an * 5.0 + data.x * 6.28) + 0.04 * sin(an * 3.0 + data.y * 6.28) + 0.06 * sin(an * 2.0 + data.x * 12.0)) * cool;
-  float m = 1.0 - smoothstep(edge - 0.15, edge, length(q));
-  float halo = exp(-dot(uv, uv) * 1.6) * (1.0 - cool);
-  vec3 hot = vec3(2.3, 0.55, 0.04) * (0.8 + 0.4 * col.y);
-  vec3 c = mix(hot, vec3(0.05, 0.04, 0.035), cool);
-  float a = m * mix(0.9, 0.7, cool);
-  return vec4(c * m + vec3(1.5, 0.3, 0.02) * halo * 0.7, max(a, halo * 0.35)) * col.w;
+  float r2 = dot(uv, uv), core = exp(-r2 * 9.0), glow = exp(-r2 * 2.5);
+  vec3 c = mix(vec3(2.6, 0.75, 0.08), vec3(1.5, 0.18, 0.03), col.x) * col.y;
+  return vec4(c * (core * 1.2 + glow * 0.55), core * 0.55) * col.w;
 }`;
 
 /** One wave's drawing (pooled). */
@@ -444,7 +450,7 @@ class Slot {
   };
   readonly D = {
     uC0: { value: new THREE.Vector2() }, uCn: { value: new THREE.Vector2() }, uRn: { value: 0 }, uRmax: { value: 0 },
-    uFront: { value: 0 }, uScorch: { value: 0 }, uHot: { value: 0 }, uFace: this.P.uFace, uHalf: this.P.uHalf, uN: this.P.uN,
+    uFront: { value: 0 }, uScorch: { value: 0 }, uHot: { value: 0 }, uShock: { value: 0 }, uShockA: { value: 0 }, uFace: this.P.uFace, uHalf: this.P.uHalf, uN: this.P.uN,
   };
   /** The sheet's uniforms: the wave's (P) and its own. */
   readonly S: Record<string, THREE.IUniform>;
@@ -492,7 +498,7 @@ class Slot {
     count(this.smoke, FIRE_WAVE.smokePerU, SMOKE_CAP, age < Tr * 1.2 + 1.8);
     // the spits: one cell about a unit of the front's arc wide
     this.S.uSpitN.value = Math.max(3, Math.round(arc / FIRE_WAVE.spitEvery));
-    count(this.embers, FIRE_WAVE.embersPerU, EMBER_CAP, age < Tr * 1.3 + 3.1);
+    count(this.embers, FIRE_WAVE.embersPerU, EMBER_CAP, age < Tr * 1.3 + 2.0);
     this.sparks.u.uCount.value = w.ring ? SPARK_CAP : Math.round(SPARK_CAP * 0.45); this.sparks.count = SPARK_CAP; this.sparks.mesh.visible = age < 0.5;
     this.flash.count = 1; this.flash.mesh.visible = age < 0.17;
     // the ground: the hot line under the front, then the scorch
@@ -501,6 +507,9 @@ class Slot {
     this.D.uC0.value.set(r.x, r.y); this.D.uCn.value.set(cx, cy); this.D.uRn.value = Rn; this.D.uRmax.value = Rn;
     const front = Math.min(1, q * 6) * (1 - Math.min(1, Math.max(0, (q - 0.85) / 0.45)));
     this.D.uFront.value = front;
+    // the opening burst's shock ring on the floor: out to about 2.6 u in a quarter of a second
+    this.D.uShock.value = 0.3 + 2.4 * (1 - Math.exp(-age * 9)) * (1 + 1.5 * age);
+    this.D.uShockA.value = age < 0.28 ? Math.min(1, age * 40) * (1 - age / 0.28) : 0;
     this.D.uHot.value = Math.exp(-Math.max(0, age - Tr * 0.5) * 2.2) * Math.min(1, q * 2);
     this.D.uScorch.value = Math.min(1, q * 1.5) * (1 - Math.min(1, Math.max(0, (age - FIRE_WAVE.scorchHold) / (FIRE_WAVE.scorchEnd - FIRE_WAVE.scorchHold))));
     const pad = r.r * (1 + FIRE_WAVE.overrun) + 1.5, key = `${r.tick}:${r.who}:${w.ring}`;
@@ -563,7 +572,7 @@ export class FireWaves {
       const age = t - wv.rec.tick / 60, front = s.draw(wv, age, this.heightAt);
       if (!lights) return;
       const r = wv.rec, [cx, cy] = wv.ring ? centerAt(r, age) : [r.x, r.y];
-      if (age < 0.12) lights.add(cx, this.heightAt(cx, cy) + 0.9, cy, 0xffd9a0, age < 0.05 ? 6 : 3.5, r.r + 2);
+      if (age < 0.16) lights.add(cx, this.heightAt(cx, cy) + 0.9, cy, 0xffd9a0, age < 0.06 ? 10 : 5, r.r + 3);
       if (front > 0) {
         // the light rides the front: on a burst, out along the aim
         const R = s.D.uRn.value * (wv.ring ? 0 : 0.7), lx = cx + Math.cos(wv.face) * R, ly = cy + Math.sin(wv.face) * R;

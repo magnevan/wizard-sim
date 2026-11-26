@@ -34,6 +34,8 @@ const EMBERS_PER_CELL = 2;
 const CHAR_LIFE = 3, GROW = 0.4;
 /** How tall (u) the tongues stand where the patch burns hardest. */
 const FLAME_H = 0.95;
+/** The cells (u across) the licks and spits are dealt in: at most one tongue in each at a time. */
+const LICK_CELL = 1.8;
 
 const FLOOR_HEAD = /* glsl */ `
 ${CELL_GLSL}
@@ -84,28 +86,68 @@ vec3 gasRamp(float h) {
   if (h < 0.7) return mix(c2, c3, (h - 0.45) / 0.25);
   return mix(c3, c4, (h - 0.7) / 0.3);
 }
-vec2 gas(vec3 p) {
-  vec2 guv = (p.xz - uSurfDims.xy) / (uSurfDims.z * uSurfSize);
+// how hard the patch burns at ground point xz (0..1): its cells' fire, roughened so it never follows the grid
+float burnAt(vec2 xz) {
+  vec2 guv = (xz - uSurfDims.xy) / (uSurfDims.z * uSurfSize);
   vec4 s = texture(uSurf, guv);
-  float grow = texture(uChar, guv).r;
   float life = s.r > 0.01 ? clamp(s.g / s.r, 0.0, 1.0) : 0.0;
-  // the patch's own edge, roughened so it never follows the grid's cells
-  float rough = vnoise3(vec3(p.xz * 1.7, 5.0)) - 0.5;
-  float burn = smoothstep(0.3, 0.85, s.r + rough * 0.45) * grow * mix(0.25, 1.0, life);
-  if (burn < 0.02) return vec2(0.0, 1.0);
+  float rough = vnoise3(vec3(xz * 1.7, 5.0)) - 0.5;
+  return smoothstep(0.3, 0.85, s.r + rough * 0.45) * texture(uChar, guv).r * mix(0.25, 1.0, life);
+}
+// licks and spits (the user, take 1: "maybe we should vary some fire effects like we did with the wave. Like some spits
+// / licks of fire coming up outside of the effect"): the ground is cut into cells LICK_CELL u across; now and then a
+// cell standing in the fire shoots up a tall thin tongue that rises, lets go of the ground and dies. Near the patch's
+// edge it leans outward (down the burn's slope), so tongues reach out over the clean stone. Only a sample's own cell
+// is looked at, so their number costs nothing; a tongue stays inside its cell.
+float lickBase(vec3 p, float y) {
+  vec2 cell = floor(p.xz / ${LICK_CELL.toFixed(2)});
+  float id = cell.x * 157.0 + cell.y * 311.0;
+  float period = 1.1 + 1.3 * rnd(id, 70.0), t = fract(uClock / period + rnd(id, 71.0)) / 0.45;
+  if (t > 1.0 || rnd(id + floor(uClock / period + rnd(id, 71.0)) * 17.0, 72.0) > 0.7) return -1.0;
+  vec2 base = (cell + 0.5 + (vec2(rnd(id, 73.0), rnd(id, 74.0)) - 0.5) * 0.3) * ${LICK_CELL.toFixed(2)};
+  float bb = burnAt(base);
+  if (bb < 0.35) return -1.0;
+  // outward: down the slope of the burn; leaning further the nearer the edge
+  vec2 g = vec2(burnAt(base + vec2(0.45, 0.0)) - burnAt(base - vec2(0.45, 0.0)), burnAt(base + vec2(0.0, 0.45)) - burnAt(base - vec2(0.0, 0.45)));
+  float edge = clamp(length(g) * 1.4, 0.0, 1.0);
+  vec2 out2 = length(g) > 1e-3 ? -normalize(g) : vec2(cos(id), sin(id));
+  float H = (1.4 + 1.0 * rnd(id, 75.0)) * bb, lean = 0.12 + 0.55 * edge;
+  // up fast, then the foot lifts off and it thins away
+  float top = H * min(1.0, t / 0.3), foot = H * smoothstep(0.35, 1.0, t) * 0.9;
+  if (y < foot - 0.2 || y > top + 0.2) return -1.0;
+  float k = clamp(y / max(H, 0.05), 0.0, 1.0);
+  // a wiggle climbing up it, so it licks rather than standing as a column
+  vec2 side = vec2(-out2.y, out2.x);
+  vec2 c = base + out2 * lean * k * k * ${LICK_CELL.toFixed(2)} * 0.5 + side * sin(y * 4.5 - uClock * 9.0 + id) * 0.09 * k;
+  // narrowing to a point at its tip
+  float rad = 0.22 * (1.0 - 0.8 * k) * (1.0 - 0.4 * t);
+  float s = 1.0 - length(p.xz - c) / rad;
+  s -= smoothstep(top - 0.3, top + 0.1, y) + (1.0 - smoothstep(foot - 0.2, foot + 0.2, y)) * step(0.01, foot);
+  // light enough that the noise tears it
+  return s * 0.95 - 0.9 * smoothstep(0.7, 1.0, t);
+}
+vec2 gas(vec3 p) {
   float y = p.y - uGy;
+  float lick = lickBase(p, y);
+  float burn = burnAt(p.xz);
+  if (burn < 0.02 && lick < -0.5) return vec2(0.0, 1.0);
+  vec2 guv = (p.xz - uSurfDims.xy) / (uSurfDims.z * uSurfSize);
+  float heatRunes = texture(uSurf, guv).b;
   // clusters where the flames gather, drifting slowly; between them only low licks
-  float cl = smoothstep(0.38, 0.72, vnoise3(vec3(p.xz * 0.8, uClock * 0.15 + uSeed * 0.01)));
-  float tall = uH * burn * mix(0.3, 1.0, cl) * (0.85 + 0.3 * s.b);
-  if (y > tall + 0.35) return vec2(0.0, 1.0);
+  float cl = smoothstep(0.45, 0.75, vnoise3(vec3(p.xz * 0.95, uClock * 0.15 + uSeed * 0.01)));
+  float tall = max(uH * burn * mix(0.3, 1.0, cl) * (0.85 + 0.3 * heatRunes), 0.05);
+  if (y > tall + 0.35 && lick < -0.5) return vec2(0.0, 1.0);
   // tongues: noise climbing through the gas, bent by a slower noise
   vec3 q = vec3(p.xz * 2.1, y * 1.25 - uClock * 2.3);
   q.xy += (vec2(vnoise3(q * 0.45 + 3.1), vnoise3(q * 0.45 + 7.7)) - 0.5) * 1.0;
   float n = fbm3(q);
   // thick in the clusters, thin between them, so the charred bed and its glowing cracks show through
-  float d = (1.0 - y / max(tall, 0.05)) * burn * mix(0.55, 1.2, cl) + (n - 0.5) * 1.7 - 0.6 + 0.25 * cl;
+  float body = burn > 0.02 ? (1.0 - y / tall) * burn * mix(0.3, 1.25, cl) - 0.82 + 0.3 * cl : -1.0;
+  float d = max(body, lick) + (n - 0.5) * 1.7;
   if (d <= 0.0) return vec2(0.0, 1.0);
-  float heat = 1.0 - clamp(d * 1.5, 0.0, 1.0) + 0.38 * clamp(y / max(tall, 0.05), 0.0, 1.0);
+  float heat = 1.0 - clamp(d * 1.5, 0.0, 1.0) + (lick > body ? 0.12 + 0.45 * clamp(y / 1.6, 0.0, 1.0) : 0.38 * clamp(y / tall, 0.0, 1.0));
+  // a lick stays orange to red (its dense core would otherwise read as a pale pill)
+  if (lick > body) heat = max(heat, 0.3);
   return vec2(d, heat);
 }
 void main() {
@@ -182,17 +224,25 @@ vec4 decal(vec3 wp) {
   // a fuzzy, ragged rim (the user, round 1: "edges can be a little fuzzier"): two scales of noise, a wide soft ramp
   float n = fbm3(vec3(wp.xz * 1.5, 3.0)), nf = vnoise3(vec3(wp.xz * 6.0, 9.0));
   float m = ch.g + (n - 0.5) * 0.6 + (nf - 0.5) * 0.25;
-  float rim = smoothstep(0.18, 0.85, m);
+  float rim = smoothstep(0.1, 0.9, m);
   vec3 cr = texture(uCracks, wp.xz / 3.2).rgb;
   float crack = smoothstep(0.32, 0.85, cr.r) * smoothstep(0.05, 0.4, cr.g + 0.1);
   float life = s.r > 0.01 ? clamp(s.g / s.r, 0.0, 1.0) : 0.0;
   float bed = smoothstep(0.4, 0.95, s.r + (n - 0.5) * 0.4) * ch.r * mix(0.25, 1.0, life);
   float flick = 0.65 + 0.35 * vnoise3(vec3(wp.xz * 2.5, uClock * 2.2));
-  // the char stays dark between the flames; only its cracks glow (a flat glow washed the whole bed to tan)
-  float glow = (crack * 1.3 + 0.05) * flick * bed;
-  vec3 charC = cr * 0.12 + vec3(0.012, 0.008, 0.007);
-  vec3 glowC = vec3(1.0, 0.38, 0.07) * glow * 1.6;
-  float a = rim * 0.93;
+  // the bed alive between the flames (the user, take 1: "the background looks a bit static where there is no fire"):
+  // a dull red underglow beneath the flame clusters (the gas's own cluster noise, same seed), heat moving through the
+  // cracks in slow waves, and patches of embers glowing up and dimming
+  float cl = smoothstep(0.45, 0.75, vnoise3(vec3(wp.xz * 0.95, uClock * 0.15 + uSeed * 0.01)));
+  float wave = 0.5 + 0.5 * sin(dot(wp.xz, vec2(0.83, 0.56)) * 1.4 - uClock * 1.7 + n * 5.0);
+  // molten pockets: rare pools of glow that swell and fade, with a speckle of embers round them
+  float pocket = smoothstep(0.68, 0.86, vnoise3(vec3(wp.xz * 1.6, uClock * 0.35 + 4.0)));
+  float embers = pocket * (0.6 + 0.4 * vnoise3(vec3(wp.xz * 9.0, uClock * 1.3)));
+  float glow = (crack * (0.9 + 1.2 * wave) + 0.04) * flick * bed;
+  vec3 charC = cr * 0.06 + vec3(0.008, 0.006, 0.005);
+  vec3 glowC = vec3(1.0, 0.38, 0.07) * glow * 1.6 + vec3(0.55, 0.09, 0.02) * cl * bed * 0.9 + vec3(1.8, 0.5, 0.06) * embers * bed * 1.8;
+  // smoky toward the rim: the char's dark thins out into a soot haze rather than ending
+  float a = rim * mix(0.55, 0.96, smoothstep(0.35, 0.9, m));
   return vec4(charC * a + glowC, a);
 }`;
 
@@ -226,7 +276,7 @@ export class FireFloor {
     this.G = { ...this.U, ...FX_U, uSeed: { value: seed }, uChar: { value: null }, uGy: { value: 0 }, uH: { value: FLAME_H }, uBoxC: { value: new THREE.Vector3() }, uBoxH: { value: new THREE.Vector3(1, 1, 1) } };
     this.flames = gasMesh(this.G);
     this.embers = new ParticleBatch({ motion: FLOOR_EMBER, look: LOOK_EMBER, cap: MAX_BURNING * EMBERS_PER_CELL, order: 2, uniforms: this.U });
-    this.embers.u.uSeed.value = seed + 7; this.bed.u.uSeed.value = seed + 3;
+    this.embers.u.uSeed.value = seed + 7; this.bed.u.uSeed.value = seed;   // the bed's underglow follows the gas's clusters
     this.group.add(this.bed.mesh, this.flames, this.embers.mesh);
   }
 

@@ -450,4 +450,31 @@ window.ROUNDS = [
     ],
     general: 'Anything else about the patch',
   },
+  {
+    id: 'fire-9',
+    group: 'Fire',
+    topic: 'Patch',
+    tab: '2 · alive',
+    el: 'fire',
+    date: '2026-11-26',
+    title: 'Fire patch, take 2: the bed alive, licks and spits',
+    lead: 'Your notes on take 1 (“pretty good... feels a little off”): the wandering fire is good, but the ground between the flames looked static; vary the fire like the wave, with spits and licks coming up, some outside the patch; and there was no concept art for it.',
+    items: [
+      {
+        id: 'concept',
+        title: 'The concept',
+        text: 'Codex, from a frame of take 1, the gas ring and the storyboard you kept. Top row: the patch’s life with your notes. Bottom row: five close-up ideas for a livelier burn (glowing veins, a tall curling lick, tongues spilling over the rim, molten pockets, a ragged ring of flame). Its main lesson: the patch is mostly dark, smoky char with flame covering perhaps a third of it; take 1 was two thirds flame, which hid everything else.',
+        img: ['el-story-patch-3.jpg'],
+        ask: 'Which of its ideas do you want?',
+      },
+      {
+        id: 'patch',
+        title: 'Fire patch',
+        text: 'After your notes and the concept: less flame (fewer, smaller clusters), so the char shows; the char darker and smoky toward its rim; the bed alive: a dull red underglow beneath wherever the flames wander, heat moving through the cracks in slow waves, and molten pockets that swell and fade. And licks: the ground is dealt into cells about 1.8 u across, and now and then one shoots a tall, thin tongue of the same gas that wiggles up, lets go of the ground and dies; near the edge they lean outward, reaching over the clean stone. Two runes, five runes, and at play distance.',
+        vid: ['p2-patch-14.mp4', 'p2-patch5-14.mp4', 'p2-patch-30.mp4'],
+        ask: 'Closer?',
+      },
+    ],
+    general: 'Anything else about the patch',
+  },
 ];

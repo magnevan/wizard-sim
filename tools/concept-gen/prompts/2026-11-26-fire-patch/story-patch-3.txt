@@ -1,0 +1,13 @@
+Generate one image with your image generation tool, then save it as story-patch-3.png in the current directory. Reply with just the file name.
+
+Three images are attached. The first is a frame of our game as it is now: a stylised 3D action game seen from a steep camera about 46 degrees down, on a warm, pale sandstone floor; a small red wizard has placed a Fire patch on the ground near some goblins. Its flames are billowing clouds of burning gas, saturated yellow and orange, over a dark charred bed with thin glowing cracks. The second is the same fire as a ring, the element's approved look: soft, billowing, gaseous flame, never sprites or a flat sheet. The third is an earlier storyboard of the patch that the designer liked for its beats.
+
+Draw a storyboard: two rows of five panels, left to right in time, each panel the same game camera (46 degrees down, same framing), on the same pale sandstone floor, with the same small red wizard and a few goblins at game scale (a wizard is about 1.6 metres tall). Thin dark gutters between panels. The patch is a rough circle about 4 metres across.
+
+The designer's notes on the current patch: the flames wandering around the patch are good, but where there is no fire the charred ground looks static; and the fire is too even, it needs variety, like little spits and licks of flame coming up, some reaching out a bit beyond the patch's edge.
+
+Top row, the patch's life with those notes: (1) it lands: a burst of fire at its middle racing out to the patch's edge; (2) burning: billowing clusters of gaseous flame wander over a charred bed that is alive between them, with embers glowing and dimming in patches, heat pulsing through the cracks in slow waves, a dull red underglow beneath the flames; tall thin licks of flame shoot up here and there and die; at the rim small tongues of fire spill out over the clean stone and curl back; (3) a goblin walks in and catches fire; (4) dying: the clusters shrink, the bed glows in fewer, smaller spots, thin smoke rises; (5) the aftermath: a soft-edged dark char with a few ember specks and smoke wisps.
+
+Bottom row: five close-up variations of panel 2 only, each a different idea for making the burning patch more varied and alive (for example: glowing veins that flare and travel, flame licks that leap and detach, a ragged rim of creeping flame, pockets of molten glow, heat haze). Same camera and scale as the top row, zoomed in a little.
+
+Keep the look of the references: soft billowing gas for every flame, saturated yellows and oranges, dark char. Paint with restraint: flat, readable shapes, few of them. No text, no labels, no numbers, no UI, no arrows.

@@ -149,3 +149,7 @@ The first try of concept art as breakdowns (`docs/explorations/2026-11-26-spell-
 - The parts sheet ("each building block alone on black, a short life strip of four to six frames") gave clean rows to rebuild from, and asked-for new parts (a hollow ring flame, a wave-front segment, a scorch cooling) came out as usable as the copied one.
 - Sizes need saying in game terms (metres, wizard heights); the ring came back a little wide, so read radii off the sim, not the art.
 - Words about hurting yourself trip the image model's filter: "sets him alight... a desperate, self-harming spell" was refused (self-harm, violence). The same look as "a mantle of fire around himself" passed.
+
+### 2026-11-26, fire patch take 2
+
+One storyboard (`prompts/2026-11-26-fire-patch/story-patch-3.txt`) with three references: a frame of the gas patch (take 1), a frame of the gas ring, and `el-story-patch.jpg`. It asked for the patch's life with the user's notes on top and five close-up variations of the burning stage below, which worked well as an idea sheet: each variation came back distinct. First try; kept as `docs/reference/spell-concepts/fire/el-story-patch-3.jpg`.

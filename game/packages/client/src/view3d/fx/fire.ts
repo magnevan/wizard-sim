@@ -47,7 +47,8 @@ export const NOZZLE = { forward: 0.55, height: 1.3, endHeight: 0.6 };
 /**
  * The body mesh (fire-body.ts): off since round 5. The user, round 4: "there are fire particles that spit out, but
  * there's also an animated sheet under. I think the sheet has problems. It bends in a way that looks weird, it ends
- * abruptly, the holes don't look realistic." The tongues now fill the cone over a soft glow; true draws the mesh again.
+ * abruptly, the holes don't look realistic." Painted flame puffs (PUFF) now fill the cone over a soft glow; true draws
+ * the mesh again.
  */
 const BODY_MESH = false;
 
@@ -71,8 +72,7 @@ const RATE = {
   core: (n: number) => 320 + 60 * n, coreLife: 0.2,
   smoke: (n: number) => 16 + 6 * n, smokeLife: 1.5,
   puff: (n: number) => 170 + 50 * n, puffLife: 0.5,
-  ember: (n: number) => (14 + 8 * n) * (n >= 5 ? 1.6 : 1), emberLife: 0.9,
-  tongue: (n: number) => 160 + 50 * n, tongueLife: 0.3,
+  ember: (n: number) => (40 + 15 * n) * (n >= 5 ? 1.6 : 1), emberLife: 1.1,
   glow: (n: number) => 90 + 20 * n, glowLife: 0.5,
 };
 
@@ -83,12 +83,12 @@ Particle particle(float k, float age, float ts) {
   vec4 A = aimAt(uTime - ts);
   float s = age * uCore, side = rnd(k, 31.0) * 2.0 - 1.0;
   Particle p = P0(); p.alive = true;
-  p.pos = sprayAt(A, s, side * uHalf * 0.3 * smoothstep(0.0, 0.4, s), 0.0, axisH(s) + (rnd(k, 35.0) - 0.5) * 0.12 * s);
+  p.pos = sprayAt(A, s, side * uHalf * 0.1 * smoothstep(0.0, 0.4, s), 0.0, axisH(s) + (rnd(k, 35.0) - 0.5) * 0.05 * s);
   // drawn as if 1.1 u nearer the camera (along its own line of sight, so it stays where it is on screen): the staff's
   // white-hot start shows over the caster's own hat and back when he faces away from the camera
   p.pos += normalize(cameraPosition - p.pos) * 1.1;
-  p.size = 0.08 + fanW(A, s) * 0.22 + 0.1 * (1.0 - smoothstep(0.0, 0.3, s / uCore));
-  p.stretch = 0.035;
+  p.size = 0.05 + fanW(A, s) * 0.06 + 0.05 * (1.0 - smoothstep(0.0, 0.3, s / uCore));
+  p.stretch = 0.09;
   p.col = vec4(s / uCore, 0.0, age, 1.0);
   return p;
 }`);
@@ -116,29 +116,8 @@ Particle particle(float k, float age, float ts) {
   float h = axisH(s) + 0.3 + sin(a * 3.14159) * 0.8 - a * a * 1.2;
   Particle p = P0(); p.alive = true;
   p.pos = sprayAt(A, s, ang, 0.0, max(0.03, h));
-  p.size = 0.035; p.stretch = 0.025;
+  p.size = 0.05; p.stretch = 0.025;
   p.col = vec4(0.05 + 0.25 * rnd(k, 23.0) + a * 0.3, 0.0, a, 1.0 - a * a);
-  return p;
-}`);
-
-/**
- * Tongues: many small painted flame tongues racing out through the body, each a quarter of a second, its tip trailing
- * behind it; the speed the body alone couldn't show (the study: the pixel spray is hundreds of small fast pieces).
- */
-const TONGUE = streamMotion(/* glsl */ `${SPRAY_HEAD}
-Particle particle(float k, float age, float ts) {
-  vec4 A = aimAt(uTime - ts);
-  float s0 = 0.04 + 0.8 * rnd(k, 41.0), s = s0 + age * (0.3 + 0.22 * rnd(k, 42.0));
-  if (s > 1.06) return P0();
-  // across the whole cone (they are the body now), denser toward the middle
-  float sd = rnd(k, 43.0) * 2.0 - 1.0, side = sign(sd) * pow(abs(sd), 1.3) * uHalf * 0.95 * smoothstep(0.0, 0.25, s), w = fanW(A, s);
-  Particle p = P0(); p.alive = true;
-  p.pos = sprayAt(A, s, side, 0.0, mix(axisH(s), w * 0.3 + 0.15, smoothstep(0.0, 0.6, s)) + (rnd(k, 44.0) - 0.3) * (0.2 + w * 0.35) + age * age * 0.3);
-  p.size = (0.15 + w * 0.15) * (0.7 + 0.5 * rnd(k, 45.0)) * sin(min(age, 0.999) * 3.14159) * (1.0 - 0.6 * smoothstep(0.85, 1.06, s));
-  p.aspect = 0.55; p.stretch = 0.035;
-  // its picture re-picked 12 times a second: the stepped flicker of the pixel flames
-  p.col = vec4(s, age, 0.0, 1.0);
-  p.data = vec4(rnd(k * 7.0 + floor(uTime * 12.0), 46.0), rnd(k, 47.0), 0.0, 0.0);
   return p;
 }`);
 
@@ -177,15 +156,14 @@ Particle particle(float k, float age, float ts) {
 }`);
 
 const LOOK_PUFF = /* glsl */ `
-uniform float uTime;
+uniform sampler2D uSheet;
+${SHEET_GLSL}
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   float age = col.x;
-  // a soft blotch with a ragged, churning edge
-  float n = vnoise3(vec3(uv * 2.4 + data.xy * 11.0, uTime * 3.0 + data.x * 7.0));
-  float r = length(uv) * (0.75 + 0.5 * n);
-  float m = smoothstep(1.0, 0.35, r);
-  // bright yellow when young, orange, then red as it ends (Magicka 1)
-  vec3 c = fireRamp(0.24 + age * 0.45 + (n - 0.5) * 0.12);
+  vec3 t = sheetCell(uSheet, uv * 0.5 + 0.5, data.x, data.y, 4.0, 4.0);
+  float lum = max(t.r, max(t.g, t.b)), m = smoothstep(0.06, 0.4, lum);
+  // the painting's own flame, warmer when young and redder as it ends (Magicka 1)
+  vec3 c = t * mix(vec3(1.7, 1.5, 1.1), vec3(1.2, 0.5, 0.3), smoothstep(0.2, 0.9, age));
   float fade = smoothstep(0.0, 0.08, age) * (1.0 - smoothstep(0.45, 1.0, age));
   float a = m * fade;
   // mostly added light (they glow as one mass, as Magicka's do), a little cover so it holds colour on pale stone
@@ -195,20 +173,7 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
 
 // ---- looks -------------------------------------------------------------------------------------------------------
 
-/** A tongue: the painted lick, tip trailing, covering where it's bright, cooler toward the far end. */
-const LOOK_TONGUE = /* glsl */ `
-uniform sampler2D uSheet;
-${SHEET_GLSL}
-vec4 look(vec2 uv, vec4 col, vec4 data) {
-  vec3 t = sheetCell(uSheet, vec2(uv.x * 0.5 + 0.5, 0.5 - uv.y * 0.5), data.x, data.y, 4.0, 4.0);
-  float lum = max(t.r, max(t.g, t.b)), m = smoothstep(0.08, 0.45, lum);
-  // the painting's own colour, pushed past white at its hottest and cooled to red toward the far end
-  vec3 c = t * mix(vec3(2.4, 1.9, 1.4), vec3(1.5, 0.7, 0.4), smoothstep(0.3, 1.0, col.x));
-  float a = m * 0.7;
-  return vec4(c * a, a);
-}`;
-
-/** The glow under the tongues: soft warm light riding out with them, the body's warmth without a surface. */
+/** The glow under the puffs: soft warm light riding out with them, the body's warmth without a surface. */
 const LOOK_GLOW = /* glsl */ `
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   float m = exp(-dot(uv, uv) * 2.6) * sin(min(col.y, 0.999) * 3.14159);
@@ -220,9 +185,11 @@ const LOOK_CORE = /* glsl */ `
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   float m = smoothstep(1.0, 0.0, length(uv)); m *= m;
   float heat = clamp(col.x, 0.0, 1.0);
-  vec3 c = mix(vec3(5.0, 4.8, 4.0), vec3(3.6, 2.4, 0.8), heat);
-  float a = m * smoothstep(1.0, 0.6, heat);
-  return vec4(c * a * 0.55, a * 0.55);
+  // crisp: a hard-edged streak, white along its middle, yellow-orange at its edges, cooling toward the jet's end
+  float e = smoothstep(1.0, 0.75, length(uv)), x = abs(uv.x);
+  vec3 c = mix(mix(vec3(6.0, 5.8, 5.2), vec3(4.6, 3.0, 0.9), smoothstep(0.15, 0.75, x)), vec3(3.6, 2.0, 0.5), heat * 0.6);
+  float a = e * smoothstep(1.0, 0.7, heat);
+  return vec4(c * a * 0.8, a * 0.75);
 }`;
 
 /** Smoke: a painted puff's shape and shading, tinted dark warm grey-brown, capped so what's behind it still shows. */
@@ -241,7 +208,7 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
 export const LOOK_EMBER = /* glsl */ `
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   float m = smoothstep(1.0, 0.3, length(uv));
-  return vec4(fireRamp(col.x) * 0.9 * m, m * 0.9) * col.w;
+  return vec4(fireRamp(col.x) * 1.6 * m, m * 0.95) * col.w;
 }`;
 
 /**
@@ -305,11 +272,10 @@ export class FireSpray {
     add(SMOKE, LOOK_SMOKE, RATE.smoke, RATE.smokeLife, 0, { uSheet: { value: FIRE_TEX.smoke } });
     // the body: one volume, a mesh (fire-body.ts), its deep-red outline shell first, then the flame
     add(GLOW, LOOK_GLOW, RATE.glow, RATE.glowLife, 2, {}, 7);
-    add(PUFF, LOOK_PUFF, RATE.puff, RATE.puffLife, 3, {}, 8);
+    add(PUFF, LOOK_PUFF, RATE.puff, RATE.puffLife, 3, { uSheet: { value: FIRE_TEX.rolls } }, 8);
     this.body = new FireBody(SPRAY_HEAD, this.U, seed);
     this.body.group.visible = BODY_MESH;
     this.group.add(this.body.group);
-    add(TONGUE, LOOK_TONGUE, RATE.tongue, RATE.tongueLife, 4, { uSheet: { value: FIRE_TEX.licks } }, 6);
     add(CORE, LOOK_CORE, RATE.core, RATE.coreLife, 4);
     add(EMBER, LOOK_EMBER, RATE.ember, RATE.emberLife, 5);
     this.fan = new GroundDecal({ look: FAN, uniforms: { ...this.F, uHalf: this.U.uHalf } });

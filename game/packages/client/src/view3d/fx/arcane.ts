@@ -97,7 +97,7 @@ vec4 look(float along, float across, float len) {
   // pulses: fast packets racing out from the staff; one in seven skipped so they don't tick like a clock
   float ph = (along - uClock * uSurgeV) / uSurgeSp, f = fract(ph), L = min(uSurgeL / uSurgeSp, 0.9);
   // a long, soft pulse: a bright head and a long tail of light behind it
-  float pulse = (f > 1.0 - L ? pow((f - (1.0 - L)) / L, 1.6) * smoothstep(1.0, 0.94, f) : 0.0) * step(0.14, rnd(floor(ph) + 4096.0, 5.0)) * ends;
+  float pulse = (f > 1.0 - L ? pow((f - (1.0 - L)) / L, 1.4) * smoothstep(1.0, 0.82, f) : 0.0) * step(0.14, rnd(floor(ph) + 4096.0, 5.0)) * ends;
   // the core and the body: gaussian falloffs, no edge to read as a border
   // a bulging glow where it leaves the staff (Diablo 3's Disintegrate), swelling core, body and plasma there
   float bulge = exp(-along * along / 0.35);
@@ -114,10 +114,15 @@ vec4 look(float along, float across, float len) {
   float wisp = (smoothstep(0.78, 0.97, ridge) + 0.6 * smoothstep(0.82, 0.98, ridge2)) * env * ends;
   float haze = env * env * 0.18 * ends;
   float lit = 0.55 + 1.1 * pulse + 0.8 * bulge;
+  float cloudW = reachW * 0.75, around = exp(-(side * side) / (cloudW * cloudW) * 1.8);
+  float pulseCloud = pulse * around * (0.75 + 0.5 * n);
+  float dHit = length(vec2(along - len, across)), hitR = uHalo * uWide * 1.6;
+  float hitCloud = exp(-(dHit * dHit) / (hitR * hitR) * 1.6) * (0.65 + 0.7 * n2) * step(0.3, len) * uWide;
   vec3 c = vec3(1.2, 0.06, 2.0) * wisp * lit * uHaloK * 1.8 + vec3(0.7, 0.03, 1.0) * haze * lit;
   c += mix(vec3(1.5, 0.18, 1.9), vec3(2.4, 0.9, 2.8), body) * body * (1.0 + 0.4 * pulse + 0.6 * bulge);
   c += mix(vec3(3.0, 2.2, 3.4), vec3(5.0, 4.8, 5.2), max(uWhite, pulse)) * core;
-  float a = clamp(body * 0.85 + wisp * 0.55 * uHaloK + haze * 0.5, 0.0, 0.95);
+  c += vec3(1.7, 0.25, 2.3) * pulseCloud * 1.2 + vec3(2.0, 0.45, 2.6) * hitCloud * 1.4;
+  float a = clamp(body * 0.85 + wisp * 0.55 * uHaloK + haze * 0.5 + pulseCloud * 0.35 + hitCloud * 0.45, 0.0, 0.95);
   return vec4(c, a);
 }`;
 
@@ -343,7 +348,7 @@ export class ArcaneBeam {
     this.L.uClock.value = t; this.L.uBody.value = W.body; this.L.uCore.value = W.core; this.L.uHalo.value = W.halo; this.L.uHaloK.value = W.haloK;
     this.L.uWide.value = Math.sqrt(wide); this.L.uWhite.value = n >= 4 ? 1 : 0; this.L.uSurgeSp.value = S.sp; this.L.uSurgeV.value = S.v; this.L.uSurgeL.value = S.len;
     this.line.mesh.visible = wide > 0 && len > 0.01;
-    this.line.set(this.a, this.b, W.halo * 2.6 + 0.2, W.halo * 1.2 + 0.1);
+    this.line.set(this.a, this.b, W.halo * 2.6 + 0.2, W.halo * 1.8 + 0.3);
     // its haze: a band about a wizard's arm either side of the line
     this.H.uClock.value = t; this.H.uHazeW.value = 0.5 + 0.04 * n; this.H.uOnH.value = wide * grow;
     this.haze.mesh.visible = this.line.mesh.visible;

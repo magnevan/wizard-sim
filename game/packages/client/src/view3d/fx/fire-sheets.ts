@@ -5,6 +5,7 @@
  * - `smoke`: 4 × 4 pale smoke puffs (a shape and its shading; the shader tints them dark).
  * - `cracks`: a tileable charred bed with glowing cracks, under the floor's flames.
  * - `licks`: 4 × 4 long flame tongues, base down: the spray's fast tongues (the study's "many small, fast elements").
+ * - `rolls`: 4 × 4 painted rolling flame masses: the spray's puffs since round 8 (the user: "flames have no texture").
  * - `flow`: a tileable texture of flame tongues streaming upward, scrolled through the body mesh (fire-body.ts).
  *
  * The spray's body and the floor's flames are meshes now (fire-body.ts, fire-floor.ts), so of the flame sheets the sprite
@@ -15,12 +16,12 @@
  */
 import * as THREE from 'three';
 
-const urls = import.meta.glob<string>('../../../../../content/generated/fx/fire-{smoke,cracks,licks,flow}.png', { eager: true, query: '?url', import: 'default' });
+const urls = import.meta.glob<string>('../../../../../content/generated/fx/fire-{smoke,cracks,licks,flow,rolls}.png', { eager: true, query: '?url', import: 'default' });
 
-export interface FireTex { smoke: THREE.Texture | null; cracks: THREE.Texture | null; licks: THREE.Texture | null; flow: THREE.Texture | null }
+export interface FireTex { smoke: THREE.Texture | null; cracks: THREE.Texture | null; licks: THREE.Texture | null; flow: THREE.Texture | null; rolls: THREE.Texture | null }
 
 /** The sheets, once loaded (null if missing). */
-export const FIRE_TEX: FireTex = { smoke: null, cracks: null, licks: null, flow: null };
+export const FIRE_TEX: FireTex = { smoke: null, cracks: null, licks: null, flow: null, rolls: null };
 
 async function load(name: keyof FireTex, tile = false): Promise<void> {
   const url = Object.entries(urls).find(([p]) => p.endsWith(`/fire-${name}.png`))?.[1];
@@ -33,7 +34,7 @@ async function load(name: keyof FireTex, tile = false): Promise<void> {
   } catch { /* drawn without it */ }
 }
 
-if (typeof document !== 'undefined') await Promise.all([load('smoke'), load('cracks', true), load('licks'), load('flow', true)]);
+if (typeof document !== 'undefined') await Promise.all([load('smoke'), load('cracks', true), load('licks'), load('flow', true), load('rolls')]);
 
 /**
  * GLSL: one cell of a sheet of `cols` × `rows` cells, `q` 0..1 across it (y up), picked by `pick` (0..1) and mirrored

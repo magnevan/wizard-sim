@@ -137,6 +137,13 @@ What the rounds taught:
 - **Beam** (`arcane.ts`): pulses at 16.5 + 2.25 u/s a rune (0.75×), 1.5 + 0.15 u long with a bright head and a long tail, widening the core most and the plasma least; a bulge where the beam leaves the staff (exp(−along²/0.35)) swelling core, body and plasma, with a bigger staff glow; at the hit no disc, a small hot point, the spark fan and the plasma envelope billowing round the goblin.
 - **Rock** (`earth.ts` `WAKE`): the trail tapers to 0.15 of its radius and erodes over its back half (from 0.45 of its length), and is a little longer (1.6 + 0.5 u a rune), so it trails off instead of ending square.
 
+## Round 8: painted flames, a real weld, embers; the beam's clouds (2026-11-26)
+
+**Round 7 verdicts, verbatim.** Fire: "Not a good attempt. flames have no texture, lets remove the old flame particles. add the embers, the initial \"weld\" looks really bad compared to magicka 2". In the rock's box, notes that read as the beam's: "Looks pretty good, a few tweaks. Can we make a brightly glowing cloud at the impact point? it looks like it just ends now. And I want to change the traveling points in two ways: 1. fade in the glow too, so its not starting at a hard point 2. In addition to the whisps, have a strong glowing cloud around the glowing points too, in addition to the whisps."
+
+- **Fire** (`fire.ts`, `fire-sheets.ts`): the puffs sample a cell of the painted `fire-rolls.png` (16 rolling flame masses from the toon round, unused since the sprite build), tinted warmer when young and redder as they age; the licks are gone; the weld is a crisp jet of long streaks (stretch 0.09, a tenth of the cone's spread, a hard edge, white along the middle and yellow-orange at the edges) instead of soft glows; embers 40 + 15 a rune a second (from 14 + 8), 0.05 u, brighter, 1.1 s. **Lesson:** procedural blobs read as "no texture" however they move; the painted sheet carried the fire at once, as the toon round's painted sheets had.
+- **Beam** (`arcane.ts`): a glowing plasma cloud round the hit point (radius 1.6 of the plasma's, noise-broken), so the beam no longer just ends; each pulse fades in at its head (over 0.18 of its length) as well as its tail; a glowing cloud round each pulse besides the wisps.
+
 ## Sources
 
 - [Stylized VFX in RiME](https://www.unrealengine.com/events/unreal-fest-europe-2018/stylized-vfx-in-rime) (Simon Trümpler, Unreal Fest Europe 2018), and his [VFX Sketchbook](https://realtimevfx.com/t/simon-trumpler-vfx-sketchbook/4177?page=11) on realtimevfx.com (UV distortion plus alpha erosion; the inner duplicate mesh; faster scrolling while fading).

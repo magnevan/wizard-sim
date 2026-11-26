@@ -17,8 +17,8 @@
      "perRune": 41.5,
      "perSecond": 14.1,
      "gain": null,
-     "reach": 4.5,
-     "help": "+1 FIRE: DMG ×1.41, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+     "reach": 6,
+     "help": "+1 FIRE: DMG ×1.41, RANGE +0.8U, WIDTH +24%, WIND-UP +0.04S"
     },
     {
      "n": 2,
@@ -31,8 +31,8 @@
      "perRune": 28.2,
      "perSecond": 19.1,
      "gain": 1.36,
-     "reach": 5,
-     "help": "+1 FIRE: DMG ×1.22, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+     "reach": 6.8,
+     "help": "+1 FIRE: DMG ×1.22, RANGE +0.8U, WIDTH +26%, WIND-UP +0.04S"
     },
     {
      "n": 3,
@@ -45,8 +45,8 @@
      "perRune": 22.4,
      "perSecond": 22.7,
      "gain": 1.19,
-     "reach": 5.5,
-     "help": "+1 FIRE: DMG ×1.15, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+     "reach": 7.5,
+     "help": "+1 FIRE: DMG ×1.15, RANGE +0.8U, WIDTH +29%, WIND-UP +0.04S"
     },
     {
      "n": 4,
@@ -59,8 +59,8 @@
      "perRune": 18.9,
      "perSecond": 25.3,
      "gain": 1.12,
-     "reach": 6,
-     "help": "+1 FIRE: DMG ×1.12, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+     "reach": 8.3,
+     "help": "+1 FIRE: DMG ×1.12, RANGE +0.8U, WIDTH +31%, WIND-UP +0.04S"
     },
     {
      "n": 5,
@@ -73,7 +73,7 @@
      "perRune": 16.6,
      "perSecond": 27.6,
      "gain": 1.1,
-     "reach": 6.5,
+     "reach": 9,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
     }
    ]
@@ -248,8 +248,8 @@
      "perRune": 12.5,
      "perSecond": 4.3,
      "gain": null,
-     "reach": 4.5,
-     "help": "+1 COLD: DMG ×1.41, FROST +8, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+     "reach": 6,
+     "help": "+1 COLD: DMG ×1.41, FROST +8, RANGE +0.8U, WIDTH +24%, WIND-UP +0.04S"
     },
     {
      "n": 2,
@@ -262,8 +262,8 @@
      "perRune": 8.7,
      "perSecond": 5.9,
      "gain": 1.4,
-     "reach": 5,
-     "help": "+1 COLD: DMG ×1.22, FROST +8, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+     "reach": 6.8,
+     "help": "+1 COLD: DMG ×1.22, FROST +8, RANGE +0.8U, WIDTH +26%, WIND-UP +0.04S"
     },
     {
      "n": 3,
@@ -276,8 +276,8 @@
      "perRune": 7,
      "perSecond": 7.1,
      "gain": 1.21,
-     "reach": 5.5,
-     "help": "+1 COLD: DMG ×1.15, FROST +8, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+     "reach": 7.5,
+     "help": "+1 COLD: DMG ×1.15, FROST +8, RANGE +0.8U, WIDTH +29%, WIND-UP +0.04S"
     },
     {
      "n": 4,
@@ -290,8 +290,8 @@
      "perRune": 6,
      "perSecond": 8,
      "gain": 1.13,
-     "reach": 6,
-     "help": "+1 COLD: DMG ×1.12, FROST +8, RANGE +0.5U, CONE +25%, WIND-UP +0.04S (A COLD POOL HOLDS 4)"
+     "reach": 8.3,
+     "help": "+1 COLD: DMG ×1.12, FROST +8, RANGE +0.8U, WIDTH +31%, WIND-UP +0.04S (A COLD POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -304,7 +304,7 @@
      "perRune": 4.8,
      "perSecond": 7.9,
      "gain": 1,
-     "reach": 6.5,
+     "reach": 9,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
     }
    ]
@@ -472,70 +472,70 @@
      "n": 1,
      "title": "Water spray",
      "shape": "spray",
-     "value": 4.2,
-     "crowd": 16.8,
+     "value": 7,
+     "crowd": 26.2,
      "runes": 1,
      "seconds": 2.93,
-     "perRune": 4.2,
-     "perSecond": 1.4,
+     "perRune": 7,
+     "perSecond": 2.4,
      "gain": null,
-     "reach": 4.5,
-     "help": "+1 WATER: DMG ×1.41, PUSH +18U/S A SECOND, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+     "reach": 6,
+     "help": "+1 WATER: DMG ×1.41, PUSH +18U/S A SECOND, RANGE +0.8U, WIDTH +24%, WIND-UP +0.04S"
     },
     {
      "n": 2,
      "title": "Water spray",
      "shape": "spray",
-     "value": 4,
-     "crowd": 14.5,
+     "value": 6.2,
+     "crowd": 22.2,
      "runes": 2,
      "seconds": 2.95,
-     "perRune": 2,
-     "perSecond": 1.3,
-     "gain": 0.94,
-     "reach": 5,
-     "help": "+1 WATER: DMG ×1.22, PUSH +18U/S A SECOND, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+     "perRune": 3.1,
+     "perSecond": 2.1,
+     "gain": 0.89,
+     "reach": 6.8,
+     "help": "+1 WATER: DMG ×1.22, PUSH +18U/S A SECOND, RANGE +0.8U, WIDTH +26%, WIND-UP +0.04S"
     },
     {
      "n": 3,
      "title": "Water spray",
      "shape": "spray",
-     "value": 4,
-     "crowd": 14.2,
+     "value": 6.1,
+     "crowd": 21.4,
      "runes": 3,
      "seconds": 2.97,
-     "perRune": 1.3,
-     "perSecond": 1.4,
-     "gain": 1.02,
-     "reach": 5.5,
-     "help": "+1 WATER: DMG ×1.15, PUSH +18U/S A SECOND, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+     "perRune": 2,
+     "perSecond": 2.1,
+     "gain": 0.98,
+     "reach": 7.5,
+     "help": "+1 WATER: DMG ×1.15, PUSH +18U/S A SECOND, RANGE +0.8U, WIDTH +29%, WIND-UP +0.04S"
     },
     {
      "n": 4,
      "title": "Water spray",
      "shape": "spray",
-     "value": 4.1,
-     "crowd": 14.4,
+     "value": 6.3,
+     "crowd": 21.5,
      "runes": 4,
      "seconds": 2.98,
-     "perRune": 1,
-     "perSecond": 1.4,
+     "perRune": 1.6,
+     "perSecond": 2.1,
      "gain": 1.02,
-     "reach": 6,
-     "help": "+1 WATER: DMG ×1.12, PUSH +18U/S A SECOND, RANGE +0.5U, CONE +25%, WIND-UP +0.04S (A WATER POOL HOLDS 4)"
+     "reach": 8.3,
+     "help": "+1 WATER: DMG ×1.12, PUSH +18U/S A SECOND, RANGE +0.8U, WIDTH +31%, WIND-UP +0.04S (A WATER POOL HOLDS 4)"
     },
     {
      "n": 5,
      "title": "Water spray",
      "shape": "spray",
-     "value": 4.1,
-     "crowd": 14.4,
+     "value": 6.3,
+     "crowd": 21.5,
      "runes": 5,
      "seconds": 3,
-     "perRune": 0.8,
-     "perSecond": 1.4,
+     "perRune": 1.3,
+     "perSecond": 2.1,
      "gain": 1,
-     "reach": 6.5,
+     "reach": 9,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
     }
    ]
@@ -1726,24 +1726,24 @@
    "form": "water",
    "cast": "force",
    "heals": false,
-   "base": 4.2,
-   "baseCrowd": 16.8,
+   "base": 7,
+   "baseCrowd": 26.2,
    "rows": [
     {
      "add": "water",
      "title": "Water spray",
-     "value": 4,
-     "crowd": 14.5,
-     "gain": 0.94,
-     "crowdGain": 0.86
+     "value": 6.2,
+     "crowd": 22.2,
+     "gain": 0.89,
+     "crowdGain": 0.85
     },
     {
      "add": "fire",
      "title": "Scalding spray",
      "value": 40.5,
      "crowd": 142.5,
-     "gain": 9.64,
-     "crowdGain": 8.47
+     "gain": 5.78,
+     "crowdGain": 5.45
     }
    ]
   },

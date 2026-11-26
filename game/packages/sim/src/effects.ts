@@ -7,9 +7,9 @@
  */
 import { possessed, possession } from './possess';
 import type { Mod, SpellSpec } from './compile';
-import { ARMS, BODY, CELL, COMBAT, PERKS, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
+import { ARMS, BODY, CELL, COMBAT, PERKS, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T, sprayShape } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
-import { inCone, len, rayCircle } from './geom';
+import { inCone, inDrop, len, rayCircle } from './geom';
 import { HIT_KIND, addChill, addKnock, applyHit, drench, ignite, setHitKind, soakOf, tryFreeze, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { TERRAIN_HIT, clipRay, collideWalls, damageWall, fieldAlong, fieldAt, isRockHit, lensAt, rayThroughLens, wallAt, wallDamage } from './walls';
@@ -575,7 +575,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     return;
   }
   if (spec.shape === 'spray') {
-    const range = (possessed(w, src) ? possession(w).spray(w, src).range : SHAPES.sprayRange) + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
+    const { range, rb } = sprayShape(spec.sizeN, possessed(w, src) ? possession(w).spray(w, src).range : SHAPES.sprayRange);
     // Rock and barriers stop a spray like a beam: it ends at the wall and wears it down (healing doesn't).
     const [wallD, wk] = clipRay(w, x, y, dx, dy, range, b.team[src]);
     if (wk >= 0 && !spec.heal) damageWall(w, wk, wallDamage(w, wk, spec.counts, 0, rate), spec.counts[EL.fire - 1]);
@@ -588,7 +588,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     for (let i = 0; i < b.kind.length; i++) {
       if (!alive(w, i) || i === src) continue;
       const near = splash > 0 && len(b.x[i] - lx, b.y[i] - ly) <= splash + b.r[i];
-      if ((near || inCone(x, y, face, half, range, b.x[i], b.y[i], b.r[i])) && clearLine(w, x, y, b.x[i], b.y[i])) inside.push(i);
+      if ((near || inDrop(x, y, dx, dy, range, rb, b.x[i], b.y[i], b.r[i])) && clearLine(w, x, y, b.x[i], b.y[i])) inside.push(i);
     }
     if (COMBAT.sprayFalloff < 1) inside.sort((a, c) => len(b.x[a] - x, b.y[a] - y) - len(b.x[c] - x, b.y[c] - y) || a - c);
     inside.forEach((i, k) => {

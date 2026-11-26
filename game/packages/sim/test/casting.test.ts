@@ -467,16 +467,16 @@ describe('Life (support)', () => {
     expect(taken(w, dummy, RES.cold)).toBe(1); // and lapses (half-life ~7 s)
   });
 
-  it('a Life spray: more Fire widens the cone, more Life heals harder', () => {
+  it('a Life spray: more Fire widens the raindrop, more Life heals harder', () => {
     const healAt = (q: Element[], x: number, y: number) => {
       const { w, d } = range(8, 2);
       w.bodies.x[1] = x; w.bodies.y[1] = y; w.bodies.hp[1] = 20;
       d.queue(...q).cast(BTN.force, 45, 5);
       return w.bodies.hp[1] - 20;
     };
-    // an ally about 43 degrees off your aim: outside a one-Fire cone, inside a three-Fire one
-    expect(healAt(['life', 'fire'], 2.19, 2.05)).toBe(0);
-    expect(healAt(['life', 'fire', 'fire', 'fire'], 2.19, 2.05)).toBeGreaterThan(0);
+    // an ally beside the far end of the raindrop: outside a one-Fire spray's bulb, inside a three-Fire one's
+    expect(healAt(['life', 'fire'], 5.5, 1.6)).toBe(0);
+    expect(healAt(['life', 'fire', 'fire', 'fire'], 5.5, 1.6)).toBeGreaterThan(0);
     expect(healAt(['life', 'life', 'fire'], 2.5, 0)).toBeGreaterThan(healAt(['life', 'fire'], 2.5, 0));
   });
 

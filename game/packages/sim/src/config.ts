@@ -150,7 +150,13 @@ export const STATUS = {
 
 export const SHAPES = {
   beamRange: 30, beamWidth: 0.35, // past the edge of the view: a beam runs until it hits something
-  sprayRange: 4.5, sprayHalfAngle: 0.09, // turns (about 32 degrees)
+  /**
+   * A spray is a raindrop (geom.ts inDrop; the user, 2026-11-26: narrower and longer like Magicka's, "raindrop-esque"):
+   * it reaches sprayRange + sprayPerRune a rune past the first, ending in a round bulb of sprayBulb (+ sprayBulbPerRune a
+   * rune) of that reach; its straight edges run from the hands tangent to the bulb. Three runes: 7.5 u, a 3.6 u bulb,
+   * edges about 18 degrees either side (the old cone: 5.5 u at 49 degrees, about the same area).
+   */
+  sprayRange: 6, sprayPerRune: 0.75, sprayBulb: 0.2, sprayBulbPerRune: 0.02,
   /**
    * Spell audit, 2026-11-11. Each zap of a held arc (it aims itself and chains, so it gives up damage to the aimed beam),
    * a Discharge's zap and a Strike's hit, as shares of the payload; and the close casts' edge over the placed ones
@@ -467,3 +473,12 @@ export const ARMS = {
   /** What each guard takes before it breaks. */
   hp: { mirror: 90, bulwark: 160, ember: 90, rime: 90, spark: 45, tide: 90, prism: 90, leaf: 90, spike: 120 },
 };
+
+/**
+ * A spray's raindrop at n runes (SHAPES; geom.ts inDrop): its reach, its bulb's radius, and the tangent of its edges'
+ * half-angle (the views take atan of it). `base` is the reach at one rune (a possessed fixture's own).
+ */
+export function sprayShape(n: number, base: number = SHAPES.sprayRange): { range: number; rb: number; tanHalf: number } {
+  const k = Math.max(1, n) - 1, range = base + SHAPES.sprayPerRune * k, rb = range * (SHAPES.sprayBulb + SHAPES.sprayBulbPerRune * k), c = range - rb;
+  return { range, rb, tanHalf: rb / Math.sqrt(Math.max(1e-6, c * c - rb * rb)) };
+}

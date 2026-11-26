@@ -37,6 +37,7 @@ import type { Frame } from './actors';
 import { HEIGHT, WIDTH, type Anchors, type RigKind } from './rigs';
 import { FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './util';
 import { Sil } from './sil';
+import { sprayDrop } from '../spray-drop';
 
 const EL = X.EL;
 
@@ -1174,7 +1175,7 @@ export class Vfx {
     const tr = this.trails.get(key) ?? new AimTrail();
     this.trails.set(key, tr);
     tr.record(t, t0, { x, y, ground, ex, ey });
-    const n = clamp(spec.sizeN || 1, 1, 5), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (n - 1)) * TAU;
+    const n = clamp(spec.sizeN || 1, 1, 5), half = sprayDrop(n).half;
     sprayJet(this.o.x, { kind, n, half, endH: 6, t0, seed, aim: tr.at, thin }, t);
   }
   private channels(w: World, t: number, bodies: BodyView[], light: LightFn): void {

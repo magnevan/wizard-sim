@@ -8,8 +8,9 @@
  *   for the flames standing on them.
  */
 import * as THREE from 'three';
-import { CELL, EL, MAX_SEATS, PHASE, SHAPES, SURF, specOf, type World } from '@wizard-sim/sim';
-import type { HeightAt } from './decal';
+import { CELL, EL, MAX_SEATS, PHASE, SURF, specOf, type World } from '@wizard-sim/sim';
+import type { HeightAt } from './decal';import { sprayDrop } from '../../spray-drop';
+
 
 /** Ticks a floor takes to fade at the end of its life (art/vfx.ts FLOOR_FADE: the last second). */
 export const FLOOR_FADE = 60;
@@ -22,8 +23,9 @@ export interface SprayIn {
   age: number;
   /** Runes setting its size, 1..5. */
   n: number;
-  /** The sim's half-angle (rad) and range (u); reach: to where it stops (a wall cuts it short). */
-  half: number; range: number; reach: number;
+  /** The sim's raindrop (spray-drop.ts): its edges' half-angle (rad), range and bulb radius (u); reach: to where it
+   * stops (a wall cuts it short). */
+  half: number; range: number; rb: number; reach: number;
   /** The caster's middle (three's x, z) and the aim's angle (rad, from +x toward +z). */
   x: number; z: number; ang: number;
 }
@@ -41,7 +43,7 @@ export function sprays(w: World): SprayIn[] {
     const x = b.x[i], y = b.y[i], ex = s.chanEndX[i], ey = s.chanEndY[i];
     out.push({
       seat: i, kind, age: s.chanTicks[i] / 60, n,
-      half: SHAPES.sprayHalfAngle * (1 + 0.25 * (n - 1)) * Math.PI * 2, range: SHAPES.sprayRange + 0.5 * (n - 1),
+      ...sprayDrop(n),
       reach: Math.hypot(ex - x, ey - y), x, z: y, ang: Math.atan2(s.aimY[i], s.aimX[i]),
     });
   }

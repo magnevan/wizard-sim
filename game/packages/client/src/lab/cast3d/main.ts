@@ -33,7 +33,7 @@
  */
 import * as THREE from 'three';
 import {
-  AIM_UNIT, ARCH, KIND, KEYED_EL, MAX_SEATS, NO_INPUT, PHASE, QUEUE_MAX, SHAPES, atan2Turns, createWorld, devRefillRunes, devSpawnEnemy, devStage, restore, quantize, snapshot, specOf, step,
+  AIM_UNIT, ARCH, KIND, KEYED_EL, MAX_SEATS, NO_INPUT, PHASE, QUEUE_MAX, atan2Turns, createWorld, devRefillRunes, devSpawnEnemy, devStage, restore, quantize, snapshot, specOf, step,
   type World,
 } from '@wizard-sim/sim';
 import { rules, type Element } from '@wizard-sim/rules';
@@ -42,6 +42,7 @@ import { setupStage } from '../kit-render';
 import { Spells3D } from '../../view3d/spells3d';
 import { Bodies3D } from '../../view3d/bodies';
 import { setSceneOrigin } from '../../view3d/scene-map';
+import { dropOutline } from '../../spray-drop';
 import { SCENES as PIXEL_SCENES } from '../vfx-lab/scenes';
 import { FOV, PITCH } from '../../view3d/camera3d';
 import { liveModel, liveSlugs } from '../../art/model-pose';
@@ -229,10 +230,8 @@ function drawHits(run: Run): void {
     const spec = specOf(w, i), x = w.bodies.x[i], y = w.bodies.y[i];
     if (spec.shape === 'beam') { dots([x, y], [s.chanEndX[i], s.chanEndY[i]]); continue; }
     if (spec.shape !== 'spray') continue;
-    const face = Math.atan2(s.aimY[i], s.aimX[i]), range = SHAPES.sprayRange + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1)) * Math.PI * 2;
-    const at = (a: number, r: number): [number, number] => [x + Math.cos(a) * r, y + Math.sin(a) * r];
-    dots([x, y], at(face - half, range)); dots([x, y], at(face + half, range));
-    for (let k = 0; k <= 40; k++) { const p = at(face - half + (2 * half * k) / 40, range); pts.push(p[0], 0.06, p[1]); }
+    const face = Math.atan2(s.aimY[i], s.aimX[i]), outline = dropOutline(x, y, face, spec.sizeN || 1);
+    for (let k = 1; k < outline.length; k++) dots(outline[k - 1], outline[k]);
   }
   const m = w.missiles;
   for (let j = 0; j < m.alive.length; j++) if (m.alive[j]) { circle(m.x[j], m.y[j], m.r[j]); dots([m.x[j], m.y[j]], [m.x[j] + m.vx[j] * m.life[j] / 60, m.y[j] + m.vy[j] * m.life[j] / 60], 0.4); }

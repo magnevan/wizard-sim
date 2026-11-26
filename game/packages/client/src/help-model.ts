@@ -10,7 +10,7 @@
 import { rules, type Cast, type Element, type SpellDescriptor } from '@wizard-sim/rules';
 import {
   ARMS, COMBAT, DAMAGE, GUARD_NAME, QUEUE_MAX, RHYTHM, RUNES, SHAPES, STATUS, STRUCT, SURFACE,
-  compile, elementName, formCurve, imbueReach, twoHanded, type SpellSpec,
+  compile, elementName, formCurve, imbueReach, sprayShape, twoHanded, type SpellSpec,
 } from '@wizard-sim/sim';
 import type { Demo } from './demo';
 
@@ -224,8 +224,8 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
   switch (sh) {
     case 'beam': reach('RANGE', SHAPES.beamRange); break;
     case 'spray':
-      reach('RANGE', SHAPES.sprayRange + 0.5 * (spec.sizeN - 1));
-      m.push({ key: 'cone', label: 'CONE', v: 100 * (1 + 0.25 * (spec.sizeN - 1)), unit: '%', hidden: true });
+      reach('RANGE', sprayShape(spec.sizeN || 1).range);
+      m.push({ key: 'cone', label: 'WIDTH', v: Math.round(100 * sprayShape(spec.sizeN || 1).rb / sprayShape(1).rb), unit: '%', hidden: true });
       break;
     case 'arc':
       reach('RANGE', SHAPES.arcRange);

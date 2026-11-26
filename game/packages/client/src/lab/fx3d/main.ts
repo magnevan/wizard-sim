@@ -19,7 +19,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {
-  AIM_UNIT, BTN, EL, KEYED_EL, QUEUE_MAX, SHAPES, atan2Turns, createWorld, devRefillRunes, devStage, quantize,
+  AIM_UNIT, BTN, EL, KEYED_EL, QUEUE_MAX, atan2Turns, createWorld, devRefillRunes, devStage, quantize,
   restore, snapshot, step, PHASE, specOf, type PlayerInput, type World,
 } from '@wizard-sim/sim';
 import wizMeta from '../../../../../content/assets/models/wizard.json';
@@ -29,7 +29,8 @@ import { FxStage } from '../../view3d/fx/stage';
 import { SpellLights } from '../../view3d/fx/lights';
 import { FireFloor, FireSpray, type FireSheets, type FxLook } from '../../view3d/fx/fire';
 import { SurfGrid, sprays } from '../../view3d/fx/from-sim';
-import { flatFloor } from '../../view3d/fx/decal';
+import { flatFloor } from '../../view3d/fx/decal';import { dropOutline } from '../../spray-drop';
+
 
 const q = new URLSearchParams(location.search);
 const LOOK: FxLook = q.get('look') === 'b' ? 'b' : 'a';
@@ -180,10 +181,8 @@ function drawHits(): void {
   const s = w.seats;
   if (s.phase[0] === PHASE.channel) {
     const spec = specOf(w, 0), x = w.bodies.x[0], y = w.bodies.y[0], face = Math.atan2(s.aimY[0], s.aimX[0]);
-    const range = SHAPES.sprayRange + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1)) * Math.PI * 2;
-    const at = (a: number, r: number): [number, number] => [x + Math.cos(a) * r, y + Math.sin(a) * r];
-    dots([x, y], at(face - half, range), 0.2, pts); dots([x, y], at(face + half, range), 0.2, pts);
-    for (let k = 0; k <= 40; k++) { const p = at(face - half + (2 * half * k) / 40, range); pts.push(p[0], 0.04, p[1]); }
+    const outline = dropOutline(x, y, face, spec.sizeN || 1);
+    for (let k = 1; k < outline.length; k++) dots(outline[k - 1], outline[k], 0.2, pts);
     dots([x, y], [s.chanEndX[0], s.chanEndY[0]], 0.3, end);
   }
   const L = grid.burning.image.data as Float32Array;

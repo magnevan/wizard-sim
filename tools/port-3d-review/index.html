@@ -75,9 +75,61 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
   <header>
     <div class="eyebrow">Port to 3D · step 0 · 2026-11-25</div>
     <h1>The Court in 3D</h1>
-    <p class="lede"><b>New: <a href="#r10">round 10</a>, flames that burn out, after how Magicka 1 builds its fire.</b> Below it, <a href="#r9">round 9</a>, <a href="#r8">round 8</a>, <a href="#r7">round 7</a>, <a href="#r6">round 6</a>, <a href="#r5">round 5</a>, <a href="#r4">round 4</a>, <a href="#r3">round 3</a>, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
+    <p class="lede"><b>New: <a href="#r11">round 11</a>, the spray is a raindrop now, and the wider, tapered beam.</b> Below it, <a href="#r10">round 10</a>, <a href="#r9">round 9</a>, <a href="#r8">round 8</a>, <a href="#r7">round 7</a>, <a href="#r6">round 6</a>, <a href="#r5">round 5</a>, <a href="#r4">round 4</a>, <a href="#r3">round 3</a>, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
     <div class="hero"><img src="img/plaza-26.jpg" alt="Two wizards and six goblins on the court's sunk plaza, seen from the 3D game camera"></div>
   </header>
+
+  <section id="r11">
+    <div class="top">
+      <div>
+        <h2>Round 11: the spray is a raindrop now</h2>
+        <p>You asked for the shape to be narrower and longer like Magicka's, and "more raindrop-esque". That changes the game's rules, not just the look, so it's done in the sim. <b>Every spray now hits a raindrop:</b> narrow at the hands, two straight edges running into a round bulb at the end. Three runes reach 7.5 u (was 5.5), with edges about 18° either side (was 49°) and a bulb 3.6 u across; the area is about the same. The dotted clip shows the new hit outline under the fire.</p>
+        <ul>
+          <li><b>All sprays share it:</b> water and cold too, an assumption since Magicka's sprays are alike. Say if one should keep the old shape.</li>
+          <li><b>Balance:</b> the only spell row that moved is the one-rune water spray (damage on the test crowd 4 → 7, since it reaches further); bot wave and Survive runs moved both ways within their usual noise. Logged as a design decision.</li>
+          <li><b>The fire follows it:</b> one stream from the hands that opens into a burning bulb. The three streams you saw are gone with the wide fan.</li>
+          <li><b>The char:</b> a ragged patch under the bulb where the flames die, instead of a stencil of the spell's outline.</li>
+          <li><b>Kept:</b> it still comes from the hands, as you liked.</li>
+          <li><b>Not yet:</b> your note on hollow, bright-edged flames like Magicka's; if the flames still read as separate sprites in this shape, a new flipbook is next.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r11-fire" data-rec="keep">
+        <div class="q">The raindrop fire</div>
+        <div class="choices" role="group" aria-label="The raindrop fire">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r11-fire" aria-label="Note: The raindrop fire" placeholder="The shape, the flames, the char"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+      <figure><video src="vid/r11-fire-open-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Open ground</b> · 3 runes, 16 u</figcaption></figure>
+      <figure><video src="vid/r11-fire-open-hit-14.mp4" muted loop playsinline autoplay></video><figcaption><b>With the hit outline</b> · the new raindrop, dotted</figcaption></figure>
+      <figure><video src="vid/r11-fire3-30.mp4" muted loop playsinline autoplay></video><figcaption><b>3 runes</b> · the game camera, 30 u</figcaption></figure>
+      <figure><video src="vid/r11-fire2-30.mp4" muted loop playsinline autoplay></video><figcaption><b>2 runes</b> · 30 u</figcaption></figure>
+      <figure><video src="vid/r11-fire3-14.mp4" muted loop playsinline autoplay></video><figcaption><b>In the crowd</b> · 3 runes, 16 u</figcaption></figure>
+    </div>
+    <div class="top">
+      <div>
+        <p><b>Arcane beam</b>, from your round 9 note: the glow is wider, and the plasma and body taper toward the front instead of widening there. The hit cloud still blooms where it strikes a goblin.</p>
+      </div>
+      <div class="answer" data-id="r11-arcane" data-rec="keep">
+        <div class="q">The beam, wider and tapered</div>
+        <div class="choices" role="group" aria-label="The beam, wider and tapered">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r11-arcane" aria-label="Note: The beam, wider and tapered" placeholder="The glow, the taper"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+      <figure><video src="vid/r11-arcane-open-30.mp4" muted loop playsinline autoplay></video><figcaption><b>Into the distance</b> · 30 u</figcaption></figure>
+      <figure><video src="vid/r11-arcane-open-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Into the distance</b> · 14 u</figcaption></figure>
+      <figure><video src="vid/r11-arcane-14.mp4" muted loop playsinline autoplay></video><figcaption><b>On a goblin</b> · 14 u</figcaption></figure>
+    </div>
+  </section>
 
   <section id="r10">
     <div class="top">

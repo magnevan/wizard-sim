@@ -122,8 +122,9 @@ export const TUT_PLACES = {
   cluster: [[2.6, -0.7], [3.4, 0.2], [2.4, 0.9], [3.6, -1.3], [4.2, 1.0]] as const,
   /** Beat 13: the puddle, and the two straw goblins standing in it. */
   puddle: [3, 0] as const, puddleR: 1.7, puddled: [[3, -0.75], [3, 0.75]] as const,
-  /** Beat 14: the pit you can't step into, and the bramble in its middle. */
-  pit: [3.5, -2] as const, pitR: 5.5,
+  /** Beat 14: the pit you can't step into, and the bramble in its middle. Wider than a two-rune spray reaches from its lip
+   * (7.1: the spray became a longer raindrop, 2026-11-26), so the fireball is still the way across. */
+  pit: [3.5, -0.5] as const, pitR: 7.1,
   /** Beat 15: the wounded dummy, and the goblin asleep beside it. */
   patient: [1.5, 1.5] as const, sleeper: [2.6, 2.4] as const,
   /** The end card's three arches (Sanctum, Survive, Arena). */

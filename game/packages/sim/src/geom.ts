@@ -10,6 +10,22 @@ export function angleDiff(a: number, b: number): number {
   return d;
 }
 
+/**
+ * A spray's raindrop (the user, 2026-11-26: "less section of a pie chart and more raindrop-esque", narrower and longer
+ * like Magicka's): a round bulb of radius `rb` ending `range` out along (dx, dy) from (ox, oy), and the two straight
+ * edges running from the origin tangent to it. Is a body at (px, py), radius pr, inside? Products and square roots only
+ * (deterministic: no trig).
+ */
+export function inDrop(ox: number, oy: number, dx: number, dy: number, range: number, rb: number, px: number, py: number, pr = 0): boolean {
+  const rx = px - ox, ry = py - oy, along = rx * dx + ry * dy, side = Math.abs(rx * dy - ry * dx);
+  const c = range - rb, bx = along - c;
+  if (bx * bx + side * side <= (rb + pr) * (rb + pr)) return true;
+  if (along * along + side * side <= pr * pr) return true;
+  const t2 = c * c - rb * rb;
+  if (t2 <= 0 || along < 0 || along * along + side * side > t2 + pr * pr) return false;
+  return side <= along * (rb / Math.sqrt(t2)) + pr;
+}
+
 /** Is point (px, py) inside the cone from (ox, oy), facing `face` (turns), half-angle `half` (turns), radius `range`? */
 export function inCone(ox: number, oy: number, face: number, half: number, range: number, px: number, py: number, pr = 0): boolean {
   const dx = px - ox, dy = py - oy;

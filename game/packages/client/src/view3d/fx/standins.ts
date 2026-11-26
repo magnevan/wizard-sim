@@ -34,7 +34,8 @@ import * as X from '../../art/px';
 import { isColdNova } from './cold';
 import { plainRock } from './earth-sheets';
 import type { SpellLights } from './lights';
-import { Batch, type RGB } from './standins-batch';
+import { Batch, type RGB } from './standins-batch';import { sprayDrop } from '../../spray-drop';
+
 
 const TAU = Math.PI * 2;
 /** Heights (u over the floor): a staff's tip, a missile's flight, a beam, a wizard's chest. */
@@ -404,7 +405,7 @@ export class Standins {
         if (spec.shape === 'spray') {
           const look = spec.look || spec.form;
           if (look === EL.fire && !spec.scald && !spec.heal && !this.drawFire) continue;   // look B (fire.ts)
-          const n = Math.max(1, Math.min(5, spec.sizeN || 1)), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (n - 1)) * TAU, range = SHAPES.sprayRange + 0.5 * (n - 1);
+          const n = Math.max(1, Math.min(5, spec.sizeN || 1)), { half, range } = sprayDrop(n);
           const face = Math.atan2(s.aimY[i], s.aimX[i]), reach = Math.min(range, Math.hypot(ex - x, ey - y));
           B.ring(B.tintBuf, x, y, 0.3, reach, P.mid, 0.55, P.deep, 0.35, face - half, face + half);
           B.circle(B.tintBuf, x, y, range, 0.07, P.deep, 0.6, face - half, face + half);

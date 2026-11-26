@@ -54,17 +54,24 @@ const BODY_MESH = false;
 
 const SPRAY_HEAD = /* glsl */ `
 ${AIM_GLSL}
-uniform float uN, uHalf, uHot;
+uniform float uN, uHalf, uHot, uRange, uRb;
 uniform vec4 uNoz;   // forward offset, nozzle height, far-end height (over the floor), floor y
-// a point of the spray as aimed at A: s of the way out, a rad off the middle, l u across, h u over the floor
+// the spray's raindrop (the sim's geom.ts inDrop): its half-width d u out, along straight edges then round the bulb
+float dropW(float d) {
+  float c = uRange - uRb, at = (c * c - uRb * uRb) / max(c, 1e-3);
+  return d < at ? d * tan(min(uHalf, 1.4)) : sqrt(max(uRb * uRb - (d - c) * (d - c), 0.0));
+}
+// a point of the spray as aimed at A: s of the way out, a off the middle (as a share of uHalf: +-uHalf is the drop's
+// edge there), l u across, h u over the floor
 vec3 sprayAt(vec4 A, float s, float a, float l, float h) {
-  float ang = A.z + a; vec2 d = vec2(cos(ang), sin(ang)), nn = vec2(-d.y, d.x);
-  vec2 g = A.xy + d * (uNoz.x + s * max(A.w - uNoz.x, 0.0)) + nn * l;
+  vec2 d = vec2(cos(A.z), sin(A.z)), nn = vec2(-d.y, d.x);
+  float dd = uNoz.x + s * max(A.w - uNoz.x, 0.0);
+  vec2 g = A.xy + d * dd + nn * (l + a / max(uHalf, 1e-3) * dropW(dd));
   return vec3(g.x, uNoz.w + h, g.y);
 }
 float axisH(float s) { return mix(uNoz.y, uNoz.z, clamp(s, 0.0, 1.0)); }
-// the fan's half-width (u) s of the way out
-float fanW(vec4 A, float s) { return (uNoz.x + s * max(A.w - uNoz.x, 0.0)) * sin(min(uHalf, 1.45)); }
+// the drop's half-width (u) s of the way out
+float fanW(vec4 A, float s) { return dropW(uNoz.x + s * max(A.w - uNoz.x, 0.0)); }
 `;
 
 /** Each layer's births a second and life (s) at n runes. */
@@ -224,22 +231,28 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
  * the flames fly above it.
  */
 const FAN = /* glsl */ `
-uniform vec4 uFan; uniform float uHalf, uFanOn, uSootOn, uClock, uNozF;
+uniform vec4 uFan; uniform float uHalf, uFanOn, uSootOn, uClock, uNozF, uRange, uRb;
+float dropW(float d) {
+  float c = uRange - uRb, at = (c * c - uRb * uRb) / max(c, 1e-3);
+  return d < at ? d * tan(min(uHalf, 1.4)) : sqrt(max(uRb * uRb - (d - c) * (d - c), 0.0));
+}
 vec4 decal(vec3 wp) {
   vec2 d = wp.xz - uFan.xy; float r = length(d);
   if (r > uFan.w + 3.0 || (uFanOn <= 0.0 && uSootOn <= 0.0)) return vec4(0.0);
   vec2 dir = vec2(cos(uFan.z), sin(uFan.z));
-  float a = atan(d.y, d.x) - uFan.z; a = mod(a + 3.14159265, 6.2831853) - 3.14159265;
-  // the light spills a little past the flames' outline (about a cell), never further
-  float side = 1.0 - smoothstep(uHalf * 0.85, uHalf * 1.15, abs(a)), end = 1.0 - smoothstep(uFan.w - 0.2, uFan.w + 1.6, r);
+  float along = dot(d, dir), across = abs(d.x * dir.y - d.y * dir.x);
+  // the light follows the raindrop (where the flames are), spilling a little past it, never further
+  float w = dropW(clamp(along, 0.0, uRange)) + 0.15 * max(along, 0.0);
+  float side = (1.0 - smoothstep(w * 0.8, w * 1.25 + 0.3, across)) * step(-0.5, along), end = 1.0 - smoothstep(uFan.w - 0.2, uFan.w + 1.6, r);
   float n = fbm3(vec3(wp.xz * 1.1 - dir * uClock * 3.0, uClock * 0.7));
   float fan = side * end * smoothstep(0.2, 1.0, r) * (0.7 + 0.3 * n);
   float pool = exp(-dot(wp.xz - uFan.xy - dir * uNozF, wp.xz - uFan.xy - dir * uNozF) / 7.0);
   // as wide as the pixel spray's glow (the study): a pool round the caster and the fan, spilling past the flames
   float k = (fan * 1.15 + pool * 1.0) * uFanOn;
   // soot under the far half (Magicka 2's char): dark, blotchy, taking the stone's colour away
-  float soot = side * (1.0 - smoothstep(uFan.w - 0.1, uFan.w + 0.8, r)) * smoothstep(0.25, 0.6, r / max(uFan.w, 1.0)) * uSootOn;
-  soot *= smoothstep(0.12, 0.6, fbm3(vec3(wp.xz * 1.6, 3.0)));
+  vec2 bc = uFan.xy + dir * max(min(uFan.w, uRange) - uRb * 1.1, 0.5);
+  float br = length(wp.xz - bc), wob = fbm3(vec3(wp.xz * 0.7, 9.0)), grain = fbm3(vec3(wp.xz * 2.3, 3.0));
+  float soot = (1.0 - smoothstep(uRb * 0.45, uRb * 1.25, br * (0.75 + 0.6 * wob))) * smoothstep(0.3, 0.65, grain) * uSootOn * 0.85;
   // a warm glaze: it takes a little of the pale stone's own colour away (alpha) and puts saturated firelight back, so the
   // floor under the fire turns orange rather than just brighter (which the tone map would wash to cream)
   vec3 c = mix(vec3(1.0, 0.45, 0.1), vec3(1.0, 0.24, 0.04), clamp(r / max(uFan.w, 1.0), 0.0, 1.0));
@@ -257,6 +270,7 @@ export class FireSpray {
   private U = {
     uTime: { value: 0 }, uEnd: { value: 1e9 }, uN: { value: 1 }, uHalf: { value: 0.5 }, uHot: { value: 0 }, uCore: { value: 0.35 },
     uNoz: { value: new THREE.Vector4(NOZZLE.forward, NOZZLE.height, NOZZLE.endHeight, 0) }, uAim: this.trail.uniform,
+    uRange: { value: 7.5 }, uRb: { value: 1.8 },
   };
   private layers: { b: ParticleBatch; rate: (n: number) => number; life: (n: number) => number }[] = [];
   /** The warm pool and fan on the floor (FAN). */
@@ -285,7 +299,7 @@ export class FireSpray {
     this.group.add(this.body.group);
     add(CORE, LOOK_CORE, RATE.core, RATE.coreLife, 4);
     add(EMBER, LOOK_EMBER, RATE.ember, RATE.emberLife, 5);
-    this.fan = new GroundDecal({ look: FAN, uniforms: { ...this.F, uHalf: this.U.uHalf } });
+    this.fan = new GroundDecal({ look: FAN, uniforms: { ...this.F, uHalf: this.U.uHalf, uRange: this.U.uRange, uRb: this.U.uRb } });
     this.group.add(this.fan.mesh);
   }
 
@@ -303,7 +317,7 @@ export class FireSpray {
       const t0 = t - spray.age;
       if (!r || r.end < t || Math.abs(r.t0 - t0) > 0.05) { r = this.rec = { t0, end: Infinity, last: t, n: spray.n }; }
       r.last = t; r.n = spray.n;
-      this.U.uHalf.value = spray.half;
+      this.U.uHalf.value = spray.half; this.U.uRange.value = spray.range; this.U.uRb.value = spray.rb;
       // the channel's end isn't set on its first tick (it reads as the room's origin): never past the sim's range
       this.trail.record(t, { x: spray.x, z: spray.z, ang: spray.ang, reach: Math.min(spray.reach, spray.range) });
     } else if (r && r.end === Infinity) r.end = r.last;

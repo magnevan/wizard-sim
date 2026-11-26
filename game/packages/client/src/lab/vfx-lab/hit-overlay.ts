@@ -1,7 +1,7 @@
 /**
  * The VFX Lab's hit overlay (?hit=1): what the sim's hits really cover, dotted over the stage, read from the sim's state
  * and config, never from the art, so an effect can be checked against where it hurts:
- *   - a spray's cone (effects.ts channelTick: SHAPES.sprayRange and sprayHalfAngle, both growing per extra rune), and
+ *   - a spray's raindrop (effects.ts channelTick: geom.ts inDrop at config.ts sprayShape, growing per extra rune), and
  *     where it stops (the channel's far end: a wall cuts it short)
  *   - a beam's line, to the channel's far end
  *   - each missile's circle (missiles.r) and the rest of its flight (its velocity over its remaining life)
@@ -9,8 +9,9 @@
  *   - each area cast's ring (its burst event's radius), for half a second
  * Drawn on the stage's 2D overlay; positions go through each panel's own camera, so the ground's turn and squash apply.
  */
-import { DT, MAX_SEATS, PHASE, SHAPES, atan2Turns, specOf, type World } from '@wizard-sim/sim';
-import type { Cell } from './cell';
+import { DT, MAX_SEATS, PHASE, atan2Turns, specOf, type World } from '@wizard-sim/sim';
+import type { Cell } from './cell';import { dropOutline } from '../../spray-drop';
+
 
 const COL = 'rgba(255,255,255,0.9)', SHADE = 'rgba(0,0,0,0.55)', RING = 'rgba(255,214,90,0.95)';
 /** Ticks an area ring stays on the overlay after it went off. */
@@ -64,11 +65,7 @@ function channels(w: World, dots: (pts: [number, number][], col: string, gap?: n
     if (spec.shape === 'beam') { dots([[x, y], [ex, ey]], COL, 4); continue; }
     if (spec.shape !== 'spray') continue;
     const face = atan2Turns(s.aimY[i], s.aimX[i]) * Math.PI * 2;
-    const range = SHAPES.sprayRange + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1)) * Math.PI * 2;
-    const at = (a: number, r: number): [number, number] => [x + Math.cos(a) * r, y + Math.sin(a) * r];
-    const arc: [number, number][] = [];
-    for (let k = 0; k <= 24; k++) arc.push(at(face - half + (2 * half * k) / 24, range));
-    dots([[x, y], at(face - half, range)], COL); dots([[x, y], at(face + half, range)], COL); dots(arc, COL);
+    dots(dropOutline(x, y, face, spec.sizeN || 1, 24), COL);
     // where the stream stops (short of the range when a wall cuts it)
     dots([[x, y], [ex, ey]], RING, 7);
   }

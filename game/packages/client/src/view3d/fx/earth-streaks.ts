@@ -76,13 +76,14 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   if (abs(ang) > 1.25) return vec4(0.0);
   float ray = floor(ang * 7.0), rl = 0.55 + 0.45 * rnd(ray + col.y, 3.0);
   float spoke = 1.0 - smoothstep(0.25, 0.5, abs(fract(ang * 7.0) - 0.5) * 2.0 / max(0.25, 1.0 - r));
-  float solid = smoothstep(0.35, 0.1, r) * (1.0 - smoothstep(0.1, 0.35, age));
+  float solid = smoothstep(0.3, 0.08, r) * (1.0 - smoothstep(0.05, 0.22, age));
   float rays = spoke * step(r, rl) * smoothstep(0.0, 0.15, age);
   // eaten from the middle outward: the burst leaves the point it struck
   float keep = smoothstep(age * 0.9 - 0.05, age * 0.9 + 0.05, r + 0.15 * rnd(ray + col.y, 6.0));
   float m = clamp(max(solid, rays * keep), 0.0, 1.0) * (1.0 - smoothstep(0.7, 1.0, age));
-  vec3 c = mix(vec3(1.7, 1.55, 1.25), vec3(0.55, 0.42, 0.28), smoothstep(0.2, 0.8, age));
-  return vec4(c * m, m * 0.85);
+  // grit, not light (2026-11-26: "flashing can be too loud"): a warm pale contact for a moment, rays already dust
+  vec3 c = mix(vec3(1.15, 1.0, 0.78), vec3(0.42, 0.32, 0.21), smoothstep(0.04, 0.3, age));
+  return vec4(c * m * 0.8, m * 0.7);
 }`;
 
 export interface StreakRock { x0: number; y: number; z0: number; t0: number; vx: number; vz: number; r: number; end: number }

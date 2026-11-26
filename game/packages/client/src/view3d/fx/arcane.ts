@@ -27,6 +27,7 @@
  * staff's rings and a bigger impact at five. Every particle is a pure function of the clock and seeds.
  */
 import * as THREE from 'three';
+import { phaseOf } from './phase';
 import { EL, KIND, MAX_SEATS, PHASE, SHAPES, specOf, type World } from '@wizard-sim/sim';
 import { AIM_GLSL, AimTrail } from './aim-trail';
 import { BeamStrip, GroundStrip } from './beam-strip';
@@ -192,8 +193,8 @@ vec3 beamPt(vec4 A, float d) { vec2 dir = vec2(cos(A.z), sin(A.z)), g = A.xy + d
 `;
 
 /** Each layer's births a second and life (s), at n runes and impact variant (0 a, 1 b). */
-/** How long (s) the plasma's wisps linger once the beam stops. */
-const LINGER = 1.6;
+/** The beam's phases (phase.ts): it grows in 0.1 s, the beam itself goes out in 0.14 s, the plasma lingers 1.6 s as smoke. */
+const LIFE = { grow: 0.1, fall: 0.14, linger: 1.6 };
 
 const RATE = {
   hit: (n: number, b: number) => (b ? 26 + 6 * n : 34 + 8 * n), hitLife: (b: number) => (b ? 0.42 : 0.32),
@@ -359,14 +360,13 @@ export class ArcaneBeam {
       r.last = t; r.n = beam.n; r.groundY = groundY;
       this.trail.record(t, { x: beam.x, z: beam.z, ang: beam.ang, reach: beam.hit ? beam.reach : -beam.reach });
     } else if (r && r.end === Infinity) r.end = r.last;
-    if (r && t > r.end + Math.max(RATE.hitLife(1), LINGER) + 0.05) r = this.rec = null;
+    if (r && t > r.end + Math.max(RATE.hitLife(1), LIFE.linger) + 0.05) r = this.rec = null;
     this.group.visible = !!r;
     if (!r) { this.haze.mesh.visible = false; return; }
     const n = r.n, imp = impact === 'b' ? 1 : 0, gy = r.groundY;
     this.trail.fill(t);
     const now = this.trail.at(t), hit = now.reach > 0, reach = Math.abs(now.reach);
-    const grow = 1 - (1 - Math.min(1, Math.max(0, (t - r.t0) / 0.1))) ** 2;
-    const wide = t <= r.end ? 1 : Math.max(0, 1 - (t - r.end) / 0.14), after = t <= r.end ? 0 : Math.min(1, (t - r.end) / LINGER);
+    const { grow, on: wide, after } = phaseOf(t, r.t0, r.end, LIFE);
     const cs = Math.cos(now.ang), sn = Math.sin(now.ang), len = Math.max(0, reach - BEAM_FROM.forward) * grow;
     this.a.set(now.x + cs * BEAM_FROM.forward, gy + BEAM_FROM.height, now.z + sn * BEAM_FROM.forward);
     this.b.set(this.a.x + cs * len, this.a.y, this.a.z + sn * len);

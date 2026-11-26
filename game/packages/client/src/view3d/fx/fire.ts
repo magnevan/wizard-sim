@@ -25,6 +25,7 @@
  * Everything is a pure function of the clock, the sim's state and seeds, as the pixel effects are.
  */
 import * as THREE from 'three';
+import { phaseOf } from './phase';
 import { AIM_GLSL, AimTrail } from './aim-trail';
 import { type SprayIn } from './from-sim';
 import { GroundDecal } from './decal';
@@ -310,6 +311,9 @@ vec4 decal(vec3 wp) {
   return vec4(c * k * 0.35 * (1.0 - soot) + vec3(0.035, 0.022, 0.014) * soot * 0.55, clamp(k * 0.12 + soot * 0.9, 0.0, 0.95));
 }`;
 
+/** The spray's phases (phase.ts): its light goes out in 0.3 s; the soot, smoke and ash linger 6 s. */
+const PHASE = { fall: 0.3, linger: 6.0 };
+
 /** Its runes' heat: shifts the colours hotter (art/spray-jet.ts: hot = 0.035 per rune past the first). */
 const hotOf = (n: number): number => 0.035 * (n - 1);
 
@@ -373,7 +377,7 @@ export class FireSpray {
       // the channel's end isn't set on its first tick (it reads as the room's origin): never past the sim's range
       this.trail.record(t, { x: spray.x, z: spray.z, ang: spray.ang, reach: Math.min(spray.reach, spray.range) });
     } else if (r && r.end === Infinity) r.end = r.last;
-    if (r && t > r.end + 6.2) { r = this.rec = null; }
+    if (r && t > r.end + PHASE.linger + 0.2) { r = this.rec = null; }
     this.group.visible = !!r;
     if (!r) return;
     const n = r.n;
@@ -385,11 +389,12 @@ export class FireSpray {
     this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - Math.max(0, t - r.end - 0.8) / 0.3);
     this.U.uN.value = n; this.U.uHot.value = hotOf(n); this.U.uCore.value = 0.34 + 0.02 * n; this.U.uNoz.value.w = groundY;
     for (const l of this.layers) { l.b.u.uRate.value = l.rate(n); l.b.u.uLife.value = l.life(n); }
-    const now = this.trail.at(t), on = t <= r.end ? Math.min(1, (t - r.t0) / 0.15) : Math.max(0, 1 - (t - r.end) / 0.3);
+    // phases (phase.ts): the stream's light grows in 0.15 s and goes out in 0.3 s; the soot is its aftermath (6 s)
+    const ph = phaseOf(t, r.t0, r.end, PHASE), now = this.trail.at(t), on = Math.min(ph.on, Math.min(1, (t - r.t0) / 0.15));
     // the light on the floor runs out with the flames (full length in about 0.45 s), not ahead of them
     const grown = Math.min(1, (t - r.t0) / 0.45);
     this.F.uFan.value.set(now.x, now.z, now.ang, NOZZLE.forward + (now.reach - NOZZLE.forward) * grown); this.F.uFanOn.value = on * (0.75 + 0.07 * n); this.F.uClock.value = t;
-    this.F.uSootOn.value = t <= r.end ? Math.min(1, (t - r.t0) / 0.3) : Math.max(0, 1 - (t - r.end) / 6.0);
+    this.F.uSootOn.value = Math.min(1, (t - r.t0) / 0.3) * (1 - ph.after);
     this.fan.heightAt = () => groundY;
     this.fan.cover({ x0: now.x - now.reach - 3, z0: now.z - now.reach - 3, x1: now.x + now.reach + 3, z1: now.z + now.reach + 3 });
     // light: the staff's flare and the stream, brighter with more runes, only while it's running

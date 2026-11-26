@@ -29,7 +29,7 @@ export interface Impact {
 }
 
 /** How long an impact draws (s): the cracks are last to go. */
-export const IMPACT_LIFE = 3.4;
+export const IMPACT_LIFE = 4.8;
 /** Impacts drawn at once (the oldest beyond this go first). */
 const MAX_IMPACTS = 6;
 /** Shard instances (all impacts together). */
@@ -204,10 +204,11 @@ export class EarthImpacts {
       u.uT.value = age; u.uLife.value = life; u.uR.value = R; u.uSeed.value = i.seed % 997; u.uSalt.value = (i.seed % 61) * 1.7; u.uClock.value = age;
       for (const [k, v] of Object.entries(o)) u[k].value = v;
     };
-    set(D.ring, !i.pass, 1.5 + 0.08 * i.n, { uTube: 0.22 + 0.04 * i.n, uRate: 5.5, uR0: 0.2 }, g, R * 0.15);
+    // the aftermath (the lessons, 2026-11-26: what's left lingers): the dust hangs and settles slowly, the gravel stays
+    set(D.ring, !i.pass, 2.3 + 0.1 * i.n, { uTube: 0.22 + 0.04 * i.n, uRate: 5.5, uR0: 0.2 }, g, R * 0.15);
     set(D.shock, !i.pass && i.n >= 4, 0.5, { uTube: 0.1, uRate: 7, uR0: 0.4 }, g);
     D.shock.u.uR.value = R * 2;
-    set(D.blob, true, 0.85, { uB: i.r * 0.7 + 0.18 }, i.pass ? i.y : (i.y + g) * 0.5, i.pass ? 0 : R * 0.3);
+    set(D.blob, true, 1.7, { uB: i.r * 0.7 + 0.18 }, i.pass ? i.y : (i.y + g) * 0.5, i.pass ? 0 : R * 0.3);
   }
 
   /** The rock's shards at `age` s after impact i, from instance k; returns the next free instance. */
@@ -226,9 +227,10 @@ export class EarthImpacts {
       const tf = Math.min(age, land), skid = Math.max(0, age - land), slide = (1 - Math.exp(-skid * 6)) / 6 * 0.35;
       const x = i.x + vx * (tf + slide), z = i.z + vz * (tf + slide);
       const y = age < land ? y0 + vy * tf - 0.5 * GRAV * tf * tf : g + size * 0.6;
-      const life = land + (big ? 0.9 : 0.35) + 0.4 * h01(sd, 6);
-      if (age > life + 0.45) continue;
-      const shrink = 1 - Math.min(1, Math.max(0, (age - life) / 0.45));
+      // the gravel lies where it landed a while, then sinks into the floor
+      const life = land + (big ? 2.6 : 2.0) + 0.6 * h01(sd, 6);
+      if (age > life + 0.6) continue;
+      const shrink = 1 - Math.min(1, Math.max(0, (age - life) / 0.6));
       const spin = (big ? 3 : 9 + 8 * h01(sd, 7)) * tf;
       this.e.set(h01(sd, 8) * 6.28 + spin, h01(sd, 9) * 6.28, h01(sd, 10) * 6.28 + spin * 0.6);
       this.q.setFromEuler(this.e);

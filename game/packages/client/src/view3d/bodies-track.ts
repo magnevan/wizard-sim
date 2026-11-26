@@ -81,6 +81,11 @@ export class BodyTrack {
   private turnOwe = new Float64Array(MAX_BODIES);
   private flashT = new Float64Array(MAX_BODIES).fill(-9);
   private flashSoft = new Uint8Array(MAX_BODIES);
+  /** Each body's last real hit, for its recoil (bodies.ts): when, the unit direction away from who dealt it (sim x, y), how hard. */
+  private recT = new Float64Array(MAX_BODIES).fill(-9);
+  private recX = new Float32Array(MAX_BODIES);
+  private recY = new Float32Array(MAX_BODIES);
+  private recK = new Float32Array(MAX_BODIES);
   private swingN = new Uint16Array(MAX_BODIES);
   private lastHitT = new Float64Array(MAX_BODIES).fill(NaN);
   private hitAt = new Float64Array(MAX_BODIES).fill(NaN);
@@ -136,6 +141,17 @@ export class BodyTrack {
     this.snapX.set(w.bodies.x); this.snapY.set(w.bodies.y); this.snapKind.set(w.bodies.kind); this.snapFace.set(w.bodies.face);
   }
 
+  /**
+   * Body i's recoil at sim time t: how far it leans (radians) and which way (a unit sim x, y away from the blow). Fast
+   * in (0.06 s), then back with a small rebound over about 0.4 s; none for a body that's down.
+   */
+  recoil(w: World, i: number, t: number): { lean: number; dx: number; dy: number } | null {
+    const a = t - this.recT[i];
+    if (!(a >= 0 && a < 0.5) || w.bodies.downed[i] || w.bodies.down[i] > 0) return null;
+    const env = a < 0.06 ? Math.sin((a / 0.06) * Math.PI / 2) : Math.exp(-(a - 0.06) * 7) * Math.cos((a - 0.06) * 9);
+    return { lean: 0.2 * this.recK[i] * env, dx: this.recX[i], dy: this.recY[i] };
+  }
+
   afterStep(w: World): void {
     const b = w.bodies, s = w.seats, t = this.simTime(w);
     this.seenTick = w.clock[0];
@@ -145,6 +161,12 @@ export class BodyTrack {
         // flashes they kept burning goblins ghost-white (the 3D fire's round 8)
         this.flashSoft[e.who] = t - this.flashT[e.who] < 0.35 || b.burn[e.who] > 0 ? 1 : 0;
         this.flashT[e.who] = t;
+        // the recoil: away from who dealt it (a burn's ticks and hits from the world don't push); a repeat only nudges
+        const src = e.src ?? -1;
+        if (!e.dot && src >= 0 && src !== e.who && b.kind[src]) {
+          const dx = b.x[e.who] - b.x[src], dy = b.y[e.who] - b.y[src], d = Math.hypot(dx, dy);
+          if (d > 1e-3) { this.recX[e.who] = dx / d; this.recY[e.who] = dy / d; this.recK[e.who] = this.flashSoft[e.who] ? 0.3 : 1; this.recT[e.who] = t; }
+        }
       }
       if (e.kind === 'blink' && e.who >= 0) { this.prevX[e.who] = b.x[e.who]; this.prevY[e.who] = b.y[e.who]; }
       if (e.kind === 'fizzle' && e.ev === EV.death && e.who >= 0) this.fall(w, e.who, e.tick, t);

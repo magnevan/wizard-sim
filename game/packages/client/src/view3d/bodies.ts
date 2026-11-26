@@ -45,7 +45,11 @@ interface Fall extends Fallen { slug: string; t0: number; shown: Shown }
  */
 // a falling fade, not a solid white blink (the user on the rock, round 2: "blinks in and out in too much of a static manner")
 // a held spray or beam re-hits every few ticks: those repeat hits (level 4) only glimmer, or the rim never goes out
-const flashLevel = (f: number): number => (f >= 16 ? 0.85 : f >= 9 ? 0.45 : f >= 4 ? 0.08 : 0);
+// softer since the recoil carries the hit (the user, 2026-11-26: "It's nice to have somewhat of an omph to acknowledge the
+// hit, but flashing can be too loud")
+const flashLevel = (f: number): number => (f >= 16 ? 0.5 : f >= 9 ? 0.26 : f >= 4 ? 0.06 : 0);
+
+const UP = new THREE.Vector3(0, 1, 0), AXIS = new THREE.Vector3();
 
 export class Bodies3D {
   /** Everything this draws, under the parent the view gave. */
@@ -86,6 +90,10 @@ export class Bodies3D {
       const sh = this.take(i, m ? slug : null, s.kind, b.r[i]);
       const x = this.track.prevX[i] + (b.x[i] - this.track.prevX[i]) * alpha, y = this.track.prevY[i] + (b.y[i] - this.track.prevY[i]) * alpha;
       sh.holder.position.copy(toScene(x, y));
+      // a hit tips the body back from its feet, away from the blow (bodies-track.ts recoil)
+      const rc = this.track.recoil(real, i, t);
+      if (rc) { const q = toScene(x + rc.dx, y + rc.dy).sub(sh.holder.position); q.y = 0; q.normalize(); AXIS.crossVectors(UP, q).normalize(); sh.holder.quaternion.setFromAxisAngle(AXIS, rc.lean); }
+      else sh.holder.quaternion.identity();
       sh.holder.updateMatrixWorld(true);
       const tint = b.kind[i] === KIND.double ? DOUBLE_TINT : 0xffffff;
       if (sh.inst && m && slug) this.poseInst(sh, m, livePose(slug, s, i), scopedKey('3d|' + slug + '|' + i), statusTint(s), tint, s.flash);

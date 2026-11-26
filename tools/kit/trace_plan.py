@@ -58,6 +58,13 @@ FIXES = {
         ('paint', 'the shore walk', 21, 33, 27, 34),       # a bay cut into the bluff, so the bath has room
         ('paint', 'grass at 3.5 m', 20, 29, 23, 32),       # the bluff over the bay is lawn with a parapet: a built wall behind the bath, a lookout above
         ('disc', 'the bath', 22.5, 35.0, 1.5),             # west of the climbing flight's landing             # a row of the walk between it and the sea, or it pours over as a fall            # a pool sunk into the shore walk, not a raised rim against the cliff
+        # the made set pieces (Meshy, 2026-11-26) in place of the plan's wall boxes and the trace's post stand-ins for the tents
+        ('drop-setpiece', 'setpiece.post'),
+        ('paint', 'paving at 3.5 m', 9, 21, 15, 25), ('paint', 'paving at 3.5 m', 39, 21, 44, 24),
+        ('object', dict(kind='setpiece', id='greenhouse', name='the greenhouse', piece='setpiece.greenhouse', at=[12.0, 23.0], front='S')),
+        ('object', dict(kind='setpiece', id='stills', name='the stills', piece='setpiece.stills', at=[41.5, 22.5], front='S')),
+        ('object', dict(kind='setpiece', id='tent-w', name='the west tent', piece='setpiece.infirmary-tent', at=[14.0, 15.5], front='S')),
+        ('object', dict(kind='setpiece', id='tent-e', name='the east tent', piece='setpiece.infirmary-tent', at=[32.0, 15.5], front='S')),
         # markers: the seats start on the road in, on the well's axis (the read: arrive from the north, the cots first)
         ('object', dict(kind='marker', id='start-0', at=[23, 9], name="seat 0 starts on the road in from the main gate")),
         ('object', dict(kind='marker', id='start-1', at=[22.2, 8.2], name="seat 1's start")),
@@ -285,6 +292,8 @@ def to_scene(P, scene_name):
             if 'name' in fx[2]: t['id'] = 't-' + '-'.join(''.join(c if c.isalnum() else ' ' for c in fx[2]['name'].lower().replace('the ', '')).split())
         elif fx[0] == 'object':     # ('object', obj): a marker or any other object, as written
             objs.append(dict(fx[1]))
+        elif fx[0] == 'drop-setpiece':   # ('drop-setpiece', piece): leave out the trace's set pieces of that kind (stand-ins replaced by hand)
+            setpieces[:] = [sp for sp in setpieces if sp['piece'] != fx[1]]
         elif fx[0] == 'flight':     # ('flight', name, head): a flight the plan drew as plain stairs
             objs.append(dict(id=f'f{sum(o["kind"] == "flight" for o in objs) + 1}', kind='flight', name=fx[1], head=fx[2]))
         elif fx[0] == 'paint':

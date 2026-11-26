@@ -13,6 +13,7 @@ The live game is public. The rest are private claude.ai pages where the design w
 | Page | Source | What it's for |
 |---|---|---|
 | [Wizard Sim (the game)](https://magnevan.github.io/wizard-sim/) | `game/` | The game, deployed on every push to main. |
+| [The Infirmary on the Kit](https://claude.ai/artifact/9xpg4f5Ye54kgLyGKrMEvA) | `tools/infirmary-review/` | The infirmary's plan D as a 3D kit scene: where it stands, the walk at the game's camera, what's off, and questions. |
 | [Elemental Arms](https://claude.ai/artifact/BVhH8ibwbLs7Zp8FcbPyB1) | `tools/weapon-variants/` | Every conjured weapon and infusion the rules allow (57), each with Codex concept art; mark keep, maybe or no (issue #4). |
 | [World and Progression](https://claude.ai/artifact/YHDPMoL1keyG9AJ649mREc) | `tools/world-progression/` | The world as fields, zone strength, unlock pacing, shrines, encounters and story spines; answer the round-2 questions. |
 | [Tenth Element](https://claude.ai/artifact/EFD5ENtJsssrtPZxFtX49C) | `tools/tenth-element/` | Nine candidate tenth elements with animated vignettes, to rate. |

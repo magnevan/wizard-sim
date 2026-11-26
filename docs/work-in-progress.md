@@ -14,6 +14,9 @@ The opening is a chain of eight stops, Life first; the yard and the battery are 
 > [!in-review] Try the map editor
 > `npm run dev` in `game/`, then open http://localhost:5187/editor.html: patch B in 3D. Paint terraces, add stairs and props, click a wall section to make it a window or door, and pin (N) anything that should change: Claude sees new pins with your next message in the terminal. [How to use it](../tools/map-editor/README.md#using-the-editor).
 
+> [!in-review] The infirmary on the kit
+> Plan D rebuilt as a 3D kit scene, shown as renders along the walk: [The Infirmary on the Kit](https://claude.ai/artifact/9xpg4f5Ye54kgLyGKrMEvA). Answer its three questions; then the new pieces start ([thread](threads/infirmary-kit.md)).
+
 [The Morning Everything Breaks](https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews) · [Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) · [Saved marks](archive/claude-review-feedback-2026-11-16.md#opening-segment) · [Playable battery](current-state.md#rooms)
 
 ## The port to 3D

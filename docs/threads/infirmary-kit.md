@@ -11,7 +11,7 @@ Branch `worktree-infirmary-kit`.
 
 ## Next
 
-- [ ] **The user walks it** (`npm run dev` in `game/`, then `index.html#infirmary`, or the editor) and says what's off. Known from the first look (`cli.mjs view`):
+- [ ] **The user reviews it** on [The Infirmary on the Kit](https://claude.ai/artifact/9xpg4f5Ye54kgLyGKrMEvA) (renders, so no game needed; source `tools/infirmary-review/`, answers in its db `answers`), or walks it (`npm run dev` in `game/`, then `index.html#infirmary`). Known from the first look (`cli.mjs view`):
   - The east flight from the overlook is a short 2-cell flight beside the stills, not plan rev 7's long run along the drop (no room on the kit without moving the dais or the stills). The two overlook flights are near twins again, which the flow critic marked down.
   - The conduit walkways (raised to 3.8 m, a kerb you step onto) mostly didn't survive the flights' landings; they're dressing anyway (pipes with vines).
   - The woods are drawn as plain lawn: the kit has no woods floor yet.

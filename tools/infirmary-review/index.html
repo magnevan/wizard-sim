@@ -1,0 +1,231 @@
+<title>The Infirmary on the Kit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; status ladder up top, then the scene as a walk, then questions beside what they ask about. */
+:root {
+  --bg: #f3f5ef; --panel: #ffffff; --fg: #1d2420; --muted: #5d6a62; --line: #d6ddd3;
+  --accent: #2f7d55; --accent-soft: #e1efe6; --warn: #a86a12; --warn-soft: #f7ecd9; --done: #2f7d55; --todo: #9aa69e;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141a17; --panel: #1c2420; --fg: #e4ebe6; --muted: #9aa89f; --line: #2e3a34;
+  --accent: #6cc495; --accent-soft: #1f3a2c; --warn: #e0a548; --warn-soft: #3a2e1a; --done: #6cc495; --todo: #5b6861; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141a17; --panel: #1c2420; --fg: #e4ebe6; --muted: #9aa89f; --line: #2e3a34;
+  --accent: #6cc495; --accent-soft: #1f3a2c; --warn: #e0a548; --warn-soft: #3a2e1a; --done: #6cc495; --todo: #5b6861; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 750; }
+h2 { font-size: 26px; font-weight: 750; }
+h3 { font-size: 17px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 17px; color: var(--muted); }
+section { display: grid; gap: 18px; }
+code { font: 13px var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+/* the ladder */
+.ladder { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.phase { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.phase ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.phase li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; }
+.mark { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--todo); margin-top: 3px; }
+li.done .mark { background: var(--done); border-color: var(--done); }
+li.now .mark { border-color: var(--warn); background: var(--warn-soft); }
+li .when { color: var(--muted); font-size: 13px; }
+li.now b { color: var(--warn); }
+/* figures */
+.trio { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+figure img { width: 100%; border-radius: 8px; border: 1px solid var(--line); cursor: zoom-in; display: block; }
+figcaption { font-size: 13.5px; color: var(--muted); }
+figcaption b { color: var(--fg); font-weight: 600; }
+.walk { display: grid; gap: 34px; }
+.stop { display: grid; gap: 12px; }
+.stop .num { font: 500 13px var(--mono); color: var(--accent); }
+/* gaps */
+.gaps { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.gaps li { background: var(--warn-soft); border-left: 3px solid var(--warn); padding: 10px 14px; border-radius: 0 6px 6px 0; }
+/* questions */
+.answer { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 12px; }
+.answer .rec { font-size: 13.5px; color: var(--muted); }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choices button { font: 500 14px var(--body); padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.choices button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.choices button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+textarea { width: 100%; box-sizing: border-box; min-height: 64px; font: 14px/1.5 var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); resize: vertical; }
+.status { font: 12px var(--mono); color: var(--muted); min-height: 1em; }
+dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 94vh; }
+dialog::backdrop { background: rgb(0 0 0 / .8); }
+dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6px; }
+@media (prefers-reduced-motion: no-preference) { .choices button { transition: background .15s, border-color .15s; } }
+</style>
+
+<div class="wrap">
+
+<header style="display:grid;gap:14px">
+  <div class="eyebrow">The opening · stop 1 · Life</div>
+  <h1>The Infirmary on the Kit</h1>
+  <p class="lede">The infirmary's layout, the plan you picked on 22 November, rebuilt in 3D from the kit's pieces so it can be walked in the 3D game. Nothing on it is final art yet: every building, tent and the well are stand-ins. This page shows where it stands, so you can review it without loading the game.</p>
+</header>
+
+<section>
+  <h2>Where it stands</h2>
+  <p>Yes, the concept art and flow are done. The infirmary went through reading the concept, plans, flow and sense on 22 November as a flat grey-box. Today's work started the second half: building it in 3D.</p>
+  <div class="ladder">
+    <div class="phase">
+      <div class="eyebrow">Done · 22 Nov, as a grey-box</div>
+      <h3>Deciding what the place is</h3>
+      <ol>
+        <li class="done"><span class="mark"></span><span>Concept art read as a plan <span class="when">(the caged well, the cots, the conduits)</span></span></li>
+        <li class="done"><span class="mark"></span><span>Three plans plus a control; you picked <b>plan D</b> <span class="when">("the flow is very good, where you see the people to heal first")</span></span></li>
+        <li class="done"><span class="mark"></span><span>Flow in the game: <b>8/10</b>, passed <span class="when">(four rounds, revisions 4 to 7)</span></span></li>
+        <li class="done"><span class="mark"></span><span>Sense in the game: <b>9/10</b>, passed <span class="when">(revision 9)</span></span></li>
+      </ol>
+    </div>
+    <div class="phase">
+      <div class="eyebrow">Started · 26 Nov</div>
+      <h3>Building it on the kit</h3>
+      <ol>
+        <li class="done"><span class="mark"></span><span>Trace plan D into a kit scene, 0 errors <span class="when">(today)</span></span></li>
+        <li class="done"><span class="mark"></span><span>Walkable in the 3D game <span class="when">(today, on its branch)</span></span></li>
+        <li class="now"><span class="mark"></span><span><b>Your look at this draft</b>, then the new pieces: Codex pictures for your OK before any Meshy model</span></li>
+        <li><span class="mark"></span><span>Surfaces: tiling textures from Codex</span></li>
+        <li><span class="mark"></span><span>Paint-over of the grey-box, as the dressing target</span></li>
+        <li><span class="mark"></span><span>Dressing: lamps, beds, cots, pipes, vines</span></li>
+        <li><span class="mark"></span><span>Beauty, judged in the whole scene at the game's camera</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>From concept to scene</h2>
+  <p>The concept is a walled box. Plan D kept its ideas (the caged well, the conduits, the cots under tents) and put them on a slope down to the sea, with the road arriving from the north on the well's axis.</p>
+  <div class="trio">
+    <figure><img src="img/concept-v2.jpg" alt="Concept art: a walled infirmary garden with a caged green crystal well at its centre, tents with cots, a greenhouse, copper stills and a stone bath"><figcaption><b>The concept.</b> The well choked in vines, tents of cots, the greenhouse, stills and the bath.</figcaption></figure>
+    <figure><img src="img/plan-journey.jpg" alt="Plan D from above with four numbered passes: in from the main gate, the fix loop, up to the cots, out to the battery"><figcaption><b>Plan D, revision 9.</b> The four passes: in from the gate, the fix loop down to the shore and back, up to the cots, out east to the battery.</figcaption></figure>
+    <figure><img src="img/top.jpg" alt="The kit scene from straight above: the arrival road, the top terrace, the well's tier with two buildings, the flights to the shore and the sea"><figcaption><b>The kit scene today, from above.</b> Woods are drawn as plain lawn for now.</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>The walk, at the game's camera</h2>
+  <p>In the order you'd play it. The small wizard is there for scale.</p>
+  <div class="walk">
+    <div class="stop"><span class="num">1 · In from the main gate</span>
+      <figure><img src="img/arrival.jpg" alt="The road from the north onto the top terrace, four post stand-ins where the tents go"><figcaption>The road arrives on the well's axis. The four posts stand where the tents with the cots go: the wounded are meant to be the first thing you see.</figcaption></figure></div>
+    <div class="stop"><span class="num">2 · The overlook and the well</span>
+      <figure><img src="img/overlook.jpg" alt="The top terrace's edge looking down 1.5 m onto the well on its round dais, with a flight down on each side"><figcaption>The terrace looks down 1.5 m onto the well's dais. The round pier on it is the well's stand-in. A flight goes down on each side.</figcaption></figure></div>
+    <div class="stop"><span class="num">3 · West: the greenhouse</span>
+      <figure><img src="img/west.jpg" alt="The west flight down beside the greenhouse's grey box, and two garden beds"><figcaption>The west flight comes down beside the greenhouse (a grey box for now), with two garden beds.</figcaption></figure></div>
+    <div class="stop"><span class="num">4 · East: the stills</span>
+      <figure><img src="img/east.jpg" alt="The east flight down beside the stills' grey box, the paved road leaving east"><figcaption>The east flight comes down by the stills. In plan D it was a long run along the drop; on the kit it's a short flight like the west one (question below).</figcaption></figure></div>
+    <div class="stop"><span class="num">5 · Down to the shore, the bath</span>
+      <figure><img src="img/shore.jpg" alt="A straight flight down the cliff to the shore walk, the small bath, and a second flight climbing along the cliff"><figcaption>The fix loop goes down the straight flight to the shore. The bath sits on the sand at the foot of the cliff. It's cramped and untidy here, the roughest corner of the draft.</figcaption></figure></div>
+    <div class="stop"><span class="num">6 · Back up along the cliff</span>
+      <figure><img src="img/cliff.jpg" alt="The flight climbing east along the cliff face back to the well's tier"><figcaption>The way back up runs along the cliff face, west to east, so the loop's two flights look different.</figcaption></figure></div>
+    <div class="stop"><span class="num">7 · Out to the battery</span>
+      <figure><img src="img/road.jpg" alt="The paved road east along the well's tier, a round pier where the battery's smokestack stands"><figcaption>The road leaves east along the well's tier. The round pier stands in for the battery's smokestack, the cue for where you're going.</figcaption></figure></div>
+  </div>
+</section>
+
+<section>
+  <h2>What's off in this draft</h2>
+  <ul class="gaps">
+    <li><b>Everything is a stand-in.</b> Tents are posts, the well and smokestack are round piers, the greenhouse and stills are grey boxes. They're the piece list for the next step.</li>
+    <li><b>The east flight</b> lost plan D's long run along the drop (no room on the kit grid), so the two overlook flights look alike again, which the flow critic marked down before.</li>
+    <li><b>The conduit walkways</b> (raised paths from the well to what it feeds) mostly didn't survive where the flights land. They may come back as dressing: brass pipes with vines.</li>
+    <li><b>The bath corner</b> at the shore is cramped and messy.</li>
+    <li><b>Woods</b> are drawn as plain lawn: the kit has no woods floor yet.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Questions</h2>
+  <p>Answers save as you go. Leaving a box blank is fine; I'll ask again rather than assume.</p>
+
+  <div class="answer" data-id="q-code-rule">
+    <h3>Did I get the code-drawn art rule right this time?</h3>
+    <p>As written in the process doc: <b>code is fine for procedural pieces</b>, alone or mixed with painted sprites and textures: the stone-by-stone floors, plants, water, waterfalls. <b>Buildings, facades and other large set pieces aren't drawn in code</b>; they come from Codex pictures made into Meshy models. My summary in the terminal ("narrowed to buildings…") read the wrong way round.</p>
+    <div class="choices"><button type="button" data-v="right">That's right</button><button type="button" data-v="wrong">Still wrong</button></div>
+    <textarea id="n-code-rule" aria-label="Note on the code-drawn art rule" placeholder="What it should say…"></textarea>
+    <div class="status"></div>
+  </div>
+
+  <div class="answer" data-id="q-east-flight">
+    <h3>The east flight: keep it short, or make room for the long run?</h3>
+    <p>Plan D's east flight ran along the drop toward the stills so it wouldn't mirror the west one. Getting it back means moving the well's dais west a few metres, or the stills east.</p>
+    <p class="rec">My pick: move the stills east. It keeps the well on the road's axis and costs nothing but a few cells.</p>
+    <div class="choices"><button type="button" data-v="move-stills">Move the stills</button><button type="button" data-v="move-dais">Move the dais</button><button type="button" data-v="keep">Keep it short</button></div>
+    <textarea id="n-east-flight" aria-label="Note on the east flight" placeholder="Anything else about it…"></textarea>
+    <div class="status"></div>
+  </div>
+
+  <div class="answer" data-id="q-layout">
+    <h3>Is the layout good enough to start on the pieces?</h3>
+    <p>The next step is Codex pictures of the new pieces: the caged well, the greenhouse, the stills, tents with cots, conduit pipes, the bath, the smokestack. You OK each picture before any Meshy model.</p>
+    <div class="choices"><button type="button" data-v="go">Start on the pieces</button><button type="button" data-v="layout-first">Fix the layout first</button></div>
+    <textarea id="n-layout" aria-label="Note on the layout" placeholder="What to change first…"></textarea>
+    <div class="status"></div>
+  </div>
+
+  <div class="answer" data-id="general">
+    <h3>Anything else</h3>
+    <textarea id="n-general" aria-label="General note" placeholder="Anything about the scene, the page or the process…"></textarea>
+    <div class="status"></div>
+  </div>
+</section>
+
+</div>
+
+<dialog id="zoom" aria-label="Enlarged picture"></dialog>
+
+<script>
+const zoom = document.getElementById('zoom');
+for (const img of document.querySelectorAll('figure img')) img.addEventListener('click', () => {
+  const big = document.createElement('img'); big.src = img.src; big.alt = img.alt;
+  zoom.replaceChildren(big); zoom.showModal();
+});
+zoom.addEventListener('click', () => zoom.close());
+
+const boxes = [...document.querySelectorAll('.answer')];
+const state = {};
+function paint(box) {
+  const s = state[box.dataset.id] || {};
+  for (const b of box.querySelectorAll('.choices button')) b.setAttribute('aria-pressed', String(b.dataset.v === s.choice));
+  const ta = box.querySelector('textarea');
+  if (document.activeElement !== ta) ta.value = s.note || '';
+}
+function setStatus(box, text) { box.querySelector('.status').textContent = text; }
+for (const box of boxes) for (const b of box.querySelectorAll('.choices button')) b.setAttribute('aria-pressed', 'false');
+
+(async () => {
+  const db = window.claude ? await window.claude.use('db') : null;
+  if (!db) { for (const box of boxes) setStatus(box, 'Sign in to save answers.'); return; }
+  const col = db.collection('answers');
+  const save = async (box, patch) => {
+    const id = box.dataset.id;
+    state[id] = { ...(state[id] || {}), ...patch, at: new Date().toISOString() };
+    paint(box); setStatus(box, 'Saving…');
+    try { await col.doc(id).set(state[id]); setStatus(box, 'Saved'); }
+    catch (e) { setStatus(box, 'Not saved: ' + (e && e.code ? e.code : 'error') + '. Try again.'); }
+  };
+  for (const box of boxes) {
+    for (const b of box.querySelectorAll('.choices button')) b.addEventListener('click', () => save(box, { choice: b.dataset.v }));
+    const ta = box.querySelector('textarea');
+    let timer = 0;
+    ta.addEventListener('input', () => { clearTimeout(timer); setStatus(box, 'Typing…'); timer = setTimeout(() => save(box, { note: ta.value }), 900); });
+  }
+  const t = setTimeout(() => { for (const box of boxes) if (!box.querySelector('.status').textContent) setStatus(box, 'Saved answers did not load.'); }, 10000);
+  col.onSnapshot((snap) => {
+    clearTimeout(t);
+    for (const d of snap.docs) state[d.id] = d.data();
+    for (const box of boxes) paint(box);
+  }, () => { clearTimeout(t); for (const box of boxes) setStatus(box, 'Saved answers did not load.'); });
+})();
+</script>

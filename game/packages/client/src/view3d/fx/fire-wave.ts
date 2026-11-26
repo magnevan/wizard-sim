@@ -49,6 +49,9 @@ export const FIRE_WAVE = {
   reach: 0.34,
   /** How far past the sim's reach the sinking front runs on, as a share of it. */
   overrun: 0.12,
+  /** The opening burst's racing ring: it runs the wave's own curve this much early (its time at the reach, as a share of
+   * the wave's), plus a margin (u) ahead of the front. */
+  burstLead: 0.8, burstAhead: 0.3,
   /** Seconds the scorch lies after the cast: whole until `scorchHold`, gone by `scorchEnd`. */
   scorchHold: 1.5, scorchEnd: 5.0,
   /** The sheet: its depth behind the front (u), how high its crest stands (u), how fast its billows roll back (1/s). */
@@ -145,20 +148,26 @@ float angD(float a, float b) { return atan(sin(a - b), cos(a - b)); }
 // the opening burst (the user, take 4: "an initial burst effect emanating from the character"): a flattened shell of
 // the same gas thrown out from the feet (a ring) or the hands (a burst, forward only), gone in a fifth of a second
 float burstBase(vec3 p) {
-  float a = uAge;
-  if (a > 0.3) return -1.0;
+  // it runs the cast's full length (the user, take 6: "it should race out the full length of the effect") just ahead of
+  // the wave, on the wave's own curve (take 7: "it looked good when it was just slightly ahead"; on a fixed schedule it
+  // raced far ahead of a big ring): the front's curve played a little faster, plus a margin, out to the reach
+  float a = uAge, Tb = ${FIRE_WAVE.burstLead.toFixed(3)} * uTr, qb = a / Tb;
+  if (qb > 1.15) return -1.0;
   vec2 f = vec2(cos(uFace), sin(uFace));
   vec3 c = isRing() ? vec3(gC.x, uGy + 0.35, gC.y) : vec3(gC.x + f.x * 0.45, uGy + 0.9, gC.y + f.y * 0.45);
-  // a hollow ring of fire racing out low over the floor, well ahead of the wave (to about 2.5 u), torn apart as it goes
+  // a hollow ring of fire racing out low over the floor ahead of the wave, out to the cast's reach, torn apart as it goes
   vec2 rel = p.xz - c.xz;
-  float R = 0.3 + 2.0 * (1.0 - exp(-a * 9.0)) * (1.0 + 1.8 * a);
+  float off = isRing() ? 0.0 : 0.45, Rend = uR * ${(1 + FIRE_WAVE.overrun).toFixed(3)} - off;
+  float R = min(Rend, frontR(a / ${FIRE_WAVE.burstLead.toFixed(3)} + 0.02) + ${FIRE_WAVE.burstAhead.toFixed(2)} - off);
   vec2 v = vec2(length(rel) - R, (p.y - c.y) * (isRing() ? 1.3 : 1.0));
-  float s = 1.0 - length(v) / (0.22 + 0.4 * a);
-  if (!isRing()) s -= 0.8 * (1.0 - smoothstep(-0.1, 0.5, dot(normalize(rel + 1e-4), f)));
+  float s = 1.0 - length(v) / (0.3 + 0.25 * min(qb, 1.0));
+  // on a burst, only across the fan (its own edges, seen from the cast point)
+  if (!isRing()) { vec2 g = p.xz - gC; s -= 1.6 * (1.0 - edgeOf(atan(g.y, g.x))); }
   // and a fireball pop where it starts, gone in a tenth of a second
   float pop = 1.0 - length((p - c) * vec3(1.0, 1.1, 1.0)) / (0.35 + 3.0 * a);
   s = max(s, pop * 1.1 - 2.0 * smoothstep(0.03, 0.11, a));
-  return s * 1.2 - 1.4 * smoothstep(0.12, 0.3, a);
+  // thin enough that the noise tears it into tongues, so it reads as fire, not a halo
+  return s * 0.95 - 1.4 * smoothstep(0.7, 1.12, qb);
 }
 // fires spitting out of the front (the user, take 4: "individual fires that spit alongside the wave, slightly in front
 // of it, and reaching out a bit beyond the wave"): the arc is cut into cells about a unit wide; some cells throw a
@@ -214,7 +223,7 @@ vec2 gas(vec3 p) {
   float d = base + (n - 0.5) * 1.9;
   if (d <= 0.0) return vec2(0.0, 1.0);
   // hot in the dense core and near the front, cooling toward the tail and as it dies; the burst and the spits young and hot
-  float heat = 1.0 - clamp(d * 1.6, 0.0, 1.0) + (tube >= extra ? 0.25 * clamp(b / gW, 0.0, 1.0) + gHot : (bu * 1.3 >= extra ? -0.12 : -0.05));
+  float heat = 1.0 - clamp(d * 1.6, 0.0, 1.0) + (tube >= extra ? 0.25 * clamp(b / gW, 0.0, 1.0) + gHot : (bu * 1.3 >= extra ? 0.02 : -0.05));
   return vec2(d, heat);
 }
 void main() {
@@ -367,7 +376,8 @@ Particle emitParticle(float k, float back) {
   if (edgeOf(th) < 0.5) return P0();
   float tb = 0.03 * rnd(k, 72.0), life = 0.22 + 0.2 * rnd(k, 73.0), a = uAge - back - tb;
   if (a < 0.0 || a > life) return P0();
-  float t = a / life, v = 8.0 + 8.0 * rnd(k, 74.0), drag = 5.0;
+  // thrown to between half and all of the cast's reach (the distance under drag is v / drag)
+  float t = a / life, drag = 5.0, v = drag * uR * (0.5 + 0.55 * rnd(k, 74.0));
   float dist = v * (1.0 - exp(-drag * a)) / drag;
   vec2 c = centerAt(0.0), d = vec2(cos(th), sin(th));
   vec2 o = isRing() ? c + d * 0.25 : c + vec2(cos(uFace), sin(uFace)) * 0.45;
@@ -499,7 +509,7 @@ class Slot {
     // the spits: one cell about a unit of the front's arc wide
     this.S.uSpitN.value = Math.max(3, Math.round(arc / FIRE_WAVE.spitEvery));
     count(this.embers, FIRE_WAVE.embersPerU, EMBER_CAP, age < Tr * 1.3 + 2.0);
-    this.sparks.u.uCount.value = w.ring ? SPARK_CAP : Math.round(SPARK_CAP * 0.45); this.sparks.count = SPARK_CAP; this.sparks.mesh.visible = age < 0.5;
+    this.sparks.u.uCount.value = w.ring ? SPARK_CAP : Math.round(SPARK_CAP * 0.45); this.sparks.count = SPARK_CAP; this.sparks.mesh.visible = age < 0.6;
     this.flash.count = 1; this.flash.mesh.visible = age < 0.17;
     // the ground: the hot line under the front, then the scorch
     const qq = Math.min(1, q), Rn = q <= 1 ? frontR(r.r, qq) : r.r * (1 + FIRE_WAVE.overrun * (1 - Math.exp(-(q - 1) * 2.2)));
@@ -507,9 +517,10 @@ class Slot {
     this.D.uC0.value.set(r.x, r.y); this.D.uCn.value.set(cx, cy); this.D.uRn.value = Rn; this.D.uRmax.value = Rn;
     const front = Math.min(1, q * 6) * (1 - Math.min(1, Math.max(0, (q - 0.85) / 0.45)));
     this.D.uFront.value = front;
-    // the opening burst's shock ring on the floor: out to about 2.6 u in a quarter of a second
-    this.D.uShock.value = 0.3 + 2.4 * (1 - Math.exp(-age * 9)) * (1 + 1.5 * age);
-    this.D.uShockA.value = age < 0.28 ? Math.min(1, age * 40) * (1 - age / 0.28) : 0;
+    // the opening burst's shock ring on the floor, racing out with it to the cast's reach
+    const Tb = FIRE_WAVE.burstLead * Tr;
+    this.D.uShock.value = Math.min(r.r * (1 + FIRE_WAVE.overrun), frontR(r.r, (age / FIRE_WAVE.burstLead + 0.02) / Tr) + FIRE_WAVE.burstAhead);
+    this.D.uShockA.value = age < Tb * 1.1 ? Math.min(1, age * 40) * (1 - 0.7 * Math.min(1, age / (Tb * 1.1))) * (age > Tb ? 1 - (age - Tb) / (Tb * 0.1) : 1) : 0;
     this.D.uHot.value = Math.exp(-Math.max(0, age - Tr * 0.5) * 2.2) * Math.min(1, q * 2);
     this.D.uScorch.value = Math.min(1, q * 1.5) * (1 - Math.min(1, Math.max(0, (age - FIRE_WAVE.scorchHold) / (FIRE_WAVE.scorchEnd - FIRE_WAVE.scorchHold))));
     const pad = r.r * (1 + FIRE_WAVE.overrun) + 1.5, key = `${r.tick}:${r.who}:${w.ring}`;
@@ -534,6 +545,9 @@ export class FireWaves {
   private slots: Slot[] = [];
   /** The floor's height (u) under sim point (x, y). */
   heightAt: (x: number, y: number) => number = () => 0;
+
+  /** One slot made up front (hidden), so its shaders compile with the stage's warm-up instead of on the first cast. */
+  constructor() { const s = new Slot(); s.hide(); this.slots.push(s); this.group.add(s.group); }
 
   /** After each sim step (shown or replayed): new rings and bursts, and every ring's caster's spot this tick. */
   afterStep(w: World): void {

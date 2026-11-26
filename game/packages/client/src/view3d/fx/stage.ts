@@ -44,6 +44,21 @@ export class FxStage {
   readonly scene = new THREE.Scene();
   private rt: THREE.WebGLRenderTarget | null = null;
   private out = new OutputPass();
+  private warmed = false;
+
+  /**
+   * Compile every effect's shaders now, hidden ones too (the first frame, with the effects' own target bound, so the
+   * programs match the ones drawn later), instead of each one the first time it shows: a cast's first appearance was a
+   * hitch (the user, 2026-11-26: "maybe a little lagspike on the first cast?"). Asynchronous where the GPU allows.
+   */
+  private warm(renderer: THREE.WebGLRenderer, camera: THREE.Camera): void {
+    for (const scene of [this.scene, this.distort]) {
+      const hidden: THREE.Object3D[] = [];
+      scene.traverse((o) => { if (!o.visible) { hidden.push(o); o.visible = true; } });
+      try { void renderer.compileAsync(scene, camera).catch(() => {}); } catch { /* a failed warm-up only costs the hitch */ }
+      for (const o of hidden) o.visible = false;
+    }
+  }
   /** Draw calls and triangles of the effects alone in the last frame (renderer.info, for the lab's stats). */
   readonly stats = { calls: 0, triangles: 0 };
 
@@ -67,6 +82,7 @@ export class FxStage {
     renderer.render(world, camera);
     renderer.autoClear = false;
     const c0 = renderer.info.autoReset ? 0 : renderer.info.render.calls, t0 = renderer.info.autoReset ? 0 : renderer.info.render.triangles;
+    if (!this.warmed) { this.warmed = true; this.warm(renderer, fxCamera); }
     renderer.render(this.scene, fxCamera);   // with autoReset (the default) the counters now hold the effects alone
     this.stats.calls = renderer.info.render.calls - c0; this.stats.triangles = renderer.info.render.triangles - t0;
     let src = this.rt;

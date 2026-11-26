@@ -389,4 +389,36 @@ window.ROUNDS = [
     ],
     general: 'Anything else',
   },
+  {
+    id: 'fire-7',
+    group: 'Fire',
+    tab: 'Take 7: full-length burst',
+    el: 'fire',
+    date: '2026-11-26',
+    title: 'Fire, round 7: the racing ring to the full length',
+    lead: 'Your nits on take 6 (“quite good”): the hollow ring should race out the full length of the effect, and on the burst it stopped well short of the flames; a delay from release to cast; a lag spike on the first cast.',
+    items: [
+      {
+        id: 'ring',
+        title: 'Fire ring',
+        text: 'The racing ring now runs to the cast’s full radius just ahead of the wave, on the wave’s own curve played a little faster plus a small margin (a first try on a fixed schedule raced far ahead of big rings, as you saw), thinner so the noise tears it into tongues, and orange rather than a pale halo; the shock line on the floor and the sparks run with it. Two runes, then five.',
+        vid: ['f7-ring-14.mp4', 'f7-ring5-14.mp4'],
+        ask: 'Right length and look now?',
+      },
+      {
+        id: 'burst',
+        title: 'Fire burst',
+        text: 'The same arc over the fan only (it had spread past the fan’s sides once it went further), out to the burst’s full reach.',
+        vid: ['f7-burst-14.mp4'],
+        ask: 'And on the burst?',
+      },
+      {
+        id: 'timing',
+        title: 'The delay and the first-cast hitch',
+        text: 'The hitch: a wave’s drawing (its gas, sparks, embers and ground) was only made at the first Fire ring, so its shaders compiled mid-fight. Now one is made up front and every effect’s shaders compile on the first frame. The delay is the game’s cast windup, not the effect: 0.12 s plus 0.04 s a rune (0.2 s for two runes; RHYTHM.windup in the sim’s config), plus two ticks of input delay for netcode. The effect starts the tick the cast lands. Shortening the windup is a rules change; a tell during it (a glow at the hands) is the other way to make it feel immediate.',
+        ask: 'Is the hitch gone for you? And should the windup be shorter, or show a tell?',
+      },
+    ],
+    general: 'Anything else',
+  },
 ];

@@ -75,9 +75,38 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
   <header>
     <div class="eyebrow">Port to 3D · step 0 · 2026-11-25</div>
     <h1>The Court in 3D</h1>
-    <p class="lede"><b>New: <a href="#r15">round 15</a>, the beam goes out like a candle; ash flakes.</b> Below it, <a href="#r14">round 14</a>, <a href="#r13">round 13</a>, <a href="#r12">round 12</a>, <a href="#r11">round 11</a>, <a href="#r10">round 10</a>, <a href="#r9">round 9</a>, <a href="#r8">round 8</a>, <a href="#r7">round 7</a>, <a href="#r6">round 6</a>, <a href="#r5">round 5</a>, <a href="#r4">round 4</a>, <a href="#r3">round 3</a>, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
+    <p class="lede"><b>New: <a href="#r16">round 16</a>, hits that land by motion, not flashes.</b> Below it, <a href="#r15">round 15</a>, <a href="#r14">round 14</a>, <a href="#r13">round 13</a>, <a href="#r12">round 12</a>, <a href="#r11">round 11</a>, <a href="#r10">round 10</a>, <a href="#r9">round 9</a>, <a href="#r8">round 8</a>, <a href="#r7">round 7</a>, <a href="#r6">round 6</a>, <a href="#r5">round 5</a>, <a href="#r4">round 4</a>, <a href="#r3">round 3</a>, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
     <div class="hero"><img src="img/plaza-26.jpg" alt="Two wizards and six goblins on the court's sunk plaza, seen from the 3D game camera"></div>
   </header>
+
+  <section id="r16">
+    <div class="top">
+      <div>
+        <h2>Round 16: hits that land by motion, not flashes</h2>
+        <p>The first steps from the <a href="https://github.com/magnevan/wizard-sim/blob/main/docs/explorations/2026-11-26-spell-effects-lessons.md">lessons from the first four</a>.</p>
+        <ul>
+          <li><b>Recoil:</b> a hit tips a body back from its feet, away from whoever dealt it. It snaps back in 0.06 s and settles with a small rebound over about 0.4 s; repeat hits (a held beam or spray) only nudge.</li>
+          <li><b>Softer flash:</b> the white hit flash is about 40% softer, since the recoil now carries the hit.</li>
+          <li><b>The rock:</b> its contact burst is dusty grit instead of white rays, the gravel lies on the floor about 2 s longer before sinking, and the dust hangs longer.</li>
+          <li><b>Under the hood:</b> one shared way to give every effect a start, a live part and an aftermath; the beam and the fire use it.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r16-impacts" data-rec="keep">
+        <div class="q">Recoil, softer flash, the rock</div>
+        <div class="choices" role="group" aria-label="Recoil, softer flash, the rock">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r16-impacts" aria-label="Note: Recoil, softer flash, the rock" placeholder="Is the recoil enough oomph? Too much?"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+      <figure><video src="vid/r16-fire-sparse-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Fire</b> · a few goblins, 16 u</figcaption></figure>
+      <figure><video src="vid/r16-arcane-sparse-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Beam</b> · a few goblins, 16 u</figcaption></figure>
+      <figure><video src="vid/r16-earth-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Rock</b> · into the crowd, 16 u</figcaption></figure>
+    </div>
+  </section>
 
   <section id="r15">
     <div class="top">

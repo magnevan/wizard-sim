@@ -237,4 +237,37 @@ window.ROUNDS = [
     ],
     general: 'Anything else about Fire',
   },
+  {
+    id: 'fire-3',
+    group: 'Fire',
+    tab: 'Take 3: ring and burst',
+    el: 'fire',
+    date: '2026-11-26',
+    title: 'Fire, round 3: the ring and the burst, built',
+    lead: 'The first build of one travelling wave for both casts (fx/fire-wave.ts), from the take-2 parts and storyboard. Clips run past the end, so the scorch shows. The lab floor is paler than the court\'s.',
+    items: [
+      {
+        id: 'ring',
+        title: 'Fire ring',
+        text: 'A white flash at the feet, then a band of flame racing out: lopsided puffs from the take-2 sheet that ride the front and break up from the inside, upright ground flames standing on it with their tips leaving upward, a hot line on the stone under the front and a sooted band just behind it. The inside burns out behind the front. It slows at the sim\'s radius and runs on about a tenth past it while sinking. It leaves scorch streaks running out like spokes and soot blotches, fading over about six seconds. Top: two runes, close; below, five runes.',
+        vid: ['f3-ring-14.mp4', 'f3-ring5-14.mp4'],
+        ask: 'Keep building the ring this way?',
+      },
+      {
+        id: 'burst',
+        title: 'Fire burst',
+        text: 'The same wave over the aimed fan (Shift+LMB, about 120° wide and 2.5 m long), from a flash at the hands. Toward each end the flames get smaller and redder and a few spill past the fan, so it frays instead of cutting off. The scorch is the same spokes, only inside the fan.',
+        vid: ['f3-burst-14.mp4'],
+        ask: 'Keep building the burst this way?',
+      },
+      {
+        id: 'game',
+        title: 'At the game\'s distance',
+        text: 'The ring at 30 u among the crowd, as you would see it playing. (The burst at this distance and a walking ring were still rendering when the machine ran low on memory; they come next round.)',
+        vid: ['f3-ring-30.mp4'],
+        ask: 'Do they read at play distance?',
+      },
+    ],
+    general: 'Anything else about the ring and the burst',
+  },
 ];

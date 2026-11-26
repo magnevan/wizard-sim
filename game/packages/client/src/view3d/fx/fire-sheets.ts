@@ -10,6 +10,8 @@
  *   flames since round 10, after how Magicka 1 builds its own (docs/reference/magicka-fire/how-magicka-1-builds-it.md).
  * - `smokeburn`: a smoke puff thinning out over 4 frames, as one density channel.
  * - `flow`: a tileable texture of flame tongues streaming upward, scrolled through the body mesh (fire-body.ts).
+ * - `puff2`, `rise`, `impact`: Fire's take-2 parts (prep.py parts2): lopsided puffs breaking up from the inside, upright
+ *   ground flames whose tips leave upward (the ring and the burst, fire-wave.ts), and a fire splash for impacts.
  *
  * The spray's body and the floor's flames are meshes now (fire-body.ts, fire-floor.ts), so of the flame sheets the sprite
  * builds drew from, fire-rolls, fire-wisps and fire-carpet stay on disk unused.
@@ -19,12 +21,12 @@
  */
 import * as THREE from 'three';
 
-const urls = import.meta.glob<string>('../../../../../content/generated/fx/fire-{smoke,cracks,licks,flow,rolls,burn,smokeburn}.png', { eager: true, query: '?url', import: 'default' });
+const urls = import.meta.glob<string>('../../../../../content/generated/fx/fire-{smoke,cracks,licks,flow,rolls,burn,smokeburn,puff2,rise,impact}.png', { eager: true, query: '?url', import: 'default' });
 
-export interface FireTex { smoke: THREE.Texture | null; cracks: THREE.Texture | null; licks: THREE.Texture | null; flow: THREE.Texture | null; rolls: THREE.Texture | null; burn: THREE.Texture | null; smokeburn: THREE.Texture | null }
+export interface FireTex { smoke: THREE.Texture | null; cracks: THREE.Texture | null; licks: THREE.Texture | null; flow: THREE.Texture | null; rolls: THREE.Texture | null; burn: THREE.Texture | null; smokeburn: THREE.Texture | null; puff2: THREE.Texture | null; rise: THREE.Texture | null; impact: THREE.Texture | null }
 
 /** The sheets, once loaded (null if missing). */
-export const FIRE_TEX: FireTex = { smoke: null, cracks: null, licks: null, flow: null, rolls: null, burn: null, smokeburn: null };
+export const FIRE_TEX: FireTex = { smoke: null, cracks: null, licks: null, flow: null, rolls: null, burn: null, smokeburn: null, puff2: null, rise: null, impact: null };
 
 async function load(name: keyof FireTex, tile = false): Promise<void> {
   const url = Object.entries(urls).find(([p]) => p.endsWith(`/fire-${name}.png`))?.[1];
@@ -37,7 +39,7 @@ async function load(name: keyof FireTex, tile = false): Promise<void> {
   } catch { /* drawn without it */ }
 }
 
-if (typeof document !== 'undefined') await Promise.all([load('smoke'), load('cracks', true), load('licks'), load('flow', true), load('rolls'), load('burn'), load('smokeburn')]);
+if (typeof document !== 'undefined') await Promise.all([load('smoke'), load('cracks', true), load('licks'), load('flow', true), load('rolls'), load('burn'), load('smokeburn'), load('puff2'), load('rise'), load('impact')]);
 
 /**
  * GLSL: one cell of a sheet of `cols` × `rows` cells, `q` 0..1 across it (y up), picked by `pick` (0..1) and mirrored

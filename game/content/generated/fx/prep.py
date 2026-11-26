@@ -57,6 +57,42 @@ def burn():
     sm.save(HERE / 'fire-smokeburn.png', optimize=True)
 
 
+def parts2(take=1):
+    """Fire's parts, take 2 (raw/fire-parts2-1.png: a 6 x 10 grid on black; tools/concept-gen/prompts/2026-11-26-fire-element):
+    fire-puff2.png (rows 0-2: three lopsided puffs breaking up from the inside, 6 frames each), fire-lick2.png (row 3: four
+    single licks, still), fire-rise.png (rows 4-6: three upright ground flames whose tips leave upward, 6 frames each, each
+    cell's bottom on the flame's foot) and fire-impact.png (row 9: a splash of fire on a surface, 6 frames), cells of 256."""
+    import numpy as np
+    src = Image.open(RAW / f'fire-parts2-{take}.png').convert('RGB'); W, H = src.size
+    on = (np.array(src.convert('L')) > 28).any(1)
+    bands, s = [], None
+    for i, v in enumerate(on):
+        if v and s is None: s = i
+        if not v and s is not None:
+            if i - s > 8: bands.append((s, i))
+            s = None
+    assert len(bands) == 10, bands
+    pitch = W / 6
+
+    def cell(col, band, foot=False):
+        side = round(pitch)
+        cx = round((col + 0.5) * pitch)
+        y1 = band[1] + 4 if foot else round((band[0] + band[1]) / 2 + side / 2)
+        return src.crop((cx - side // 2, y1 - side, cx - side // 2 + side, y1)).resize((256, 256), Image.LANCZOS)
+
+    def sheet(name, rows, frames, foot=False):
+        out = Image.new('RGB', (frames * 256, len(rows) * 256))
+        for r, b in enumerate(rows):
+            for i in range(frames):
+                out.paste(cell(i, bands[b], foot), (i * 256, r * 256))
+        out.save(HERE / name, optimize=True)
+
+    sheet('fire-puff2.png', [0, 1, 2], 6)
+    sheet('fire-lick2.png', [3], 4)
+    sheet('fire-rise.png', [4, 5, 6], 6, foot=True)
+    sheet('fire-impact.png', [9], 6)
+
+
 if __name__ == '__main__':
     scaled('fire-rolls')
     scaled('fire-smoke')
@@ -65,4 +101,5 @@ if __name__ == '__main__':
     scaled('fire-flow')
     carpet()
     burn()
+    parts2()
     Image.open(RAW / 'earth-cracks-1.png').convert('L').resize((1024, 1024), Image.LANCZOS).save(HERE / 'earth-cracks.png', optimize=True)

@@ -1,7 +1,7 @@
 /**
  * Stand-ins for every spell (the port's decision 3: docs/explorations/2026-11-25-port-3d-plan.md): until a family gets
  * its real 3D effect, what the sim does is drawn as its own hit shape, in the element's colour, so the 3D game is
- * playable and readable. Fire's spray and floor (fire.ts) and the Frost ring (cold.ts) are the exceptions: they draw
+ * playable and readable. Fire's spray and floor (fire.ts), the Fire ring and burst (fire-wave.ts) and the Frost ring (cold.ts) are the exceptions: they draw
  * nothing here unless drawFire / drawCold asks for their stand-ins.
  *
  * Everything is read from the sim each frame, as the pixel view does (art/vfx.ts, view-structures.ts, the VFX Lab's
@@ -32,6 +32,7 @@ import {
 } from '@wizard-sim/sim';
 import * as X from '../../art/px';
 import { isColdNova } from './cold';
+import { isFireBurst, isFireNova } from './fire-wave';
 import { plainRock } from './earth-sheets';
 import type { SpellLights } from './lights';
 import { Batch, type RGB } from './standins-batch';import { sprayDrop } from '../../spray-drop';
@@ -73,7 +74,7 @@ const specPal = (s: SpellSpec): Pal => (s.scald ? STEAM : s.heal ? palOf(EL.life
 const hash = (a: number, b = 0, c = 0): number => { const s = Math.sin(a * 127.1 + b * 311.7 + c * 74.7) * 43758.5453; return s - Math.floor(s); };
 
 /** A remembered event: what it was, when (tick), and what it needs to be drawn. */
-interface Rec { key: string; tick: number; life: number; kind: keyof typeof LIFE; x: number; y: number; x2: number; y2: number; r: number; look: number; who: number; half: number; line: boolean; heal: boolean; coldNova?: boolean }
+interface Rec { key: string; tick: number; life: number; kind: keyof typeof LIFE; x: number; y: number; x2: number; y2: number; r: number; look: number; who: number; half: number; line: boolean; heal: boolean; coldNova?: boolean; fireWave?: boolean }
 
 /** What the host passes each frame. */
 export interface StandinFrame {
@@ -137,7 +138,7 @@ export class Standins {
       case 'burst': {
         if (e.ev === EV.dismiss || e.ev === EV.wellDry || e.ev === EV.gutter) return;
         const sp = seatSpec();
-        add(e.who >= MAX_SEATS ? 'slam' : 'burst', { r: e.amount ?? 1, look: e.look ?? (sp ? sp.look || sp.form : 0), heal: !!sp?.heal, coldNova: e.who < MAX_SEATS && isColdNova(sp) });
+        add(e.who >= MAX_SEATS ? 'slam' : 'burst', { r: e.amount ?? 1, look: e.look ?? (sp ? sp.look || sp.form : 0), heal: !!sp?.heal, coldNova: e.who < MAX_SEATS && isColdNova(sp), fireWave: e.who < MAX_SEATS && isFireNova(sp) });
         return;
       }
       case 'zap': {
@@ -160,7 +161,7 @@ export class Standins {
         if (e.text === 'imbue') {
           const sp = { form: e.look ?? 0, counts: new Uint8Array(N_EL) } as unknown as SpellSpec;
           if (e.els) for (let id = 1; id <= N_EL; id++) if (e.els & (1 << id)) sp.counts[id - 1] = 1;
-          add('imbue', { r: e.amount ?? 2, half: (e.half ?? 0.1) * TAU, line: imbueLine(sp) });
+          add('imbue', { r: e.amount ?? 2, half: (e.half ?? 0.1) * TAU, line: imbueLine(sp), fireWave: isFireBurst(e) });
           return;
         }
         if (e.text && /^(strike|sweep|heavy|lash|thrust|slam|cleave|smash|spin)/.test(e.text)) add('blow', {});
@@ -625,6 +626,7 @@ export class Standins {
       switch (r.kind) {
         case 'burst': case 'slam': {
           if (r.coldNova && !this.drawCold) break;   // cold.ts
+          if (r.fireWave && !this.drawFire) break;   // fire-wave.ts
           // the sim hits the whole disc at once: its rim stands at the full radius from the first frame, a wave runs out to it
           const Q = r.kind === 'slam' ? { light: SLAM, mid: SLAM, deep: SLAM } : P, grow = Math.min(1, age / 0.22), rr = r.r * (0.3 + 0.7 * grow);
           B.ring(B.tintBuf, r.x, r.y, 0, r.r, Q.mid, 0.2 * fade, Q.deep, 0.4 * fade);
@@ -637,6 +639,7 @@ export class Standins {
           break;
         }
         case 'imbue': {
+          if (r.fireWave && !this.drawFire) break;   // fire-wave.ts
           const grow = Math.min(1, age / 0.15), reach = r.r * grow, face = Math.atan2(r.y2 - r.y, r.x2 - r.x);
           if (r.line) {
             const ex = r.x + Math.cos(face) * reach, ey = r.y + Math.sin(face) * reach, nx = -Math.sin(face) * SHAPES.imbueLineHalf, ny = Math.cos(face) * SHAPES.imbueLineHalf;

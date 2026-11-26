@@ -54,10 +54,12 @@ uniform vec3 uHead; uniform vec2 uDir; uniform float uLen, uR, uSpeed, uSince, u
 void shape(vec2 q, out vec3 wp, out vec3 nrm, out float age) {
   float s = q.x * uLen, th = q.y * 6.2832;
   float a = (s / max(uSpeed, 0.1) + uSince) / uLife;
-  age = max(clamp(a, 0.0, 1.0), smoothstep(0.82, 1.0, q.x));
+  // the tail thins out and wears away over its back half, so it trails off (the user, round 6: it ended "too abruptly,
+  // looks more like a flag hanging off than a trail")
+  age = max(clamp(a, 0.0, 1.0), smoothstep(0.45, 1.0, q.x) * 0.95);
   vec3 d = vec3(uDir.x, 0.0, uDir.y), side = vec3(-uDir.y, 0.0, uDir.x), up = vec3(0.0, 1.0, 0.0);
   float k = clamp(a, 0.0, 1.0);
-  float rad = uR * (0.75 + 1.1 * sqrt(k)) * smoothstep(-0.2, 0.5, s) * (0.75 + 0.5 * vnoise3(vec3(s * 0.9, 1.3, uSeed * 0.01)));
+  float rad = uR * (0.75 + 1.1 * sqrt(k)) * smoothstep(-0.2, 0.5, s) * (0.75 + 0.5 * vnoise3(vec3(s * 0.9, 1.3, uSeed * 0.01))) * (1.0 - 0.85 * smoothstep(0.5, 1.0, q.x));
   vec3 c = uHead - d * (s + uR * 0.8) - up * (0.2 * k * k) + side * (vnoise3(vec3(s * 0.6, 4.7, uSeed * 0.01)) - 0.5) * uR * k;
   nrm = side * cos(th) + up * sin(th);
   wp = c + (side * cos(th) + up * sin(th) * 0.8) * rad;
@@ -210,7 +212,7 @@ export class EarthFx {
     const x = r.x0 + r.vx * tt, z = r.z0 + r.vz * tt, u = wk.u;
     (u.uHead.value as THREE.Vector3).set(x, this.flightY(x, z, r.r), z); (u.uDir.value as THREE.Vector2).set(r.vx / sp, r.vz / sp);
     // a short trail of dust behind the rock, not a tube back to the staff (the user: "reads like a textured tube")
-    u.uLen.value = Math.min(sp * tt, 1.0 + 0.35 * r.n); u.uR.value = r.r * (0.9 + 0.08 * r.n); u.uSpeed.value = sp; u.uSince.value = since; u.uLife.value = life;
+    u.uLen.value = Math.min(sp * tt, 1.6 + 0.5 * r.n); u.uR.value = r.r * (0.9 + 0.08 * r.n); u.uSpeed.value = sp; u.uSince.value = since; u.uLife.value = life;
     u.uSeed.value = r.seed % 997; u.uSalt.value = (r.seed % 53) * 2.3; u.uClock.value = td - r.t0;
   }
 

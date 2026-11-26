@@ -76,7 +76,7 @@ export function arcaneBeams(w: World): BeamIn[] {
 // ---- the line -----------------------------------------------------------------------------------------------------
 
 /** The surges: spacing (u), speed (u/s) and length (u) at n runes; slower and softer than the pixel beam (art/kit.ts beamSurge) since round 3 (the user and Codex: racing white blocks read as beads). */
-const surgeOf = (n: number) => { const v = 22 + 3 * n; return { v, sp: 2.2, len: 0.7 + 0.1 * n }; };
+const surgeOf = (n: number) => { const v = 16.5 + 2.25 * n; return { v, sp: 2.4, len: 1.5 + 0.15 * n }; };
 /** The body's and the core's half-widths (u) at n runes; the halo's reach and strength. A wizard is 2.7 u tall. */
 const widthOf = (n: number) => ({
   body: 0.1 + 0.02 * n,
@@ -96,13 +96,16 @@ vec4 look(float along, float across, float len) {
   float d = length(vec2(ax, across)), side = abs(across);
   // pulses: fast packets racing out from the staff; one in seven skipped so they don't tick like a clock
   float ph = (along - uClock * uSurgeV) / uSurgeSp, f = fract(ph), L = min(uSurgeL / uSurgeSp, 0.9);
-  float pulse = exp(-pow((f - (1.0 - L * 0.5)) / (L * 0.5), 2.0)) * step(0.14, rnd(floor(ph) + 4096.0, 5.0)) * ends;
+  // a long, soft pulse: a bright head and a long tail of light behind it
+  float pulse = (f > 1.0 - L ? pow((f - (1.0 - L)) / L, 1.6) * smoothstep(1.0, 0.94, f) : 0.0) * step(0.14, rnd(floor(ph) + 4096.0, 5.0)) * ends;
   // the core and the body: gaussian falloffs, no edge to read as a border
-  float cw = uCore * uWide * (1.0 + 0.6 * pulse) + 0.008, bw = uBody * uWide;
+  // a bulging glow where it leaves the staff (Diablo 3's Disintegrate), swelling core, body and plasma there
+  float bulge = exp(-along * along / 0.35);
+  float cw = uCore * uWide * (1.0 + 0.9 * pulse + 1.6 * bulge) + 0.008, bw = uBody * uWide * (1.0 + 2.2 * bulge);
   float core = exp(-(d * d) / (cw * cw) * 1.5) * ends, body = exp(-(d * d) / (bw * bw) * 1.2) * ends;
   // the plasma: two noises flowing slowly along and outward from the line, cut into wisps, inside an envelope that
   // widens toward the hit
-  float reachW = uHalo * uWide * (0.7 + 0.8 * smoothstep(0.2 * len, len, along));
+  float reachW = uHalo * uWide * (0.7 + 0.8 * smoothstep(0.2 * len, len, along) + 1.2 * bulge + 0.7 * exp(-pow(along - len, 2.0) / 0.25));
   vec3 pq = vec3(along * 1.3 - uClock * 1.2, side * 2.4 - uClock * 1.1, uClock * 0.45 + sign(across) * 3.7);
   // tendrils: ridged noise (bright where the noise crosses its middle) gives thin curling filaments with gaps between
   float n = fbm3(pq), n2 = fbm3(pq * 2.2 + vec3(5.0, 1.0, uClock * 0.8));
@@ -110,9 +113,9 @@ vec4 look(float along, float across, float len) {
   float env = exp(-(side * side) / (reachW * reachW) * 1.4);
   float wisp = (smoothstep(0.78, 0.97, ridge) + 0.6 * smoothstep(0.82, 0.98, ridge2)) * env * ends;
   float haze = env * env * 0.18 * ends;
-  float lit = 0.55 + 1.8 * pulse;
+  float lit = 0.55 + 1.1 * pulse + 0.8 * bulge;
   vec3 c = vec3(1.2, 0.06, 2.0) * wisp * lit * uHaloK * 1.8 + vec3(0.7, 0.03, 1.0) * haze * lit;
-  c += mix(vec3(1.5, 0.18, 1.9), vec3(2.4, 0.9, 2.8), body) * body * (1.0 + 0.5 * pulse);
+  c += mix(vec3(1.5, 0.18, 1.9), vec3(2.4, 0.9, 2.8), body) * body * (1.0 + 0.4 * pulse + 0.6 * bulge);
   c += mix(vec3(3.0, 2.2, 3.4), vec3(5.0, 4.8, 5.2), max(uWhite, pulse)) * core;
   float a = clamp(body * 0.85 + wisp * 0.55 * uHaloK + haze * 0.5, 0.0, 0.95);
   return vec4(c, a);
@@ -219,10 +222,10 @@ Particle emitParticle(float slot, float back) {
   Particle p = P0();
   float t = uTime - back, fl = 0.88 + 0.12 * sin(t * 37.0) * sin(t * 13.0 + 1.0);
   p.alive = true; p.col = vec4(1.0);
-  if (slot < 0.5) { p.pos = uStaff; p.size = (0.13 + 0.025 * uN) * fl * uOnF; p.data = vec4(3.0, 1.0, 0.0, 0.0); }
+  if (slot < 0.5) { p.pos = uStaff; p.size = (0.38 + 0.06 * uN) * fl * uOnF; p.data = vec4(3.0, 1.0, 0.0, 0.0); }
   else if (slot < 1.5) { p.pos = uStaff; p.size = (0.2 + 0.04 * uN) * fl * uOnF; p.data.x = 1.0; }
-  else if (slot < 2.5) { p.pos = uHit; p.size = mix(0.2 + 0.035 * uN, 0.4 + 0.07 * uN, uImp) * fl * uHitOn; p.data = vec4(3.0, 2.0, 0.0, 0.0); }
-  else if (slot < 3.5) { p.pos = uHit; p.size = mix(0.26 + 0.05 * uN, 0.55 + 0.12 * uN, uImp) * fl * uHitOn; p.rot = 0.06 * sin(t * 5.0); p.data.x = 1.0; }
+  else if (slot < 2.5) { p.pos = uHit; p.size = 0.0; p.data = vec4(3.0, 2.0, 0.0, 0.0); }
+  else if (slot < 3.5) { p.pos = uHit; p.size = (0.12 + 0.02 * uN) * fl * uHitOn; p.rot = 0.06 * sin(t * 5.0); p.data.x = 1.0; }
   else if (slot < 4.5) { p.pos = uHit; p.size = (0.32 + 0.06 * uN) * (0.8 + 0.2 * sin(t * 19.0)) * uHitOn * step(0.5, uImp); p.rot = 0.785 + t * 0.9; p.data.x = 1.0; p.col.w = 0.7; }
   else if (slot < 6.5) {
     float ph = fract(t * 2.4 + (slot - 5.0) * 0.5);

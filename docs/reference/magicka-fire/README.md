@@ -13,9 +13,11 @@ What the stills add: Magicka 2's jet is narrow and runs about half the length be
 
 Five more clips for Fire's element pass, kept on the user's machine in the main checkout's gitignored `.reference/magicka2-clips/`; cropped copies and 16-frame sheets are on the [Spell Effects Review](https://claude.ai/artifact/Kwh9yrDCTVmnXQRcHQ6vxT), round "Magicka 2 clips". What they show:
 
-- **Every cast starts with the same wind-up**: a curved swirl of flame round the wizard for about a quarter second, whatever the shape. A part Fire owns across all its casts.
+- **Every clip opens with a swirl of flame round the wizard**: Magicka's queued-element orb (it spawns with a flash and orbits you as you queue). The user left it out of our game on purpose (2026-11-26), and that stands for now.
 - **Nova (our ring):** a white-hot disc at the feet swelling into a ring of bright puffs with thin flame streaks shooting out past it; orange, red and gone in about half a second; faint round soot blotches left (one per puff) and a darker scorch at the feet that lingers.
 - **Self, then burning:** a small flash at the feet, the whole body white for one frame, then an orange glow and small upright licks on the body for about 3 s. Small: the status carries it.
 - **Fireball (Earth + Fire):** a bright streak with a dark smoke trail; a white-yellow bloom becoming flames that cling to the bushes about 1.5 s, leaving them charred.
 - **Fire beam (Arcane + Fire):** a dark red twisting core wrapped in licking flames; a bloom round a dark red hole at the hit, smouldering after.
-- The "wall or area" clip has no effect in it (the cast doesn't come within its 1.4 s).
+- **Fire wall (Shield + Fire)**, re-recorded: an arc of separate fire columns pouring up from the ground round the wizard for about 10 s. The user: "I don't think this effect is very good. It's basically fire pouring up from the ground in very discrete geysirs." A counterexample for burning ground.
+
+The user's verdicts (2026-11-26): "the goal isn't to copy magickas effects, I think there are areas where we can make better looking effects, or make different stylistic choices. But it's a useful reference to have." Our travelling wave of fire is preferred over Magicka's nova explosion, for the ring and the aimed burst alike (Magicka can't aim a burst). The fireball is "quite good looking. The streak is strong, and it's a visually impressive impact" (phase 2, missiles); the beam's style differs from ours.

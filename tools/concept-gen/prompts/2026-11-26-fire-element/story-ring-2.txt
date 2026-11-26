@@ -1,0 +1,11 @@
+Generate one image with your image generation tool, then save it as story-ring-2.png in the current directory. Reply with just the file name.
+
+Two images are attached. The first is a frame of our game: a stylised 3D action game seen from a steep camera about 46 degrees down, on a warm, pale sandstone floor; a small red wizard casts a Fire spray. That fire is approved and sets the look of the element. The second is its flame sprite sheet: fireballs burning out over 8 frames. Keep their painted toon style: soft round shading, white-hot hearts, orange and red, burning out into dark crackle.
+
+Draw a storyboard: two rows of five panels, left to right in time, each panel the same game camera (46 degrees down, same framing), on the same pale sandstone floor, with the same small red wizard and a few goblins at game scale (a wizard is about 1.6 metres tall). Thin dark gutters between panels.
+
+Top row, the Fire ring: a wave of flame travels outward from the wizard's feet in a full circle to about 3 metres, as one connected surface. The wave has a sharply defined, very hot, bright yellow-white leading edge that stands tallest at the front, and behind it the flames taper down quickly towards the inside, burning out to red crackle, so the middle is low and nearly clear. As the wave reaches its full size it slows, the whole wave sinks down and thins, fading out a little beyond its edge rather than stopping. Panels: (1) a white flash at the feet; (2) the wave a metre out, hot front, tapered interior; (3) the wave reaching the goblins, who catch fire; (4) the wave sinking and thinning just past its reach; (5) the aftermath: scorch streaks on the stone radiating outward from the wizard like spokes, short dark soot blotches along them, a few cooling embers; no single ring.
+
+Bottom row, the Fire burst: exactly the same travelling wave, but only a fan-shaped segment about 120 degrees wide thrown forward from the wizard's hands toward the goblins. Its two ends are not cut off: at each side the wave lowers and frays into a few curling flames and smoke, so the fan has soft, burning ends. Same five beats.
+
+Keep the look of the references. Paint with restraint: flat, readable shapes, few of them. No text, no labels, no numbers, no UI, no arrows.

@@ -1,0 +1,12 @@
+Generate one image with your image generation tool, then save it as parts-sheet-2.png in the current directory. Reply with just the file name.
+
+Two images are attached. The first is a frame of our game: a stylised 3D action game seen from a steep camera about 46 degrees down, on a warm, pale sandstone floor; a small red wizard casts a Fire spray. That fire is approved and sets the look of the element. The second is its flame sprite sheet: fireballs burning out over 8 frames. Keep their painted toon style: soft round shading, white-hot hearts, orange and red, burning out into dark crackle.
+
+Paint a VFX artist's parts sheet for the Fire element: building blocks of game particle effects, each shown alone on a plain black background, in labelled-free rows, so a developer can cut them into sprites. Each row is a short life strip left to right (born, living, dying). Every sprite is irregular and lopsided, never round or symmetrical, so that rotating it gives real variety. The rows:
+1. Flame puff, three variants (one per sub-row of six frames): a ragged, lopsided mass of fire, white-hot at first, that breaks up from the inside as it burns out: dark holes open in its middle and spread outward, leaving a broken rim of orange and red crackle that thins to nothing.
+2. Single flame lick, four variants side by side (each one still frame): one small, thin tongue of fire, a single lick among many, each a different curl and length, clearly smaller and simpler than the puffs.
+3. Rising ground flame, three variants (six frames each): an upright flame standing on the ground that stretches upward, its tip detaching and disappearing upward into the air as the base shrinks and goes out. Straight up, no sideways lean.
+4. Smoke puff, two variants (six frames each): dark grey-brown smoke that grows, curls and thins away, lopsided.
+5. Impact splash (six frames): fire hitting a surface: a flat, hot flash that sprays short streaks of flame and sparks outward in a fan, then breaks into crackle. Seen from above at an angle, as a hit on a body or a wall.
+
+Paint with restraint: flat, readable shapes, few of them, clean edges against the black. No text, no labels, no numbers, no UI, no arrows.

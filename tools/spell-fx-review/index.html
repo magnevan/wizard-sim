@@ -53,6 +53,7 @@ main { display: grid; gap: 18px; padding-block: 16px 56px; }
 .media img, .media video { width: 100%; border-radius: 8px; display: block; cursor: zoom-in; background: #000; }
 .side { display: grid; align-content: start; gap: 14px; min-width: 0; }
 .side p { margin: 0; color: var(--fg); }
+.side p.note { color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; font-size: 14px; }
 
 .answer { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 8px; }
 .answer .q { font-weight: 600; }
@@ -142,6 +143,7 @@ function render() {
     const side = document.createElement('div'); side.className = 'side';
     side.innerHTML = '<div><h2></h2><p></p></div>';
     $('h2', side).textContent = it.title; $('p', side).textContent = it.text;
+    if (it.note) { const n = document.createElement('p'); n.className = 'note'; n.textContent = it.note; side.append(n); }
     if (it.ask) side.append(answerBox(`${r.id}-${it.id}`, it.ask, true));
     el.append(media, side); main.append(el);
   }

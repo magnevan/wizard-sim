@@ -58,7 +58,7 @@ Answered 2026-11-25: the method yes ("I just need to see it visually"), shared r
 - [ ] **Flipbooks for the other mediums** (frost, dust, smoke, the beam's plasma): the burn-out flipbook was what the fire lacked; the others likely lack it too.
 - [ ] **The fire's nozzle** on the animated staff tip, not the fixed `NOZZLE` offset (Codex, round 9: the jet seems to start at the hat).
 - [ ] **Open from round 3:** the Frost flash is faint; frost glints on bodies are small; the rock's dust trail still a tube in shape (Codex: three separate lobes); the haze pass shown only on the beam (fire could use it).
-- [ ] **The spell-look guide**, written from the four once they pass, and a critic calibrated on the user's verdicts.
+- [ ] **The spell-look guide**: first draft, [lessons from the first four](../explorations/2026-11-26-spell-effects-lessons.md) (aftermath phases, flipbooks, narrow highlights, impacts by motion, concept art as breakdowns); next a shared on/after phase helper, the concept prompts tried on the next family, and a critic calibrated on the user's verdicts.
 - [ ] Then every other family in batches (sprays, beams, missiles, novas, lightning, ground effects, walls, Sigil devices, statuses, weapons and guards, enemy attacks, deaths, previews), one review page per batch.
 
 ## Done

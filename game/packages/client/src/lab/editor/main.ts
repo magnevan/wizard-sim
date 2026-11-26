@@ -344,7 +344,7 @@ function selWhere(): [number, number] | null {
   if (sel.type === 'pin') { const p = pins.find((x) => x.id === (sel as { id: string }).id); return p?.anchor.x != null && p.anchor.y != null ? [p.anchor.x, p.anchor.y] : null; }
   if (sel.type === 'obj') {
     const o = sc.objects.find((x) => x.id === (sel as { id: string }).id) as Record<string, unknown> | undefined;
-    const pts = [o?.at, o?.centre, ...((o?.head ?? o?.ends ?? []) as unknown[])].filter((p): p is [number, number] => Array.isArray(p));
+    const pts = [o?.at, o?.centre, ...((o?.head ?? o?.ends ?? o?.pts ?? []) as unknown[])].filter((p): p is [number, number] => Array.isArray(p));
     return pts.length ? [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length] : null;
   }
   const t = sc.terraces.find((x) => x.id === (sel as { id: string }).id);

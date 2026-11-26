@@ -10,6 +10,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RAIL_MOD, railFit } from './kit-fit';
 import { fallMesh } from './kit-fall';
+import { pipeMesh, type PipeMats, type PipeRun } from './kit-pipe';
 import { waterMesh } from './kit-water';
 import { clearInlays, flowInlays, inlayInto, type InlaySpec } from './kit-inlay';
 import { FOLIAGE_TIME, grow, type Recipe } from './foliage';
@@ -157,7 +158,7 @@ export async function loadKitArt(): Promise<void> {
 const texUrls = import.meta.glob<string>('../../../../content/generated/textures/*.png', { eager: true, query: '?url', import: 'default' });
 const texTiles = import.meta.glob<Record<string, number>>('../../../../content/generated/textures/tiles.json', { eager: true, import: 'default' });
 /** Textures that dress walls, steps and props, not floors. */
-const NOT_FLOOR = /^(ashlar|smooth-stone|tread|kerb|plaza-disc|magic-flow|tiles|vine-.*|banner-.*)$/;
+const NOT_FLOOR = /^(ashlar|smooth-stone|tread|kerb|plaza-disc|magic-flow|tiles|vine-.*|banner-.*|brass|pipe-.*)$/;
 /**
  * The floor materials a level can have, for the editor: the flat tones, and every texture (in the textures folder or
  * in tiles.json) that isn't for walls, steps or props, so a new texture shows up as a floor on its own.
@@ -242,6 +243,26 @@ function kerbMat(): THREE.MeshStandardMaterial | undefined {
   if (!stone || !KIT_OPTS.kerb) return undefined;
   if (!KERB_BLOCK) { KERB_BLOCK = triplanar(stone, TILE['smooth-stone'] ?? 2, undefined, true); KERB_BLOCK.vertexColors = true; }
   return KERB_BLOCK;
+}
+let PIPE_MATS: PipeMats | undefined;
+/** The saddles' sandstone: the smooth stone, world-mapped, warmed toward the reference's sandstone (its own material, so the kerbs keep theirs). */
+function saddleStone(): THREE.Material {
+  const stone = RAW['smooth-stone'];
+  if (!stone) return PROP.stone;
+  const m = triplanar(stone, TILE['smooth-stone'] ?? 2, undefined, false); m.color.setHex(0xf2d2a2);
+  return m;
+}
+/** The pipes' materials (kit-pipe.ts): the Codex-painted brass, collar and band pictures on the pipe's own UVs, the saddles in the smooth stone. */
+function pipeMats(): PipeMats {
+  if (PIPE_MATS && (PIPE_MATS.brass as THREE.MeshStandardMaterial).map === (RAW.brass ?? null) || PIPE_MATS && !RAW.brass) return PIPE_MATS;   // made again once the textures are in
+  const metal = (name: string, c: number, rough: number, metalness: number) => {
+    const t = RAW[name];   // (loaded repeating, in sRGB)
+    return new THREE.MeshStandardMaterial({ map: t ?? null, color: t ? 0xffffff : c, roughness: rough, metalness });
+  };
+  return (PIPE_MATS = {
+    brass: metal('brass', 0xc8902c, 0.38, 0.55), collar: metal('pipe-collar', 0xd09a34, 0.35, 0.55), band: metal('pipe-band', 0x2a3a8c, 0.3, 0.15),
+    inside: new THREE.MeshStandardMaterial({ color: 0x2a1c0c, roughness: 0.8, side: THREE.DoubleSide }), stone: saddleStone(),
+  });
 }
 /** A tiling texture's world-mapped material by name (paving, ashlar, smooth-stone...), once loadKitArt has run. */
 export const kitMat = (name: string): THREE.Material | undefined => TEX[name];
@@ -504,6 +525,7 @@ function piece(it: Inst): THREE.Group | null {
   if (KIT_PIECES[it.p]?.class === 'inlay') return inlay(it);
   if (cls === 'fall') return it.pts && it.low != null ? fallMesh(it.pts, yOf(it.h), yOf(it.low), TP_TIME) : null;   // water pouring into lower water (kit-fall.ts)
   if (cls === 'cliff') return it.pts && it.low != null ? cliffFace(it.pts, it.h, it.low) : null;   // a sea cliff laid from the cliff kit
+  if (cls === 'pipe') return it.pts ? pipeMesh(it as Inst & PipeRun, yOf, pipeMats()) : null;   // a conduit pipe drawn along its route (kit-pipe.ts)
   if (cls === 'edge' || cls === 'sweep') {
     const g = edgeFrame(it), L = it.len!, low = it.low!;
     const drop = it.h - low;

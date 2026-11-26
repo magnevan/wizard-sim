@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "name": "patch-pipes",
+  "G": 2,
+  "notes": "A test patch for conduit pipes (pipe.run, kit-pipe.ts): a run with corners on the terrace, up over its parapet and straight down the 3 m wall, on along the yard into the stills (it plugs in); a branch teeing off it with a free open mouth.",
+  "terraces": [
+    {"id": "t-terrace", "glyph": "U", "name": "the terrace", "h": 3, "mat": "paving", "edge": "parapet"},
+    {"id": "t-yard", "glyph": "L", "name": "the yard", "h": 0, "mat": "paving", "edge": "retain"}
+  ],
+  "corners": [
+    "UUUUUUUUUUUUUUUUUUUUU",
+    "UUUUUUUUUUUUUUUUUUUUU",
+    "UUUUUUUUUUUUUUUUUUUUU",
+    "UUUUUUUUUUUUUUUUUUUUU",
+    "UUUUUUUUUUUUUUUUUUUUU",
+    "UUUUUUUUUUUUUUUUUUUUU",
+    "LLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLLLLL"
+  ],
+  "objects": [
+    {"id": "f1", "kind": "flight", "name": "the stair", "head": [[14, 5.5], [17, 5.5]]},
+    {"id": "s1", "kind": "setpiece", "piece": "setpiece.stills", "at": [5, 13.5], "front": "N"},
+    {"id": "pipe1", "kind": "pipe", "name": "the main", "pts": [[2, 2], [9.5, 2], [9.5, 4.6], [9.5, 4.6, 4.4], [9.5, 5.85, 4.4], [9.5, 5.85, 0.5], [9.5, 9], [5, 9], [5, 12]]},
+    {"id": "pipe2", "kind": "pipe", "name": "the branch", "pts": [[8, 9], [8, 7], [2, 7]]}
+  ]
+}

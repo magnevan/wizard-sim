@@ -74,7 +74,7 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
 <header style="display:grid;gap:14px">
   <div class="eyebrow">The opening · stop 1 · Life</div>
   <h1>The Infirmary on the Kit</h1>
-  <p class="lede">The infirmary's layout, the plan you picked on 22 November, rebuilt in 3D from the kit's pieces so it can be walked in the 3D game. Every piece is now its real model: the well, the tents, the greenhouse, the stills, the smokestack and the bath's dressing. The vines, flowers, smoke and pipes are still to come. This page shows where it stands, so you can review it without loading the game.</p>
+  <p class="lede">The infirmary's layout, the plan you picked on 22 November, rebuilt in 3D from the kit's pieces so it can be walked in the 3D game. Every piece is now its real model: the well, the tents, the greenhouse, the stills, the smokestack and the bath's dressing. The pipes are drawn in code; the vines, flowers and smoke are still to come. This page shows where it stands, so you can review it without loading the game.</p>
 </header>
 
 <section>
@@ -100,7 +100,8 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
         <li class="done"><span class="mark"></span><span>Layout round 2: the stills moved, the east flight, the bath; a fresh critic <b>approved</b> it at 7.5/10, and its fixes are in</span></li>
         <li class="done"><span class="mark"></span><span>Greenhouse, stills and tents modelled and placed <span class="when">(90 credits)</span></span></li>
         <li class="done"><span class="mark"></span><span>Well, smokestack and bath dressing modelled and placed <span class="when">(120 credits; 210 in all)</span></span></li>
-        <li class="now"><span class="mark"></span><span><b>The pipes:</b> the Meshy sheet failed; one question below</span></li>
+        <li class="done"><span class="mark"></span><span>The pipes, drawn in code along their routes <span class="when">(free)</span></span></li>
+        <li class="now"><span class="mark"></span><span><b>Your look</b> at the pipes; then the vines, flowers and smoke</span></li>
         <li><span class="mark"></span><span>Surfaces: tiling textures from Codex</span></li>
         <li><span class="mark"></span><span>Paint-over of the grey-box, as the dressing target</span></li>
         <li><span class="mark"></span><span>Dressing: lamps, beds, cots, pipes, vines</span></li>
@@ -144,7 +145,7 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
 <section>
   <h2>What's off in this draft</h2>
   <ul class="gaps">
-    <li><b>The pipes are missing:</b> Meshy read the four-pipe sheet as one fused object, so it can't be split (question below). The tent split gave three loose cots; the fourth cot, the table and the lantern are fused to the tent.</li>
+    <li>The tent split gave three loose cots; the fourth cot, the table and the lantern are fused to the tent.</li>
     <li><b>Living parts still to come:</b> the vines on the well and pipes (drawing back as the well relights), flowers in the planters, the smokestack's smoke.</li>
     <li><b>The conduit walkways</b> (raised paths from the well to what it feeds) are gone from the layout; they come back in dressing as the brass pipes below.</li>
     <li><b>The two big paved tiers</b> look alike: they need different floors (the read asked for it) and the pipes to break them up. That's for the surfaces and dressing steps.</li>
@@ -221,14 +222,13 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
 
 <section>
   <h2>The pipes</h2>
-  <div class="answer" data-id="q-pipes">
-    <h3>How should the conduit pipes be made?</h3>
-    <p>The pipe sheet failed in Meshy (30 credits spent, nothing usable). Two ways on:</p>
-    <p><b>Drawn in code along their routes</b>, like the kerbs and road stones: brass tubes with flanged joints and stone saddles, laid along any path from the well to the greenhouse, stills, tents and bath, with the painted brass texture from the pictures. Free; they bend and branch to fit the layout, and the vines can grow along them. Under your rule this counts as a procedural piece, not a set piece.</p>
-    <p><b>Meshy again</b>, one picture per part (straight, elbow, tee, support), about 120 credits; the parts then get placed piece by piece.</p>
-    <p class="rec">My pick: code along routes. Pipes are a run that changes with the layout, like kerbs, and drawing them to size beats fitting four fixed parts.</p>
-    <div class="choices"><button type="button" data-v="code">Code along routes</button><button type="button" data-v="meshy">Meshy, part by part</button></div>
-    <textarea id="n-q-pipes" aria-label="Note on the pipes" placeholder="Anything else about them…"></textarea><div class="status"></div>
+  <p>Meshy fused the pipe sheet into one object (left), so the pipes are now drawn in code along their routes, like the kerbs and road stones (your pick): brass tube, riveted collars, blue bands with the academy star, sandstone saddles, T-joints, climbs down walls and open mouths, with painted textures from Codex. They don't block walking.</p>
+  <div class="trio"><figure><img src="img/pipes-meshy-failed.jpg" alt="Meshy's model of the pipe sheet from four sides: one pipe on a saddle fused to a framed back panel"><figcaption><b>Meshy's try</b>: one fused object, nothing to split.</figcaption></figure><figure><img src="img/pipes-test.jpg" alt="Close-up of the procedural pipes on a test patch: corners, a riveted T, star bands, stone saddles"><figcaption><b>The procedural pipes</b> close up, on a test patch.</figcaption></figure></div>
+  <p>In the infirmary they run from the well's three stubs: west to the greenhouse, east to the stills, north up the overlook wall to a T feeding both tents, and south across the well's tier and down the bath bay's wall to an open mouth over the pool (the overlook and shore views above). The south pipe crosses the middle of the well's tier; it could run along an edge instead if it cuts the space up.</p>
+  <div class="answer" data-id="q-pipes-look">
+    <h3>Do the pipes work?</h3>
+    <div class="choices"><button type="button" data-v="keep">Keep</button><button type="button" data-v="tune">Tune</button><button type="button" data-v="redo">Redo</button></div>
+    <textarea id="n-q-pipes-look" aria-label="Note on the pipes" placeholder="Size, routes, look…"></textarea><div class="status"></div>
   </div>
 </section>
 

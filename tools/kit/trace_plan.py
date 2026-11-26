@@ -61,6 +61,17 @@ FIXES = {
         # the made set pieces (Meshy, 2026-11-26) in place of the plan's wall boxes and the trace's post stand-ins for the tents
         ('drop-setpiece', 'setpiece.post'), ('drop-setpiece', 'setpiece.pier-round'),
         ('object', dict(kind='setpiece', id='well', name='the well', piece='setpiece.infirmary-well', at=[23.0, 21.5], front='S')),
+        # the conduits: brass pipes drawn to size along their routes (kit-pipe.ts), from the well's stubs to what it feeds
+        ('object', dict(kind='pipe', id='pipe-greenhouse', name='the conduit to the greenhouse', r=0.3,
+                        pts=[[21.7, 22.6, 4.5], [20.4, 22.6, 4.5], [20.4, 22.6, 4.0], [20.4, 25.0], [15.4, 25.0], [15.4, 23.6], [14.9, 23.6]])),
+        ('object', dict(kind='pipe', id='pipe-stills', name='the conduit to the stills', r=0.3,
+                        pts=[[24.4, 22.6, 4.5], [25.6, 22.6, 4.5], [25.6, 22.6, 4.0], [25.6, 23.6], [39.3, 23.6]])),
+        ('object', dict(kind='pipe', id='pipe-bath', name='the conduit down to the bath', r=0.3,
+                        pts=[[23.0, 22.9], [23.0, 32.4], [23.0, 32.75, 4.0], [23.0, 32.75, 0.7], [23.0, 33.4]])),
+        ('object', dict(kind='pipe', id='pipe-tents', name='the conduit along the top terrace to the tents', r=0.3,
+                        pts=[[17.0, 16.8], [17.0, 18.6], [25.0, 18.6], [25.0, 16.8]])),
+        ('object', dict(kind='pipe', id='pipe-riser', name='the conduit up the overlook wall', r=0.3,
+                        pts=[[23.0, 20.1], [23.0, 19.7, 4.5], [23.0, 19.7, 5.5], [23.0, 18.6]])),
         # the bath's dressing (one Meshy sheet, split): urns either side, planters to fill with grown flowers, the towel stand
         ('object', dict(kind='vignette', id='bath-urn-e', name='a lidded urn by the bath', piece='dress.urn-lidded', at=[24.5, 36.4], front='W')),
         ('object', dict(kind='vignette', id='bath-towels', name='the towel stand', piece='dress.towel-stand', at=[25.9, 36.3], front='W')),

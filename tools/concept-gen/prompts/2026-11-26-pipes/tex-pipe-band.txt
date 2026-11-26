@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-pipe-band.png in the current directory. Reply with just the file name.
+
+The attached image shows the brass conduit pipes this texture is for: stylised, hand-painted, polished golden brass, each pipe wearing a narrow band of deep blue enamel with a gold emblem on it.
+
+Draw that enamel band laid out flat as a square texture, seen straight on: a field of deep royal-blue glossy enamel with soft painted sheen, edged down its left side and down its right side by a thin raised strip of polished gold brass running from the top edge to the bottom edge, and in the exact centre one gold eight-pointed star (four long points and four shorter points between them, like a compass rose) raised in polished gold with a small round boss at its middle, the star about a third of the image wide. The same hand-painted style as the attached image, flat even light, the blue enamel and the two gold edge strips reaching the top and bottom edges of the image so the band continues when the image is stacked top to bottom.

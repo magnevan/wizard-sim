@@ -87,6 +87,151 @@ def flight_frame(f, rows, T):
     return None
 
 
+PIPE_H, PIPE_R = 0.5, 0.22       # a pipe's default height above the floor (m) and radius (u)
+PIPE_SADDLE = 3.0                # u between the sandstone saddles under a level run
+PIPE_FLOAT = 1.0                 # m: a level run higher than this over its floor (away from its ends) is a warning
+
+
+def footprint(v, G):
+    """A placed piece's footprint in corners (a box turned to its front and turn, or a circle) and its kit.json entry."""
+    pc = KIT['pieces'].get(v.get('piece'))
+    if not pc or 'footprint' not in pc: return None, pc
+    fw, fd = pc['footprint']; dx, dy = OUT[v.get('front', 'S')]
+    hw, hd = (fw / 2 / G, fd / 2 / G) if dy else (fd / 2 / G, fw / 2 / G)
+    cx0, cy0 = v['at']
+    if pc.get('shape') == 'round': return Point(v['at']).buffer(hw * 0.98, 24), pc
+    box = [(cx0 - hw, cy0 - hd), (cx0 + hw, cy0 - hd), (cx0 + hw, cy0 + hd), (cx0 - hw, cy0 + hd)]
+    if v.get('turn'):
+        t = math.radians(v['turn']); c0, s0 = math.cos(t), math.sin(t)
+        box = [(cx0 + (px - cx0) * c0 - (py - cy0) * s0, cy0 + (px - cx0) * s0 + (py - cy0) * c0) for px, py in box]
+    return Polygon(box), pc
+
+
+def pipes(objs, floor_u, T, G, nx, ny, placed, err, label):
+    """Conduit pipes ({kind: pipe, pts: [[x, y] or [x, y, z m]], h?, r?}): dressing the renderer draws to size along
+    their route (kit-pipe.ts), never models. Each becomes one pipe.run: pts resolved to [x u, y u, z m] (a point without
+    z sits h above the floor there), what each end does (open: a mouth with a collar; plug: stops at a set piece's or
+    vignette's footprint; tee: joins another pipe's run), and saddles [x u, y u, floor m, pipe z m, angle] under level runs.
+    Checks: pipe-point (a point off the map or over no floor), pipe-wall (through a building), pipe-setpiece (through a set
+    piece other than at an end), and warnings pipe-float (a run over one floor, more than PIPE_FLOAT above it away from its
+    ends; a hop over a drop is fine) and pipe-sink (dipping into its floor)."""
+    from shapely.prepared import prep
+    if not objs: return []
+    fl = [(T[ch]['h'], ch, prep(u.buffer(1e-6))) for ch, u in floor_u.items()]
+
+    def floor_at(x, y):
+        """the topmost floor at (x, y), in corners: (height m, glyph), or (None, None) over nothing"""
+        p, best = Point(x, y), (None, None)
+        for h, ch, pu in fl:
+            if (best[0] is None or h > best[0]) and pu.contains(p): best = (h, ch)
+        return best
+    solids = []      # (object, footprint, top m, a set piece?)
+    for v in placed:
+        box, pc = footprint(v, G)
+        if box is None: continue
+        fh = floor_at(*v['at'])[0]
+        solids.append((v, box, (fh or 0.0) + pc.get('height', 2.0), v.get('kind') == 'setpiece'))
+    lerp = lambda a, b, t: [a[i] + (b[i] - a[i]) * t for i in range(3)]
+    done = []
+    for o in objs:
+        h, r = o.get('h', PIPE_H), o.get('r', PIPE_R)
+        raw = o.get('pts') or []
+        if len(raw) < 2:
+            err('pipe-point', f"{label(o)}: a pipe needs two points or more", raw[0][:2] if raw else None, [o['id']]); continue
+        P, bad = [], False
+        for p in raw:
+            x, y = p[0], p[1]
+            if not (0 <= x <= nx and 0 <= y <= ny):
+                err('pipe-point', f"{label(o)}: its point ({x},{y}) is off the map", (x, y), [o['id']]); bad = True; continue
+            fh = floor_at(x, y)[0]
+            if len(p) < 3 and fh is None:
+                err('pipe-point', f"{label(o)}: no floor under its point ({x},{y}) to sit on (give it a height: [x, y, z])", (x, y), [o['id']]); bad = True; continue
+            q = [float(x), float(y), float(p[2]) if len(p) > 2 else fh + h]
+            if not P or max(abs(q[i] - P[-1][i]) for i in range(3)) > 1e-6: P.append(q)
+        if bad or len(P) < 2: continue
+        ends, plugs = ['open', 'open'], [None, None]
+        # an end on (or in) a placed piece's footprint plugs into it: the run is cut where it meets the footprint
+        for k, (i, j) in enumerate(((0, 1), (-1, -2))):
+            e, nb = P[i], P[j]
+            for v, box, top, _ in solids:
+                if not box.buffer(0.15).contains(Point(e[0], e[1])) or e[2] > top: continue
+                ends[k], plugs[k] = 'plug', v['id']
+                if math.hypot(nb[0] - e[0], nb[1] - e[1]) < 1e-6: break       # a vertical run into it: as it is
+                seg = LineString([e[:2], nb[:2]]); L = seg.length
+                outside = seg.difference(box)
+                if outside.is_empty:
+                    err('pipe-setpiece', f"{label(o)}: its end run lies wholly inside {label(v)}", e[:2], [o['id'], v['id']]); break
+                ts = [seg.project(Point(c)) for g in getattr(outside, 'geoms', [outside]) for c in g.coords]
+                t = max(0.0, (min(ts) - 0.08) / L)                                 # just inside the footprint's face
+                P[i] = lerp(e, nb, t)
+                break
+        done.append(dict(o=o, P=P, r=r, ends=ends, plugs=plugs))
+    out = []
+    for d in done:
+        o, P, r = d['o'], d['P'], d['r']
+        U = lambda q: (q[0] * G, q[1] * G, q[2] / 0.6)                            # corners and metres -> u
+        tees = []
+        for k, i in enumerate((0, -1)):
+            if d['ends'][k] != 'open': continue
+            ex, ey, ez = U(P[i])
+            for d2 in done:
+                if d2 is d: continue
+                for a, b in zip(d2['P'], d2['P'][1:]):
+                    a, b = U(a), U(b); ab = [b[n] - a[n] for n in range(3)]; LL = sum(c * c for c in ab) or 1e-9
+                    t = max(0.0, min(1.0, ((ex - a[0]) * ab[0] + (ey - a[1]) * ab[1] + (ez - a[2]) * ab[2]) / LL))
+                    c = [a[n] + ab[n] * t for n in range(3)]
+                    if math.dist((ex, ey, ez), c) <= max(d2['r'], 0.15) + 0.05:
+                        # the branch runs on to the main's centre line; the main's collar there is turned along the main
+                        P[i] = [c[0] / G, c[1] / G, c[2] * 0.6]; Lab = math.sqrt(LL)
+                        d['ends'][k] = 'tee'
+                        tees.append(dict(end=k, into=d2['o']['id'], r=d2['r'], at=[round(c[0], 4), round(c[1], 4), round(c[2] * 0.6, 4)],
+                                         dir=[round(ab[n] / Lab, 5) for n in range(3)]))
+                        break
+                if d['ends'][k] == 'tee': break
+        saddles, flagged = [], set()
+        e0, e1 = P[0][:2], P[-1][:2]
+        for n, (a, b) in enumerate(zip(P, P[1:])):
+            L = math.hypot(b[0] - a[0], b[1] - a[1])
+            if L < 1e-6: continue                                                  # a vertical run: on a wall face, held by it
+            k = max(2, int(L / 0.25) + 1)
+            under = [floor_at(*lerp(a, b, s / k)[:2])[0] for s in range(1, k)]
+            flat = None not in under and max(under) - min(under) < 0.3            # over one floor (a hop over a drop may float)
+            for s in range(1, k):
+                t = s / k; x, y, z = lerp(a, b, t)
+                fh, g = floor_at(x, y)
+                near_end = min(math.hypot(x - e0[0], y - e0[1]), math.hypot(x - e1[0], y - e1[1])) < 0.5
+                if g and T[g].get('edge') == 'wall' and z < T[g]['h'] - 0.05 and not near_end and ('wall', n) not in flagged:
+                    flagged.add(('wall', n))
+                    err('pipe-wall', f"{label(o)}: runs through {T[g].get('name', g)} (a building) at ({x:.1f},{y:.1f})", (x, y), [o['id']])
+                for v, box, top, is_sp in solids:
+                    if not is_sp or v['id'] in d['plugs'] and near_end or z > top or ('sp', n, v['id']) in flagged: continue
+                    if box.contains(Point(x, y)):
+                        flagged.add(('sp', n, v['id']))
+                        err('pipe-setpiece', f"{label(o)}: runs through {label(v)} at ({x:.1f},{y:.1f}); end it at the piece (it plugs in) or go round",
+                            (x, y), [o['id'], v['id']])
+                if fh is None: continue
+                if z - r * 0.6 < fh - 0.05 and T[g].get('edge') != 'wall' and ('sink', n) not in flagged:   # (in a building: pipe-wall says it)
+                    flagged.add(('sink', n))
+                    err('pipe-sink', f"{label(o)}: sinks into the floor at ({x:.1f},{y:.1f}) ({z:.2f} m, the floor {fh:.2f} m)", (x, y), [o['id']], 'warning')
+                if flat and z - fh > PIPE_FLOAT and min(t, 1 - t) * L > 0.6 and ('float', n) not in flagged:
+                    flagged.add(('float', n))
+                    err('pipe-float', f"{label(o)}: floats {z - fh:.1f} m over the floor at ({x:.1f},{y:.1f}) with nothing under it", (x, y), [o['id']], 'warning')
+            # saddles: a level run (slope under 1 in 7) stands on one every PIPE_SADDLE u, where the floor is close below
+            Lu = L * G
+            if Lu < 1.0 or abs(b[2] - a[2]) / 0.6 > 0.15 * Lu: continue
+            m = max(1, round(Lu / PIPE_SADDLE))
+            for s in range(m):
+                x, y, z = lerp(a, b, (s + 0.5) / m)
+                fh, g = floor_at(x, y)
+                if fh is None or T[g].get('mat') == 'water' or not (-0.01 <= z - r * 0.6 - fh <= 1.2): continue
+                if any(box.contains(Point(x, y)) for _, box, _, _ in solids): continue
+                saddles.append([round(x * G, 3), round(y * G, 3), fh, round(z, 3), round(math.atan2(b[1] - a[1], b[0] - a[0]), 4)])
+        out.append(dict(p='pipe.run', x=P[0][0] * G, y=P[0][1] * G, h=min(q[2] for q in P), rot=0, r=r, src=o['id'], name=label(o),
+                        pts=[[round(q[0] * G, 4), round(q[1] * G, 4), round(q[2], 4)] for q in P],
+                        ends=d['ends'], tees=tees, plugs=d['plugs'], saddles=saddles))
+    return out
+
+
 def compile_scene(sc):
     G = sc['G']; rows = sc['corners']
     T = {t['glyph']: t for t in sc['terraces']}
@@ -852,6 +997,8 @@ def compile_scene(sc):
                     n0 = len(inst)
                     put(rule['put'], px, py, T[s[2]]['h'], math.atan2(-ny_, -nx_), on_floor=True)
                     if len(inst) > n0: taken.append((px, py))
+
+    inst += pipes(kind('pipe'), floor_u, T, G, nx, ny, kind('setpiece') + kind('vignette'), err, label)
 
     # ---- reachability: cells by terrace, joined where steps are small, plus flights ----
     walk = {c for c in T if T[c].get('edge') != 'wall' and T[c].get('walk', True)}

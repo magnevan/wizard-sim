@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-pipe-collar.png in the current directory. Reply with just the file name.
+
+The attached image shows the brass conduit pipes this texture is for: stylised, hand-painted, polished golden brass, with riveted flange collars at their joints and ends.
+
+Draw the face of one of those flange collars laid out flat as a square texture, seen straight on: polished warm golden brass, a thin raised rim running along the top edge and another along the bottom edge, and between them one straight row of four round domed brass rivets evenly spaced across the middle, each rivet catching a soft highlight, in exactly that hand-painted style, flat even light. The brass and the two rims reach the left and right edges of the image, so the row of rivets continues evenly when the image is tiled side by side.

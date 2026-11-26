@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-brass.png in the current directory. Reply with just the file name.
+
+The attached image shows the brass conduit pipes this texture is for: stylised, hand-painted, polished warm golden brass with soft highlights, in a warm-lit academy of sandstone and gold trim.
+
+Draw a seamless tileable texture of the polished brass surface of those pipes, seen straight on and flat: warm golden brass with fine soft brushed streaks running left to right, gentle lighter and darker golden tones drifting across it, a little soft patina in the hollows of the streaks, in exactly that hand-painted style, filling the whole square image edge to edge with an even, flat light. The pattern repeats cleanly when the image is tiled side by side.

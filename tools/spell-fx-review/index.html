@@ -137,8 +137,8 @@ function render() {
   for (const it of r.items || []) {
     const el = document.createElement('section'); el.className = 'item';
     const media = document.createElement('div'); media.className = 'media';
-    for (const src of it.img || []) { const im = document.createElement('img'); im.src = 'img/' + src; im.alt = it.title; im.loading = 'lazy'; media.append(im); }
     for (const src of it.vid || []) { const v = document.createElement('video'); Object.assign(v, { src: 'vid/' + src, muted: true, loop: true, autoplay: true, playsInline: true }); media.append(v); }
+    for (const src of it.img || []) { const im = document.createElement('img'); im.src = 'img/' + src; im.alt = it.title; im.loading = 'lazy'; media.append(im); }
     const side = document.createElement('div'); side.className = 'side';
     side.innerHTML = '<div><h2></h2><p></p></div>';
     $('h2', side).textContent = it.title; $('p', side).textContent = it.text;

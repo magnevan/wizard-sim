@@ -8,3 +8,14 @@ The user's notes, verbatim:
 - **Magicka 1:** "flame particles that move outwards, scale up, fade out, change color from bright yellow to more orange/red at the end; same floating embers; Similar movement on smoke as flame, but smoke is rendered behind, and scales up larger than flame, lasts longer and has an upwards drift."
 
 What the stills add: Magicka 2's jet is narrow and runs about half the length before the blotches bloom, with a black scorch spreading under the end that stays after; Magicka 1's puffs glow as one mass (added light) and the floor under them glows red. Both cones are narrower than our sim's.
+
+## Magicka 2's other Fire casts (the user's clips, 2026-11-26)
+
+Five more clips for Fire's element pass, kept on the user's machine in the main checkout's gitignored `.reference/magicka2-clips/`; cropped copies and 16-frame sheets are on the [Spell Effects Review](https://claude.ai/artifact/Kwh9yrDCTVmnXQRcHQ6vxT), round "Magicka 2 clips". What they show:
+
+- **Every cast starts with the same wind-up**: a curved swirl of flame round the wizard for about a quarter second, whatever the shape. A part Fire owns across all its casts.
+- **Nova (our ring):** a white-hot disc at the feet swelling into a ring of bright puffs with thin flame streaks shooting out past it; orange, red and gone in about half a second; faint round soot blotches left (one per puff) and a darker scorch at the feet that lingers.
+- **Self, then burning:** a small flash at the feet, the whole body white for one frame, then an orange glow and small upright licks on the body for about 3 s. Small: the status carries it.
+- **Fireball (Earth + Fire):** a bright streak with a dark smoke trail; a white-yellow bloom becoming flames that cling to the bushes about 1.5 s, leaving them charred.
+- **Fire beam (Arcane + Fire):** a dark red twisting core wrapped in licking flames; a bloom round a dark red hole at the hit, smouldering after.
+- The "wall or area" clip has no effect in it (the cast doesn't come within its 1.4 s).

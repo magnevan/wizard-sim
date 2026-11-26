@@ -39,6 +39,7 @@ window.ROUNDS = [
   {
     id: 'fire-1',
     group: 'Fire',
+    topic: 'Concepts',
     tab: 'Take 1',
     el: 'fire',
     date: '2026-11-26',
@@ -93,6 +94,7 @@ window.ROUNDS = [
   {
     id: 'magicka-fire',
     group: 'Fire',
+    topic: 'Magicka',
     tab: 'Magicka 1 sheets',
     el: 'fire',
     date: '2026-11-26',
@@ -160,6 +162,7 @@ window.ROUNDS = [
   {
     id: 'magicka2-fire',
     group: 'Fire',
+    topic: 'Magicka',
     tab: 'Magicka 2 clips',
     el: 'fire',
     date: '2026-11-26',
@@ -207,6 +210,7 @@ window.ROUNDS = [
   {
     id: 'fire-2',
     group: 'Fire',
+    topic: 'Concepts',
     tab: 'Take 2',
     el: 'fire',
     date: '2026-11-26',
@@ -240,7 +244,8 @@ window.ROUNDS = [
   {
     id: 'fire-3',
     group: 'Fire',
-    tab: 'Take 3: ring and burst',
+    topic: 'Ring and burst',
+    tab: '1 · sprites',
     el: 'fire',
     date: '2026-11-26',
     title: 'Fire, round 3: the ring and the burst, built',
@@ -279,7 +284,8 @@ window.ROUNDS = [
   {
     id: 'fire-4',
     group: 'Fire',
-    tab: 'Take 4: a wave of gas',
+    topic: 'Ring and burst',
+    tab: '2 · gas',
     el: 'fire',
     date: '2026-11-26',
     title: 'Fire, round 4: the wave as burning gas',
@@ -319,7 +325,8 @@ window.ROUNDS = [
   {
     id: 'fire-5',
     group: 'Fire',
-    tab: 'Take 5: dressing',
+    topic: 'Ring and burst',
+    tab: '3 · dressing',
     el: 'fire',
     date: '2026-11-26',
     title: 'Fire, round 5: the gas wave dressed',
@@ -359,7 +366,8 @@ window.ROUNDS = [
   {
     id: 'fire-6',
     group: 'Fire',
-    tab: 'Take 6: burst and embers',
+    topic: 'Ring and burst',
+    tab: '4 · burst and embers',
     el: 'fire',
     date: '2026-11-26',
     title: 'Fire, round 6: a bigger opening burst, Magicka-like embers',
@@ -392,7 +400,8 @@ window.ROUNDS = [
   {
     id: 'fire-7',
     group: 'Fire',
-    tab: 'Take 7: full-length burst',
+    topic: 'Ring and burst',
+    tab: '5 · full length',
     el: 'fire',
     date: '2026-11-26',
     title: 'Fire, round 7: the racing ring to the full length',

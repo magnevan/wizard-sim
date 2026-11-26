@@ -37,6 +37,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .bar .wrap.sub[hidden] { display: none; }
 .subtabs a { font-size: 12px; padding: 5px 10px; border-style: dashed; }
 .subtabs a[aria-current="page"] { border-style: solid; }
+.takes a { font-size: 11px; padding: 4px 9px; border: 0; background: none; }
+.takes a[aria-current="page"] { background: var(--el-soft); }
 .step { display: flex; gap: 4px; }
 .step button { font: 600 13px/1 var(--body); color: var(--fg); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; cursor: pointer; }
 .step button:disabled { opacity: 0.35; cursor: default; }
@@ -83,7 +85,8 @@ dialog img, dialog video { max-width: 96vw; max-height: 94vh; display: block; bo
   <nav class="tabs" id="tabs" aria-label="Elements"></nav>
   <div class="step"><button id="prev" aria-label="Previous round">←</button><button id="next" aria-label="Next round">→</button></div>
 </div>
-<div class="wrap sub"><nav class="tabs subtabs" id="subtabs" aria-label="Rounds"></nav></div></div>
+<div class="wrap sub"><nav class="tabs subtabs" id="subtabs" aria-label="Spells"></nav></div>
+<div class="wrap sub"><nav class="tabs subtabs takes" id="takes" aria-label="Takes"></nav></div></div>
 <div class="wrap" id="page">
   <header class="round"><div class="eyebrow">Loading</div><h1>Spell Effects Review</h1></header>
 </div>
@@ -101,6 +104,8 @@ const roundOf = (id) => ROUNDS.find((r) => r.id === id) || ROUNDS[ROUNDS.length 
 const docIds = (r) => [...(r.items || []).filter((i) => i.ask).map((i) => `${r.id}-${i.id}`), ...(r.general ? [`${r.id}-general`] : [])];
 
 const groupOf = (r) => r.group || r.tab;
+// a third level inside an element: the spell (or concepts, or the Magicka study) a round belongs to
+const topicOf = (r) => r.topic || '';
 const isOpen = (r) => { const ids = docIds(r); return ids.length > 0 && ids.some((id) => !(state[id] && (state[id].choice || state[id].note))); };
 function link(r, label, current, open) {
   const a = document.createElement('a');
@@ -111,7 +116,9 @@ function link(r, label, current, open) {
   return a;
 }
 function tabs(cur) {
-  // top row: one tab per group, linking to its newest round; second row: the current group's rounds
+  // top row: one tab per group (an element, or the Plan), linking to its newest round; second row: the group's topics
+  // (a spell, its concepts, the Magicka study), each linking to its newest round; third row: the topic's takes. A group
+  // without topics lists its rounds in the second row.
   const groups = [...new Set(ROUNDS.map(groupOf))];
   const nav = $('#tabs'); nav.replaceChildren();
   for (const g of groups) {
@@ -119,9 +126,20 @@ function tabs(cur) {
     nav.append(link(rs[rs.length - 1], g, g === groupOf(cur), rs.some(isOpen)));
   }
   const mine = ROUNDS.filter((r) => groupOf(r) === groupOf(cur));
-  const sub = $('#subtabs'); sub.replaceChildren();
-  sub.parentElement.hidden = mine.length < 2;
-  for (const r of mine) sub.append(link(r, r.tab, r.id === cur.id, isOpen(r)));
+  const topics = [...new Set(mine.map(topicOf))];
+  const sub = $('#subtabs'), takes = $('#takes'); sub.replaceChildren(); takes.replaceChildren();
+  if (topics.length > 1 || topics[0]) {
+    for (const t of topics) {
+      const rs = mine.filter((r) => topicOf(r) === t);
+      sub.append(link(rs[rs.length - 1], t || 'Other', t === topicOf(cur), rs.some(isOpen)));
+    }
+    const inTopic = mine.filter((r) => topicOf(r) === topicOf(cur));
+    for (const r of inTopic) takes.append(link(r, r.tab, r.id === cur.id, isOpen(r)));
+    sub.parentElement.hidden = false; takes.parentElement.hidden = inTopic.length < 2;
+  } else {
+    for (const r of mine) sub.append(link(r, r.tab, r.id === cur.id, isOpen(r)));
+    sub.parentElement.hidden = mine.length < 2; takes.parentElement.hidden = true;
+  }
   const k = ROUNDS.indexOf(cur);
   $('#prev').disabled = k <= 0; $('#next').disabled = k >= ROUNDS.length - 1;
 }
@@ -141,7 +159,7 @@ function render() {
   const page = $('#page'); page.replaceChildren();
   const head = document.createElement('header'); head.className = 'round';
   head.innerHTML = `<div class="eyebrow"></div><h1></h1><p class="lead"></p><div class="tally"></div>`;
-  $('.eyebrow', head).textContent = [r.group && r.group !== r.tab ? r.group : '', r.tab, r.date].filter(Boolean).join(' · ');
+  $('.eyebrow', head).textContent = [r.group && r.group !== r.tab ? r.group : '', r.topic || '', r.tab, r.date].filter(Boolean).join(' · ');
   $('h1', head).textContent = r.title; $('.lead', head).textContent = r.lead || '';
   page.append(head);
   const main = document.createElement('main');

@@ -35,18 +35,26 @@ FIXES = {
     'infirmary': [   # plan D's stairs are plain stairs() (sectors to the trace), so its four flights are written here (2026-11-26)
         ('terrace', 't-sea', dict(name='the deep')), ('terrace', 't-stream-c', dict(name='the bath')),
         ('terrace', 't-stream', dict(name='the sea')), ('terrace', 'stairs at 0 m', dict(name='the shore walk')),
-        ('terrace', 'stairs at 0.5 m', dict(name="the bath's rim", edge='retain')), ('terrace', 'wood at 4 m', dict(name='the conduit walks', h=3.8)),
+        ('terrace', 'stairs at 4.5 m', dict(name="the east flight's landing", h=4.25, edge='parapet')),
+        ('terrace', 'the shore walk', dict(edge='parapet')),   # a low sea wall along the walk, and round the bath sunk into it
         ('paint', 't-woods-d', 0, 0, 76, 0),                  # the lattice's first row fell outside the plan's fill: woods, not -10 m sea
-        # the overlook: its two flights down to the well's tier (the east one by the stills, 2 cells; rev 7's long run along the drop has no room)
-        ('paint', 'paving at 5 m', 15, 18, 20, 19), ('paint', 'paving at 5 m', 27, 18, 31, 19),
-        ('paint', 'paving at 3.5 m', 15, 20, 20, 24), ('paint', 'paving at 3.5 m', 25, 20, 30, 24),
+        # the overlook's two flights down to the well's tier: the west one straight down by the greenhouse; the east one a long run
+        # along the drop (rev 7; the user, 2026-11-26: move the stills east to make room): a ledge off the top terrace, a flight,
+        # a landing at 4.25 m, a second flight, then the well's tier. The conduit walks are dropped: pipes come back as dressing.
+        ('paint', 'paving at 5 m', 15, 18, 20, 19),
+        ('paint', 'paving at 3.5 m', 15, 20, 20, 24), ('paint', 'paving at 3.5 m', 25, 20, 42, 25),
         ('disc', 'dais at 4 m', 23.0, 21.5, 2.4),
-        ('flight', 'west flight', [[16.0, 19.5], [19.0, 19.5]]), ('flight', 'east flight', [[28.0, 19.5], [30.0, 19.5]]),
+        ('paint', 'paving at 5 m', 27, 20, 28, 22), ("paint", "the east flight's landing", 29, 20, 34, 22),   # the ledge keeps a cell clear of the dais's round edge
+        ('paint', 'stills', 39, 21, 44, 24),
+        ('flight', 'west flight', [[16.0, 19.5], [19.0, 19.5]]),
+        ('flight', 'east flight, upper', [[28.5, 20.0], [28.5, 22.0]]), ('flight', 'east flight, lower', [[34.5, 20.0], [34.5, 22.0]]),
         # the shore: sand, the walk, the flight down by the greenhouse and the way back up along the cliff, west to east
         ('paint', 'sand at 0 m', 6, 35, 48, 36), ('paint', 'sand at 0 m', 6, 37, 21, 37),
-        ('paint', 'the shore walk', 16, 30, 19, 36), ('paint', 'the shore walk', 15, 35, 20, 37), ('paint', 'the shore walk', 20, 35, 32, 36), ('paint', 'the shore walk', 24, 32, 32, 34),
+        ('paint', 'the shore walk', 16, 30, 19, 36), ('paint', 'the shore walk', 15, 35, 20, 37), ('paint', 'the shore walk', 20, 35, 32, 37), ('paint', 'the shore walk', 24, 32, 32, 34),
         ('flight', 'shore flight down', [[16.0, 29.5], [19.0, 29.5]]), ('flight', 'shore flight up', [[32.5, 32.0], [32.5, 34.0]]),
-        ('disc', "the bath's rim", 23.0, 35.5, 2.0), ('disc', 'the bath', 23.0, 35.5, 1.25),
+        ('paint', 'the sea', 20, 38, 30, 39),              # a woods tongue the plan left under the bath, out into the sea
+        ('paint', 'the shore walk', 21, 33, 27, 34),       # a bay cut into the bluff, so the bath has room
+        ('disc', 'the bath', 22.5, 35.0, 1.5),             # west of the climbing flight's landing             # a row of the walk between it and the sea, or it pours over as a fall            # a pool sunk into the shore walk, not a raised rim against the cliff
         # markers: the seats start on the road in, on the well's axis (the read: arrive from the north, the cots first)
         ('object', dict(kind='marker', id='start-0', at=[23, 9], name="seat 0 starts on the road in from the main gate")),
         ('object', dict(kind='marker', id='start-1', at=[22.2, 8.2], name="seat 1's start")),

@@ -31,7 +31,7 @@ export interface Scenario {
 export type Page = 'pixel' | '3d';
 
 const ALL: readonly Scenario[] = [
-  { id: 'infirmary', name: 'The opening: the infirmary', blurb: 'Outside the main gate on the battery road: the wounded under tents round a failing well (grey-box).', room: 'infirmary', kind: 'campaign' },
+  { id: 'infirmary', name: 'The opening: the infirmary', blurb: 'Outside the main gate on the battery road: the wounded under tents round a failing well (grey-box).', room: 'infirmary', kind: 'campaign', pages: ['pixel', '3d'] },
   { id: 'court', name: 'The opening: the courtyard', blurb: 'The academy\'s central court and its great armillary: the hub every road leaves from.', room: 'court', kind: 'campaign', key: '8', pages: ['pixel', '3d'] },
   { id: 'yard', name: 'The opening: the drill yard', blurb: 'The crash course in fighting, through a corner of the academy (beats 2 and 3).', room: 'yard', kind: 'campaign', key: '7' },
   { id: 'battery', name: 'The opening: the battery', blurb: 'The wall, its four defences and the failing well (beats 4 to 7).', room: 'battery', kind: 'campaign', key: '6' },

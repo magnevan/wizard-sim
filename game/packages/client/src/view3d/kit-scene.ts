@@ -35,6 +35,7 @@ const LOW = 1.2;
 const SCENES: Record<string, () => Promise<unknown>> = {
   court: () => import('../lab/kit-court.json'),
   practice: () => import('../lab/kit-practice.json'),
+  infirmary: () => import('../lab/kit-infirmary.json'),
 };
 
 /** Is there a compiled scene for this room? */

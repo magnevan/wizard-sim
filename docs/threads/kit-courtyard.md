@@ -1,6 +1,6 @@
 # The courtyard on the kit (growing the kit by building a map)
 
-Status: active; dressed (banners, benches, quay props), sea edge built (cliffs, timber quay), 0 errors; now: the user saves the draft, then court-kit merges to main and the old pixel-art version is cleaned up · Last touched: 2026-11-25
+Status: parked for a polish pass (the user, 2026-11-26: "it's smaller so we can skip past it"); saved and merged to main; map work moves to [the infirmary](infirmary-kit.md) · Last touched: 2026-11-26
 Record: [flexible building](../explorations/2026-11-23-flexible-building.md) (the kit, the grid) · the kit: `tools/kit/` ([README](../../tools/kit/README.md)) · [court read](../campaign/01-opening/court-read.md) · plan D: `tools/place-plans/plans/court-d.py` · [the opening thread](opening.md) (the places it's for) · [the map-editor thread](map-editor.md) (editor changes go there, not here)
 
 ## Where it stands
@@ -11,12 +11,16 @@ How things are made: pictures in Codex (free), models through the Meshy API (sta
 
 ## Next
 
+**For the polish pass** (listed 2026-11-26; the old pixel version's removal and the game's wiring are not this thread's):
+- [ ] The map's outer boundary shows flat rock walls where a level meets the map's edge (the south-west wood).
+- [ ] The arch's keystone and trim (below).
+- [ ] The rowing boat from the quay sheet was modelled at an angle and is unused.
+- [ ] The 3D court plays only on the 3D page (`index.html`); the old `#court` level is still the pixel one.
+
 - [ ] **Foliage** (plants, flowers, vines, paving): moved to its own thread, [foliage](foliage.md), handed to a fresh session (2026-11-24).
 - [ ] **Later: the arch's keystone and trim** (the user, 2026-11-24). Either painted into the voussoir ring's texture (free; a keystone is a few pixels at the game camera), or as one of several small ornaments bundled into a single Meshy call: one Codex sheet (keystone, urn, finial, lantern, ball topper) → one model → split into loose parts in Blender → `fit.py` each. Bundling suits small ornaments, not buildings.
-- [ ] **Save the draft** (the user, Ctrl+S in the editor): the banners, the quay's props and open edge, and the two old lamp stand-ins removed are editor edits not yet in `court.scene.json`.
-- [ ] **Merge court-kit into main and clean up the old pixel-art version** (the user, 2026-11-25: "after we hit a natural stopping point for this map").
-- [ ] Later: the map's outer boundary still shows flat rock walls where a level meets the map's edge (the south-west wood); the rowing boat from the quay sheet was modelled at an angle and is unused.
-- [ ] Then the yard and the infirmary on the kit. They should need far fewer new pieces.
+- [x] Save the draft (the user, 0b43ef6) and merge court-kit into main (2026-11-25).
+- [ ] Then the yard and the infirmary on the kit: the infirmary started 2026-11-26 ([its thread](infirmary-kit.md)); the yard after it.
 
 ## Done
 

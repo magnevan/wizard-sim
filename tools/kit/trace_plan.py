@@ -32,6 +32,30 @@ FIXES = {
         ('paint', 'paving at -2 m', 45, 63, 50, 64), ('paint', 'wood at -5 m', 45, 65, 50, 74), ('head', 'sea stair, lower', [[45.0, 64.5], [50.0, 64.5]]),
         ('disc', 'dais at 2 m', 47.5, 40.0, 4.6),   # the armillary's set piece brings its own dais: the floor under it is the sunk plaza's
     ],
+    'infirmary': [   # plan D's stairs are plain stairs() (sectors to the trace), so its four flights are written here (2026-11-26)
+        ('terrace', 't-sea', dict(name='the deep')), ('terrace', 't-stream-c', dict(name='the bath')),
+        ('terrace', 't-stream', dict(name='the sea')), ('terrace', 'stairs at 0 m', dict(name='the shore walk')),
+        ('terrace', 'stairs at 0.5 m', dict(name="the bath's rim", edge='retain')), ('terrace', 'wood at 4 m', dict(name='the conduit walks', h=3.8)),
+        ('paint', 't-woods-d', 0, 0, 76, 0),                  # the lattice's first row fell outside the plan's fill: woods, not -10 m sea
+        # the overlook: its two flights down to the well's tier (the east one by the stills, 2 cells; rev 7's long run along the drop has no room)
+        ('paint', 'paving at 5 m', 15, 18, 20, 19), ('paint', 'paving at 5 m', 27, 18, 31, 19),
+        ('paint', 'paving at 3.5 m', 15, 20, 20, 24), ('paint', 'paving at 3.5 m', 25, 20, 30, 24),
+        ('disc', 'dais at 4 m', 23.0, 21.5, 2.4),
+        ('flight', 'west flight', [[16.0, 19.5], [19.0, 19.5]]), ('flight', 'east flight', [[28.0, 19.5], [30.0, 19.5]]),
+        # the shore: sand, the walk, the flight down by the greenhouse and the way back up along the cliff, west to east
+        ('paint', 'sand at 0 m', 6, 35, 48, 36), ('paint', 'sand at 0 m', 6, 37, 21, 37),
+        ('paint', 'the shore walk', 16, 30, 19, 36), ('paint', 'the shore walk', 15, 35, 20, 37), ('paint', 'the shore walk', 20, 35, 32, 36), ('paint', 'the shore walk', 24, 32, 32, 34),
+        ('flight', 'shore flight down', [[16.0, 29.5], [19.0, 29.5]]), ('flight', 'shore flight up', [[32.5, 32.0], [32.5, 34.0]]),
+        ('disc', "the bath's rim", 23.0, 35.5, 2.0), ('disc', 'the bath', 23.0, 35.5, 1.25),
+        # markers: the seats start on the road in, on the well's axis (the read: arrive from the north, the cots first)
+        ('object', dict(kind='marker', id='start-0', at=[23, 9], name="seat 0 starts on the road in from the main gate")),
+        ('object', dict(kind='marker', id='start-1', at=[22.2, 8.2], name="seat 1's start")),
+        ('object', dict(kind='marker', id='start-2', at=[23.8, 8.2], name="seat 2's start")),
+        ('object', dict(kind='marker', id='start-3', at=[23, 7.4], name="seat 3's start")),
+        ('object', dict(kind='marker', id='gate-court', at=[23, 1.5], name="the road north: back to the courtyard's bridge")),
+        ('object', dict(kind='marker', id='gate-battery', at=[75, 27], name="the road's east end: on to the battery")),
+        ('object', dict(kind='marker', id='well', at=[23, 21.5], tag='landmark', name='the well')),
+    ],
 }
 SETPIECE_NAMES = {'bell tower': 'setpiece.bell-tower', 'battery tower': 'setpiece.battery-tower', 'beacon': 'setpiece.beacon',
                   'the armillary': 'setpiece.armillary'}
@@ -243,14 +267,22 @@ def to_scene(P, scene_name):
         objs.append(dict(id=f'f{n}', kind='flight', name=f['name'], head=[[float(x0), hy], [float(x1), hy]]))
     # fixes the plan needs on the kit, by scene: ('paint', terrace name, x0, y0, x1, y1) inclusive corners, ('head', flight name, head)
     byname = {o['name']: o for o in objs}
+    glyph_of = lambda nm: next(t['glyph'] for t in terraces if nm in (t['name'], t['id']))   # by name, or by id where names repeat
     for fx in FIXES.get(scene_name, []):
-        if fx[0] == 'paint':
-            _, nm, x0, y0, x1, y1 = fx; g = next(t['glyph'] for t in terraces if t['name'] == nm)
+        if fx[0] == 'terrace':      # ('terrace', name, changes): rename or re-level one of the trace's terraces
+            t = next(t for t in terraces if fx[1] in (t['name'], t['id'])); t.update(fx[2])
+            if 'name' in fx[2]: t['id'] = 't-' + '-'.join(''.join(c if c.isalnum() else ' ' for c in fx[2]['name'].lower().replace('the ', '')).split())
+        elif fx[0] == 'object':     # ('object', obj): a marker or any other object, as written
+            objs.append(dict(fx[1]))
+        elif fx[0] == 'flight':     # ('flight', name, head): a flight the plan drew as plain stairs
+            objs.append(dict(id=f'f{sum(o["kind"] == "flight" for o in objs) + 1}', kind='flight', name=fx[1], head=fx[2]))
+        elif fx[0] == 'paint':
+            _, nm, x0, y0, x1, y1 = fx; g = glyph_of(nm)
             for y in range(y0, y1 + 1):
                 for x in range(x0, x1 + 1): rows[y][x] = g; kept.add((y, x))
         elif fx[0] == 'head' and fx[1] in byname: byname[fx[1]]['head'] = fx[2]
         elif fx[0] == 'disc':       # ('disc', terrace name, cx, cy, r): every corner within r of (cx, cy) on one level
-            _, nm, cx, cy, rr = fx; g = next(t['glyph'] for t in terraces if t['name'] == nm)
+            _, nm, cx, cy, rr = fx; g = glyph_of(nm)
             for y in range(ny):
                 for x in range(nx):
                     if math.hypot(x - cx, y - cy) <= rr: rows[y][x] = g; kept.add((y, x))

@@ -40,10 +40,10 @@ describe('the scenario registry', () => {
     for (const s of SCENARIOS.filter(isPlayable)) for (const ally of [false, true]) expect(fromLocation('', hashFor(s, ally))).toMatchObject({ scenario: { id: s.id }, ally });
   });
 
-  it('the 3D page offers only the rooms with a kit scene: the court and the practice ground', () => {
+  it('the 3D page offers only the rooms with a kit scene: the court, the infirmary and the practice ground', () => {
     try {
       usePage('3d');
-      expect(SCENARIOS.map((s) => s.id).sort()).toEqual(['court', 'practice']);
+      expect(SCENARIOS.map((s) => s.id).sort()).toEqual(['court', 'infirmary', 'practice']);
       expect(SCENARIOS.every(isPlayable)).toBe(true);
       expect(['Digit1', 'Digit8'].map((c) => scenarioForKey(c)?.id)).toEqual(['practice', 'court']);
       expect(fromLocation('', '#practice').scenario.id).toBe('practice');

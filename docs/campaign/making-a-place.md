@@ -55,9 +55,36 @@ It doesn't judge fidelity to the concept. The concept is a source of ideas, not 
 
 **Beauty critic.** Follows [the beauty rubric](beauty-rubric.md): full-size frames, hard caps, the greyscale test, refinements, then a score against the anchors. Gets frames in the game's camera and the concept art, and judges beauty and interest compared with the concept, not how closely the layout matches it. **It is calibrated before it scores** (2026-11-22). The concept art is 9–10, a bare grey-box is 1, and [the anchors](anchors/) are frames the user has rated, named with that rating (`court-2026-11-22-user-1to2-*`: "horrible"). It never scores a frame above an anchor that the frame doesn't clearly beat in craft, and a rising score has to mean visibly closer to the concept, not just changed. Without anchors, five rounds rose from 2 to 6 while the user saw 1–2. With them, a fresh critic scored those same frames 1–2. Add an anchor every time the user rates frames.
 
-**Art comes from painted sources, never from code** (the user, 2026-11-22). That means no procedural facades, stone, kerbs, inlays or re-tinted textures: they cap a place at about 2/10 however many rounds follow.
+**No code-drawn set pieces** (the user, 2026-11-22, narrowed 2026-11-26). Buildings, facades and other large set pieces come from Codex pictures made into Meshy models, never drawn in code: the courtyard's code-drawn facades and stone faces were rated 1–2/10. Procedural pieces are fine in code, or as a hybrid of code and painted sprites or textures: the stone-by-stone floors, plants (code-grown over Codex-painted leaf sheets), water, waterfalls.
 
-**Stage 4's art is now the stylised-3D kit** (2026-11-23). Places are drawn in 3D from made pieces (Meshy models from Codex pictures, fitted in Blender) on a square grid, placed by `tools/kit/compile.py` from a layout ([flexible building](../explorations/2026-11-23-flexible-building.md), [stylised 3D](../explorations/2026-11-23-stylised-3d.md)). Code-drawn art stays excluded. The Codex-painted buildings and the stage table's note on blockout boxes come from the pixel era; the log rows below are history.
+**Stage 4's art is now the stylised-3D kit** (2026-11-23). Places are drawn in 3D from made pieces (Meshy models from Codex pictures, fitted in Blender) on a square grid, placed by `tools/kit/compile.py` from a scene ([flexible building](../explorations/2026-11-23-flexible-building.md), [stylised 3D](../explorations/2026-11-23-stylised-3d.md)). The steps are in [building it on the kit](#building-it-on-the-kit). The Codex-painted buildings and the stage table's note on blockout boxes come from the pixel era; the log rows below are history.
+
+## Building it on the kit
+
+Once a plan has passed flow and sense (stages 0 to 3 above, still worth doing for every new place: they're cheap next to building the level), it's built in 3D. Agreed with the user on 2026-11-26.
+
+1. **Trace.** `python tools/kit/trace_plan.py <plan> <scene>` writes a first-draft scene, `tools/kit/scenes/<scene>.scene.json`, and the gaps it couldn't say (curved flights, buildings that need pieces, set pieces). Fix the draft until `compile.py <scene>` reports no errors. From then on **the scene is the source**: every edit goes through the map editor or `tools/map-editor/cli.mjs`, never a fresh trace.
+2. **Walkable early.** Export the scene's room (`python tools/kit/room.py <scene>`) and register it, so the place can be loaded and walked in the 3D game (`index.html#<room>`) from the first draft. Wiring it into the campaign is another session's job.
+3. **New pieces.** List what the scene needs that the kit hasn't got. For each, Codex paints a picture (free, no OK needed). **The user OKs the picture and its credit cost before any Meshy model** (unless they've given a time-bound permission, e.g. while away). Then Meshy 7.1 via the API (the website only for a piece that fails twice), `fit.py` in Blender, `slim.py`; full-size models stay on disk. Small ornaments bundle into one Meshy call and are split after. A feature that changes with its situation (an arch, a quay, falls, cliffs) is a compiler rule the renderer draws to size, not a fixed model.
+4. **Surfaces.** Tiling textures from Codex (`textures.py`); procedural floors, plants and water as above.
+5. **Paint-over.** Codex paints loosely over our own grey-box to set the dressing target; it goes on the scene's Concepts panel.
+6. **Dressing.** Lamps, benches, banners, beds, by rule (`dress` styles) or placed by hand.
+7. **Beauty.** Judged in the whole scene at the game's camera, with a Codex second opinion; the critic calibrated on frames the user has rated.
+
+The user reviews by hand whenever they look, pinning faults in the editor; there's no separate pin stage. Each pin is closed with what it became: a scene edit, a compiler rule or a new piece. Work goes to the user in batches, and a blank answer box means a missed question, not a yes.
+
+## Rules to veto
+
+Faults caught by the user, by Claude or by a critic can each become a rule: a principle, a critic's brief line, a sense rule or a compiler check. **Every rule added goes in this list**, so the user can veto it; when it's unclear whether a fault should become a rule, ask instead. A vetoed rule is struck through here and taken out of its home.
+
+| Rule | Home | Caught by | Added |
+|---|---|---|---|
+| Principles 18 to 23 (arrive from the north on the axis, show where you're going, never route behind something tall, measure routes in screens, keep out of a landmark's screen shadow, height reads only on faces toward the camera) | [level-design.md](level-design.md) | flow and sense critics | 2026-11-22 |
+| Every plan revision passes the walk report before a critic sees it | stage 1, above | the walk report (Claude) | 2026-11-22 |
+| A place's size target goes in its read; plans are checked against it | stage 0, above | structure critic | 2026-11-22 |
+| Stopping rule: two flow rounds that don't move the score, with the rest dressing, end the flat-frame rounds | the log, above | Claude | 2026-11-22 |
+| Every public edge over a metre gets a parapet (`unguarded` is a compiler error) | `tools/kit/compile.py` | sense critic | 2026-11-22 |
+| Steps need room for their treads (`steps-runout`) | `tools/kit/compile.py` | the user's pins | 2026-11-24 |
 
 ## The sense rules
 

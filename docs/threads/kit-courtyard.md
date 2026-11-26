@@ -1,6 +1,6 @@
 # The courtyard on the kit (growing the kit by building a map)
 
-Status: active; dressed (banners, benches, quay props), sea edge built (cliffs, timber quay), 0 errors; now: the user saves the draft, then court-kit merges to main and the old pixel-art version is cleaned up · Last touched: 2026-11-25
+Status: active; dressed (banners, benches, quay props), sea edge built (cliffs, timber quay), 0 errors; now: the user saves the draft, then court-kit merges to main and the old pixel-art version is cleaned up · Last touched: 2026-11-26
 Record: [flexible building](../explorations/2026-11-23-flexible-building.md) (the kit, the grid) · the kit: `tools/kit/` ([README](../../tools/kit/README.md)) · [court read](../campaign/01-opening/court-read.md) · plan D: `tools/place-plans/plans/court-d.py` · [the opening thread](opening.md) (the places it's for) · [the map-editor thread](map-editor.md) (editor changes go there, not here)
 
 ## Where it stands
@@ -20,6 +20,7 @@ How things are made: pictures in Codex (free), models through the Meshy API (sta
 
 ## Done
 
+- 2026-11-26: buildings are edges for the laid stones (the user chose B of three): the paving is laid up to each building's model base and its rows turn along the walls; [road stones](../explorations/2026-11-24-road-stones.md#buildings-are-edges-2026-11-26).
 - 2026-11-25: the user approved p34 (plaza inlay, "ok for now") and p37 (stone road, "much better"); violet cracks dropped (the user doesn't like them in the concept art); the animated-water note was stale (water moves since `636f446`). Dressing: benches behind the sea parapets by rule (`along: view`), the seven element banners from one Codex sheet (`banners.py`) at the hall, library and workshops doors. Sea edge: the landing a timber quay (fascia, piles, mooring posts, drawn to size) dressed with bollards, hook lamps, crates, a barrel and rope (one bundled Meshy call); cliffs found by the compiler (`cliff.face`) and laid from one Meshy cliff run along every open edge over the sea (60 credits in all, the user's choice of two calls over one).
 - 2026-11-25: road and paving laid stone by stone (from the road-flow worktree via `kit-clean`): `tess_layout.py` bakes each scene's stones (the court: 11,709) to `game/content/generated/layouts/<scene>-stones.json` after each compile, the floor shader paints them live (`kit-stones.ts`), and the editor lays touched pieces again in the background; kerbs are rounded blocks with a mortar bed. Answers p37 (left open for the user).
 - 2026-11-24: the plaza's radial floor as an inlaid slab with seven recessed channels of tinted, flowing magic (p34, the new `inlay` class, `setpiece.plaza-inlay`); dressing from two bundled Meshy calls (60 credits): urn, lanterns, pots, keystone, lamp posts, bench.

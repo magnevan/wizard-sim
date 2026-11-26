@@ -131,6 +131,22 @@ The user asked for the stones in the editor and whether they should be a shader 
 
 Open (written for the cut stones; the seam zones of the straightened cells are irregular polygons instead): where rows from several edges meet, each block of rows keeps its own direction, so wide paving reads as patches at different angles with a few dark triangles of mortar between them; a border course along each edge with one calm direction inside would be quieter. Colours are r6's, not yet matched to the court; nothing is in the shader yet.
 
+### Buildings are edges (2026-11-26)
+
+The user asked whether the layout should consider objects placed on the ground, "especially for large objects like buildings, where the 'ground' extending under them is more of an implementation detail". Laid under a building, the rows run on as if it weren't there, so its walls slice stones into slivers all round (the library stands at 20 degrees to its terrace's rows).
+
+Three ways, round the library (`objects-a-b-c.jpg`): A as it was; B buildings as edges, so a course runs along each wall and the rows turn with it; C every set piece as an edge, where flowerbeds and topiary each pull rows round them and the ground between turns into a patchwork. The user chose B. Small things (crates, benches, lamps, beds, piers) stay ignored, as the ground really does run under them.
+
+Built:
+
+- A set piece marked `"paving": "edge"` in `kit.json` is a building: the library, workshops, great hall, hall half, bell tower, beacon, battery tower, gate tower and the armillary.
+- Its outline is its **model's** base, not its `kit.json` box: a model is fitted uniformly inside the box, so it is often much smaller (the bell tower 6.3 u across on a 10 u footprint, the great hall 7.1 u deep on 12). A box-shaped hole would leave a ring of bare tile. `tools/kit/model_base.py` draws the model's triangles between 0.15 and 1.5 u above its foot from above, bridges gaps under 2 u (doorways), fills what the walls enclose and smooths notches under 0.7 u (`building-bases.jpg`). The 0.15 u skips a thin ground slab under some models: the great hall's runs on under its archway, and counting it closed the archway the north road runs through. A piece with no model falls back to its stand-in's plinth.
+- `tess_layout.py` cuts each outline, drawn in by 0.12 u so the stones run a little under the wall, out of the laid floors within 0.4 m of the building's height. The shader is unchanged. Moving a building re-lays the pieces it stands on (a few seconds in the editor).
+
+Result: `buildings-as-edges-library.jpg`, `buildings-as-edges-hall.jpg` (from above, before and after) and `buildings-as-edges-in-game-library.jpg`, `-hall.jpg`. The court went from 11,084 stones to 9,965. The hall's wings stand about 2 u into the north road each side, so the road's rows now funnel into the 4.4 u archway rather than running under the walls.
+
+Not done: where rows from a building meet the terrace's own rows they still meet in an irregular knot (above the library's north-east corner), the same flaw as the open note above. The great hall's ground slab still lies plain over the road in its archway.
+
 ## Trade-offs and what was not done
 
 - The road tile's rows run east to west everywhere, so they cross the north road and run along the east-west street. Only laying the road in rows (the experiment) fixes that.

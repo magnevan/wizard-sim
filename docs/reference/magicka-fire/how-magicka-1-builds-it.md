@@ -26,3 +26,16 @@ The atlases are 3D textures: each slice is an 8 × 8 grid of 32 px cells, and th
 ## What we take
 
 Few, big, fast, long-lived flame sprites that triple in size, each playing a burn-out flipbook; short hot wisps at the nozzle; dark smoke behind; many small embers. Our own flipbooks are painted by Codex in our toon style (`game/content/generated/fx/fire-burn-*`), and played on our particles with the same structure. Their additive blend suits their darker scenes; on our pale stone the flame covers, as earlier rounds found.
+
+## The other Fire effects (read 2026-11-26, for Fire's element pass)
+
+Sheets (one row per emitter, the cells' frames, each particle's life on our floor colour) made with `tools/magicka-study/` and shown on the [Spell Effects Review](https://claude.ai/artifact/Kwh9yrDCTVmnXQRcHQ6vxT), round "Magicka fire"; the pictures stay out of the repo. *(Verified against the files.)*
+
+- **The fade is in the frames.** Every flame cell darkens to nothing over its flipbook while its alpha stays near 1, and the sprite grows 2 to 3 times over its life at the same time.
+- **The area (our ring), `Area_fire1_b`**, one 1 s pulse: 6 big flame puffs and 6 smoke puffs flung out fast (speed 42–48), 10 short wisps, 3 slower puffs falling back, 12 sparks. No ring is drawn: a dozen puffs moving outward make it.
+- **Fire on the ground (our patch), `Area_ground_fire`**: sparks, a soft glow that doubles and fades in under half a second, and a crackle cell (4 frames, 0.5–1 s) respawned 10 a second, each growing ×3.2. Burning ground is a trickle of short crackles; a lasting scorch would be a decal.
+- **Fire on yourself, `Self_Fire`**: 0.4 s, a big glow shrinking to nothing, five flame puffs, curled wisps rising fast. What lasts is the burning status after it.
+- **`Fire_Blast`**: 500 small spinning flames at once over a smoke haze: many small parts, not a few big ones (a reference for our burst).
+- **Burning, three levels**: level 1 is curled wisps (15 a second), a little smoke and three puffs; level 3 adds leaning flames held within ±20° of upright, flame puffs, a pulse of big puffs and a shrinking glow, six layers. Burning grows by adding layers.
+- **Variety comes from rotation**: one smoke cell, one spark, one wisp, each rotated at random (±180°, or ±20° where it must stay upright) and spun.
+- **On our pale floor their additive flames wash out** to near white; on their dark ground they glow. Ours still need the dark rims and smoke (lessons, section 5).

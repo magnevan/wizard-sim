@@ -69,9 +69,9 @@ float fanW(vec4 A, float s) { return (uNoz.x + s * max(A.w - uNoz.x, 0.0)) * sin
 
 /** Each layer's births a second and life (s) at n runes. */
 const RATE = {
-  core: (n: number) => 64 + 8 * n, coreLife: 0.14,
+  core: () => 90, coreLife: 0.18,
   smoke: (n: number) => 5 + 2 * n, smokeLife: 1.0,
-  puff: (n: number) => 40 + 6 * n, puffLife: 0.42,
+  puff: (n: number) => 36 + 8 * n, puffLife: 0.72,
   ember: (n: number) => (24 + 6 * n) * (n >= 5 ? 1.6 : 1), emberLife: 1.1,
   glow: (n: number) => 12 + 3 * n, glowLife: 0.3,
 };
@@ -83,12 +83,12 @@ Particle particle(float k, float age, float ts) {
   vec4 A = aimAt(uTime - ts);
   float s = age * uCore, side = rnd(k, 31.0) * 2.0 - 1.0;
   Particle p = P0(); p.alive = true;
-  p.pos = sprayAt(A, s, side * uHalf * 0.1 * smoothstep(0.0, 0.4, s), 0.0, axisH(s) + (rnd(k, 35.0) - 0.5) * 0.05 * s);
+  p.pos = sprayAt(A, s, side * uHalf * 0.04 * smoothstep(0.0, 0.4, s), 0.0, axisH(s) + (rnd(k, 35.0) - 0.5) * 0.05 * s);
   // drawn as if 1.1 u nearer the camera (along its own line of sight, so it stays where it is on screen): the staff's
   // white-hot start shows over the caster's own hat and back when he faces away from the camera
   p.pos += normalize(cameraPosition - p.pos) * 1.1;
-  p.size = 0.07 + 0.33 * pow(age, 1.25);
-  p.stretch = 0.018;
+  p.size = 0.07 + 0.28 * pow(age, 0.85);
+  p.stretch = 0.02;
   p.col = vec4(s / uCore, 0.0, age, 1.0);
   return p;
 }`);
@@ -97,11 +97,11 @@ const SMOKE = streamMotion(/* glsl */ `${SPRAY_HEAD}
 Particle particle(float k, float age, float ts) {
   if (ts < 0.15) return P0();
   vec4 A = aimAt(uTime - ts);
-  float a = age, sb = 0.6 + 0.3 * rnd(k, 11.0), side = rnd(k, 12.0) * 2.0 - 1.0, w = fanW(A, sb);
+  float a = age, sb = 0.65 + 0.25 * rnd(k, 11.0), side = rnd(k, 12.0) * 2.0 - 1.0, w = fanW(A, sb);
   Particle p = P0(); p.alive = true;
-  p.pos = sprayAt(A, sb + a * 0.16, side * uHalf * 0.6, 0.0, axisH(sb) + 0.1 + a * 1.0);
+  p.pos = sprayAt(A, sb + a * 0.08, side * uHalf * 0.6, 0.0, axisH(sb) + 0.1 + a * 1.6);
   // scales out fast at first, then slowly (1 - (1 - a)^3)
-  p.size = (0.45 + w * 0.38) * (0.65 + 1.2 * (1.0 - pow(1.0 - a, 3.0)));
+  p.size = (0.5 + w * 0.42) * (0.65 + 1.4 * (1.0 - pow(1.0 - a, 3.0)));
   p.rot = rnd(k, 13.0) * 6.2832 + a * (rnd(k, 15.0) > 0.5 ? 0.7 : -0.7);
   p.col = vec4(a, 0.0, 0.0, smoothstep(0.0, 0.1, a) * (1.0 - smoothstep(0.3, 1.0, a)));
   p.data = vec4(rnd(k, 14.0), rnd(k, 16.0), 0.0, 0.0);
@@ -141,13 +141,16 @@ Particle particle(float k, float age, float ts) {
 const PUFF = streamMotion(/* glsl */ `${SPRAY_HEAD}
 Particle particle(float k, float age, float ts) {
   vec4 A = aimAt(uTime - ts);
-  float s = 0.04 + 0.96 * (1.0 - pow(1.0 - age, 1.25));
-  float sd = rnd(k, 73.0) * 2.0 - 1.0, side = sd * uHalf * 0.8 * smoothstep(0.0, 0.5, s), w = fanW(A, s);
+  // fast out of the jet, slowing (drag) so most of its life is spent burning out near the cone's end, a little past it
+  float s = 0.04 + 0.96 * (1.0 - pow(1.0 - age, 1.4));
+  float sd = rnd(k, 73.0) * 2.0 - 1.0, side = sd * uHalf * 1.0 * smoothstep(0.0, 0.5, s), w = fanW(A, s);
   Particle p = P0(); p.alive = true;
-  p.pos = sprayAt(A, s, side, 0.0, axisH(s) + age * 0.12 + (rnd(k, 74.0) - 0.5) * w * 0.1);
+  // rising as it burns (Magicka 1's flame has negative gravity)
+  p.pos = sprayAt(A, s, side, 0.0, axisH(s) + age * age * 0.5 + (rnd(k, 74.0) - 0.5) * w * 0.1);
   // swells fast and keeps growing as it slows: a blotch that pulses large, then fades
-  p.size = (0.18 + w * 0.19) * (0.7 + 0.95 * sin(age * 3.14159));
-  p.stretch = 0.015;
+  // grows about three times over its life
+  p.size = (0.2 + w * 0.14) * (0.7 + 1.2 * (1.0 - pow(1.0 - age, 2.0)));
+  p.stretch = 0.025;
   p.rot = rnd(k, 75.0) * 6.2832 + age * (rnd(k, 76.0) > 0.5 ? 0.35 : -0.35);
   p.col = vec4(age, s, 0.0, 1.0);
   p.data = vec4(rnd(k, 77.0), rnd(k, 78.0), 0.0, 0.0);
@@ -159,14 +162,16 @@ uniform sampler2D uSheet;
 ${SHEET_GLSL}
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   float age = col.x;
-  vec3 t = sheetCell(uSheet, uv * 0.5 + 0.5, data.x, data.y, 4.0, 4.0);
-  float lum = max(t.r, max(t.g, t.b)), m = smoothstep(0.06, 0.4, lum);
+  // its own burn-out, frame by frame: one of three painted flipbooks (fire-burn.png), picked per particle
+  vec2 q = uv * 0.5 + 0.5; if (data.y > 0.5) q.x = 1.0 - q.x;
+  vec3 t = flipbook(uSheet, q, floor(data.x * 3.0), age, 8.0, 3.0).rgb;
+  float lum = max(t.r, max(t.g, t.b)), m = smoothstep(0.03, 0.3, lum);
   // the painting's own flame, warmer when young and redder as it ends (Magicka 1)
-  vec3 c = t * mix(vec3(2.0, 1.65, 0.85), vec3(1.0, 0.45, 0.1), smoothstep(0.45, 0.95, age));
-  float fade = smoothstep(0.0, 0.06, age) * (1.0 - smoothstep(0.55, 1.0, age));
+  vec3 c = t * mix(vec3(2.0, 1.75, 1.35), vec3(1.1), age);   // the painting already cools from white to red; lifted a little into HDR
+  float fade = smoothstep(0.0, 0.04, age) * (1.0 - smoothstep(0.65, 1.0, age));
   // covering, so the painted curls hold their colour on the pale stone instead of adding up to a glare or a fog
-  float cover = m * fade * 0.42;
-  return vec4(c * m * fade * 0.42, cover);
+  float cover = m * fade * 0.68;
+  return vec4(c * cover, cover);
 }`;
 
 // ---- looks -------------------------------------------------------------------------------------------------------
@@ -185,9 +190,12 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   // a jet that widens and breaks up into the body as it cools, not a hard tube (Codex's critique, iteration 0)
   float h = clamp(col.x, 0.0, 1.0);
   float noise = vnoise3(vec3(uv * 7.0, uTime * 24.0 - h * 8.0));
-  float m = (1.0 - smoothstep(0.12, 0.85 + 0.7 * (noise - 0.5) * h, length(uv))) * (1.0 - smoothstep(0.7, 1.0, h));
-  vec3 c = mix(vec3(1.8, 1.65, 1.15), vec3(1.5, 0.95, 0.25), h);
-  return vec4(c * m * 0.65, 0.2 * m);
+  float r = length(uv);
+  // narrow, and dissolving into the flames as it cools rather than ending in a blunt white tip (Codex, iteration 11)
+  float m = (1.0 - smoothstep(0.18, 0.92 + (noise - 0.5) * 0.35 * h, r)) * (1.0 - smoothstep(0.45, 1.0, h));
+  m *= mix(1.0, smoothstep(0.25, 0.65, noise), smoothstep(0.35, 0.9, h));
+  vec3 c = mix(vec3(4.0, 3.4, 2.2), vec3(2.2, 1.25, 0.35), h);
+  return vec4(c * m * 0.5, 0.1 * m);
 }`;
 
 /** Smoke: a painted puff's shape and shading, tinted dark warm grey-brown, capped so what's behind it still shows. */
@@ -195,11 +203,11 @@ const LOOK_SMOKE = /* glsl */ `
 uniform sampler2D uSheet;
 ${SHEET_GLSL}
 vec4 look(vec2 uv, vec4 col, vec4 data) {
-  vec3 t = sheetCell(uSheet, uv * 0.5 + 0.5, data.x, data.y, 4.0, 4.0);
-  float lum = max(t.r, max(t.g, t.b)), m = smoothstep(0.03, 0.7, lum);
+  vec2 q = uv * 0.5 + 0.5; if (data.y > 0.5) q.x = 1.0 - q.x;
+  float lum = flipbook(uSheet, q, 0.0, col.x, 4.0, 1.0).r, m = smoothstep(0.03, 0.7, lum);
   // dark, the contrast Magicka 2's flame sits against (iteration 7's lighter smoke washed the fire out)
   vec3 c = mix(vec3(0.006, 0.006, 0.007), vec3(0.03, 0.026, 0.022), smoothstep(0.4, 0.95, lum));
-  float a = m * 0.5 * col.w;
+  float a = m * 0.48 * col.w;
   return vec4(c * a, a);
 }`;
 
@@ -230,12 +238,12 @@ vec4 decal(vec3 wp) {
   // as wide as the pixel spray's glow (the study): a pool round the caster and the fan, spilling past the flames
   float k = (fan * 1.15 + pool * 1.0) * uFanOn;
   // soot under the far half (Magicka 2's char): dark, blotchy, taking the stone's colour away
-  float soot = side * (1.0 - smoothstep(uFan.w - 0.1, uFan.w + 0.8, r)) * smoothstep(0.35, 0.8, r / max(uFan.w, 1.0)) * uSootOn;
+  float soot = side * (1.0 - smoothstep(uFan.w - 0.1, uFan.w + 0.8, r)) * smoothstep(0.25, 0.6, r / max(uFan.w, 1.0)) * uSootOn;
   soot *= smoothstep(0.12, 0.6, fbm3(vec3(wp.xz * 1.6, 3.0)));
   // a warm glaze: it takes a little of the pale stone's own colour away (alpha) and puts saturated firelight back, so the
   // floor under the fire turns orange rather than just brighter (which the tone map would wash to cream)
   vec3 c = mix(vec3(1.0, 0.45, 0.1), vec3(1.0, 0.24, 0.04), clamp(r / max(uFan.w, 1.0), 0.0, 1.0));
-  return vec4(c * k * 0.35 * (1.0 - soot) + vec3(0.035, 0.022, 0.014) * soot * 0.55, clamp(k * 0.12 + soot * 0.75, 0.0, 0.95));
+  return vec4(c * k * 0.35 * (1.0 - soot) + vec3(0.035, 0.022, 0.014) * soot * 0.55, clamp(k * 0.12 + soot * 0.9, 0.0, 0.95));
 }`;
 
 /** Its runes' heat: shifts the colours hotter (art/spray-jet.ts: hot = 0.035 per rune past the first). */
@@ -268,10 +276,10 @@ export class FireSpray {
       this.layers.push({ b, rate, life: L(life) });
       this.group.add(b.mesh);
     };
-    add(SMOKE, LOOK_SMOKE, RATE.smoke, RATE.smokeLife, 0, { uSheet: { value: FIRE_TEX.smoke } });
+    add(SMOKE, LOOK_SMOKE, RATE.smoke, RATE.smokeLife, 0, { uSheet: { value: FIRE_TEX.smokeburn } });
     // the body: one volume, a mesh (fire-body.ts), its deep-red outline shell first, then the flame
     add(GLOW, LOOK_GLOW, RATE.glow, RATE.glowLife, 2, {}, 7);
-    add(PUFF, LOOK_PUFF, RATE.puff, RATE.puffLife, 3, { uSheet: { value: FIRE_TEX.rolls } }, 8);
+    add(PUFF, LOOK_PUFF, RATE.puff, RATE.puffLife, 3, { uSheet: { value: FIRE_TEX.burn } }, 8);
     this.body = new FireBody(SPRAY_HEAD, this.U, seed);
     this.body.group.visible = BODY_MESH;
     this.group.add(this.body.group);
@@ -309,7 +317,7 @@ export class FireSpray {
     this.body.uGrow.value = Math.min(1, (t - r.t0) / 1.0);
     // the release erodes outward in the body's shader; this only cleans up after it
     this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - Math.max(0, t - r.end - 0.8) / 0.3);
-    this.U.uN.value = n; this.U.uHot.value = hotOf(n); this.U.uCore.value = 0.38 + 0.025 * n; this.U.uNoz.value.w = groundY;
+    this.U.uN.value = n; this.U.uHot.value = hotOf(n); this.U.uCore.value = 0.34 + 0.02 * n; this.U.uNoz.value.w = groundY;
     for (const l of this.layers) { l.b.u.uRate.value = l.rate(n); l.b.u.uLife.value = l.life(n); }
     const now = this.trail.at(t), on = t <= r.end ? Math.min(1, (t - r.t0) / 0.15) : Math.max(0, 1 - (t - r.end) / 0.3);
     // the light on the floor runs out with the flames (full length in about 0.45 s), not ahead of them

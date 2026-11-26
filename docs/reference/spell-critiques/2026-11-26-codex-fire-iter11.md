@@ -1,0 +1,17 @@
+**7/10 for proximity to Magicka 2:** the painted burn-out finally supplies convincing fire texture, but the solid white core, crowded red perimeter and perforated black footprint still overpower the reference’s hierarchy of hot jet, larger yellow-orange rolls and expanding smoke.
+
+**Presentable to the designer now as a progress review: yes. Presentable as the finished Magicka 2-quality effect: no.** At 30 units it reads as fire, but the texture improvement largely collapses into a red-black clump. The wider simulated cone is not the fault; the distribution of brightness within it is. These are proposed tuning values, not render-validated results; the sheets cannot establish smoothness or flicker quality.
+
+1. **CORE: replace the white sausage with a narrow jet that dissolves into the rolls.** At t=0.3 and t=0.9 the core has an inflated, rounded end and almost no internal value separation. Magicka 2 also clips to white, but its transition into ragged gold flame is much less mechanically blunt.
+
+   In `RATE`, set `core: () => 90`, `coreLife: 0.18`. In `FireSpray.update`, set `uCore.value = 0.34 + 0.02 * n` (0.40 at three runes). In `CORE.particle`, replace size with `0.07 + 0.28 * pow(age, 0.85)` and stretch with `0.02`. In `LOOK_CORE.look`, retain the existing noise and colour endpoints; replace the final longitudinal mask factor with `1.0 - smoothstep(0.45, 1.0, h)`, then multiply `m` by `mix(1.0, smoothstep(0.25, 0.65, noise), smoothstep(0.35, 0.9, h))`. Return `vec4(c * m * 0.50, 0.10 * m)`. Keep premultiplied blending (`ONE`, `ONE_MINUS_SRC_ALPHA`). This preserves the bright attachment while breaking up its handoff.
+
+2. **PUFF: fewer, larger, hotter rolls; less red confetti.** The open-ground frame proves the texture exists, but too many similarly sized curls accumulate at the far edge. The reference has larger readable gold lobes against darkness. Also, the active sheet is `FIRE_TEX.burn`, not `fire-rolls.png`.
+
+   Set `RATE.puff = (n) => 24 + 6 * n`, `puffLife: 0.62` (42 births/s and approximately 26 live puffs at three runes, versus 60 and 43). Keep `s`, angle spread and rise unchanged: the same cone is traversed in 0.62 seconds. In `PUFF.particle`, set size to `(0.22 + w * 0.20) * (0.7 + 1.2 * (1.0 - pow(1.0 - age, 2.0)))`. In `LOOK_PUFF.look`, set `c = t * mix(vec3(2.6, 2.3, 1.65), vec3(1.1), age)`; change fade-out to `smoothstep(0.50, 0.95, age)` and cover multiplier from `0.68` to `0.56`. Retain the eight-frame playback and premultiplied blend. Larger shapes carry at game distance; earlier fading reduces the cold red accumulation.
+
+3. **FAN/SMOKE: separate rising smoke from the floor stain.** The release’s black, hole-filled stamp currently reads like a damaged shadow. Keep dark smoke—it is essential against sandstone.
+
+   In `FAN.decal`, replace the soot noise multiplier with `mix(0.55, 1.0, smoothstep(0.20, 0.75, fbm3(vec3(wp.xz * 1.0, 3.0))))`; reduce the returned soot alpha coefficient `0.9` to `0.60`. In `RATE`, set smoke to `4 + n`, life `0.9`. In `SMOKE.particle`, change rise `a * 1.6` to `a * 1.8`; retain size. In `LOOK_SMOKE.look`, retain colours but reduce alpha multiplier `0.48` to `0.38`. Keep order 0 and covering premultiplied blending.
+
+**Broken-looking:** the conspicuous pale holes in the released scorch are visible even without targets; they are not goblin hit flashes. The broad cone itself is valid. I see no definite detached nozzle, rectangular sprite boundary or missing flame texture in these frames.

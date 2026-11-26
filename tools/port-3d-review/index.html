@@ -75,9 +75,42 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
   <header>
     <div class="eyebrow">Port to 3D · step 0 · 2026-11-25</div>
     <h1>The Court in 3D</h1>
-    <p class="lede"><b>New: <a href="#r9">round 9</a>, the fire iterated with Codex until presentable, and the beam into the distance.</b> Below it, <a href="#r8">round 8</a>, <a href="#r7">round 7</a>, <a href="#r6">round 6</a>, <a href="#r5">round 5</a>, <a href="#r4">round 4</a>, <a href="#r3">round 3</a>, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
+    <p class="lede"><b>New: <a href="#r10">round 10</a>, flames that burn out, after how Magicka 1 builds its fire.</b> Below it, <a href="#r9">round 9</a>, <a href="#r8">round 8</a>, <a href="#r7">round 7</a>, <a href="#r6">round 6</a>, <a href="#r5">round 5</a>, <a href="#r4">round 4</a>, <a href="#r3">round 3</a>, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
     <div class="hero"><img src="img/plaza-26.jpg" alt="Two wizards and six goblins on the court's sunk plaza, seen from the 3D game camera"></div>
   </header>
+
+  <section id="r10">
+    <div class="top">
+      <div>
+        <h2>Round 10: flames that burn out, after how Magicka 1 builds its fire</h2>
+        <p>As you suggested, I opened the games' files. Magicka 2 packs everything into hashed engine bundles that I didn't crack; Magicka 1 keeps readable effect definitions and particle atlases, which I decoded for study only (nothing of theirs is copied into our game or repo). What they show:</p>
+        <ul>
+          <li>Its fire spray is just five emitters: about <b>60 big flame sprites a second, living about a second, growing three times</b>; short hot wisps at the nozzle; dark smoke born behind; red embers; a burst at the start.</li>
+          <li><b>Each flame sprite is a flipbook that plays its own burn-out</b>: a dense white-gold fireball breaking into orange crackle, red embers, then a faint haze. Ours were still pictures tinted by age, so they never visibly burned. That was the missing piece.</li>
+        </ul>
+        <p>So Codex painted our own flipbooks in our toon style (three fireballs × eight burn-out stages, below, and a smoke puff thinning over four), and the flame layer now plays them. Then two more Codex critique loops, and my own balancing where its numbers overshot (one pass left the flames thin and the smoke a black blob). Codex's last score: <b>7/10, "presentable to the designer now as a progress review"</b>. Not yet Magicka 2 quality: it still wants larger, hotter flame rolls and less red confetti at the edges. The full write-up is in <span class="mono">docs/reference/magicka-fire/how-magicka-1-builds-it.md</span>.</p>
+      </div>
+      <div class="answer" data-id="r10-fire" data-rec="keep">
+        <div class="q">The burning flames</div>
+        <div class="choices" role="group" aria-label="The burning flames">
+          <button type="button" data-v="keep">Right direction, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Still wrong</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r10-fire" aria-label="Note on the burning flames" placeholder="The weld, the flames, the smoke and char"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+      <figure><video src="vid/r10-fire-open-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Open ground</b> · 3 runes, 14 u: the honest view</figcaption></figure>
+      <figure><video src="vid/r10-fire3-30.mp4" muted loop playsinline autoplay></video><figcaption><b>3 runes</b> · the game camera, 30 u</figcaption></figure>
+      <figure><video src="vid/r10-fire2-30.mp4" muted loop playsinline autoplay></video><figcaption><b>2 runes</b> · 30 u</figcaption></figure>
+      <figure><video src="vid/r10-fire3-14.mp4" muted loop playsinline autoplay></video><figcaption><b>3 runes</b> · in the crowd, 14 u</figcaption></figure>
+      <figure><video src="vid/r10-fire2-14.mp4" muted loop playsinline autoplay></video><figcaption><b>2 runes</b> · 14 u</figcaption></figure>
+    </div>
+    <div class="shots wide">
+      <figure><img src="img/r10-burn.jpg" alt="Three painted flame flipbooks, eight burn-out stages each"><figcaption><b>Our flipbooks</b> · each flame plays one row over its life, left to right</figcaption></figure>
+    </div>
+  </section>
 
   <section id="r9">
     <div class="top">

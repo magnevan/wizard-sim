@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as fire-burn-1.png in the current directory. Reply with just the file name.
+
+The attached image is concept art for our stylised 3D game's fire spell, hand-painted toon style. Make an animation flipbook sheet for one particle of that fire: a single puffy ball of flame burning out, in eight stages, laid out in a 4 by 2 grid of equal square cells on a pure black background (stage 1 top left, reading left to right, then the second row).
+
+Stage 1: a dense, round, billowing fireball, white-hot and pale yellow in the middle with yellow-orange lobes. Stage 2: the same ball slightly larger, yellow and orange with a white heart. Stage 3: orange with yellow highlights, its lobes starting to break apart. Stage 4: orange and red, broken into crackling chunks with dark gaps. Stage 5: deep orange-red crackle, thinner, more gaps. Stage 6: dark red glowing embers in a loose ragged cluster. Stage 7: a few faint dark red embers. Stage 8: almost nothing, a faint dark red haze.
+
+Keep the same overall position and size in every cell so the stages play as one animation; each ball is centred and fills about 70% of its cell. Painted, crisp, soft toon shading, not pixel art, not photographic. No text, no grid lines, no borders.

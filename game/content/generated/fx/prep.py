@@ -7,6 +7,8 @@
   1024 x 512), so a quad's base is the flames' base (fire.ts samples the cell whole).
 - fire-cracks.png: the tileable charred bed with glowing cracks, scaled to 1024 px.
 - fire-flow.png: the tileable flame tongues streaming upward, scrolled through the spray's body (take 1), 1024 px.
+- fire-burn.png: three flame flipbooks (raw/fire-burn-1..3), 8 burn-out frames each, 2048 x 768 (cells of 256).
+- fire-smokeburn.png: a smoke flipbook, 4 frames as one grey density channel (dark smoke -> high), 1024 x 256.
 - earth-cracks.png: 2 x 2 white crack stars on black, as one grey channel (the impact's crack decal), 1024 px.
 """
 from pathlib import Path
@@ -37,6 +39,24 @@ def carpet(take=1):
     out.save(HERE / 'fire-carpet.png', optimize=True)
 
 
+def burn():
+    out = Image.new('RGB', (8 * 256, 3 * 256))
+    for r in range(3):
+        src = Image.open(RAW / f'fire-burn-{r + 1}.png').convert('RGB'); W, H = src.size
+        for i in range(8):
+            cx, cy = i % 4, i // 4
+            c = src.crop((round(cx * W / 4), round(cy * H / 2), round((cx + 1) * W / 4), round((cy + 1) * H / 2))).resize((256, 256), Image.LANCZOS)
+            out.paste(c, (i * 256, r * 256))
+    out.save(HERE / 'fire-burn.png', optimize=True)
+    src = Image.open(RAW / 'fire-smokeburn-1.png').convert('L'); W, H = src.size
+    sm = Image.new('L', (4 * 256, 256))
+    for i in range(4):
+        cx, cy = i % 2, i // 2
+        c = src.crop((round(cx * W / 2), round(cy * H / 2), round((cx + 1) * W / 2), round((cy + 1) * H / 2))).resize((256, 256), Image.LANCZOS)
+        sm.paste(c.point(lambda v: 255 - v), (i * 256, 0))
+    sm.save(HERE / 'fire-smokeburn.png', optimize=True)
+
+
 if __name__ == '__main__':
     scaled('fire-rolls')
     scaled('fire-smoke')
@@ -44,4 +64,5 @@ if __name__ == '__main__':
     scaled('fire-cracks')
     scaled('fire-flow')
     carpet()
+    burn()
     Image.open(RAW / 'earth-cracks-1.png').convert('L').resize((1024, 1024), Image.LANCZOS).save(HERE / 'earth-cracks.png', optimize=True)

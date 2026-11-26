@@ -156,6 +156,20 @@ The user, on round 8: "For arcane you need a clip where he just shoots into the 
 
 **The beam** got its clip into the distance (`scene=empty`), which showed the round 8 hit cloud drawn at the beam's end with nothing hit; it now shows only on a hit (`uHitL`).
 
+## Round 10: flames that burn out (2026-11-26)
+
+The user, after round 9: "the iteration helped a lot, we're closer. But maybe its time to look at the sprites in the magicka 2 source code to help understand it, I think corrected sprites will do a lot".
+
+Magicka 2's data is packed in hashed engine bundles and wasn't opened; Magicka 1's effect definitions (plain XML) and particle atlases (LZX-compressed XNA 3D textures, decoded with a small script kept in the job folder) were read for study only. The full notes are in [how Magicka 1 builds it](../reference/magicka-fire/how-magicka-1-builds-it.md); nothing from the game is copied into the repo or the game.
+
+**The finding.** Magicka 1's fire spray is five plain emitters, and its flame is about 60 big sprites a second, living about a second and growing three times, **each playing an 8-frame burn-out flipbook**: a dense white-gold fireball, orange crackle with dark gaps, red embers, a faint haze. The atlases are 3D textures whose depth slices are the animation frames. Every 3D fire we built had still pictures tinted by age, so the flames never visibly burned: the single biggest thing missing, and one no amount of tuning counts and alphas could supply.
+
+**What we built.** Codex painted our own flipbooks in our toon style: three fireballs burning down over eight stages (`fire-burn.png`, 2048 × 768) and a smoke puff thinning over four (`fire-smokeburn.png`), prompts in `game/content/generated/fx/prompts/`, originals in `raw/`, packed by `prep.py`. `fire-sheets.ts` gained `flipbook()`, which plays a row over a particle's life and cross-fades between frames. The flame layer (`PUFF` in `fire.ts`) plays them, picking a row and a mirror per particle; the smoke plays its own.
+
+**Two more loops.** Codex scored the first flipbook fire 6 (a thin white fuse, a cauliflower silhouette, too much red crackle); its fixes overshot (thin dim flames, a black blob of smoke), so the flames and smoke were balanced by eye; it then scored 7 ("presentable to the designer now as a progress review... not the finished Magicka 2-quality effect"); its first note there, a blunt white end on the weld, was fixed before showing. Its other notes (larger, hotter rolls; less red confetti at the edges) are in the thread's Next.
+
+**Lessons.** Look at how the reference is actually built before tuning numbers: one structural fact (flames that animate their own burn-out) outweighed ten loops of tuning. A critic's scores dip when the structure changes and its numbers can overshoot; keep the change if it's the right structure, and balance by eye.
+
 ## Sources
 
 - [Stylized VFX in RiME](https://www.unrealengine.com/events/unreal-fest-europe-2018/stylized-vfx-in-rime) (Simon Trümpler, Unreal Fest Europe 2018), and his [VFX Sketchbook](https://realtimevfx.com/t/simon-trumpler-vfx-sketchbook/4177?page=11) on realtimevfx.com (UV distortion plus alpha erosion; the inner duplicate mesh; faster scrolling while fading).

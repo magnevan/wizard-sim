@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as fire-smokeburn-1.png in the current directory. Reply with just the file name.
+
+The attached image is concept art for our stylised 3D game's fire spell, hand-painted toon style. Make an animation flipbook sheet for one particle of the dark smoke rising off that fire: a single soft puff of dark grey-brown smoke dissipating, in four stages, in a 2 by 2 grid of equal square cells on a pure white background (stage 1 top left).
+
+Stage 1: a dense, round, billowing puff of dark charcoal-brown smoke with soft toon shading. Stage 2: the same puff a little larger and softer, starting to thin at its edges. Stage 3: thinner, wispier, with holes. Stage 4: a faint, ragged wisp almost gone.
+
+Keep each puff centred, filling about 70% of its cell, the same position in every cell. Painted, soft toon shading. No text, no grid lines, no borders.

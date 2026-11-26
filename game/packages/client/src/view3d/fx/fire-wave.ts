@@ -14,9 +14,9 @@
  * - **The burst's two ends** ("a little bit more treatment to handle the edges, since a ring doesn't have an edge"):
  *   toward each end the flames get smaller and redder, and a few spill past the fan, so it frays instead of cutting off.
  *
- * Layers, back to front: the ground (a hot line under the front, then the scorch); smoke; the upright ground flames whose
- * tips leave upward (fire-rise.png), standing tallest on the front; the lopsided puffs breaking up from the inside
- * (fire-puff2.png), riding the front; a white flash where it starts. No layer is a solid shape.
+ * Layers, back to front: the ground (a hot line under the front, then the scorch); smoke; the wave itself, a volume of
+ * burning gas (take 4, after the user found the sprites "stacked" and a sheet "solid... with holes"; see the volume's
+ * docblock below); a white flash where it starts.
  *
  * Sizes and timing are the sim's: the ring's radius from its burst event (SHAPES.novaRadius + novaPerRune a rune), the
  * burst's reach and half-angle from its imbue event (SHAPES.imbueRange...; effects.ts imbue()). The sim hits the whole
@@ -30,7 +30,9 @@ import { EL, MAX_SEATS, type SpellSpec, type World } from '@wizard-sim/sim';
 import { GroundDecal } from './decal';
 import { FIRE_TEX, SHEET_GLSL } from './fire-sheets';
 import type { SpellLights } from './lights';
-import { ParticleBatch } from './particles';
+import { HASH, NOISE } from './glsl';
+import { ParticleBatch, premulMaterial } from './particles';
+import { FX_U } from './stage';
 import { PATH_GLSL, RING, RingTracker, centerAt, fillPath, frontR, pathUniform, runesOf, stretchOf, type RingRec } from './ring-shape';
 
 const TAU = Math.PI * 2;
@@ -49,8 +51,10 @@ export const FIRE_WAVE = {
   overrun: 0.12,
   /** Seconds the scorch lies after the cast: whole until `scorchHold`, gone by `scorchEnd`. */
   scorchHold: 1.5, scorchEnd: 5.0,
-  /** Flames a unit of the front's arc: the puffs riding it and the ground flames standing on it. */
-  puffsPerU: 9, risePerU: 8, smokePerU: 1.3,
+  /** The sheet: its depth behind the front (u), how high its crest stands (u), how fast its billows roll back (1/s). */
+  width: 1.3, lift: 1.0, roll: 3.0,
+  /** Smoke puffs a unit of the front's arc. */
+  smokePerU: 1.3,
 };
 
 /** Seconds a wave is drawn for, scorch included. */
@@ -59,7 +63,7 @@ const lifeOf = (): number => FIRE_WAVE.scorchEnd + 0.1;
 /** A burst's or a ring's wave: a ring is a fan of half-angle π. */
 interface Wave { rec: RingRec; face: number; half: number; ring: boolean }
 
-const PUFF_CAP = 700, RISE_CAP = 520, SMOKE_CAP = 90;
+const SMOKE_CAP = 90;
 
 /** Shared GLSL: where the front is and how tall it stands at a moment, and the fan's edges. */
 const WAVE_GLSL = /* glsl */ `
@@ -81,96 +85,133 @@ float angleOf(float k, float s) { float f = (k + rnd(k, s)) / max(uCount, 1.0); 
 float edgeOf(float th) { if (isRing()) return 1.0; float d = abs(atan(sin(th - uFace), cos(th - uFace))) / uHalf; return 1.0 - smoothstep(0.82, 1.1, d); }
 `;
 
-/** The puffs: lopsided flames born on the front, carried a little further with it, swelling and breaking up from the inside. */
-const PUFFS = /* glsl */ `
+/**
+ * The wave itself: a volume of burning gas, ray-marched (the user on the sheet before it, 2026-11-26: "it's reading more
+ * like a solid sheet with holes through it, rather than something composed of gas/plasma"; and before that, on the
+ * sprites: "stacked individual sprites rather than a cohesive wave"). A box round the wave is drawn by its back faces;
+ * each pixel marches its ray through the box, stopping at the floor or a body (the world's depth), and gathers light and
+ * cover from a density field shaped like a rolling tube just behind the front:
+ *
+ * - **Shape:** in the wave's own frame (how far behind the front, how high) the gas is a blob riding behind the front,
+ *   with a low smoky tail behind it, broken by 3D noise into billows. Round the arc the same noise, so the front is one
+ *   body with lobes, never a row of pieces.
+ * - **Billowing:** the noise turns round the tube's axis as the wave travels (rolling forward over its top), so a lobe
+ *   can be followed from frame to frame as it rolls over.
+ * - **Gas, not a surface:** dense parts glow yellow-orange, thin parts are a translucent red, the thinnest only darken
+ *   (smoke); light builds up where a ray passes through more of it.
+ * - **Taper:** as the wave sinks the tube lowers, the noise eats it and it goes out; a burst's ends are eaten the same
+ *   way, so they fray.
+ */
+const VOL_STEPS = 28;
+
+const VOL_COMMON = /* glsl */ `
+${HASH}
+${NOISE}
 ${WAVE_GLSL}
-Particle emitParticle(float k, float back) {
-  if (k >= uCount) return P0();
-  float th = angleOf(k, 1.0), e = edgeOf(th);
-  // neighbours on the arc are born at staggered times, so the front has no holes where a run of them came together
-  float tb = (mod(k, 4.0) + rnd(k, 2.0)) * uTr * (1.3 / 4.0);
-  float life = (0.22 + 0.14 * rnd(k, 3.0)) * mix(0.7, 1.0, e);
-  float a = uAge - back - tb;
-  if (a < 0.0 || a > life) return P0();
-  // how tall the wave stands now (not when this flame was born), so the whole wave sinks together
-  float t = a / life, h = tallAt(uAge - back);
-  if (h * mix(0.35, 1.0, e) < 0.001) return P0();
-  // on the front as it is now, falling behind it as it ages: the young hot ones outside, the old ones inside, shrinking
-  vec2 c = centerAt(uAge - back), d = vec2(cos(th), sin(th));
-  float r = max(0.0, frontAt(uAge - back) - 0.06 - 0.65 * t * t);
-  float sz = (0.46 + 0.16 * rnd(k, 5.0)) * h * mix(0.45, 1.0, e) * mix(1.0, 0.42, smoothstep(0.15, 1.0, t)) * (0.88 + 0.06 * uN);
-  Particle p = P0(); p.alive = true;
-  p.pos = vec3(c.x + d.x * r, uGy + sz * 0.7 + 0.3 * smoothstep(0.45, 1.0, t), c.y + d.y * r);
-  p.size = sz;
-  // flatter, joined heads (no stretch: the kit turns a stretched quad along its motion, undoing its random rotation)
-  p.aspect = 0.85 + 0.15 * rnd(k, 10.0);
-  p.rot = rnd(k, 6.0) * 6.2832 + t * (rnd(k, 7.0) - 0.5) * 1.2;
-  p.col = vec4(t, h, e, tb / uTr);
-  p.data = vec4(rnd(k, 8.0), rnd(k, 9.0), 0.0, 0.0);
-  return p;
+uniform float uWidth, uLift, uRoll;
+uniform vec3 uBoxC, uBoxH;
+// the band's depth behind the front: thin as it leaves the caster, full by mid-way, narrowing as it dies
+float bandW(float age, float Rf) { float q = age / uTr; return min(Rf * 0.42, uWidth * mix(0.45, 1.0, smoothstep(0.0, 0.6, q)) * mix(1.0, 0.75, smoothstep(1.0, 1.7, q))); }
+`;
+
+const VOL_VERT = /* glsl */ `
+${VOL_COMMON}
+out vec3 vWorld;
+void main() {
+  vec3 wp = uBoxC + position * uBoxH;
+  vWorld = wp;
+  gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0);
 }`;
 
-/** fire-puff2.png: three rows of six frames; hotter on the front and young, redder at the fan's ends. */
-const LOOK_PUFF = /* glsl */ `
-uniform sampler2D uSheet;
-${SHEET_GLSL}
-vec4 look(vec2 uv, vec4 col, vec4 data) {
-  float t = col.x, h = col.y, e = col.z;
-  vec2 q = uv * 0.5 + 0.5; if (data.y > 0.5) q.x = 1.0 - q.x;
-  vec3 s = flipbook(uSheet, q, floor(data.x * 3.0), t, 6.0, 3.0).rgb;
-  float lum = max(s.r, max(s.g, s.b));
-  float m = smoothstep(0.04, 0.3, lum);
-  // a hot head on the front, cooling to a red wake as it falls behind
-  vec3 c = s * mix(vec3(4.0, 3.0, 1.35), vec3(1.0, 0.3, 0.06), smoothstep(0.08, 0.65, t));
-  c *= mix(vec3(1.0, 0.62, 0.45), vec3(1.0), e);
-  float fade = smoothstep(0.0, 0.05, t) * (1.0 - smoothstep(0.7, 1.0, t));
-  // the wave going down loses cover (it breaks up) rather than shrinking into crumbs
-  float cover = m * fade * mix(0.82, 0.28, smoothstep(0.15, 1.0, t)) * e;
-  // covering, so the painted flame holds its body on the pale stone instead of washing through
-  return vec4(c * cover, cover);
+const VOL_FRAG = /* glsl */ `
+#include <packing>
+${VOL_COMMON}
+uniform sampler2D uDepth; uniform vec2 uRes; uniform float uNear, uFar;
+in vec3 vWorld;
+out vec4 fxColor;
+// 0 hottest .. 1 going out: saturated (almost no blue), so after the tone map the core stays yellow and the body orange
+vec3 gasRamp(float h) {
+  h = clamp(h, 0.0, 1.0);
+  vec3 c0 = vec3(3.2, 1.6, 0.08), c1 = vec3(2.5, 0.8, 0.03), c2 = vec3(1.6, 0.3, 0.012), c3 = vec3(0.7, 0.08, 0.01), c4 = vec3(0.12, 0.02, 0.01);
+  if (h < 0.2) return mix(c0, c1, h / 0.2);
+  if (h < 0.45) return mix(c1, c2, (h - 0.2) / 0.25);
+  if (h < 0.7) return mix(c2, c3, (h - 0.45) / 0.25);
+  return mix(c3, c4, (h - 0.7) / 0.3);
+}
+// this moment's wave, worked out once per pixel
+vec2 gC; float gRf, gW, gH, gQ, gSpin, gHot;
+// density (0..) and heat (0 hottest .. 1 cool) at world point p
+vec2 gas(vec3 p) {
+  vec2 rel = p.xz - gC; float r = length(rel);
+  float b = gRf - r;                       // how far behind the front
+  if (b < -0.5 || b > gW + 0.3) return vec2(0.0, 1.0);
+  vec2 dir = rel / max(r, 1e-4);
+  float th = atan(dir.y, dir.x), e = edgeOf(th);
+  if (e <= 0.0) return vec2(0.0, 1.0);
+  float y = p.y - uGy;
+  // the tube's cross-section, centred a third of the band behind the front
+  float bc = gW * 0.34, yc = gH * 0.42, rx = gW * 0.42, ry = gH * 0.5;
+  vec2 l = vec2((b - bc) / rx, (y - yc) / ry);
+  float base = 1.0 - length(l);
+  // the low smoky tail behind it
+  base = max(base, (1.0 - smoothstep(0.0, 1.0, (b - bc) / max(gW - bc, 0.05))) * step(bc, b) * (0.35 - 1.6 * y / max(gH, 0.05)));
+  // the noise turns round the tube's axis (rolling forward over the top): a lobe rolls over from frame to frame
+  float cs = cos(gSpin), sn = sin(gSpin);
+  vec2 lr = vec2(cs * (b - bc) - sn * (y - yc), sn * (b - bc) + cs * (y - yc));
+  vec3 np = vec3(dir * (gRf * 1.25 - lr.x * 1.3), lr.y * 1.5 + uSeed * 0.013);
+  vec3 wq = np * 0.6 + 3.1;
+  np += (vec3(vnoise3(wq), vnoise3(wq + 4.7), vnoise3(wq + 9.1)) - 0.5) * 1.1;
+  float n = fbm3(np * 1.8);
+  float er = mix(0.0, 1.25, smoothstep(0.6, 1.6, gQ)) + (1.0 - e) * 1.1;
+  float d = base * 1.15 + (n - 0.5) * 1.9 - er;
+  if (d <= 0.0) return vec2(0.0, 1.0);
+  // hot in the dense core and near the front, cooling toward the tail and as it dies
+  float heat = 1.0 - clamp(d * 1.6, 0.0, 1.0) + 0.25 * clamp(b / gW, 0.0, 1.0) + gHot;
+  return vec2(d, heat);
+}
+void main() {
+  vec3 ro = cameraPosition, rd = normalize(vWorld - ro);
+  // entry into the box (slab test); the exit is this back face
+  vec3 inv = 1.0 / rd, t0 = (uBoxC - uBoxH - ro) * inv, t1 = (uBoxC + uBoxH - ro) * inv;
+  vec3 tn = min(t0, t1);
+  float tIn = max(max(max(tn.x, tn.y), tn.z), 0.0), tOut = length(vWorld - ro);
+  // stop at the floor or whatever stands in the way (the world's depth along this ray)
+  vec3 fwd = -vec3(viewMatrix[0][2], viewMatrix[1][2], viewMatrix[2][2]);
+  float scene = -perspectiveDepthToViewZ(texture(uDepth, gl_FragCoord.xy / uRes).r, uNear, uFar);
+  tOut = min(tOut, scene / max(dot(rd, fwd), 1e-3));
+  if (tOut <= tIn) discard;
+  float q = uAge / uTr;
+  gC = centerAt(uAge); gRf = frontAt(uAge); gW = bandW(uAge, gRf); gH = uLift * tallAt(uAge); gQ = q;
+  gSpin = -uAge * uRoll; gHot = 0.3 * smoothstep(0.6, 1.5, q);
+  float dt = (tOut - tIn) / ${VOL_STEPS}.0;
+  // a per-pixel offset along the ray, so the steps don't show as bands
+  float t = tIn + dt * fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+  vec3 col = vec3(0.0); float acc = 0.0;
+  for (int i = 0; i < ${VOL_STEPS}; i++) {
+    vec2 g = gas(ro + rd * t);
+    if (g.x > 0.0) {
+      float a = 1.0 - exp(-g.x * 14.0 * dt);
+      // the thinnest gas only darkens (smoke); denser gas glows
+      vec3 em = gasRamp(g.y) * smoothstep(0.02, 0.25, g.x);
+      col += (1.0 - acc) * a * em;
+      acc += (1.0 - acc) * a;
+      if (acc > 0.98) break;
+    }
+    t += dt;
+  }
+  if (acc < 0.004) discard;
+  fxColor = vec4(col, acc);
 }`;
 
-/** The ground flames: upright, standing on the front, tallest while it's tall; their tips leave upward as they die. */
-const RISE = /* glsl */ `
-${WAVE_GLSL}
-Particle emitParticle(float k, float back) {
-  if (k >= uCount) return P0();
-  float th = angleOf(k, 21.0), e = edgeOf(th);
-  float tb = (mod(k, 4.0) + rnd(k, 22.0)) * uTr * (1.05 / 4.0);
-  float life = 0.2 + 0.12 * rnd(k, 23.0);
-  float a = uAge - back - tb;
-  if (a < 0.0 || a > life) return P0();
-  float t = a / life;
-  float h = tallAt(uAge - back) * mix(0.3, 1.0, e);
-  if (h < 0.001) return P0();
-  vec2 c = centerAt(tb), d = vec2(cos(th), sin(th));
-  // left where the front passed: the dying wake behind it
-  float r = max(0.0, frontAt(tb) - 0.08);
-  Particle p = P0(); p.alive = true;
-  // its tip leaves upward as it dies
-  p.pos = vec3(c.x + d.x * r, uGy - 0.02 + 0.28 * smoothstep(0.45, 1.0, t), c.y + d.y * r);
-  p.size = (0.42 + 0.22 * rnd(k, 25.0)) * h * (0.9 + 0.05 * uN) * (1.0 - 0.55 * smoothstep(0.25, 1.0, t));
-  p.aspect = 0.75;
-  p.rot = (rnd(k, 26.0) - 0.5) * 0.25;
-  p.col = vec4(a / life, h, e, 0.0);
-  p.data = vec4(rnd(k, 27.0), rnd(k, 28.0), 0.0, 0.0);
-  return p;
-}`;
-
-/** fire-rise.png: three rows of six frames, each cell standing on its foot (uv.y 0 at the base). */
-const LOOK_RISE = /* glsl */ `
-uniform sampler2D uSheet;
-${SHEET_GLSL}
-vec4 look(vec2 uv, vec4 col, vec4 data) {
-  float t = col.x, e = col.z;
-  vec2 q = vec2(uv.x * 0.5 + 0.5, uv.y); if (data.y > 0.5) q.x = 1.0 - q.x;
-  vec3 s = flipbook(uSheet, q, floor(data.x * 3.0), t, 6.0, 3.0).rgb;
-  float lum = max(s.r, max(s.g, s.b)), m = smoothstep(0.05, 0.3, lum);
-  vec3 c = s * mix(vec3(1.8, 0.95, 0.3), vec3(0.8, 0.24, 0.06), t);
-  c *= mix(vec3(1.0, 0.62, 0.45), vec3(1.0), e);
-  float cover = m * smoothstep(0.0, 0.08, t) * 0.8 * (1.0 - smoothstep(0.75, 1.0, t)) * col.y * e;
-  return vec4(c * cover, cover);
-}`;
+/** The volume's box: one draw call (a cube's back faces, placed and sized by uniforms). */
+function volumeMesh(u: Record<string, THREE.IUniform>): THREE.Mesh {
+  const m = premulMaterial(new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, uniforms: u, vertexShader: VOL_VERT, fragmentShader: VOL_FRAG, side: THREE.BackSide }));
+  m.depthTest = false;   // the march stops at the world's depth itself; the box's own faces may lie behind the floor
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), m);
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 3;
+  return mesh;
+}
 
 /** Smoke: a few dark puffs rising off the burnt ground behind the front (the dark the pale floor needs). */
 const SMOKE = /* glsl */ `
@@ -269,8 +310,8 @@ vec4 decal(vec3 wp) {
 /** One wave's drawing (pooled). */
 class Slot {
   readonly group = new THREE.Group();
-  readonly puffs: ParticleBatch;
-  readonly rise: ParticleBatch;
+  /** The wave's gas (a ray-marched box). */
+  readonly sheet: THREE.Mesh;
   readonly smoke: ParticleBatch;
   readonly flash: ParticleBatch;
   readonly ground: GroundDecal;
@@ -283,6 +324,8 @@ class Slot {
     uC0: { value: new THREE.Vector2() }, uCn: { value: new THREE.Vector2() }, uRn: { value: 0 }, uRmax: { value: 0 },
     uFront: { value: 0 }, uScorch: { value: 0 }, uHot: { value: 0 }, uFace: this.P.uFace, uHalf: this.P.uHalf, uN: this.P.uN,
   };
+  /** The sheet's uniforms: the wave's (P) and its own. */
+  readonly S: Record<string, THREE.IUniform>;
   wave: Wave | null = null;
   private covered = '';
 
@@ -291,10 +334,10 @@ class Slot {
       new ParticleBatch({ motion, look, cap, order, soft, upright, uniforms: { ...this.P, uCount: { value: 0 }, ...extra } });
     this.ground = new GroundDecal({ look: GROUND, uniforms: this.D, order: -1, step: 0.25 });
     this.smoke = batch(SMOKE, LOOK_SMOKE, SMOKE_CAP, 1, { uSheet: { value: FIRE_TEX.smokeburn } }, false, 0.5);
-    this.rise = batch(RISE, LOOK_RISE, RISE_CAP, 2, { uSheet: { value: FIRE_TEX.rise } }, true, 0.15);
-    this.puffs = batch(PUFFS, LOOK_PUFF, PUFF_CAP, 3, { uSheet: { value: FIRE_TEX.puff2 } });
+    this.S = { ...this.P, uCount: { value: 0 }, uSeed: { value: 0 }, ...FX_U, uBoxC: { value: new THREE.Vector3() }, uBoxH: { value: new THREE.Vector3(1, 1, 1) }, uWidth: { value: FIRE_WAVE.width }, uLift: { value: FIRE_WAVE.lift }, uRoll: { value: FIRE_WAVE.roll } };
+    this.sheet = volumeMesh(this.S);
     this.flash = batch(FLASH, LOOK_FLASH, 1, 4, {}, false, 0.6);
-    this.group.add(this.ground.mesh, this.smoke.mesh, this.rise.mesh, this.puffs.mesh, this.flash.mesh);
+    this.group.add(this.ground.mesh, this.smoke.mesh, this.sheet, this.flash.mesh);
   }
 
   /** Draw wave `w` at age `age` s; `heightAt` reads the floor (sim x, y). Returns the light's strength (0: none). */
@@ -304,7 +347,8 @@ class Slot {
     const n = w.ring ? runesOf(r.r) : Math.max(1, Math.min(5, 1 + Math.round((r.r - 2.5) / 0.6)));
     const Tr = FIRE_WAVE.reach * stretchOf(r.r), q = age / Tr;
     const gy = heightAt(r.x, r.y);
-    for (const b of [this.puffs, this.rise, this.smoke, this.flash, this.ground]) b.u.uSeed.value = r.seed;
+    for (const b of [this.smoke, this.flash, this.ground]) b.u.uSeed.value = r.seed;
+    this.S.uSeed.value = r.seed;
     if (w.ring) fillPath(this.P.uPath.value, r); else for (const v of this.P.uPath.value) v.set(r.x, r.y);
     this.P.uAge.value = age; this.P.uR.value = r.r; this.P.uTr.value = Tr; this.P.uGy.value = gy;
     this.P.uFace.value = w.face; this.P.uHalf.value = w.half; this.P.uN.value = n;
@@ -315,8 +359,12 @@ class Slot {
       b.u.uCount.value = Math.min(cap, Math.round(arc * per * (0.85 + 0.08 * n)));
       b.count = cap;
     };
-    count(this.puffs, FIRE_WAVE.puffsPerU, PUFF_CAP, q < 1.3 + 1.1 / Tr);
-    count(this.rise, FIRE_WAVE.risePerU, RISE_CAP, q < 1.25 + 0.6 / Tr);
+    this.sheet.visible = q < 1.75;
+    {
+      const [bx, by] = w.ring ? centerAt(r, age) : [r.x, r.y], R = r.r * (1 + FIRE_WAVE.overrun) + 0.7, H = FIRE_WAVE.lift * 1.6 + 0.2;
+      (this.S.uBoxC.value as THREE.Vector3).set(bx, gy + H / 2 - 0.1, by);
+      (this.S.uBoxH.value as THREE.Vector3).set(R, H / 2, R);
+    }
     count(this.smoke, FIRE_WAVE.smokePerU, SMOKE_CAP, age < Tr * 1.2 + 1.8);
     this.flash.count = 1; this.flash.mesh.visible = age < 0.17;
     // the ground: the hot line under the front, then the scorch
@@ -335,7 +383,8 @@ class Slot {
 
   hide(): void { this.group.visible = false; this.wave = null; }
 
-  dispose(): void { for (const d of [this.puffs, this.rise, this.smoke, this.flash, this.ground]) d.dispose(); }
+  dispose(): void { for (const d of [this.smoke, this.flash, this.ground]) d.dispose();
+    this.sheet.geometry.dispose(); (this.sheet.material as THREE.Material).dispose(); }
 }
 
 /** Every Fire ring and Fire burst in the world. */

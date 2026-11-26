@@ -36,7 +36,7 @@ FIXES = {
         ('terrace', 't-sea', dict(name='the deep')), ('terrace', 't-stream-c', dict(name='the bath')),
         ('terrace', 't-stream', dict(name='the sea')), ('terrace', 'stairs at 0 m', dict(name='the shore walk')),
         ('terrace', 'stairs at 4.5 m', dict(name="the east flight's landing", h=4.25, edge='parapet')),
-        ('terrace', 'the shore walk', dict(edge='parapet')),   # a low sea wall along the walk, and round the bath sunk into it
+        ('terrace', 'the shore walk', dict(edge='parapet')), ('terrace', 'sand at 0 m', dict(name='the beach', mat='sand')),   # a low sea wall along the walk, and round the bath sunk into it
         ('paint', 't-woods-d', 0, 0, 76, 0),                  # the lattice's first row fell outside the plan's fill: woods, not -10 m sea
         # the overlook's two flights down to the well's tier: the west one straight down by the greenhouse; the east one a long run
         # along the drop (rev 7; the user, 2026-11-26: move the stills east to make room): a ledge off the top terrace, a flight,
@@ -51,10 +51,11 @@ FIXES = {
         ('flight', 'west flight', [[16.0, 19.5], [19.0, 19.5]]),
         ('flight', 'east flight', [[30.5, 20.0], [30.5, 21.0]]),
         # the shore: sand, the walk, the flight down by the greenhouse and the way back up along the cliff, west to east
-        ('paint', 'sand at 0 m', 6, 35, 48, 36), ('paint', 'sand at 0 m', 6, 37, 21, 37),
-        ('paint', 'the shore walk', 16, 30, 19, 36), ('paint', 'the shore walk', 15, 35, 20, 37), ('paint', 'the shore walk', 20, 35, 32, 37), ('paint', 'the shore walk', 24, 32, 32, 34),
+        # (the user, 2026-11-26: the lower ledge felt "way too constrained": the shore is now six rows deep, the walk five,
+        # with a sand beach running on under the cliffs both ways and the sea starting at row 42)
+        ('paint', 'the beach', 0, 35, 48, 36), ('paint', 'the beach', 0, 37, 76, 41),
+        ('paint', 'the shore walk', 16, 30, 19, 36), ('paint', 'the shore walk', 15, 35, 34, 40), ('paint', 'the shore walk', 24, 32, 32, 34),
         ('flight', 'shore flight down', [[16.0, 29.5], [19.0, 29.5]]), ('flight', 'shore flight up', [[32.5, 32.0], [32.5, 34.0]]),
-        ('paint', 'the sea', 20, 38, 30, 39),              # a woods tongue the plan left under the bath, out into the sea
         ('paint', 'the shore walk', 21, 33, 27, 34),       # a bay cut into the bluff, so the bath has room
         ('paint', 'grass at 3.5 m', 20, 29, 23, 32),       # the bluff over the bay is lawn with a parapet: a built wall behind the bath, a lookout above
         ('disc', 'the bath', 22.5, 35.0, 1.5),             # west of the climbing flight's landing             # a row of the walk between it and the sea, or it pours over as a fall            # a pool sunk into the shore walk, not a raised rim against the cliff

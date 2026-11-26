@@ -1,0 +1,213 @@
+<title>Spell Effects Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a sticky pager of rounds over one round at a time; each item is the picture wide, its words and answer box beside it. */
+:root {
+  --bg: #f6f3ee; --panel: #fffdf9; --fg: #221d1a; --muted: #6d645c; --line: #e2dbd1;
+  --el: #c9471c; --el-soft: #f8e3d6; --focus: #2f6fd6;
+  --display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #171412; --panel: #211d1a; --fg: #efe9e2; --muted: #a59a90; --line: #3a332d;
+  --el: #ff7a45; --el-soft: #3a2218; --focus: #7aa7ff; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #171412; --panel: #211d1a; --fg: #efe9e2; --muted: #a59a90; --line: #3a332d;
+  --el: #ff7a45; --el-soft: #3a2218; --focus: #7aa7ff; color-scheme: dark }
+/* element tints, set per round */
+.el-neutral { --el: #6b5f8a; --el-soft: #e9e5f2 }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .el-neutral { --el: #b3a6e0; --el-soft: #2a2638 } }
+:root[data-theme="dark"] .el-neutral { --el: #b3a6e0; --el-soft: #2a2638 }
+
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
+.bar .wrap { display: flex; align-items: center; gap: 12px; padding-block: 10px; }
+.brand { font: 800 17px/1 var(--display); letter-spacing: -0.01em; white-space: nowrap; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: thin; padding-block: 2px; }
+.tabs a { flex: none; text-decoration: none; color: var(--muted); font: 500 13px/1 var(--body); padding: 7px 11px; border-radius: 999px; border: 1px solid var(--line); }
+.tabs a[aria-current="page"] { color: var(--fg); background: var(--el-soft); border-color: var(--el); }
+.tabs a .new { font: 500 10px/1 var(--mono); color: var(--el); margin-left: 6px; }
+.step { display: flex; gap: 4px; }
+.step button { font: 600 13px/1 var(--body); color: var(--fg); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; cursor: pointer; }
+.step button:disabled { opacity: 0.35; cursor: default; }
+
+header.round { padding-block: 32px 8px; display: grid; gap: 8px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--el); }
+h1 { font: 800 clamp(28px, 4vw, 40px)/1.05 var(--display); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.lead { color: var(--muted); max-width: 68ch; margin: 0; }
+.tally { font: 500 12px/1 var(--mono); color: var(--muted); }
+
+main { display: grid; gap: 18px; padding-block: 16px 56px; }
+.item { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px; }
+.item.text { grid-template-columns: minmax(0, 1fr); }
+.item h2 { font: 700 20px/1.15 var(--display); margin: 0 0 6px; text-wrap: balance; }
+.item p, .item li { max-width: 68ch; }
+.item ol, .item ul { padding-left: 20px; margin: 0; display: grid; gap: 8px; }
+.media { display: grid; gap: 10px; min-width: 0; }
+.media img, .media video { width: 100%; border-radius: 8px; display: block; cursor: zoom-in; background: #000; }
+.side { display: grid; align-content: start; gap: 14px; min-width: 0; }
+.side p { margin: 0; color: var(--fg); }
+
+.answer { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 8px; }
+.answer .q { font-weight: 600; }
+.choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.choices button { font: 500 13px/1 var(--body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.choices button[aria-pressed="true"] { background: var(--el); border-color: var(--el); color: var(--panel); }
+textarea { font: 14px/1.45 var(--body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-height: 72px; resize: vertical; width: 100%; box-sizing: border-box; }
+.status { font: 500 11px/1 var(--mono); color: var(--muted); min-height: 11px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 94vh; }
+dialog::backdrop { background: rgb(0 0 0 / 0.82); }
+dialog img, dialog video { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6px; }
+
+@media (max-width: 760px) {
+  .item { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+  .brand { display: none; }
+}
+</style>
+
+<div class="bar"><div class="wrap">
+  <div class="brand">Spell Effects</div>
+  <nav class="tabs" id="tabs" aria-label="Rounds"></nav>
+  <div class="step"><button id="prev" aria-label="Previous round">←</button><button id="next" aria-label="Next round">→</button></div>
+</div></div>
+<div class="wrap" id="page">
+  <header class="round"><div class="eyebrow">Loading</div><h1>Spell Effects Review</h1></header>
+</div>
+<dialog id="zoom"></dialog>
+
+<script src="rounds.js"></script>
+<script>
+const ROUNDS = window.ROUNDS || [];
+const state = {};            // answers by doc id
+let col = null;              // db collection, once it loads
+let dbState = 'loading';     // loading | ready | none | failed
+
+const $ = (s, r = document) => r.querySelector(s);
+const roundOf = (id) => ROUNDS.find((r) => r.id === id) || ROUNDS[ROUNDS.length - 1];
+const docIds = (r) => [...(r.items || []).filter((i) => i.ask).map((i) => `${r.id}-${i.id}`), ...(r.general ? [`${r.id}-general`] : [])];
+
+function tabs(cur) {
+  const nav = $('#tabs'); nav.replaceChildren();
+  ROUNDS.forEach((r, i) => {
+    const a = document.createElement('a');
+    a.href = '#' + r.id; a.textContent = r.tab;
+    if (r.id === cur.id) a.setAttribute('aria-current', 'page');
+    const ids = docIds(r);
+    const open = ids.length && ids.some((id) => !(state[id] && (state[id].choice || state[id].note)));
+    if (i === ROUNDS.length - 1 && open) { const n = document.createElement('span'); n.className = 'new'; n.textContent = 'open'; a.append(n); }
+    nav.append(a);
+    if (r.id === cur.id) requestAnimationFrame(() => a.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
+  });
+  const k = ROUNDS.indexOf(cur);
+  $('#prev').disabled = k <= 0; $('#next').disabled = k >= ROUNDS.length - 1;
+}
+
+function answerBox(id, q, withChoices) {
+  const box = document.createElement('div');
+  box.className = 'answer'; box.dataset.id = id;
+  box.innerHTML = `<div class="q"></div>${withChoices ? '<div class="choices"><button data-v="keep">Build from it</button><button data-v="tune">Tune first</button><button data-v="redo">Redo</button></div>' : ''}<textarea placeholder="Notes"></textarea><div class="status"></div>`;
+  $('.q', box).textContent = q;
+  const ta = $('textarea', box); ta.id = 'note-' + id; ta.setAttribute('aria-label', q + ' (notes)');
+  return box;
+}
+
+function render() {
+  const r = roundOf(location.hash.slice(1));
+  document.body.className = 'el-' + (r.el || 'neutral');
+  const page = $('#page'); page.replaceChildren();
+  const head = document.createElement('header'); head.className = 'round';
+  head.innerHTML = `<div class="eyebrow"></div><h1></h1><p class="lead"></p><div class="tally"></div>`;
+  $('.eyebrow', head).textContent = `${r.tab} · ${r.date}`;
+  $('h1', head).textContent = r.title; $('.lead', head).textContent = r.lead || '';
+  page.append(head);
+  const main = document.createElement('main');
+  for (const s of r.sections || []) {
+    const el = document.createElement('section'); el.className = 'item text';
+    el.innerHTML = `<div><h2></h2>${s.html}</div>`; $('h2', el).textContent = s.title;
+    main.append(el);
+  }
+  for (const it of r.items || []) {
+    const el = document.createElement('section'); el.className = 'item';
+    const media = document.createElement('div'); media.className = 'media';
+    for (const src of it.img || []) { const im = document.createElement('img'); im.src = 'img/' + src; im.alt = it.title; im.loading = 'lazy'; media.append(im); }
+    for (const src of it.vid || []) { const v = document.createElement('video'); Object.assign(v, { src: 'vid/' + src, muted: true, loop: true, autoplay: true, playsInline: true }); media.append(v); }
+    const side = document.createElement('div'); side.className = 'side';
+    side.innerHTML = '<div><h2></h2><p></p></div>';
+    $('h2', side).textContent = it.title; $('p', side).textContent = it.text;
+    if (it.ask) side.append(answerBox(`${r.id}-${it.id}`, it.ask, true));
+    el.append(media, side); main.append(el);
+  }
+  if (r.general) {
+    const el = document.createElement('section'); el.className = 'item text';
+    el.append(answerBox(`${r.id}-general`, r.general, false)); main.append(el);
+  }
+  page.append(main);
+  tabs(r); wire(); paintAll();
+  window.scrollTo(0, 0);
+}
+
+function tally() {
+  const r = roundOf(location.hash.slice(1)), ids = docIds(r), t = $('.tally');
+  if (!t || !ids.length) return;
+  const done = ids.filter((id) => state[id] && (state[id].choice || state[id].note)).length;
+  t.textContent = `${done} of ${ids.length} answered`;
+}
+function paint(box) {
+  const s = state[box.dataset.id] || {};
+  for (const b of box.querySelectorAll('.choices button')) b.setAttribute('aria-pressed', String(b.dataset.v === s.choice));
+  const ta = $('textarea', box);
+  if (document.activeElement !== ta && !box.dataset.dirty) ta.value = s.note || '';
+  if (dbState === 'none') setStatus(box, 'Sign in to save answers.');
+  else if (dbState === 'failed') setStatus(box, 'Saved answers did not load.');
+}
+function paintAll() { for (const box of document.querySelectorAll('.answer')) paint(box); tally(); }
+function setStatus(box, text) { $('.status', box).textContent = text; }
+
+async function save(box, patch) {
+  const id = box.dataset.id;
+  if (!col) { setStatus(box, dbState === 'loading' ? 'Still loading, try again in a moment.' : 'Sign in to save answers.'); return; }
+  state[id] = { ...(state[id] || {}), ...patch, at: new Date().toISOString() };
+  paint(box); setStatus(box, 'Saving…');
+  try { await col.doc(id).set(state[id]); delete box.dataset.dirty; setStatus(box, 'Saved'); tally(); }
+  catch (e) { setStatus(box, 'Not saved (' + (e && e.code ? e.code : 'error') + '). Try again.'); }
+}
+function wire() {
+  for (const box of document.querySelectorAll('.answer')) {
+    for (const b of box.querySelectorAll('.choices button')) b.addEventListener('click', () => save(box, { choice: b.dataset.v }));
+    const ta = $('textarea', box); let timer = 0;
+    const flush = () => { if (!box.dataset.dirty) return; clearTimeout(timer); save(box, { note: ta.value }); };
+    ta.addEventListener('input', () => { box.dataset.dirty = '1'; clearTimeout(timer); setStatus(box, 'Typing…'); timer = setTimeout(flush, 900); });
+    ta.addEventListener('blur', flush);
+  }
+  for (const m of document.querySelectorAll('.media img, .media video')) m.addEventListener('click', () => {
+    const z = $('#zoom'), c = m.tagName === 'IMG' ? Object.assign(document.createElement('img'), { src: m.src, alt: m.alt })
+      : Object.assign(document.createElement('video'), { src: m.src, muted: true, loop: true, autoplay: true, playsInline: true, controls: true });
+    z.replaceChildren(c); z.showModal();
+  });
+}
+$('#zoom').addEventListener('click', (e) => { if (e.target === e.currentTarget || e.target.tagName === 'IMG') e.currentTarget.close(); });
+$('#prev').addEventListener('click', () => { const k = ROUNDS.indexOf(roundOf(location.hash.slice(1))); if (k > 0) location.hash = ROUNDS[k - 1].id; });
+$('#next').addEventListener('click', () => { const k = ROUNDS.indexOf(roundOf(location.hash.slice(1))); if (k < ROUNDS.length - 1) location.hash = ROUNDS[k + 1].id; });
+window.addEventListener('hashchange', render);
+render();
+
+(async () => {
+  const db = window.claude ? await window.claude.use('db') : null;
+  if (!db) { dbState = 'none'; paintAll(); return; }
+  col = db.collection('answers');
+  const t = setTimeout(() => { if (dbState === 'loading') { dbState = 'failed'; paintAll(); } }, 10000);
+  col.onSnapshot((snap) => {
+    clearTimeout(t); dbState = 'ready';
+    for (const d of snap.docs) state[d.id] = d.data();
+    paintAll(); tabs(roundOf(location.hash.slice(1)));
+  }, () => { clearTimeout(t); dbState = 'failed'; paintAll(); });
+})();
+</script>

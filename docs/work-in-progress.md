@@ -21,7 +21,9 @@ The opening is a chain of eight stops, Life first; the yard and the battery are 
 > [!in-review] Play the 3D page; effects have their own thread
 > The Court in 3D's questions are all answered (2026-11-25). The 3D game is the main page (`?runes=1` gives runes in the court, `#practice` for the practice ground). Spell effects moved to [their own thread](threads/spell-effects-3d.md), which starts with a fresh session. The swap is done (2026-11-25): the public page is the 3D game, the pixel game is at `/classic.html`.
 
-[The Court in 3D](https://claude.ai/artifact/3dWPYc5ZxZqgrYfpksnegu) · [Thread](threads/port-3d.md) · [Effects thread](threads/spell-effects-3d.md) · [Plan](explorations/2026-11-25-port-3d-plan.md)
+Spell effects are reviewed on their own page from 2026-11-26, one round per page: [Spell Effects Review](https://claude.ai/artifact/Kwh9yrDCTVmnXQRcHQ6vxT) (Fire round 1, the concepts, open now). The Court in 3D keeps the open `r15-*` and `r16-impacts` verdicts.
+
+[The Court in 3D](https://claude.ai/artifact/3dWPYc5ZxZqgrYfpksnegu) · [Spell Effects Review](https://claude.ai/artifact/Kwh9yrDCTVmnXQRcHQ6vxT) · [Thread](threads/port-3d.md) · [Effects thread](threads/spell-effects-3d.md) · [Plan](explorations/2026-11-25-port-3d-plan.md)
 
 ## Goblin warband art
 

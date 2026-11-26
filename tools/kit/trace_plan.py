@@ -59,7 +59,15 @@ FIXES = {
         ('paint', 'grass at 3.5 m', 20, 29, 23, 32),       # the bluff over the bay is lawn with a parapet: a built wall behind the bath, a lookout above
         ('disc', 'the bath', 22.5, 35.0, 1.5),             # west of the climbing flight's landing             # a row of the walk between it and the sea, or it pours over as a fall            # a pool sunk into the shore walk, not a raised rim against the cliff
         # the made set pieces (Meshy, 2026-11-26) in place of the plan's wall boxes and the trace's post stand-ins for the tents
-        ('drop-setpiece', 'setpiece.post'),
+        ('drop-setpiece', 'setpiece.post'), ('drop-setpiece', 'setpiece.pier-round'),
+        ('object', dict(kind='setpiece', id='well', name='the well', piece='setpiece.infirmary-well', at=[23.0, 21.5], front='S')),
+        # the bath's dressing (one Meshy sheet, split): urns either side, planters to fill with grown flowers, the towel stand
+        ('object', dict(kind='vignette', id='bath-urn-e', name='a lidded urn by the bath', piece='dress.urn-lidded', at=[24.5, 36.4], front='W')),
+        ('object', dict(kind='vignette', id='bath-towels', name='the towel stand', piece='dress.towel-stand', at=[25.9, 36.3], front='W')),
+        ('object', dict(kind='vignette', id='bath-urn', name='a tall urn', piece='dress.urn-tall', at=[35.0, 35.6], front='W')),
+        ('object', dict(kind='vignette', id='bath-trough', name='a trough by the climb', piece='dress.planter-trough', at=[29.6, 36.2], front='N')),
+        ('object', dict(kind='vignette', id='bath-box', name='a planter', piece='dress.planter-box', at=[31.2, 36.3], front='N')),
+        ('object', dict(kind='setpiece', id='battery-stack', name="the battery's smokestack", piece='setpiece.battery-stack', at=[51.0, 23.5], front='S')),
         ('paint', 'paving at 3.5 m', 9, 21, 15, 25), ('paint', 'paving at 3.5 m', 39, 21, 44, 24),
         ('object', dict(kind='setpiece', id='greenhouse', name='the greenhouse', piece='setpiece.greenhouse', at=[12.0, 23.0], front='S')),
         ('object', dict(kind='setpiece', id='stills', name='the stills', piece='setpiece.stills', at=[41.5, 22.5], front='S')),

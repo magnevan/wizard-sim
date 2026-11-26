@@ -93,6 +93,13 @@
     {"id": "f2", "kind": "flight", "name": "east flight", "head": [[30.5, 20.0], [30.5, 21.0]]},
     {"id": "f3", "kind": "flight", "name": "shore flight down", "head": [[16.0, 29.5], [19.0, 29.5]]},
     {"id": "f4", "kind": "flight", "name": "shore flight up", "head": [[32.5, 32.0], [32.5, 34.0]]},
+    {"kind": "setpiece", "id": "well", "name": "the well", "piece": "setpiece.infirmary-well", "at": [23.0, 21.5], "front": "S"},
+    {"kind": "vignette", "id": "bath-urn-e", "name": "a lidded urn by the bath", "piece": "dress.urn-lidded", "at": [24.5, 36.4], "front": "W"},
+    {"kind": "vignette", "id": "bath-towels", "name": "the towel stand", "piece": "dress.towel-stand", "at": [25.9, 36.3], "front": "W"},
+    {"kind": "vignette", "id": "bath-urn", "name": "a tall urn", "piece": "dress.urn-tall", "at": [35.0, 35.6], "front": "W"},
+    {"kind": "vignette", "id": "bath-trough", "name": "a trough by the climb", "piece": "dress.planter-trough", "at": [29.6, 36.2], "front": "N"},
+    {"kind": "vignette", "id": "bath-box", "name": "a planter", "piece": "dress.planter-box", "at": [31.2, 36.3], "front": "N"},
+    {"kind": "setpiece", "id": "battery-stack", "name": "the battery's smokestack", "piece": "setpiece.battery-stack", "at": [51.0, 23.5], "front": "S"},
     {"kind": "setpiece", "id": "greenhouse", "name": "the greenhouse", "piece": "setpiece.greenhouse", "at": [12.0, 23.0], "front": "S"},
     {"kind": "setpiece", "id": "stills", "name": "the stills", "piece": "setpiece.stills", "at": [41.5, 22.5], "front": "S"},
     {"kind": "setpiece", "id": "tent-w", "name": "the west tent", "piece": "setpiece.infirmary-tent", "at": [14.0, 15.5], "front": "S"},
@@ -105,8 +112,6 @@
     {"kind": "marker", "id": "gate-battery", "at": [75, 27], "name": "the road's east end: on to the battery"},
     {"kind": "marker", "id": "well", "at": [23, 21.5], "tag": "landmark", "name": "the well"},
     {"id": "r1", "kind": "round", "name": "the circle r 5 u round (0, -3)", "centre": [23.0, 21.5], "r": 2.5},
-    {"id": "r3", "kind": "round", "name": "the circle r 3 u round (0, 27)", "centre": [23.0, 36.5], "r": 1.5},
-    {"id": "s1", "kind": "setpiece", "name": "the battery's smoke", "piece": "setpiece.pier-round", "at": [51.0, 23.5], "front": "S"},
-    {"id": "s2", "kind": "setpiece", "name": "the well", "piece": "setpiece.pier-round", "at": [23.0, 21.5], "front": "S"}
+    {"id": "r3", "kind": "round", "name": "the circle r 3 u round (0, 27)", "centre": [23.0, 36.5], "r": 1.5}
   ]
 }

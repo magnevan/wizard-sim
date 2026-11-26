@@ -158,6 +158,7 @@ Particle particle(float k, float age, float ts) {
   float turn = abs(cos(ft * (2.5 + 2.0 * rnd(k, 87.0)) + ph));
   // a dim glow while it's riding the flames, cooling to dark ash over its flight
   p.col = vec4(0.5 - 0.25 * age, turn, age, smoothstep(0.0, 0.05, age) * (1.0 - smoothstep(0.75, 1.0, age)));
+  p.data = vec4(rnd(k, 89.0), rnd(k, 90.0), 0.0, 0.0);
   return p;
 }`);
 
@@ -269,7 +270,9 @@ const LOOK_DRIFT = /* glsl */ `
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   float turn = 0.25 + 0.75 * col.y, cool = smoothstep(0.15, 0.7, col.z);
   vec2 q = vec2(uv.x, uv.y / turn);
-  float edge = 0.55 + 0.12 * sin(atan(q.y, q.x) * 3.0 + col.x * 9.0);
+  // ragged, each flake its own: a few gentle waves round the outline (one 3-lobed wave read as a triangle, strong 5-lobed ones as stars)
+  float an = atan(q.y, q.x);
+  float edge = 0.52 + (0.03 * sin(an * 5.0 + data.x * 6.28) + 0.04 * sin(an * 3.0 + data.y * 6.28) + 0.06 * sin(an * 2.0 + data.x * 12.0));
   float m = 1.0 - smoothstep(edge - 0.18, edge, length(q));
   vec3 hot = fireRamp(col.x) * (0.9 + 0.7 * col.y), ash = vec3(0.05, 0.04, 0.035);
   vec3 c = mix(hot, ash, cool);

@@ -75,9 +75,61 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
   <header>
     <div class="eyebrow">Port to 3D · step 0 · 2026-11-25</div>
     <h1>The Court in 3D</h1>
-    <p class="lede"><b>New: <a href="#r8">round 8</a>, painted flames, a real weld and embers; the beam's clouds.</b> Below it, <a href="#r7">round 7</a>, <a href="#r6">round 6</a>, <a href="#r5">round 5</a>, <a href="#r4">round 4</a>, <a href="#r3">round 3</a>, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
+    <p class="lede"><b>New: <a href="#r9">round 9</a>, the fire iterated with Codex until presentable, and the beam into the distance.</b> Below it, <a href="#r8">round 8</a>, <a href="#r7">round 7</a>, <a href="#r6">round 6</a>, <a href="#r5">round 5</a>, <a href="#r4">round 4</a>, <a href="#r3">round 3</a>, <a href="#r2">round 2</a>, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
     <div class="hero"><img src="img/plaza-26.jpg" alt="Two wizards and six goblins on the court's sunk plaza, seen from the 3D game camera"></div>
   </header>
+
+  <section id="r9">
+    <div class="top">
+      <div>
+        <h2>Round 9: the fire, iterated with Codex until presentable</h2>
+        <p>While you were away, I ran the fire through eight loops: render nine frames (in the crowd, on open ground, at the game camera), send them to Codex beside your Magicka stills and notes, and apply its fixes. Codex's score against Magicka 2 went <b>3 → 5 → 6 → 6.5 → 7</b> out of 10. At 7 it called it "presentable to the designer now... not reference quality". I took its last round of flame and weld fixes but kept the smoke darker than it asked: its lighter smoke washed the fire out.</p>
+        <ul>
+          <li><b>The weld:</b> a hot white jet that widens and breaks up into gold, instead of a white tube.</li>
+          <li><b>The body:</b> fewer, larger painted flame masses rolling out and cooling from gold to red, with gaps between them, instead of a fog of overlapping blobs.</li>
+          <li><b>Smoke and char:</b> dark smoke rising off the far side, and char on the floor that now stays for several seconds after you stop, as in Magicka 2.</li>
+          <li><b>Embers:</b> warmer and smaller, no longer white dashes; still more than Codex wanted, since you asked for them.</li>
+          <li><b>The goblins:</b> burning bodies no longer flash ghost-white on every burn tick, which was covering the fire.</li>
+        </ul>
+        <p>Open ground is the honest view (the third clip); the crowd adds its own burning effects. Still open: the jet starts from a fixed spot near the hat rather than the animated staff tip. The critiques and frame sheets of each loop are in <span class="mono">docs/reference/spell-critiques/2026-11-26-*</span>.</p>
+      </div>
+      <div class="answer" data-id="r9-fire" data-rec="keep">
+        <div class="q">The fire, after the Codex loops</div>
+        <div class="choices" role="group" aria-label="The fire, after the Codex loops">
+          <button type="button" data-v="keep">Presentable, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Still wrong</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r9-fire" aria-label="Note: The fire, after the Codex loops" placeholder="What still reads off"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+      <figure><video src="vid/r9-fire3-30.mp4" muted loop playsinline autoplay></video><figcaption><b>3 runes</b> · the game camera, 30 u</figcaption></figure>
+      <figure><video src="vid/r9-fire2-30.mp4" muted loop playsinline autoplay></video><figcaption><b>2 runes</b> · 30 u</figcaption></figure>
+      <figure><video src="vid/r9-fire-open-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Open ground</b> · 3 runes, 14 u</figcaption></figure>
+      <figure><video src="vid/r9-fire3-14.mp4" muted loop playsinline autoplay></video><figcaption><b>3 runes</b> · in the crowd, 14 u</figcaption></figure>
+      <figure><video src="vid/r9-fire2-14.mp4" muted loop playsinline autoplay></video><figcaption><b>2 runes</b> · 14 u</figcaption></figure>
+    </div>
+    <div class="top">
+      <div>
+        <p><b>Arcane beam into the distance</b>, as you asked: no goblins, so it runs its full range. At 14 u it runs off the frame; the 30 u clip shows the whole line. It also caught a bug: the glowing hit cloud was drawn at the beam's end even when nothing was hit. It now shows only on a hit.</p>
+      </div>
+      <div class="answer" data-id="r9-arcane" data-rec="keep">
+        <div class="q">The beam, in the open</div>
+        <div class="choices" role="group" aria-label="The beam, in the open">
+          <button type="button" data-v="keep">Presentable, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Still wrong</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r9-arcane" aria-label="Note: The beam, in the open" placeholder="The core, the plasma, the pulses"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+      <figure><video src="vid/r9-arcane-open-30.mp4" muted loop playsinline autoplay></video><figcaption><b>Into the distance</b> · 30 u</figcaption></figure>
+      <figure><video src="vid/r9-arcane-open-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Into the distance</b> · 14 u</figcaption></figure>
+      <figure><video src="vid/r9-arcane-14.mp4" muted loop playsinline autoplay></video><figcaption><b>On a goblin</b> · 14 u</figcaption></figure>
+    </div>
+  </section>
 
   <section id="r8">
     <div class="top">

@@ -141,7 +141,9 @@ export class BodyTrack {
     this.seenTick = w.clock[0];
     for (const e of w.events) {
       if (e.kind === 'hit' && (e.amount ?? 0) > 0 && e.who >= 0) {
-        this.flashSoft[e.who] = t - this.flashT[e.who] < 0.35 ? 1 : 0;
+        // a repeat hit, or one on a burning body (burning is spent as a steady trickle of hits), only glimmers: as full
+        // flashes they kept burning goblins ghost-white (the 3D fire's round 8)
+        this.flashSoft[e.who] = t - this.flashT[e.who] < 0.35 || b.burn[e.who] > 0 ? 1 : 0;
         this.flashT[e.who] = t;
       }
       if (e.kind === 'blink' && e.who >= 0) { this.prevX[e.who] = b.x[e.who]; this.prevY[e.who] = b.y[e.who]; }

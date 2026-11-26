@@ -86,7 +86,7 @@ const widthOf = (n: number) => ({
 });
 
 const LINE = /* glsl */ `
-uniform float uClock, uBody, uCore, uHalo, uHaloK, uWide, uWhite, uSurgeSp, uSurgeV, uSurgeL;
+uniform float uClock, uBody, uCore, uHalo, uHaloK, uWide, uWhite, uSurgeSp, uSurgeV, uSurgeL, uHitL;
 // Round 6, the user's pick: plasma core take 2. A white-hot core with no border, falling off sharply into magenta;
 // around it a wispy violet plasma cloud peeling off the beam and drifting outward, thicker toward what it hits; pulses
 // racing down the beam that brighten the core and light up the plasma round them (the user's Disintegrate description).
@@ -117,7 +117,7 @@ vec4 look(float along, float across, float len) {
   float cloudW = reachW * 0.75, around = exp(-(side * side) / (cloudW * cloudW) * 1.8);
   float pulseCloud = pulse * around * (0.75 + 0.5 * n);
   float dHit = length(vec2(along - len, across)), hitR = uHalo * uWide * 1.6;
-  float hitCloud = exp(-(dHit * dHit) / (hitR * hitR) * 1.6) * (0.65 + 0.7 * n2) * step(0.3, len) * uWide;
+  float hitCloud = exp(-(dHit * dHit) / (hitR * hitR) * 1.6) * (0.65 + 0.7 * n2) * step(0.3, len) * uWide * uHitL;
   vec3 c = vec3(1.2, 0.06, 2.0) * wisp * lit * uHaloK * 1.8 + vec3(0.7, 0.03, 1.0) * haze * lit;
   c += mix(vec3(1.5, 0.18, 1.9), vec3(2.4, 0.9, 2.8), body) * body * (1.0 + 0.4 * pulse + 0.6 * bulge);
   c += mix(vec3(3.0, 2.2, 3.4), vec3(5.0, 4.8, 5.2), max(uWhite, pulse)) * core;
@@ -298,7 +298,7 @@ export class ArcaneBeam {
   };
   private L = {
     uClock: { value: 0 }, uBody: { value: 0.1 }, uCore: { value: 0.03 }, uHalo: { value: 0.15 }, uHaloK: { value: 0.2 }, uWide: { value: 1 }, uWhite: { value: 0 },
-    uSurgeSp: { value: 3 }, uSurgeV: { value: 20 }, uSurgeL: { value: 0.5 },
+    uSurgeSp: { value: 3 }, uSurgeV: { value: 20 }, uSurgeL: { value: 0.5 }, uHitL: { value: 0 },
   };
   private G = { uFW: { value: 0.5 }, uOnG: { value: 0 }, uHitG: { value: 0 }, uFK: { value: 0.5 } };
   private F = { uOnF: { value: 0 }, uHitOn: { value: 0 }, uStaff: { value: new THREE.Vector3() }, uHit: { value: new THREE.Vector3() } };
@@ -355,6 +355,7 @@ export class ArcaneBeam {
     this.haze.set(this.a, this.b, this.H.uHazeW.value + 0.05, 0.3);
     // the floor strip
     const hitOn = hit && grow >= 1 ? wide : 0;
+    this.L.uHitL.value = hit ? 1 : 0;
     this.G.uFW.value = 0.7 + 0.1 * n; this.G.uOnG.value = wide * grow; this.G.uHitG.value = hitOn * (imp ? 1.3 : 0.8); this.G.uFK.value = 0.45 + 0.06 * n;
     this.floor.mesh.visible = this.line.mesh.visible;
     this.floor.set(this.a.x, this.a.z, this.b.x, this.b.z, Math.max(this.G.uFW.value * 1.6, 1.2), 1.2);

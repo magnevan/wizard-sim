@@ -199,4 +199,36 @@ window.ROUNDS = [
     ],
     general: 'Anything else from these clips',
   },
+  {
+    id: 'fire-2',
+    tab: 'Fire 2',
+    el: 'fire',
+    date: '2026-11-26',
+    title: 'Fire, round 2: concepts from your notes',
+    lead: 'The parts sheet and the ring redone from your round 1 notes and your read of Magicka\'s cells, still from Codex, nothing built yet. Next comes building the ring and the burst from the storyboard, with these parts.',
+    items: [
+      {
+        id: 'parts',
+        title: 'Parts sheet, take 2',
+        text: 'Top to bottom: three flame puffs, lopsided so rotation gives variety, breaking up from the inside (holes open in the middle and spread to a broken rim); single small licks, one among many, clearly simpler than the puffs (they came as a short evolution, not four separate variants); three rising ground flames, upright, their tips leaving upward as the base dies, so a fresh one keeps the fire going; two smoke puffs that grow and thin; and the impact we lacked, a fire splash (it reads more as a hit on the ground than on a body). The ember is left out: one tinted spark fading in code does it.',
+        img: ['el-parts-sheet-2.jpg'],
+        ask: 'Build Fire from these parts?',
+      },
+      {
+        id: 'ring',
+        title: 'The ring, take 2',
+        text: 'Top row. A white flash, then a wave with a hot, bright front, thinning and sinking as it reaches its radius and running a little past it, and scorch streaks radiating out like spokes instead of a ring. Weaker than asked: the inside taper (the front is still a thick band); in the build the interior burns out faster behind the front.',
+        img: ['el-story-ring-2.jpg'],
+        ask: 'Build the ring from this?',
+      },
+      {
+        id: 'burst',
+        title: 'The burst, take 2',
+        text: 'Bottom row, the same wave cut to the aimed fan. Its second panel is right: an arc segment of the ring\'s wave thrown forward. The third drifts into a filled triangle from the hands, more spray than wave, which the build will not follow; the frayed, burning ends only partly show. The build runs the ring\'s wave over the fan and lowers and frays it toward the two ends.',
+        img: ['el-story-ring-2.jpg'],
+        ask: 'Build the burst that way?',
+      },
+    ],
+    general: 'Anything else about Fire',
+  },
 ];

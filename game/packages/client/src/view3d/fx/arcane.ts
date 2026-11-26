@@ -104,14 +104,11 @@ vec4 look(float along, float across, float len) {
   // the core and the body: gaussian falloffs, no edge to read as a border
   // a bulging glow where it leaves the staff (Diablo 3's Disintegrate), swelling core, body and plasma there
   float bulge = exp(-along * along / 0.35);
-  // wide, and tapering toward the front (the user, round 9: "the glows should be a bit wider still, and it should taper more
-  // on the front")
-  float taper = 1.0 - 0.55 * smoothstep(0.45 * len, len, along);
-  float cw = uCore * uWide * (1.0 + 0.9 * pulse + 1.6 * bulge) * (0.6 + 0.4 * taper) + 0.008, bw = uBody * uWide * (1.0 + 2.2 * bulge) * (0.45 + 0.55 * taper);
+  float cw = uCore * uWide * (1.0 + 0.9 * pulse + 1.6 * bulge) + 0.008, bw = uBody * uWide * (1.0 + 2.2 * bulge);
   float core = exp(-(d * d) / (cw * cw) * 1.5) * ends, body = exp(-(d * d) / (bw * bw) * 1.2) * ends;
   // the plasma: two noises flowing slowly along and outward from the line, cut into wisps, inside an envelope that
   // widens toward the hit
-  float reachW = uHalo * uWide * (1.35 * taper + 1.2 * bulge + 0.5 * exp(-pow(along - len, 2.0) / 0.25) * uHitL);
+  float reachW = uHalo * uWide * (0.7 + 0.8 * smoothstep(0.2 * len, len, along) + 1.2 * bulge + 0.7 * exp(-pow(along - len, 2.0) / 0.25) * uHitL);
   vec3 pq = vec3(along * 1.3 - uClock * 1.2, side * 2.4 - uClock * 1.1, uClock * 0.45 + sign(across) * 3.7);
   // tendrils: ridged noise (bright where the noise crosses its middle) gives thin curling filaments with gaps between
   float n = fbm3(pq), n2 = fbm3(pq * 2.2 + vec3(5.0, 1.0, uClock * 0.8));
@@ -120,7 +117,9 @@ vec4 look(float along, float across, float len) {
   float wisp = (smoothstep(0.78, 0.97, ridge) + 0.6 * smoothstep(0.82, 0.98, ridge2)) * env * ends;
   float haze = env * env * 0.18 * ends;
   float lit = 0.55 + 1.1 * pulse + 0.8 * bulge;
-  float cloudW = reachW * 0.75, around = exp(-(side * side) / (cloudW * cloudW) * 1.8);
+  // each pulse's own glowing cloud: wide (the user's notes from round 9 on were about the pulses: "the glows should be a bit
+  // wider still, and it should taper more on the front"; the soft front is the pulse's own profile above)
+  float cloudW = uHalo * uWide * (1.6 + 0.4 * px), around = exp(-(side * side) / (cloudW * cloudW) * 1.4);
   float pulseCloud = pulse * around * (0.75 + 0.5 * n);
   float dHit = length(vec2(along - len, across)), hitR = uHalo * uWide * 1.6;
   float hitCloud = exp(-(dHit * dHit) / (hitR * hitR) * 1.6) * (0.65 + 0.7 * n2) * step(0.3, len) * uWide * uHitL;

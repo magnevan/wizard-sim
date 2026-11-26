@@ -1,9 +1,11 @@
-// The review's pages, one per round, oldest first. Add a round by appending an entry; the page opens on the last.
+// The review's pages, one per round, oldest first, each in a `group` (an element, or Plan): the top bar shows the groups,
+// a second row the group's rounds. Add a round by appending an entry; the page opens on the last.
 // Each item with `ask` gets a keep / tune / redo box saved to the db collection `answers` as `<round id>-<item id>`.
 // Text is written by Claude (trusted markup); viewers' answers never go through innerHTML.
 window.ROUNDS = [
   {
     id: 'order',
+    group: 'Plan',
     tab: 'The order',
     el: 'neutral',
     date: '2026-11-26',
@@ -36,7 +38,8 @@ window.ROUNDS = [
   },
   {
     id: 'fire-1',
-    tab: 'Fire 1',
+    group: 'Fire',
+    tab: 'Take 1',
     el: 'fire',
     date: '2026-11-26',
     title: 'Fire, round 1: concepts',
@@ -89,7 +92,8 @@ window.ROUNDS = [
   },
   {
     id: 'magicka-fire',
-    tab: 'Magicka fire',
+    group: 'Fire',
+    tab: 'Magicka 1 sheets',
     el: 'fire',
     date: '2026-11-26',
     title: 'Magicka 1\'s fire, taken apart',
@@ -155,6 +159,7 @@ window.ROUNDS = [
   },
   {
     id: 'magicka2-fire',
+    group: 'Fire',
     tab: 'Magicka 2 clips',
     el: 'fire',
     date: '2026-11-26',
@@ -201,7 +206,8 @@ window.ROUNDS = [
   },
   {
     id: 'fire-2',
-    tab: 'Fire 2',
+    group: 'Fire',
+    tab: 'Take 2',
     el: 'fire',
     date: '2026-11-26',
     title: 'Fire, round 2: concepts from your notes',

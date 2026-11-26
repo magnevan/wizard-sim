@@ -33,6 +33,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .tabs a { flex: none; text-decoration: none; color: var(--muted); font: 500 13px/1 var(--body); padding: 7px 11px; border-radius: 999px; border: 1px solid var(--line); }
 .tabs a[aria-current="page"] { color: var(--fg); background: var(--el-soft); border-color: var(--el); }
 .tabs a .new { font: 500 10px/1 var(--mono); color: var(--el); margin-left: 6px; }
+.bar .wrap.sub { padding-block: 0 10px; }
+.bar .wrap.sub[hidden] { display: none; }
+.subtabs a { font-size: 12px; padding: 5px 10px; border-style: dashed; }
+.subtabs a[aria-current="page"] { border-style: solid; }
 .step { display: flex; gap: 4px; }
 .step button { font: 600 13px/1 var(--body); color: var(--fg); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; cursor: pointer; }
 .step button:disabled { opacity: 0.35; cursor: default; }
@@ -76,9 +80,10 @@ dialog img, dialog video { max-width: 96vw; max-height: 94vh; display: block; bo
 
 <div class="bar"><div class="wrap">
   <div class="brand">Spell Effects</div>
-  <nav class="tabs" id="tabs" aria-label="Rounds"></nav>
+  <nav class="tabs" id="tabs" aria-label="Elements"></nav>
   <div class="step"><button id="prev" aria-label="Previous round">←</button><button id="next" aria-label="Next round">→</button></div>
-</div></div>
+</div>
+<div class="wrap sub"><nav class="tabs subtabs" id="subtabs" aria-label="Rounds"></nav></div></div>
 <div class="wrap" id="page">
   <header class="round"><div class="eyebrow">Loading</div><h1>Spell Effects Review</h1></header>
 </div>
@@ -95,18 +100,28 @@ const $ = (s, r = document) => r.querySelector(s);
 const roundOf = (id) => ROUNDS.find((r) => r.id === id) || ROUNDS[ROUNDS.length - 1];
 const docIds = (r) => [...(r.items || []).filter((i) => i.ask).map((i) => `${r.id}-${i.id}`), ...(r.general ? [`${r.id}-general`] : [])];
 
+const groupOf = (r) => r.group || r.tab;
+const isOpen = (r) => { const ids = docIds(r); return ids.length > 0 && ids.some((id) => !(state[id] && (state[id].choice || state[id].note))); };
+function link(r, label, current, open) {
+  const a = document.createElement('a');
+  a.href = '#' + r.id; a.textContent = label;
+  if (current) a.setAttribute('aria-current', 'page');
+  if (open) { const n = document.createElement('span'); n.className = 'new'; n.textContent = 'open'; a.append(n); }
+  if (current) requestAnimationFrame(() => a.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
+  return a;
+}
 function tabs(cur) {
+  // top row: one tab per group, linking to its newest round; second row: the current group's rounds
+  const groups = [...new Set(ROUNDS.map(groupOf))];
   const nav = $('#tabs'); nav.replaceChildren();
-  ROUNDS.forEach((r, i) => {
-    const a = document.createElement('a');
-    a.href = '#' + r.id; a.textContent = r.tab;
-    if (r.id === cur.id) a.setAttribute('aria-current', 'page');
-    const ids = docIds(r);
-    const open = ids.length && ids.some((id) => !(state[id] && (state[id].choice || state[id].note)));
-    if (i === ROUNDS.length - 1 && open) { const n = document.createElement('span'); n.className = 'new'; n.textContent = 'open'; a.append(n); }
-    nav.append(a);
-    if (r.id === cur.id) requestAnimationFrame(() => a.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
-  });
+  for (const g of groups) {
+    const rs = ROUNDS.filter((r) => groupOf(r) === g);
+    nav.append(link(rs[rs.length - 1], g, g === groupOf(cur), rs.some(isOpen)));
+  }
+  const mine = ROUNDS.filter((r) => groupOf(r) === groupOf(cur));
+  const sub = $('#subtabs'); sub.replaceChildren();
+  sub.parentElement.hidden = mine.length < 2;
+  for (const r of mine) sub.append(link(r, r.tab, r.id === cur.id, isOpen(r)));
   const k = ROUNDS.indexOf(cur);
   $('#prev').disabled = k <= 0; $('#next').disabled = k >= ROUNDS.length - 1;
 }
@@ -126,7 +141,7 @@ function render() {
   const page = $('#page'); page.replaceChildren();
   const head = document.createElement('header'); head.className = 'round';
   head.innerHTML = `<div class="eyebrow"></div><h1></h1><p class="lead"></p><div class="tally"></div>`;
-  $('.eyebrow', head).textContent = `${r.tab} · ${r.date}`;
+  $('.eyebrow', head).textContent = [r.group && r.group !== r.tab ? r.group : '', r.tab, r.date].filter(Boolean).join(' · ');
   $('h1', head).textContent = r.title; $('.lead', head).textContent = r.lead || '';
   page.append(head);
   const main = document.createElement('main');

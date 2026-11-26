@@ -100,3 +100,12 @@ Plan D was rebuilt on the kit and painted as concept art (`tools/infirmary-revie
 - **Every plan keeps:** arrival from the north on the well's axis (principle 18); the well as landmark and fix; glowing glyph paths in the ground, walkable, from the well to what it feeds; a grand greenhouse; the triage camp as many tents round the well, open from the start; the shore below with the purifier, reached by one built stair and left by the broken wall (or the reverse); the road out east to the battery, lit by lanterns; farmland beyond a wall to the west.
 - **Fewer levels where people gather:** the arrival, the camp and the well on one broad level, roomy enough for four players and the crowd of patients; height goes into the drop to the shore and the view over it.
 - **Size:** about 2 × 2 screens as before, a little more if the farmland edge shows.
+
+### Round 2's pick (2026-11-26)
+
+Plans E (the broad terrace), F (the crescent), G (the prow) and H (the critic's mix: the crescent with a forecourt), each painted. The critic: F 7, G 6, E 5, plan D blind 4. **The user picked H:** "H looks pretty good. I would just add a decent amount more negative space to make sure characters can actually move there." Their nits, all taken into H's revision 2 (`tools/place-plans/plans/inf-h.py`):
+- a glyph path along the road out to the battery;
+- the smokestack's building: the battery's boiler house, under the stack;
+- the farm much larger, its boundary out of sight (the fields run off the west edge);
+- lanterns on the road's far side, "so it doesn't obscure the characters walking";
+- more urgency: tents put up in a hurry, triage happening (tents at odd angles round the forecourt's edges, stretchers between them).

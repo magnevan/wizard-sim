@@ -88,6 +88,9 @@ Faults caught by the user, by Claude or by a critic can each become a rule: a pr
 | Model the structure only: vines, flowers, smoke and anything that changes state or moves are procedural or effects, never in the picture | [building it on the kit](#building-it-on-the-kit), step 4 | the user, on the infirmary's pieces | 2026-11-26 |
 | Split a model into parts when its parts are useful on their own | [building it on the kit](#building-it-on-the-kit), step 4 | the user, on the infirmary's tent | 2026-11-26 |
 | Paint the kit grey-box as concept art (isolated agent, for the user only) before any pieces are made | [building it on the kit](#building-it-on-the-kit), step 3 | the user, on the infirmary | 2026-11-26 |
+| Lamps and other tall dressing go on a road's far (up-screen) side, never between the camera and the walkers | dressing (step 6) | the user, on the infirmary's road out | 2026-11-26 |
+| A feature bigger than the place (farmland, a forest, a town) runs past the map's edge: its far boundary is never in view | stage 1 (plans) | the user, on the infirmary's farmland | 2026-11-26 |
+| Leave real open ground where people gather: plans keep the middle clear and put props round the edges | stage 1 (plans) | the user, on plan H ("a decent amount more negative space") | 2026-11-26 |
 
 ## The sense rules
 

@@ -81,6 +81,7 @@ const RATE = {
   puff: (n: number) => 26 + 6 * n, puffLife: 0.72,
   ember: (n: number) => (24 + 6 * n) * (n >= 5 ? 1.6 : 1), emberLife: 1.1,
   glow: (n: number) => 12 + 3 * n, glowLife: 0.3,
+  drift: (n: number) => 16 + 5 * n, driftLife: 3.0,
 };
 
 /** The core: soft white-hot glows from the staff's tip, out to uCore of the way (0.3 at one rune to 0.46 at five). */
@@ -127,6 +128,28 @@ Particle particle(float k, float age, float ts) {
   return p;
 }`);
 
+/**
+ * Floating embers (the user, round 12: "try some floating embers like magicka has, so there's some stuff in the air
+ * after"): sparks thrown up through the burning bulb that drift slowly upward and sideways on the heat, twinkling,
+ * living about 2.5 s, so some hang in the air after the spray has stopped.
+ */
+const DRIFT = streamMotion(/* glsl */ `${SPRAY_HEAD}
+Particle particle(float k, float age, float ts) {
+  vec4 A = aimAt(uTime - ts);
+  float s0 = 0.45 + 0.6 * rnd(k, 81.0), side = (rnd(k, 82.0) * 2.0 - 1.0) * uHalf * 0.85, t = age * uLife;
+  // thrown up out of the flames fast, then floating: the lift eases off, a slow sideways wander on the heat
+  float up = 0.9 * (1.0 - exp(-t * 2.2)) + 0.22 * t;
+  float wx = sin(t * (1.3 + rnd(k, 83.0)) + rnd(k, 84.0) * 6.28) * 0.35 * smoothstep(0.0, 0.8, t);
+  Particle p = P0(); p.alive = true;
+  p.pos = sprayAt(A, s0 + 0.05 * t, side, wx, axisH(s0) + 0.2 + up);
+  p.size = 0.07 + 0.05 * rnd(k, 85.0);
+  p.stretch = 0.0;
+  float tw = 0.6 + 0.4 * sin(t * (9.0 + 6.0 * rnd(k, 86.0)) + rnd(k, 87.0) * 6.28);
+  // cooling from yellow to deep orange as it floats
+  p.col = vec4(0.55 - 0.3 * age, 0.0, age, smoothstep(0.0, 0.04, age) * (1.0 - smoothstep(0.7, 1.0, age)) * tw);
+  return p;
+}`);
+
 const GLOW = streamMotion(/* glsl */ `${SPRAY_HEAD}
 Particle particle(float k, float age, float ts) {
   vec4 A = aimAt(uTime - ts);
@@ -157,7 +180,8 @@ Particle particle(float k, float age, float ts) {
   // swells fast and keeps growing as it slows: a blotch that pulses large, then fades
   // grows about three times over its life
   // larger (the user, round 11: "I think larger sprites will look better"), and fewer so they don't pile up
-  p.size = (0.3 + w * 0.22) * (0.7 + 1.2 * (1.0 - pow(1.0 - age, 2.0)));
+  // larger again (round 12: "take them a little larger still"; about 1.35x round 12's)
+  p.size = (0.4 + w * 0.3) * (0.7 + 1.2 * (1.0 - pow(1.0 - age, 2.0)));
   p.stretch = 0.025;
   p.rot = rnd(k, 75.0) * 6.2832 + age * (rnd(k, 76.0) > 0.5 ? 0.35 : -0.35);
   p.col = vec4(age, s, 0.0, 1.0);
@@ -224,6 +248,14 @@ export const LOOK_EMBER = /* glsl */ `
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   float m = 1.0 - smoothstep(0.3, 1.0, length(uv));
   return vec4(fireRamp(col.x) * 1.3 * m, m * 0.95) * col.w;
+}`;
+
+/** A floating ember: a hot point in a soft glow, mostly added light so it shines on the pale stone (bloom catches it). */
+const LOOK_DRIFT = /* glsl */ `
+vec4 look(vec2 uv, vec4 col, vec4 data) {
+  float r = length(uv), dot0 = 1.0 - smoothstep(0.1, 0.32, r), halo = exp(-r * r * 5.0);
+  vec3 c = fireRamp(col.x) * (dot0 * 3.2 + halo * 0.9);
+  return vec4(c, dot0 * 0.85) * col.w;
 }`;
 
 /**
@@ -300,6 +332,7 @@ export class FireSpray {
     this.group.add(this.body.group);
     add(CORE, LOOK_CORE, RATE.core, RATE.coreLife, 4);
     add(EMBER, LOOK_EMBER, RATE.ember, RATE.emberLife, 5);
+    add(DRIFT, LOOK_DRIFT, RATE.drift, RATE.driftLife, 5, {}, 9);
     this.fan = new GroundDecal({ look: FAN, uniforms: { ...this.F, uHalf: this.U.uHalf, uRange: this.U.uRange, uRb: this.U.uRb } });
     this.group.add(this.fan.mesh);
   }

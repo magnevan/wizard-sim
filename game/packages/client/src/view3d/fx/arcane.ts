@@ -104,7 +104,7 @@ vec4 look(float along, float across, float len) {
   // the core and the body: gaussian falloffs, no edge to read as a border
   // a bulging glow where it leaves the staff (Diablo 3's Disintegrate), swelling core, body and plasma there
   float bulge = exp(-along * along / 0.35);
-  float cw = uCore * uWide * (1.0 + 0.9 * pulse + 1.6 * bulge) + 0.008, bw = uBody * uWide * (1.0 + 2.2 * bulge);
+  float cw = uCore * uWide * (1.0 + 1.4 * pulse + 1.6 * bulge) + 0.008, bw = uBody * uWide * (1.0 + 2.2 * bulge);
   float core = exp(-(d * d) / (cw * cw) * 1.5) * ends, body = exp(-(d * d) / (bw * bw) * 1.2) * ends;
   // the plasma: two noises flowing slowly along and outward from the line, cut into wisps, inside an envelope that
   // widens toward the hit
@@ -117,17 +117,17 @@ vec4 look(float along, float across, float len) {
   float wisp = (smoothstep(0.78, 0.97, ridge) + 0.6 * smoothstep(0.82, 0.98, ridge2)) * env * ends;
   float haze = env * env * 0.18 * ends;
   float lit = 0.55 + 1.1 * pulse + 0.8 * bulge;
-  // each pulse's own glowing cloud: wide (the user's notes from round 9 on were about the pulses: "the glows should be a bit
-  // wider still, and it should taper more on the front"; the soft front is the pulse's own profile above)
-  float cloudW = uHalo * uWide * (1.6 + 0.4 * px), around = exp(-(side * side) / (cloudW * cloudW) * 1.4);
-  float pulseCloud = pulse * around * (0.75 + 0.5 * n);
+  // each pulse's own glow: narrow and strong, about the body's width, so the wisps stay visible round it (the user, round
+  // 13: "The new glows are way way way too wide, I want narrow but strong pulses"; round 13's cloud was 1.6x the plasma)
+  float cloudW = uBody * uWide * (1.25 + 0.25 * px) + 0.02, around = exp(-(side * side) / (cloudW * cloudW) * 1.4);
+  float pulseCloud = pulse * around * (0.85 + 0.3 * n);
   float dHit = length(vec2(along - len, across)), hitR = uHalo * uWide * 1.6;
   float hitCloud = exp(-(dHit * dHit) / (hitR * hitR) * 1.6) * (0.65 + 0.7 * n2) * step(0.3, len) * uWide * uHitL;
   vec3 c = vec3(1.2, 0.06, 2.0) * wisp * lit * uHaloK * 1.8 + vec3(0.7, 0.03, 1.0) * haze * lit;
   c += mix(vec3(1.5, 0.18, 1.9), vec3(2.4, 0.9, 2.8), body) * body * (1.0 + 0.4 * pulse + 0.6 * bulge);
   c += mix(vec3(3.0, 2.2, 3.4), vec3(5.0, 4.8, 5.2), max(uWhite, pulse)) * core;
-  c += vec3(1.7, 0.25, 2.3) * pulseCloud * 1.2 + vec3(2.0, 0.45, 2.6) * hitCloud * 1.4;
-  float a = clamp(body * 0.85 + wisp * 0.55 * uHaloK + haze * 0.5 + pulseCloud * 0.35 + hitCloud * 0.45, 0.0, 0.95);
+  c += vec3(2.2, 0.5, 2.9) * pulseCloud * 2.4 + vec3(2.0, 0.45, 2.6) * hitCloud * 1.4;
+  float a = clamp(body * 0.85 + wisp * 0.55 * uHaloK + haze * 0.5 + pulseCloud * 0.2 + hitCloud * 0.45, 0.0, 0.95);
   return vec4(c, a);
 }`;
 

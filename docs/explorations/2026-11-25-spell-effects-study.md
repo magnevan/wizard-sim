@@ -170,6 +170,13 @@ Magicka 2's data is packed in hashed engine bundles and wasn't opened; Magicka 1
 
 **Lessons.** Look at how the reference is actually built before tuning numbers: one structural fact (flames that animate their own burn-out) outweighed ten loops of tuning. A critic's scores dip when the structure changes and its numbers can overshoot; keep the change if it's the right structure, and balance by eye.
 
+## Rounds 11 to 14: the raindrop, larger flames, the beam's pulses (2026-11-26)
+
+- **Round 11.** Sprays hit a raindrop, narrower and longer, at the user's request (a rule change; [decision](../decisions/README.md)); the fire follows it as one stream into a burning bulb, its char a ragged patch under the bulb. The beam was widened and tapered at the front as a whole. Verdicts: fire keep ("I think larger sprites will look better"); beam "I can't quite tell what you're changing. The problem is that I can see a very sharp starting line in the whisps for the traveling glows".
+- **Round 12.** Flames 1.5 times larger; each pulse soft at both ends. The user then said in the chat: "I've only been talking about the pulses on the beam in the last few reviews".
+- **Round 13.** The whole-beam taper undone; each pulse got its own cloud, 1.6 to 2 times the plasma's width. Verdicts: beam "I no longer see the whisps. The new glows are way way way too wide, I want narrow but strong pulses"; fire "take them a little larger still. And try some floating embers like magicka has, so there's some stuff in the air after".
+- **Round 14.** The pulse glow is about the body's width and two to three times brighter, with the core swelling inside it; the wisps show round it again. Flames about 1.35 times larger again. Floating embers: sparks thrown up out of the bulb, lifting fast then floating, wandering sideways, twinkling, yellow cooling to orange, about 3 s, so they hang in the air after the spray stops. A first version (small, covering, like the stream's embers) vanished on the pale stone; they now glow (added light the bloom catches). They are still faint on the pale court, one more reason for the darker-court test (#24).
+
 ## Sources
 
 - [Stylized VFX in RiME](https://www.unrealengine.com/events/unreal-fest-europe-2018/stylized-vfx-in-rime) (Simon Trümpler, Unreal Fest Europe 2018), and his [VFX Sketchbook](https://realtimevfx.com/t/simon-trumpler-vfx-sketchbook/4177?page=11) on realtimevfx.com (UV distortion plus alpha erosion; the inner duplicate mesh; faster scrolling while fading).

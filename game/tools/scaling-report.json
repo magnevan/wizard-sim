@@ -10,68 +10,68 @@
      "n": 1,
      "title": "Flamethrower",
      "shape": "spray",
-     "value": 41.5,
-     "crowd": 147.5,
+     "value": 42.2,
+     "crowd": 150.1,
      "runes": 1,
      "seconds": 2.93,
-     "perRune": 41.5,
-     "perSecond": 14.1,
+     "perRune": 42.2,
+     "perSecond": 14.4,
      "gain": null,
      "reach": 6,
-     "help": "+1 FIRE: DMG ×1.41, RANGE +0.8U, WIDTH +24%, WIND-UP +0.04S"
+     "help": "+1 FIRE: DMG ×1.41, RANGE +0.8U, WIDTH +24%, WIND-UP +0.03S"
     },
     {
      "n": 2,
      "title": "Flamethrower",
      "shape": "spray",
-     "value": 56.3,
-     "crowd": 197.9,
+     "value": 57.7,
+     "crowd": 202.7,
      "runes": 2,
      "seconds": 2.95,
-     "perRune": 28.2,
-     "perSecond": 19.1,
-     "gain": 1.36,
+     "perRune": 28.9,
+     "perSecond": 19.6,
+     "gain": 1.37,
      "reach": 6.8,
-     "help": "+1 FIRE: DMG ×1.22, RANGE +0.8U, WIDTH +26%, WIND-UP +0.04S"
+     "help": "+1 FIRE: DMG ×1.22, RANGE +0.8U, WIDTH +26%, WIND-UP +0.03S"
     },
     {
      "n": 3,
      "title": "Flamethrower",
      "shape": "spray",
-     "value": 67.2,
-     "crowd": 234.9,
+     "value": 69,
+     "crowd": 240.8,
      "runes": 3,
      "seconds": 2.97,
-     "perRune": 22.4,
-     "perSecond": 22.7,
+     "perRune": 23,
+     "perSecond": 23.2,
      "gain": 1.19,
      "reach": 7.5,
-     "help": "+1 FIRE: DMG ×1.15, RANGE +0.8U, WIDTH +29%, WIND-UP +0.04S"
+     "help": "+1 FIRE: DMG ×1.15, RANGE +0.8U, WIDTH +29%, WIND-UP +0.03S"
     },
     {
      "n": 4,
      "title": "Flamethrower",
      "shape": "spray",
-     "value": 75.5,
-     "crowd": 263.1,
+     "value": 78,
+     "crowd": 271.6,
      "runes": 4,
      "seconds": 2.98,
-     "perRune": 18.9,
-     "perSecond": 25.3,
-     "gain": 1.12,
+     "perRune": 19.5,
+     "perSecond": 26.1,
+     "gain": 1.13,
      "reach": 8.3,
-     "help": "+1 FIRE: DMG ×1.12, RANGE +0.8U, WIDTH +31%, WIND-UP +0.04S"
+     "help": "+1 FIRE: DMG ×1.12, RANGE +0.8U, WIDTH +31%, WIND-UP +0.03S"
     },
     {
      "n": 5,
      "title": "Flamethrower",
      "shape": "spray",
-     "value": 82.8,
-     "crowd": 288,
+     "value": 85.6,
+     "crowd": 297.5,
      "runes": 5,
      "seconds": 3,
-     "perRune": 16.6,
-     "perSecond": 27.6,
+     "perRune": 17.1,
+     "perSecond": 28.5,
      "gain": 1.1,
      "reach": 9,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -90,12 +90,12 @@
      "value": 34,
      "crowd": 170,
      "runes": 1,
-     "seconds": 0.45,
+     "seconds": 0.4,
      "perRune": 34,
-     "perSecond": 75.6,
+     "perSecond": 85,
      "gain": null,
      "reach": 3,
-     "help": "+1 FIRE: DMG ×1.41, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 FIRE: DMG ×1.41, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -104,12 +104,12 @@
      "value": 55,
      "crowd": 275,
      "runes": 2,
-     "seconds": 0.5,
+     "seconds": 0.43,
      "perRune": 27.5,
-     "perSecond": 110,
+     "perSecond": 126.9,
      "gain": 1.62,
      "reach": 3.6,
-     "help": "+1 FIRE: DMG ×1.22, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 FIRE: DMG ×1.22, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -118,12 +118,12 @@
      "value": 76,
      "crowd": 380,
      "runes": 3,
-     "seconds": 0.55,
+     "seconds": 0.48,
      "perRune": 25.3,
-     "perSecond": 138.2,
+     "perSecond": 157.2,
      "gain": 1.38,
      "reach": 4.2,
-     "help": "+1 FIRE: DMG ×1.15, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 FIRE: DMG ×1.15, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -132,12 +132,12 @@
      "value": 97,
      "crowd": 485,
      "runes": 4,
-     "seconds": 0.62,
+     "seconds": 0.53,
      "perRune": 24.2,
-     "perSecond": 157.3,
+     "perSecond": 181.9,
      "gain": 1.28,
      "reach": 4.8,
-     "help": "+1 FIRE: DMG ×1.12, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 FIRE: DMG ×1.12, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 5,
@@ -146,9 +146,9 @@
      "value": 118,
      "crowd": 590,
      "runes": 5,
-     "seconds": 0.67,
+     "seconds": 0.58,
      "perRune": 23.6,
-     "perSecond": 177,
+     "perSecond": 202.3,
      "gain": 1.22,
      "reach": 5.4,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -164,68 +164,68 @@
      "n": 1,
      "title": "Fire patch",
      "shape": "patch",
-     "value": 54.9,
-     "crowd": 274.7,
+     "value": 55.1,
+     "crowd": 275.7,
      "runes": 1,
-     "seconds": 0.92,
-     "perRune": 54.9,
-     "perSecond": 59.9,
+     "seconds": 0.87,
+     "perRune": 55.1,
+     "perSecond": 63.6,
      "gain": null,
      "reach": 2,
-     "help": "+1 FIRE: DMG ×1.41, RADIUS +0.4U, LASTS +2.4S, WIND-UP +0.04S"
+     "help": "+1 FIRE: DMG ×1.41, RADIUS +0.4U, LASTS +2.4S, WIND-UP +0.03S"
     },
     {
      "n": 2,
      "title": "Fire patch",
      "shape": "patch",
-     "value": 101.5,
-     "crowd": 507.7,
+     "value": 102.1,
+     "crowd": 510.3,
      "runes": 2,
-     "seconds": 0.97,
-     "perRune": 50.8,
-     "perSecond": 105,
+     "seconds": 0.9,
+     "perRune": 51,
+     "perSecond": 113.4,
      "gain": 1.85,
      "reach": 2.4,
-     "help": "+1 FIRE: DMG ×1.22, RADIUS +0.4U, LASTS +2.4S, WIND-UP +0.04S"
+     "help": "+1 FIRE: DMG ×1.22, RADIUS +0.4U, LASTS +2.4S, WIND-UP +0.03S"
     },
     {
      "n": 3,
      "title": "Fire patch",
      "shape": "patch",
-     "value": 147.1,
-     "crowd": 735.4,
+     "value": 147.9,
+     "crowd": 739.4,
      "runes": 3,
-     "seconds": 1.02,
-     "perRune": 49,
-     "perSecond": 144.7,
+     "seconds": 0.95,
+     "perRune": 49.3,
+     "perSecond": 155.7,
      "gain": 1.45,
      "reach": 2.8,
-     "help": "+1 FIRE: DMG ×1.15, RADIUS +0.4U, LASTS +2.4S, WIND-UP +0.04S"
+     "help": "+1 FIRE: DMG ×1.15, RADIUS +0.4U, LASTS +2.4S, WIND-UP +0.03S"
     },
     {
      "n": 4,
      "title": "Fire patch",
      "shape": "patch",
-     "value": 191.7,
-     "crowd": 958.7,
+     "value": 193,
+     "crowd": 965.2,
      "runes": 4,
-     "seconds": 1.08,
-     "perRune": 47.9,
-     "perSecond": 177,
-     "gain": 1.3,
+     "seconds": 1,
+     "perRune": 48.3,
+     "perSecond": 193,
+     "gain": 1.31,
      "reach": 3.2,
-     "help": "+1 FIRE: DMG ×1.12, RADIUS +0.4U, LASTS +2.4S, WIND-UP +0.04S"
+     "help": "+1 FIRE: DMG ×1.12, RADIUS +0.4U, LASTS +2.4S, WIND-UP +0.03S"
     },
     {
      "n": 5,
      "title": "Fire patch",
      "shape": "patch",
-     "value": 236.1,
-     "crowd": 1180.5,
+     "value": 237.7,
+     "crowd": 1188.7,
      "runes": 5,
-     "seconds": 1.13,
-     "perRune": 47.2,
-     "perSecond": 208.3,
+     "seconds": 1.05,
+     "perRune": 47.5,
+     "perSecond": 226.4,
      "gain": 1.23,
      "reach": 3.6,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -241,68 +241,68 @@
      "n": 1,
      "title": "Frost spray",
      "shape": "spray",
-     "value": 12.5,
-     "crowd": 42.5,
+     "value": 12.8,
+     "crowd": 43.4,
      "runes": 1,
      "seconds": 2.93,
-     "perRune": 12.5,
+     "perRune": 12.8,
      "perSecond": 4.3,
      "gain": null,
      "reach": 6,
-     "help": "+1 COLD: DMG ×1.41, FROST +8, RANGE +0.8U, WIDTH +24%, WIND-UP +0.04S"
+     "help": "+1 COLD: DMG ×1.41, FROST +8, RANGE +0.8U, WIDTH +24%, WIND-UP +0.03S"
     },
     {
      "n": 2,
      "title": "Frost spray",
      "shape": "spray",
-     "value": 17.4,
-     "crowd": 59.3,
+     "value": 17.9,
+     "crowd": 60.9,
      "runes": 2,
      "seconds": 2.95,
-     "perRune": 8.7,
-     "perSecond": 5.9,
+     "perRune": 9,
+     "perSecond": 6.1,
      "gain": 1.4,
      "reach": 6.8,
-     "help": "+1 COLD: DMG ×1.22, FROST +8, RANGE +0.8U, WIDTH +26%, WIND-UP +0.04S"
+     "help": "+1 COLD: DMG ×1.22, FROST +8, RANGE +0.8U, WIDTH +26%, WIND-UP +0.03S"
     },
     {
      "n": 3,
      "title": "Frost spray",
      "shape": "spray",
-     "value": 21.1,
-     "crowd": 71.6,
+     "value": 21.7,
+     "crowd": 73.6,
      "runes": 3,
      "seconds": 2.97,
-     "perRune": 7,
-     "perSecond": 7.1,
+     "perRune": 7.2,
+     "perSecond": 7.3,
      "gain": 1.21,
      "reach": 7.5,
-     "help": "+1 COLD: DMG ×1.15, FROST +8, RANGE +0.8U, WIDTH +29%, WIND-UP +0.04S"
+     "help": "+1 COLD: DMG ×1.15, FROST +8, RANGE +0.8U, WIDTH +29%, WIND-UP +0.03S"
     },
     {
      "n": 4,
      "title": "Frost spray",
      "shape": "spray",
-     "value": 23.8,
-     "crowd": 81,
+     "value": 24.7,
+     "crowd": 83.9,
      "runes": 4,
      "seconds": 2.98,
-     "perRune": 6,
-     "perSecond": 8,
-     "gain": 1.13,
+     "perRune": 6.2,
+     "perSecond": 8.3,
+     "gain": 1.14,
      "reach": 8.3,
-     "help": "+1 COLD: DMG ×1.12, FROST +8, RANGE +0.8U, WIDTH +31%, WIND-UP +0.04S (A COLD POOL HOLDS 4)"
+     "help": "+1 COLD: DMG ×1.12, FROST +8, RANGE +0.8U, WIDTH +31%, WIND-UP +0.03S (A COLD POOL HOLDS 4)"
     },
     {
      "n": 5,
      "title": "Frost spray",
      "shape": "spray",
-     "value": 23.8,
-     "crowd": 81,
+     "value": 24.7,
+     "crowd": 83.9,
      "runes": 5,
      "seconds": 3,
-     "perRune": 4.8,
-     "perSecond": 7.9,
+     "perRune": 4.9,
+     "perSecond": 8.2,
      "gain": 1,
      "reach": 9,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -321,12 +321,12 @@
      "value": 8,
      "crowd": 40,
      "runes": 1,
-     "seconds": 0.45,
+     "seconds": 0.4,
      "perRune": 8,
-     "perSecond": 17.8,
+     "perSecond": 20,
      "gain": null,
      "reach": 3,
-     "help": "+1 COLD: DMG ×1.41, FROST +8, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 COLD: DMG ×1.41, FROST +8, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -335,12 +335,12 @@
      "value": 13.6,
      "crowd": 68,
      "runes": 2,
-     "seconds": 0.5,
+     "seconds": 0.43,
      "perRune": 6.8,
-     "perSecond": 27.2,
+     "perSecond": 31.4,
      "gain": 1.7,
      "reach": 3.6,
-     "help": "+1 COLD: DMG ×1.22, FROST +8, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 COLD: DMG ×1.22, FROST +8, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -349,12 +349,12 @@
      "value": 19.2,
      "crowd": 96,
      "runes": 3,
-     "seconds": 0.55,
+     "seconds": 0.48,
      "perRune": 6.4,
-     "perSecond": 34.9,
+     "perSecond": 39.7,
      "gain": 1.41,
      "reach": 4.2,
-     "help": "+1 COLD: DMG ×1.15, FROST +8, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 COLD: DMG ×1.15, FROST +8, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -363,12 +363,12 @@
      "value": 24.8,
      "crowd": 124,
      "runes": 4,
-     "seconds": 0.62,
+     "seconds": 0.53,
      "perRune": 6.2,
-     "perSecond": 40.2,
+     "perSecond": 46.5,
      "gain": 1.29,
      "reach": 4.8,
-     "help": "+1 COLD: DMG ×1.12, FROST +8, RADIUS +0.6U, WIND-UP +0.04S (A COLD POOL HOLDS 4)"
+     "help": "+1 COLD: DMG ×1.12, FROST +8, RADIUS +0.6U, WIND-UP +0.03S (A COLD POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -377,9 +377,9 @@
      "value": 24.8,
      "crowd": 124,
      "runes": 5,
-     "seconds": 0.63,
+     "seconds": 0.55,
      "perRune": 5,
-     "perSecond": 39.2,
+     "perSecond": 45.1,
      "gain": 1,
      "reach": 5.4,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -398,12 +398,12 @@
      "value": 22.5,
      "crowd": 112.5,
      "runes": 1,
-     "seconds": 0.92,
+     "seconds": 0.87,
      "perRune": 22.5,
-     "perSecond": 24.5,
+     "perSecond": 26,
      "gain": null,
      "reach": 2,
-     "help": "+1 COLD: DMG ×1.41, FROST +8, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.04S"
+     "help": "+1 COLD: DMG ×1.41, FROST +8, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -412,12 +412,12 @@
      "value": 37.1,
      "crowd": 185.6,
      "runes": 2,
-     "seconds": 0.97,
+     "seconds": 0.9,
      "perRune": 18.6,
-     "perSecond": 38.4,
+     "perSecond": 41.2,
      "gain": 1.65,
      "reach": 2.4,
-     "help": "+1 COLD: DMG ×1.22, FROST +8, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.04S"
+     "help": "+1 COLD: DMG ×1.22, FROST +8, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -426,12 +426,12 @@
      "value": 52,
      "crowd": 259.8,
      "runes": 3,
-     "seconds": 1.02,
+     "seconds": 0.95,
      "perRune": 17.3,
-     "perSecond": 51.1,
+     "perSecond": 54.7,
      "gain": 1.4,
      "reach": 2.8,
-     "help": "+1 COLD: DMG ×1.15, FROST +8, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.04S"
+     "help": "+1 COLD: DMG ×1.15, FROST +8, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -440,12 +440,12 @@
      "value": 67.5,
      "crowd": 337.5,
      "runes": 4,
-     "seconds": 1.08,
+     "seconds": 1,
      "perRune": 16.9,
-     "perSecond": 62.3,
+     "perSecond": 67.5,
      "gain": 1.3,
      "reach": 3.2,
-     "help": "+1 COLD: DMG ×1.12, FROST +8, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.04S (A COLD POOL HOLDS 4)"
+     "help": "+1 COLD: DMG ×1.12, FROST +8, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.03S (A COLD POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -454,9 +454,9 @@
      "value": 67.5,
      "crowd": 337.5,
      "runes": 5,
-     "seconds": 1.1,
+     "seconds": 1.02,
      "perRune": 13.5,
-     "perSecond": 61.4,
+     "perSecond": 66.4,
      "gain": 1,
      "reach": 3.6,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -480,7 +480,7 @@
      "perSecond": 2.4,
      "gain": null,
      "reach": 6,
-     "help": "+1 WATER: DMG ×1.41, PUSH +18U/S A SECOND, RANGE +0.8U, WIDTH +24%, WIND-UP +0.04S"
+     "help": "+1 WATER: DMG ×1.41, PUSH +18U/S A SECOND, RANGE +0.8U, WIDTH +24%, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -494,7 +494,7 @@
      "perSecond": 2.1,
      "gain": 0.89,
      "reach": 6.8,
-     "help": "+1 WATER: DMG ×1.22, PUSH +18U/S A SECOND, RANGE +0.8U, WIDTH +26%, WIND-UP +0.04S"
+     "help": "+1 WATER: DMG ×1.22, PUSH +18U/S A SECOND, RANGE +0.8U, WIDTH +26%, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -508,7 +508,7 @@
      "perSecond": 2.1,
      "gain": 0.98,
      "reach": 7.5,
-     "help": "+1 WATER: DMG ×1.15, PUSH +18U/S A SECOND, RANGE +0.8U, WIDTH +29%, WIND-UP +0.04S"
+     "help": "+1 WATER: DMG ×1.15, PUSH +18U/S A SECOND, RANGE +0.8U, WIDTH +29%, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -522,7 +522,7 @@
      "perSecond": 2.1,
      "gain": 1.02,
      "reach": 8.3,
-     "help": "+1 WATER: DMG ×1.12, PUSH +18U/S A SECOND, RANGE +0.8U, WIDTH +31%, WIND-UP +0.04S (A WATER POOL HOLDS 4)"
+     "help": "+1 WATER: DMG ×1.12, PUSH +18U/S A SECOND, RANGE +0.8U, WIDTH +31%, WIND-UP +0.03S (A WATER POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -552,12 +552,12 @@
      "value": 4,
      "crowd": 20,
      "runes": 1,
-     "seconds": 0.45,
+     "seconds": 0.4,
      "perRune": 4,
-     "perSecond": 8.9,
+     "perSecond": 10,
      "gain": null,
      "reach": 3,
-     "help": "+1 WATER: DMG ×1.41, PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 WATER: DMG ×1.41, PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -566,12 +566,12 @@
      "value": 5.7,
      "crowd": 28.3,
      "runes": 2,
-     "seconds": 0.5,
+     "seconds": 0.43,
      "perRune": 2.8,
-     "perSecond": 11.3,
+     "perSecond": 13.1,
      "gain": 1.41,
      "reach": 3.6,
-     "help": "+1 WATER: DMG ×1.22, PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 WATER: DMG ×1.22, PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -580,12 +580,12 @@
      "value": 6.9,
      "crowd": 34.6,
      "runes": 3,
-     "seconds": 0.55,
+     "seconds": 0.48,
      "perRune": 2.3,
-     "perSecond": 12.6,
+     "perSecond": 14.3,
      "gain": 1.22,
      "reach": 4.2,
-     "help": "+1 WATER: DMG ×1.15, PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 WATER: DMG ×1.15, PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -594,12 +594,12 @@
      "value": 8,
      "crowd": 40,
      "runes": 4,
-     "seconds": 0.62,
+     "seconds": 0.53,
      "perRune": 2,
-     "perSecond": 13,
+     "perSecond": 15,
      "gain": 1.15,
      "reach": 4.8,
-     "help": "+1 WATER: DMG ×1.12, PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.04S (A WATER POOL HOLDS 4)"
+     "help": "+1 WATER: DMG ×1.12, PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.03S (A WATER POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -608,9 +608,9 @@
      "value": 8,
      "crowd": 40,
      "runes": 5,
-     "seconds": 0.63,
+     "seconds": 0.55,
      "perRune": 1.6,
-     "perSecond": 12.6,
+     "perSecond": 14.5,
      "gain": 1,
      "reach": 5.4,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -629,12 +629,12 @@
      "value": 2,
      "crowd": 10,
      "runes": 1,
-     "seconds": 0.92,
+     "seconds": 0.87,
      "perRune": 2,
-     "perSecond": 2.2,
+     "perSecond": 2.3,
      "gain": null,
      "reach": 2,
-     "help": "+1 WATER: DMG ×1.41, RADIUS +0.4U, LASTS +1S, WIND-UP +0.04S"
+     "help": "+1 WATER: DMG ×1.41, RADIUS +0.4U, LASTS +1S, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -643,12 +643,12 @@
      "value": 2.8,
      "crowd": 14.1,
      "runes": 2,
-     "seconds": 0.97,
+     "seconds": 0.9,
      "perRune": 1.4,
-     "perSecond": 2.9,
+     "perSecond": 3.1,
      "gain": 1.41,
      "reach": 2.4,
-     "help": "+1 WATER: DMG ×1.22, RADIUS +0.4U, LASTS +1S, WIND-UP +0.04S"
+     "help": "+1 WATER: DMG ×1.22, RADIUS +0.4U, LASTS +1S, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -657,12 +657,12 @@
      "value": 3.5,
      "crowd": 17.3,
      "runes": 3,
-     "seconds": 1.02,
+     "seconds": 0.95,
      "perRune": 1.2,
-     "perSecond": 3.4,
+     "perSecond": 3.6,
      "gain": 1.22,
      "reach": 2.8,
-     "help": "+1 WATER: DMG ×1.15, RADIUS +0.4U, LASTS +1S, WIND-UP +0.04S"
+     "help": "+1 WATER: DMG ×1.15, RADIUS +0.4U, LASTS +1S, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -671,12 +671,12 @@
      "value": 4,
      "crowd": 20,
      "runes": 4,
-     "seconds": 1.08,
+     "seconds": 1,
      "perRune": 1,
-     "perSecond": 3.7,
+     "perSecond": 4,
      "gain": 1.15,
      "reach": 3.2,
-     "help": "+1 WATER: DMG ×1.12, RADIUS +0.4U, LASTS +1S, WIND-UP +0.04S (A WATER POOL HOLDS 4)"
+     "help": "+1 WATER: DMG ×1.12, RADIUS +0.4U, LASTS +1S, WIND-UP +0.03S (A WATER POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -685,9 +685,9 @@
      "value": 4,
      "crowd": 20,
      "runes": 5,
-     "seconds": 1.1,
+     "seconds": 1.02,
      "perRune": 0.8,
-     "perSecond": 3.6,
+     "perSecond": 3.9,
      "gain": 1,
      "reach": 3.6,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -711,7 +711,7 @@
      "perSecond": 14.3,
      "gain": null,
      "reach": 6,
-     "help": "+1 LIGHTNING: DMG ×1.7, STUN CHANCE +17%, JUMPS +1, WIND-UP +0.04S"
+     "help": "+1 LIGHTNING: DMG ×1.7, STUN CHANCE +17%, JUMPS +1, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -725,7 +725,7 @@
      "perSecond": 24.2,
      "gain": 1.7,
      "reach": 6,
-     "help": "+1 LIGHTNING: DMG ×1.41, STUN CHANCE +9%, JUMPS +1, WIND-UP +0.04S"
+     "help": "+1 LIGHTNING: DMG ×1.41, STUN CHANCE +9%, JUMPS +1, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -739,32 +739,32 @@
      "perSecond": 34,
      "gain": 1.41,
      "reach": 6,
-     "help": "+1 LIGHTNING: DMG ×1.29, STUN CHANCE +5%, JUMPS +1, WIND-UP +0.04S"
+     "help": "+1 LIGHTNING: DMG ×1.29, STUN CHANCE +5%, JUMPS +1, WIND-UP +0.03S"
     },
     {
      "n": 4,
      "title": "Lightning arc",
      "shape": "arc",
-     "value": 119.3,
-     "crowd": 501.3,
+     "value": 130.2,
+     "crowd": 546.8,
      "runes": 4,
      "seconds": 2.98,
-     "perRune": 29.8,
-     "perSecond": 40,
-     "gain": 1.18,
+     "perRune": 32.5,
+     "perSecond": 43.6,
+     "gain": 1.29,
      "reach": 6,
-     "help": "+1 LIGHTNING: DMG ×1.23, STUN CHANCE +4%, JUMPS +1, WIND-UP +0.04S (A LIGHTNING POOL HOLDS 4)"
+     "help": "+1 LIGHTNING: DMG ×1.23, STUN CHANCE +4%, JUMPS +1, WIND-UP +0.03S (A LIGHTNING POOL HOLDS 4)"
     },
     {
      "n": 5,
      "title": "Lightning arc",
      "shape": "arc",
-     "value": 119.3,
-     "crowd": 501.3,
+     "value": 130.2,
+     "crowd": 546.8,
      "runes": 5,
      "seconds": 3,
-     "perRune": 23.9,
-     "perSecond": 39.8,
+     "perRune": 26,
+     "perSecond": 43.4,
      "gain": 1,
      "reach": 6,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -783,12 +783,12 @@
      "value": 16,
      "crowd": 80,
      "runes": 1,
-     "seconds": 0.45,
+     "seconds": 0.4,
      "perRune": 16,
-     "perSecond": 35.6,
+     "perSecond": 40,
      "gain": null,
      "reach": 5,
-     "help": "+1 LIGHTNING: DMG ×1.7, STUN CHANCE +17%, RADIUS +1U, WIND-UP +0.04S"
+     "help": "+1 LIGHTNING: DMG ×1.7, STUN CHANCE +17%, RADIUS +1U, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -797,12 +797,12 @@
      "value": 27.2,
      "crowd": 136,
      "runes": 2,
-     "seconds": 0.5,
+     "seconds": 0.43,
      "perRune": 13.6,
-     "perSecond": 54.4,
+     "perSecond": 62.8,
      "gain": 1.7,
      "reach": 6,
-     "help": "+1 LIGHTNING: DMG ×1.41, STUN CHANCE +9%, RADIUS +1U, WIND-UP +0.04S"
+     "help": "+1 LIGHTNING: DMG ×1.41, STUN CHANCE +9%, RADIUS +1U, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -811,12 +811,12 @@
      "value": 38.4,
      "crowd": 192,
      "runes": 3,
-     "seconds": 0.55,
+     "seconds": 0.48,
      "perRune": 12.8,
-     "perSecond": 69.8,
+     "perSecond": 79.4,
      "gain": 1.41,
      "reach": 7,
-     "help": "+1 LIGHTNING: DMG ×1.29, STUN CHANCE +5%, RADIUS +1U, WIND-UP +0.04S"
+     "help": "+1 LIGHTNING: DMG ×1.29, STUN CHANCE +5%, RADIUS +1U, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -825,12 +825,12 @@
      "value": 49.6,
      "crowd": 248,
      "runes": 4,
-     "seconds": 0.62,
+     "seconds": 0.53,
      "perRune": 12.4,
-     "perSecond": 80.4,
+     "perSecond": 93,
      "gain": 1.29,
      "reach": 8,
-     "help": "+1 LIGHTNING: DMG ×1.23, STUN CHANCE +4%, RADIUS +1U, WIND-UP +0.04S (A LIGHTNING POOL HOLDS 4)"
+     "help": "+1 LIGHTNING: DMG ×1.23, STUN CHANCE +4%, RADIUS +1U, WIND-UP +0.03S (A LIGHTNING POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -839,9 +839,9 @@
      "value": 49.6,
      "crowd": 248,
      "runes": 5,
-     "seconds": 0.63,
+     "seconds": 0.55,
      "perRune": 9.9,
-     "perSecond": 78.3,
+     "perSecond": 90.2,
      "gain": 1,
      "reach": 9,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -860,12 +860,12 @@
      "value": 19,
      "crowd": 95,
      "runes": 1,
-     "seconds": 0.92,
+     "seconds": 0.87,
      "perRune": 19,
-     "perSecond": 20.7,
+     "perSecond": 21.9,
      "gain": null,
      "reach": 0.9,
-     "help": "+1 LIGHTNING: DMG ×1.7, STUN CHANCE +17%, WIND-UP +0.04S"
+     "help": "+1 LIGHTNING: DMG ×1.7, STUN CHANCE +17%, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -874,12 +874,12 @@
      "value": 32.3,
      "crowd": 161.5,
      "runes": 2,
-     "seconds": 0.97,
+     "seconds": 0.9,
      "perRune": 16.2,
-     "perSecond": 33.4,
+     "perSecond": 35.9,
      "gain": 1.7,
      "reach": 0.9,
-     "help": "+1 LIGHTNING: DMG ×1.41, STUN CHANCE +9%, WIND-UP +0.04S"
+     "help": "+1 LIGHTNING: DMG ×1.41, STUN CHANCE +9%, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -888,12 +888,12 @@
      "value": 45.6,
      "crowd": 228,
      "runes": 3,
-     "seconds": 1.02,
+     "seconds": 0.95,
      "perRune": 15.2,
-     "perSecond": 44.9,
+     "perSecond": 48,
      "gain": 1.41,
      "reach": 0.9,
-     "help": "+1 LIGHTNING: DMG ×1.29, STUN CHANCE +5%, WIND-UP +0.04S"
+     "help": "+1 LIGHTNING: DMG ×1.29, STUN CHANCE +5%, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -902,12 +902,12 @@
      "value": 58.9,
      "crowd": 294.5,
      "runes": 4,
-     "seconds": 1.08,
+     "seconds": 1,
      "perRune": 14.7,
-     "perSecond": 54.4,
+     "perSecond": 58.9,
      "gain": 1.29,
      "reach": 0.9,
-     "help": "+1 LIGHTNING: DMG ×1.23, STUN CHANCE +4%, WIND-UP +0.04S (A LIGHTNING POOL HOLDS 4)"
+     "help": "+1 LIGHTNING: DMG ×1.23, STUN CHANCE +4%, WIND-UP +0.03S (A LIGHTNING POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -916,9 +916,9 @@
      "value": 58.9,
      "crowd": 294.5,
      "runes": 5,
-     "seconds": 1.1,
+     "seconds": 1.02,
      "perRune": 11.8,
-     "perSecond": 53.5,
+     "perSecond": 57.9,
      "gain": 1,
      "reach": 0.9,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -934,68 +934,68 @@
      "n": 1,
      "title": "Arcane beam",
      "shape": "beam",
-     "value": 40,
-     "crowd": 40,
+     "value": 40.8,
+     "crowd": 40.8,
      "runes": 1,
      "seconds": 2.93,
-     "perRune": 40,
-     "perSecond": 13.6,
+     "perRune": 40.8,
+     "perSecond": 13.9,
      "gain": null,
      "reach": 30,
-     "help": "+1 ARCANE: DMG ×1.7, WIND-UP +0.04S"
+     "help": "+1 ARCANE: DMG ×1.7, WIND-UP +0.03S"
     },
     {
      "n": 2,
      "title": "Arcane beam",
      "shape": "beam",
-     "value": 135.1,
-     "crowd": 135.1,
+     "value": 136.9,
+     "crowd": 136.9,
      "runes": 2,
      "seconds": 5.45,
-     "perRune": 67.5,
-     "perSecond": 24.8,
-     "gain": 3.38,
+     "perRune": 68.5,
+     "perSecond": 25.1,
+     "gain": 3.36,
      "reach": 30,
-     "help": "+1 ARCANE: DMG ×1.41, WIND-UP +0.04S"
+     "help": "+1 ARCANE: DMG ×1.41, WIND-UP +0.03S"
     },
     {
      "n": 3,
      "title": "Arcane beam",
      "shape": "beam",
-     "value": 285.4,
-     "crowd": 285.4,
+     "value": 288,
+     "crowd": 288,
      "runes": 3,
      "seconds": 7.97,
-     "perRune": 95.1,
-     "perSecond": 35.8,
-     "gain": 2.11,
+     "perRune": 96,
+     "perSecond": 36.2,
+     "gain": 2.1,
      "reach": 30,
-     "help": "+1 ARCANE: DMG ×1.29, WIND-UP +0.04S"
+     "help": "+1 ARCANE: DMG ×1.29, WIND-UP +0.03S"
     },
     {
      "n": 4,
      "title": "Arcane beam",
      "shape": "beam",
-     "value": 354.6,
-     "crowd": 354.6,
+     "value": 348,
+     "crowd": 348,
      "runes": 4,
      "seconds": 10.28,
-     "perRune": 88.7,
-     "perSecond": 34.5,
-     "gain": 1.24,
+     "perRune": 87,
+     "perSecond": 33.8,
+     "gain": 1.21,
      "reach": 30,
-     "help": "+1 ARCANE: DMG ×1.23, WIND-UP +0.04S (A ARCANE POOL HOLDS 4)"
+     "help": "+1 ARCANE: DMG ×1.23, WIND-UP +0.03S (A ARCANE POOL HOLDS 4)"
     },
     {
      "n": 5,
      "title": "Arcane beam",
      "shape": "beam",
-     "value": 354.6,
-     "crowd": 354.6,
+     "value": 348,
+     "crowd": 348,
      "runes": 5,
      "seconds": 12.8,
-     "perRune": 70.9,
-     "perSecond": 27.7,
+     "perRune": 69.6,
+     "perSecond": 27.2,
      "gain": 1,
      "reach": 30,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -1014,12 +1014,12 @@
      "value": 33.3,
      "crowd": 166.4,
      "runes": 1,
-     "seconds": 0.45,
+     "seconds": 0.4,
      "perRune": 33.3,
-     "perSecond": 74,
+     "perSecond": 83.2,
      "gain": null,
      "reach": 3,
-     "help": "+1 ARCANE: DMG ×1.7, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 ARCANE: DMG ×1.7, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -1028,12 +1028,12 @@
      "value": 56.6,
      "crowd": 282.9,
      "runes": 2,
-     "seconds": 0.5,
+     "seconds": 0.43,
      "perRune": 28.3,
-     "perSecond": 113.2,
+     "perSecond": 130.6,
      "gain": 1.7,
      "reach": 3.6,
-     "help": "+1 ARCANE: DMG ×1.41, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 ARCANE: DMG ×1.41, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -1042,12 +1042,12 @@
      "value": 79.9,
      "crowd": 399.4,
      "runes": 3,
-     "seconds": 0.55,
+     "seconds": 0.48,
      "perRune": 26.6,
-     "perSecond": 145.2,
+     "perSecond": 165.3,
      "gain": 1.41,
      "reach": 4.2,
-     "help": "+1 ARCANE: DMG ×1.29, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 ARCANE: DMG ×1.29, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -1056,12 +1056,12 @@
      "value": 103.2,
      "crowd": 515.8,
      "runes": 4,
-     "seconds": 0.62,
+     "seconds": 0.53,
      "perRune": 25.8,
-     "perSecond": 167.3,
+     "perSecond": 193.4,
      "gain": 1.29,
      "reach": 4.8,
-     "help": "+1 ARCANE: DMG ×1.23, RADIUS +0.6U, WIND-UP +0.04S (A ARCANE POOL HOLDS 4)"
+     "help": "+1 ARCANE: DMG ×1.23, RADIUS +0.6U, WIND-UP +0.03S (A ARCANE POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -1070,9 +1070,9 @@
      "value": 103.2,
      "crowd": 515.8,
      "runes": 5,
-     "seconds": 0.63,
+     "seconds": 0.55,
      "perRune": 20.6,
-     "perSecond": 162.9,
+     "perSecond": 187.6,
      "gain": 1,
      "reach": 5.4,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -1091,12 +1091,12 @@
      "value": 25.6,
      "crowd": 128,
      "runes": 1,
-     "seconds": 0.92,
+     "seconds": 0.87,
      "perRune": 25.6,
-     "perSecond": 27.9,
+     "perSecond": 29.5,
      "gain": null,
      "reach": 2.4,
-     "help": "+1 ARCANE: DMG ×1.7, RADIUS +0.4U, WIND-UP +0.04S"
+     "help": "+1 ARCANE: DMG ×1.7, RADIUS +0.4U, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -1105,12 +1105,12 @@
      "value": 43.5,
      "crowd": 217.6,
      "runes": 2,
-     "seconds": 0.97,
+     "seconds": 0.9,
      "perRune": 21.8,
-     "perSecond": 45,
+     "perSecond": 48.4,
      "gain": 1.7,
      "reach": 2.8,
-     "help": "+1 ARCANE: DMG ×1.41, RADIUS +0.4U, WIND-UP +0.04S"
+     "help": "+1 ARCANE: DMG ×1.41, RADIUS +0.4U, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -1119,12 +1119,12 @@
      "value": 61.4,
      "crowd": 307.2,
      "runes": 3,
-     "seconds": 1.02,
+     "seconds": 0.95,
      "perRune": 20.5,
-     "perSecond": 60.4,
+     "perSecond": 64.7,
      "gain": 1.41,
      "reach": 3.2,
-     "help": "+1 ARCANE: DMG ×1.29, RADIUS +0.4U, WIND-UP +0.04S"
+     "help": "+1 ARCANE: DMG ×1.29, RADIUS +0.4U, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -1133,12 +1133,12 @@
      "value": 79.4,
      "crowd": 396.8,
      "runes": 4,
-     "seconds": 1.08,
+     "seconds": 1,
      "perRune": 19.8,
-     "perSecond": 73.3,
+     "perSecond": 79.4,
      "gain": 1.29,
      "reach": 3.6,
-     "help": "+1 ARCANE: DMG ×1.23, RADIUS +0.4U, WIND-UP +0.04S (A ARCANE POOL HOLDS 4)"
+     "help": "+1 ARCANE: DMG ×1.23, RADIUS +0.4U, WIND-UP +0.03S (A ARCANE POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -1147,9 +1147,9 @@
      "value": 79.4,
      "crowd": 396.8,
      "runes": 5,
-     "seconds": 1.1,
+     "seconds": 1.02,
      "perRune": 15.9,
-     "perSecond": 72.1,
+     "perSecond": 78.1,
      "gain": 1,
      "reach": 4,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -1165,68 +1165,68 @@
      "n": 1,
      "title": "Rock",
      "shape": "missile",
-     "value": 27.5,
-     "crowd": 27.5,
+     "value": 28,
+     "crowd": 532,
      "runes": 1,
      "seconds": 1.4,
-     "perRune": 27.5,
-     "perSecond": 19.7,
+     "perRune": 28,
+     "perSecond": 20,
      "gain": null,
      "reach": null,
-     "help": "+1 EARTH: DMG ×2.5, SIZE +0.08U, WIND-UP +0.04S"
+     "help": "+1 EARTH: DMG ×2.5, SIZE +0.08U, WIND-UP +0.03S"
     },
     {
      "n": 2,
      "title": "Rock",
      "shape": "missile",
-     "value": 67.6,
-     "crowd": 67.6,
+     "value": 69.9,
+     "crowd": 5873.1,
      "runes": 2,
      "seconds": 1.42,
-     "perRune": 33.8,
-     "perSecond": 47.7,
-     "gain": 2.45,
+     "perRune": 35,
+     "perSecond": 49.4,
+     "gain": 2.5,
      "reach": null,
-     "help": "+1 EARTH: DMG ×1.73, SIZE +0.08U, WIND-UP +0.04S"
+     "help": "+1 EARTH: DMG ×1.73, SIZE +0.08U, WIND-UP +0.03S"
     },
     {
      "n": 3,
      "title": "Rock",
      "shape": "missile",
-     "value": 114.9,
-     "crowd": 114.9,
+     "value": 118.9,
+     "crowd": 118.9,
      "runes": 3,
      "seconds": 1.43,
-     "perRune": 38.3,
-     "perSecond": 80.1,
+     "perRune": 39.6,
+     "perSecond": 82.9,
      "gain": 1.7,
      "reach": null,
-     "help": "+1 EARTH: DMG ×1.48, SIZE +0.08U, WIND-UP +0.04S"
+     "help": "+1 EARTH: DMG ×1.48, SIZE +0.08U, WIND-UP +0.03S"
     },
     {
      "n": 4,
      "title": "Rock",
      "shape": "missile",
-     "value": 165.8,
-     "crowd": 165.8,
+     "value": 173.2,
+     "crowd": 173.2,
      "runes": 4,
      "seconds": 1.45,
-     "perRune": 41.4,
-     "perSecond": 114.3,
-     "gain": 1.44,
+     "perRune": 43.3,
+     "perSecond": 119.5,
+     "gain": 1.46,
      "reach": null,
-     "help": "+1 EARTH: DMG ×1.36, SIZE +0.08U, WIND-UP +0.04S (A EARTH POOL HOLDS 4)"
+     "help": "+1 EARTH: DMG ×1.36, SIZE +0.08U, WIND-UP +0.03S (A EARTH POOL HOLDS 4)"
     },
     {
      "n": 5,
      "title": "Rock",
      "shape": "missile",
-     "value": 165.8,
-     "crowd": 165.8,
+     "value": 173.2,
+     "crowd": 173.2,
      "runes": 5,
      "seconds": 1.47,
-     "perRune": 33.2,
-     "perSecond": 113,
+     "perRune": 34.6,
+     "perSecond": 118.1,
      "gain": 1,
      "reach": null,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -1245,12 +1245,12 @@
      "value": 36.4,
      "crowd": 182,
      "runes": 1,
-     "seconds": 0.45,
+     "seconds": 0.4,
      "perRune": 36.4,
-     "perSecond": 80.9,
+     "perSecond": 91,
      "gain": null,
      "reach": 4,
-     "help": "+1 EARTH: DMG ×2.5, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 EARTH: DMG ×2.5, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -1259,12 +1259,12 @@
      "value": 61.9,
      "crowd": 309.4,
      "runes": 2,
-     "seconds": 0.5,
+     "seconds": 0.43,
      "perRune": 30.9,
-     "perSecond": 123.8,
+     "perSecond": 142.8,
      "gain": 1.7,
      "reach": 4.6,
-     "help": "+1 EARTH: DMG ×1.73, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 EARTH: DMG ×1.73, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -1273,12 +1273,12 @@
      "value": 87.4,
      "crowd": 436.8,
      "runes": 3,
-     "seconds": 0.55,
+     "seconds": 0.48,
      "perRune": 29.1,
-     "perSecond": 158.8,
+     "perSecond": 180.7,
      "gain": 1.41,
      "reach": 5.2,
-     "help": "+1 EARTH: DMG ×1.48, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 EARTH: DMG ×1.48, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -1287,12 +1287,12 @@
      "value": 112.8,
      "crowd": 564.2,
      "runes": 4,
-     "seconds": 0.62,
+     "seconds": 0.53,
      "perRune": 28.2,
-     "perSecond": 183,
+     "perSecond": 211.6,
      "gain": 1.29,
      "reach": 5.8,
-     "help": "+1 EARTH: DMG ×1.36, RADIUS +0.6U, WIND-UP +0.04S (A EARTH POOL HOLDS 4)"
+     "help": "+1 EARTH: DMG ×1.36, RADIUS +0.6U, WIND-UP +0.03S (A EARTH POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -1301,9 +1301,9 @@
      "value": 112.8,
      "crowd": 564.2,
      "runes": 5,
-     "seconds": 0.63,
+     "seconds": 0.55,
      "perRune": 22.6,
-     "perSecond": 178.2,
+     "perSecond": 205.2,
      "gain": 1,
      "reach": 6.4,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -1322,12 +1322,12 @@
      "value": 32.2,
      "crowd": 161,
      "runes": 1,
-     "seconds": 0.92,
+     "seconds": 0.87,
      "perRune": 32.2,
-     "perSecond": 35.1,
+     "perSecond": 37.2,
      "gain": null,
      "reach": 1.3,
-     "help": "+1 EARTH: DMG ×2.5, RADIUS +0.4U, WIND-UP +0.04S"
+     "help": "+1 EARTH: DMG ×2.5, RADIUS +0.4U, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -1336,12 +1336,12 @@
      "value": 54.7,
      "crowd": 273.7,
      "runes": 2,
-     "seconds": 0.97,
+     "seconds": 0.9,
      "perRune": 27.4,
-     "perSecond": 56.6,
+     "perSecond": 60.8,
      "gain": 1.7,
      "reach": 1.7,
-     "help": "+1 EARTH: DMG ×1.73, RADIUS +0.4U, WIND-UP +0.04S"
+     "help": "+1 EARTH: DMG ×1.73, RADIUS +0.4U, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -1350,12 +1350,12 @@
      "value": 77.3,
      "crowd": 386.4,
      "runes": 3,
-     "seconds": 1.02,
+     "seconds": 0.95,
      "perRune": 25.8,
-     "perSecond": 76,
+     "perSecond": 81.3,
      "gain": 1.41,
      "reach": 2.1,
-     "help": "+1 EARTH: DMG ×1.48, RADIUS +0.4U, WIND-UP +0.04S"
+     "help": "+1 EARTH: DMG ×1.48, RADIUS +0.4U, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -1364,12 +1364,12 @@
      "value": 99.8,
      "crowd": 499.1,
      "runes": 4,
-     "seconds": 1.08,
+     "seconds": 1,
      "perRune": 25,
-     "perSecond": 92.1,
+     "perSecond": 99.8,
      "gain": 1.29,
      "reach": 2.5,
-     "help": "+1 EARTH: DMG ×1.36, RADIUS +0.4U, WIND-UP +0.04S (A EARTH POOL HOLDS 4)"
+     "help": "+1 EARTH: DMG ×1.36, RADIUS +0.4U, WIND-UP +0.03S (A EARTH POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -1378,9 +1378,9 @@
      "value": 99.8,
      "crowd": 499.1,
      "runes": 5,
-     "seconds": 1.1,
+     "seconds": 1.02,
      "perRune": 20,
-     "perSecond": 90.7,
+     "perSecond": 98.2,
      "gain": 1,
      "reach": 2.9,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -1396,68 +1396,68 @@
      "n": 1,
      "title": "Life beam",
      "shape": "beam",
-     "value": 52.5,
+     "value": 53.6,
      "crowd": 0,
      "runes": 1,
      "seconds": 2.93,
-     "perRune": 52.5,
-     "perSecond": 17.9,
+     "perRune": 53.6,
+     "perSecond": 18.3,
      "gain": null,
      "reach": 30,
-     "help": "+1 LIFE: HEAL ×2, WIND-UP +0.04S"
+     "help": "+1 LIFE: HEAL ×2, WIND-UP +0.03S"
     },
     {
      "n": 2,
      "title": "Life beam",
      "shape": "beam",
-     "value": 208.6,
+     "value": 211.4,
      "crowd": 0,
      "runes": 2,
      "seconds": 5.45,
-     "perRune": 104.3,
-     "perSecond": 38.3,
-     "gain": 3.97,
+     "perRune": 105.7,
+     "perSecond": 38.8,
+     "gain": 3.95,
      "reach": 30,
-     "help": "+1 LIFE: HEAL ×1.5, WIND-UP +0.04S"
+     "help": "+1 LIFE: HEAL ×1.5, WIND-UP +0.03S"
     },
     {
      "n": 3,
      "title": "Life beam",
      "shape": "beam",
-     "value": 468.3,
+     "value": 472.5,
      "crowd": 0,
      "runes": 3,
      "seconds": 7.97,
-     "perRune": 156.1,
-     "perSecond": 58.8,
+     "perRune": 157.5,
+     "perSecond": 59.3,
      "gain": 2.24,
      "reach": 30,
-     "help": "+1 LIFE: HEAL ×1.33, WIND-UP +0.04S"
+     "help": "+1 LIFE: HEAL ×1.33, WIND-UP +0.03S"
     },
     {
      "n": 4,
      "title": "Life beam",
      "shape": "beam",
-     "value": 600.6,
+     "value": 589.4,
      "crowd": 0,
      "runes": 4,
      "seconds": 10.28,
-     "perRune": 150.1,
-     "perSecond": 58.4,
-     "gain": 1.28,
+     "perRune": 147.3,
+     "perSecond": 57.3,
+     "gain": 1.25,
      "reach": 30,
-     "help": "+1 LIFE: HEAL ×1.25, WIND-UP +0.04S (A LIFE POOL HOLDS 4)"
+     "help": "+1 LIFE: HEAL ×1.25, WIND-UP +0.03S (A LIFE POOL HOLDS 4)"
     },
     {
      "n": 5,
      "title": "Life beam",
      "shape": "beam",
-     "value": 600.6,
+     "value": 589.4,
      "crowd": 0,
      "runes": 5,
      "seconds": 12.8,
-     "perRune": 120.1,
-     "perSecond": 46.9,
+     "perRune": 117.9,
+     "perSecond": 46,
      "gain": 1,
      "reach": 30,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -1476,12 +1476,12 @@
      "value": 25.2,
      "crowd": 0,
      "runes": 1,
-     "seconds": 0.45,
+     "seconds": 0.4,
      "perRune": 25.2,
-     "perSecond": 56,
+     "perSecond": 63,
      "gain": null,
      "reach": 3,
-     "help": "+1 LIFE: HEAL ×2, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 LIFE: HEAL ×2, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -1490,12 +1490,12 @@
      "value": 50.4,
      "crowd": 0,
      "runes": 2,
-     "seconds": 0.5,
+     "seconds": 0.43,
      "perRune": 25.2,
-     "perSecond": 100.8,
+     "perSecond": 116.3,
      "gain": 2,
      "reach": 3.6,
-     "help": "+1 LIFE: HEAL ×1.5, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 LIFE: HEAL ×1.5, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -1504,12 +1504,12 @@
      "value": 75.6,
      "crowd": 0,
      "runes": 3,
-     "seconds": 0.55,
+     "seconds": 0.48,
      "perRune": 25.2,
-     "perSecond": 137.5,
+     "perSecond": 156.4,
      "gain": 1.5,
      "reach": 4.2,
-     "help": "+1 LIFE: HEAL ×1.33, RADIUS +0.6U, WIND-UP +0.04S"
+     "help": "+1 LIFE: HEAL ×1.33, RADIUS +0.6U, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -1518,12 +1518,12 @@
      "value": 100.8,
      "crowd": 0,
      "runes": 4,
-     "seconds": 0.62,
+     "seconds": 0.53,
      "perRune": 25.2,
-     "perSecond": 163.5,
+     "perSecond": 189,
      "gain": 1.33,
      "reach": 4.8,
-     "help": "+1 LIFE: HEAL ×1.25, RADIUS +0.6U, WIND-UP +0.04S (A LIFE POOL HOLDS 4)"
+     "help": "+1 LIFE: HEAL ×1.25, RADIUS +0.6U, WIND-UP +0.03S (A LIFE POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -1532,9 +1532,9 @@
      "value": 100.8,
      "crowd": 0,
      "runes": 5,
-     "seconds": 0.63,
+     "seconds": 0.55,
      "perRune": 20.2,
-     "perSecond": 159.2,
+     "perSecond": 183.3,
      "gain": 1,
      "reach": 5.4,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -1553,12 +1553,12 @@
      "value": 78.4,
      "crowd": 0,
      "runes": 1,
-     "seconds": 0.92,
+     "seconds": 0.87,
      "perRune": 78.4,
-     "perSecond": 85.5,
+     "perSecond": 90.5,
      "gain": null,
      "reach": 1.8,
-     "help": "+1 LIFE: HEAL ×2, RADIUS +0.4U, LASTS +2S, WIND-UP +0.04S"
+     "help": "+1 LIFE: HEAL ×2, RADIUS +0.4U, LASTS +2S, WIND-UP +0.03S"
     },
     {
      "n": 2,
@@ -1567,12 +1567,12 @@
      "value": 196,
      "crowd": 0,
      "runes": 2,
-     "seconds": 0.97,
+     "seconds": 0.9,
      "perRune": 98,
-     "perSecond": 202.8,
+     "perSecond": 217.8,
      "gain": 2.5,
      "reach": 2.2,
-     "help": "+1 LIFE: HEAL ×1.5, RADIUS +0.4U, LASTS +2S, WIND-UP +0.04S"
+     "help": "+1 LIFE: HEAL ×1.5, RADIUS +0.4U, LASTS +2S, WIND-UP +0.03S"
     },
     {
      "n": 3,
@@ -1581,12 +1581,12 @@
      "value": 352.8,
      "crowd": 0,
      "runes": 3,
-     "seconds": 1.02,
+     "seconds": 0.95,
      "perRune": 117.6,
-     "perSecond": 347,
+     "perSecond": 371.4,
      "gain": 1.8,
      "reach": 2.6,
-     "help": "+1 LIFE: HEAL ×1.33, RADIUS +0.4U, LASTS +2S, WIND-UP +0.04S"
+     "help": "+1 LIFE: HEAL ×1.33, RADIUS +0.4U, LASTS +2S, WIND-UP +0.03S"
     },
     {
      "n": 4,
@@ -1595,12 +1595,12 @@
      "value": 548.8,
      "crowd": 0,
      "runes": 4,
-     "seconds": 1.08,
+     "seconds": 1,
      "perRune": 137.2,
-     "perSecond": 506.6,
+     "perSecond": 548.8,
      "gain": 1.56,
      "reach": 3,
-     "help": "+1 LIFE: HEAL ×1.25, RADIUS +0.4U, LASTS +2S, WIND-UP +0.04S (A LIFE POOL HOLDS 4)"
+     "help": "+1 LIFE: HEAL ×1.25, RADIUS +0.4U, LASTS +2S, WIND-UP +0.03S (A LIFE POOL HOLDS 4)"
     },
     {
      "n": 5,
@@ -1609,9 +1609,9 @@
      "value": 548.8,
      "crowd": 0,
      "runes": 5,
-     "seconds": 1.1,
+     "seconds": 1.02,
      "perRune": 109.8,
-     "perSecond": 498.9,
+     "perSecond": 539.8,
      "gain": 1,
      "reach": 3.4,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
@@ -1624,16 +1624,16 @@
    "form": "fire",
    "cast": "force",
    "heals": false,
-   "base": 41.5,
-   "baseCrowd": 147.5,
+   "base": 42.2,
+   "baseCrowd": 150.1,
    "rows": [
     {
      "add": "fire",
      "title": "Flamethrower",
-     "value": 56.3,
-     "crowd": 197.9,
-     "gain": 1.36,
-     "crowdGain": 1.34
+     "value": 57.7,
+     "crowd": 202.7,
+     "gain": 1.37,
+     "crowdGain": 1.35
     }
    ]
   },
@@ -1658,14 +1658,14 @@
    "form": "fire",
    "cast": "place",
    "heals": false,
-   "base": 54.9,
-   "baseCrowd": 274.7,
+   "base": 55.1,
+   "baseCrowd": 275.7,
    "rows": [
     {
      "add": "fire",
      "title": "Fire patch",
-     "value": 101.5,
-     "crowd": 507.7,
+     "value": 102.1,
+     "crowd": 510.3,
      "gain": 1.85,
      "crowdGain": 1.85
     }
@@ -1675,14 +1675,14 @@
    "form": "cold",
    "cast": "force",
    "heals": false,
-   "base": 12.5,
-   "baseCrowd": 42.5,
+   "base": 12.8,
+   "baseCrowd": 43.4,
    "rows": [
     {
      "add": "cold",
      "title": "Frost spray",
-     "value": 17.4,
-     "crowd": 59.3,
+     "value": 17.9,
+     "crowd": 60.9,
      "gain": 1.4,
      "crowdGain": 1.4
     }
@@ -1740,10 +1740,10 @@
     {
      "add": "fire",
      "title": "Scalding spray",
-     "value": 40.5,
-     "crowd": 142.5,
-     "gain": 5.78,
-     "crowdGain": 5.45
+     "value": 41.5,
+     "crowd": 145.9,
+     "gain": 5.93,
+     "crowdGain": 5.58
     }
    ]
   },
@@ -1900,48 +1900,48 @@
    "form": "arcane",
    "cast": "force",
    "heals": false,
-   "base": 40,
-   "baseCrowd": 40,
+   "base": 40.8,
+   "baseCrowd": 40.8,
    "rows": [
     {
      "add": "water",
      "title": "Water beam",
-     "value": 49.3,
-     "crowd": 49.3,
-     "gain": 1.23,
-     "crowdGain": 1.23
+     "value": 50.7,
+     "crowd": 50.7,
+     "gain": 1.24,
+     "crowdGain": 1.24
     },
     {
      "add": "cold",
      "title": "Frost beam",
-     "value": 51.8,
-     "crowd": 51.8,
-     "gain": 1.29,
-     "crowdGain": 1.29
+     "value": 53.2,
+     "crowd": 53.2,
+     "gain": 1.3,
+     "crowdGain": 1.3
     },
     {
      "add": "lightning",
      "title": "Lightning beam",
-     "value": 64.1,
-     "crowd": 64.1,
-     "gain": 1.6,
-     "crowdGain": 1.6
+     "value": 65.9,
+     "crowd": 65.9,
+     "gain": 1.61,
+     "crowdGain": 1.61
     },
     {
      "add": "arcane",
      "title": "Arcane beam",
-     "value": 135.1,
-     "crowd": 135.1,
-     "gain": 3.38,
-     "crowdGain": 3.38
+     "value": 136.9,
+     "crowd": 136.9,
+     "gain": 3.36,
+     "crowdGain": 3.36
     },
     {
      "add": "fire",
      "title": "Fire beam",
-     "value": 86.4,
-     "crowd": 86.4,
-     "gain": 2.16,
-     "crowdGain": 2.16
+     "value": 88.6,
+     "crowd": 88.6,
+     "gain": 2.17,
+     "crowdGain": 2.17
     }
    ]
   },
@@ -2047,48 +2047,48 @@
    "form": "earth",
    "cast": "force",
    "heals": false,
-   "base": 27.5,
-   "baseCrowd": 27.5,
+   "base": 28,
+   "baseCrowd": 532,
    "rows": [
     {
      "add": "water",
      "title": "Mud ball",
-     "value": 30.9,
-     "crowd": 30.9,
-     "gain": 1.12,
-     "crowdGain": 1.12
+     "value": 32,
+     "crowd": 1600,
+     "gain": 1.14,
+     "crowdGain": 3.01
     },
     {
      "add": "cold",
      "title": "Frost boulder",
-     "value": 33.5,
-     "crowd": 40,
-     "gain": 1.22,
-     "crowdGain": 1.45
+     "value": 33,
+     "crowd": 627,
+     "gain": 1.18,
+     "crowdGain": 1.18
     },
     {
      "add": "arcane",
      "title": "Arcane boulder",
-     "value": 42.5,
-     "crowd": 93.6,
-     "gain": 1.54,
-     "crowdGain": 3.4
+     "value": 44,
+     "crowd": 765.6,
+     "gain": 1.57,
+     "crowdGain": 1.44
     },
     {
      "add": "fire",
      "title": "Fireball",
-     "value": 49.6,
-     "crowd": 49.6,
-     "gain": 1.8,
-     "crowdGain": 1.8
+     "value": 51.2,
+     "crowd": 916.8,
+     "gain": 1.83,
+     "crowdGain": 1.72
     },
     {
      "add": "earth",
      "title": "Rock",
-     "value": 67.6,
-     "crowd": 67.6,
-     "gain": 2.45,
-     "crowdGain": 2.45
+     "value": 69.9,
+     "crowd": 5873.1,
+     "gain": 2.5,
+     "crowdGain": 11.04
     }
    ]
   },
@@ -2194,13 +2194,13 @@
    "form": "life",
    "cast": "force",
    "heals": true,
-   "base": 52.5,
+   "base": 53.6,
    "baseCrowd": 0,
    "rows": [
     {
      "add": "water",
      "title": "Rescue spray",
-     "value": 34.5,
+     "value": 35.5,
      "crowd": 0,
      "gain": 0.66,
      "crowdGain": null
@@ -2208,15 +2208,15 @@
     {
      "add": "life",
      "title": "Life beam",
-     "value": 208.6,
+     "value": 211.4,
      "crowd": 0,
-     "gain": 3.97,
+     "gain": 3.95,
      "crowdGain": null
     },
     {
      "add": "cold",
      "title": "Cooling spray",
-     "value": 34.5,
+     "value": 35.5,
      "crowd": 0,
      "gain": 0.66,
      "crowdGain": null
@@ -2226,13 +2226,13 @@
      "title": "Chain heal",
      "value": 42,
      "crowd": 0,
-     "gain": 0.8,
+     "gain": 0.78,
      "crowdGain": null
     },
     {
      "add": "fire",
      "title": "Healing spray",
-     "value": 34.5,
+     "value": 35.5,
      "crowd": 0,
      "gain": 0.66,
      "crowdGain": null
@@ -2240,7 +2240,7 @@
     {
      "add": "earth",
      "title": "Heal-stone",
-     "value": 13.7,
+     "value": 14,
      "crowd": 0,
      "gain": 0.26,
      "crowdGain": null

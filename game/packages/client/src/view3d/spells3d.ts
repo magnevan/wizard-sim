@@ -22,6 +22,7 @@ import { SpellLights } from './fx/lights';
 import { FxStage } from './fx/stage';
 import { Standins } from './fx/standins';
 import { BodyStatuses } from './fx/statuses';
+import { WindupTells } from './fx/windup';
 import { sceneX, sceneZ } from './scene-map';
 
 const fxUrls = import.meta.glob<string>('../../../../content/generated/fx/fire-*.png', { eager: true, query: '?url', import: 'default' });
@@ -51,6 +52,8 @@ export class Spells3D {
   readonly cold = new ColdNovas();
   /** The Fire ring and the Fire burst, one travelling wave (fx/fire-wave.ts), unless the stand-ins draw Fire (standins.drawFire). */
   readonly fireWaves = new FireWaves();
+  /** Each seat's cast windup: motes drawn in to the hand (fx/windup.ts). */
+  readonly windups = new WindupTells();
   private spraysBy: FireSpray[] = [];
   /** The effect time of the last frame (s), for the impact's jolt at render. */
   private shakeAt = 0;
@@ -76,6 +79,7 @@ export class Spells3D {
     this.stage.scene.add(this.cold.group);
     this.fireWaves.heightAt = (x, y) => this.simHeight(x, y);
     this.stage.scene.add(this.fireWaves.group);
+    this.stage.scene.add(this.windups.group);
     this.earth = new EarthFx((x, z) => this.simHeight(x, z));
     this.lightRoot.add(this.earth.meshes);
     this.stage.scene.add(this.earth.group);
@@ -150,6 +154,7 @@ export class Spells3D {
     this.earth.meshes.visible = this.earth.group.visible = !this.standins.drawEarth;
     if (!this.standins.drawEarth) { this.earth.update(w, t, o.alpha ?? 0, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]]); this.shakeAt = t + (o.alpha ?? 0) / 60; }
     this.statuses.update(w, t, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]], this.lights);
+    this.windups.update(w, o.alpha ?? 0, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]], (x, y) => this.simHeight(x, y));
     this.standins.draw(w, { t, alpha: o.alpha ?? 0, localSeat: o.localSeat ?? -1, cam: this.fxCam, lights: this.lights, bodyAt: o.bodyAt });
     this.lights.end();
   }

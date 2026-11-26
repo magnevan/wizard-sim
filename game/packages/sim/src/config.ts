@@ -61,8 +61,10 @@ export const RUNES = {
 export const RHYTHM = {
   /** Two Sigil presses with no free Sigil rune within this many seconds are a double-tap: dismiss what's under the cursor, or recall your oldest. */
   dryTap: 0.4,
-  windup: 0.12, // seconds, plus windupPerRune for each rune in the spell
-  windupPerRune: 0.04,
+  // seconds, plus windupPerRune for each rune in the spell (cut from 0.12 + 0.04 on 2026-11-26: the user felt a delay
+  // from release to cast; the 3D view now draws the windup too, fx/windup.ts)
+  windup: 0.08,
+  windupPerRune: 0.03,
   recovery: 0.18,
   /** A Place drag counts once the cursor moved this far while held. */
   dragMin: 1.0,

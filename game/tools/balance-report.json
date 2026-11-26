@@ -19,11 +19,11 @@
    "title": "Flamethrower",
    "queue": "fire",
    "cast": "force",
-   "runes": 1,
+   "runes": 1.01,
    "seconds": 2.92,
    "damage": 42,
    "heal": 0,
-   "crowd": 148,
+   "crowd": 150,
    "dps": 14,
    "perRune": 42
   },
@@ -31,25 +31,25 @@
    "title": "Flamethrower",
    "queue": "fire+fire",
    "cast": "force",
-   "runes": 2,
+   "runes": 2.01,
    "seconds": 2.93,
-   "damage": 56,
+   "damage": 58,
    "heal": 0,
-   "crowd": 198,
-   "dps": 19,
-   "perRune": 28
+   "crowd": 203,
+   "dps": 20,
+   "perRune": 29
   },
   {
    "title": "Arcane beam",
    "queue": "arcane",
    "cast": "force",
-   "runes": 1,
+   "runes": 1.01,
    "seconds": 2.92,
-   "damage": 40,
+   "damage": 41,
    "heal": 0,
-   "crowd": 40,
+   "crowd": 41,
    "dps": 14,
-   "perRune": 40
+   "perRune": 41
   },
   {
    "title": "Arcane beam",
@@ -57,29 +57,29 @@
    "cast": "force",
    "runes": 2.01,
    "seconds": 5.43,
-   "damage": 135,
+   "damage": 137,
    "heal": 0,
-   "crowd": 135,
+   "crowd": 137,
    "dps": 25,
-   "perRune": 67
+   "perRune": 68
   },
   {
    "title": "Fire beam",
    "queue": "arcane+fire",
    "cast": "force",
-   "runes": 2,
+   "runes": 2.01,
    "seconds": 2.93,
-   "damage": 86,
+   "damage": 89,
    "heal": 0,
-   "crowd": 86,
-   "dps": 29,
-   "perRune": 43
+   "crowd": 89,
+   "dps": 30,
+   "perRune": 44
   },
   {
    "title": "Lightning arc",
    "queue": "lightning",
    "cast": "force",
-   "runes": 1,
+   "runes": 1.01,
    "seconds": 2.92,
    "damage": 42,
    "heal": 0,
@@ -91,19 +91,19 @@
    "title": "Lightning arc",
    "queue": "lightning+lightning",
    "cast": "force",
-   "runes": 2,
+   "runes": 2.01,
    "seconds": 2.93,
    "damage": 71,
    "heal": 0,
    "crowd": 243,
    "dps": 24,
-   "perRune": 36
+   "perRune": 35
   },
   {
    "title": "Frost spray",
    "queue": "cold",
    "cast": "force",
-   "runes": 1,
+   "runes": 1.01,
    "seconds": 2.92,
    "damage": 13,
    "heal": 0,
@@ -115,11 +115,11 @@
    "title": "Frost spray",
    "queue": "cold+cold",
    "cast": "force",
-   "runes": 2,
+   "runes": 2.01,
    "seconds": 2.93,
-   "damage": 17,
+   "damage": 18,
    "heal": 0,
-   "crowd": 59,
+   "crowd": 61,
    "dps": 6,
    "perRune": 9
   },
@@ -127,7 +127,7 @@
    "title": "Water spray",
    "queue": "water",
    "cast": "force",
-   "runes": 1,
+   "runes": 1.01,
    "seconds": 2.92,
    "damage": 7,
    "heal": 0,
@@ -143,7 +143,7 @@
    "seconds": 1.38,
    "damage": 28,
    "heal": 0,
-   "crowd": 28,
+   "crowd": 532,
    "dps": 20,
    "perRune": 28
   },
@@ -153,11 +153,11 @@
    "cast": "force",
    "runes": 2,
    "seconds": 1.4,
-   "damage": 68,
+   "damage": 70,
    "heal": 0,
-   "crowd": 68,
-   "dps": 48,
-   "perRune": 34
+   "crowd": 5873,
+   "dps": 50,
+   "perRune": 35
   },
   {
    "title": "Fireball",
@@ -165,10 +165,10 @@
    "cast": "force",
    "runes": 2,
    "seconds": 1.4,
-   "damage": 49,
+   "damage": 51,
    "heal": 0,
-   "crowd": 49,
-   "dps": 35,
+   "crowd": 909,
+   "dps": 36,
    "perRune": 25
   },
   {
@@ -177,11 +177,11 @@
    "cast": "force",
    "runes": 3,
    "seconds": 1.42,
-   "damage": 115,
+   "damage": 119,
    "heal": 0,
-   "crowd": 115,
-   "dps": 81,
-   "perRune": 38
+   "crowd": 119,
+   "dps": 84,
+   "perRune": 40
   },
   {
    "title": "Water spray",
@@ -201,11 +201,11 @@
    "cast": "force",
    "runes": 2,
    "seconds": 1.4,
-   "damage": 43,
+   "damage": 44,
    "heal": 0,
-   "crowd": 94,
-   "dps": 30,
-   "perRune": 21
+   "crowd": 766,
+   "dps": 31,
+   "perRune": 22
   },
   {
    "title": "Frost boulder",
@@ -213,9 +213,9 @@
    "cast": "force",
    "runes": 2,
    "seconds": 1.4,
-   "damage": 34,
+   "damage": 33,
    "heal": 0,
-   "crowd": 40,
+   "crowd": 627,
    "dps": 24,
    "perRune": 17
   },
@@ -224,11 +224,11 @@
    "queue": "fire",
    "cast": "area",
    "runes": 1,
-   "seconds": 0.43,
+   "seconds": 0.38,
    "damage": 33,
    "heal": 0,
-   "crowd": 165,
-   "dps": 76,
+   "crowd": 166,
+   "dps": 87,
    "perRune": 33
   },
   {
@@ -236,11 +236,11 @@
    "queue": "arcane",
    "cast": "area",
    "runes": 1,
-   "seconds": 0.43,
+   "seconds": 0.38,
    "damage": 33,
    "heal": 0,
    "crowd": 166,
-   "dps": 77,
+   "dps": 87,
    "perRune": 33
   },
   {
@@ -248,11 +248,11 @@
    "queue": "earth",
    "cast": "area",
    "runes": 1,
-   "seconds": 0.43,
+   "seconds": 0.38,
    "damage": 36,
    "heal": 0,
    "crowd": 182,
-   "dps": 84,
+   "dps": 95,
    "perRune": 36
   },
   {
@@ -260,11 +260,11 @@
    "queue": "lightning",
    "cast": "area",
    "runes": 1,
-   "seconds": 0.43,
+   "seconds": 0.38,
    "damage": 16,
    "heal": 0,
    "crowd": 80,
-   "dps": 37,
+   "dps": 42,
    "perRune": 16
   },
   {
@@ -272,11 +272,11 @@
    "queue": "cold+cold",
    "cast": "area",
    "runes": 2,
-   "seconds": 0.48,
+   "seconds": 0.42,
    "damage": 14,
    "heal": 0,
    "crowd": 68,
-   "dps": 28,
+   "dps": 33,
    "perRune": 7
   },
   {
@@ -284,11 +284,11 @@
    "queue": "fire",
    "cast": "place",
    "runes": 1,
-   "seconds": 0.9,
+   "seconds": 0.85,
    "damage": 14,
    "heal": 0,
-   "crowd": 68,
-   "dps": 15,
+   "crowd": 69,
+   "dps": 16,
    "perRune": 14
   },
   {
@@ -296,11 +296,11 @@
    "queue": "arcane",
    "cast": "place",
    "runes": 1,
-   "seconds": 0.9,
+   "seconds": 0.85,
    "damage": 26,
    "heal": 0,
    "crowd": 128,
-   "dps": 28,
+   "dps": 30,
    "perRune": 26
   },
   {
@@ -308,11 +308,11 @@
    "queue": "earth+arcane",
    "cast": "place",
    "runes": 2,
-   "seconds": 0.95,
+   "seconds": 0.88,
    "damage": 51,
    "heal": 0,
    "crowd": 253,
-   "dps": 53,
+   "dps": 57,
    "perRune": 25
   },
   {
@@ -320,11 +320,11 @@
    "queue": "lightning",
    "cast": "place",
    "runes": 1,
-   "seconds": 0.9,
+   "seconds": 0.85,
    "damage": 19,
    "heal": 0,
    "crowd": 95,
-   "dps": 21,
+   "dps": 22,
    "perRune": 19
   },
   {
@@ -332,18 +332,18 @@
    "queue": "water+fire",
    "cast": "place",
    "runes": 2,
-   "seconds": 0.95,
+   "seconds": 0.88,
    "damage": 30,
    "heal": 0,
-   "crowd": 149,
-   "dps": 31,
+   "crowd": 150,
+   "dps": 34,
    "perRune": 15
   },
   {
    "title": "Life beam",
    "queue": "life",
    "cast": "force",
-   "runes": 1,
+   "runes": 1.01,
    "seconds": 2.92,
    "damage": 0,
    "heal": 0,
@@ -356,7 +356,7 @@
    "queue": "life+life",
    "cast": "area",
    "runes": 2,
-   "seconds": 0.48,
+   "seconds": 0.42,
    "damage": 0,
    "heal": 50,
    "crowd": 0,
@@ -367,7 +367,7 @@
    "title": "Chain heal",
    "queue": "life+lightning",
    "cast": "force",
-   "runes": 2,
+   "runes": 2.01,
    "seconds": 2.93,
    "damage": 0,
    "heal": 42,
@@ -388,12 +388,12 @@
     },
     {
      "spell": "Flamethrower",
-     "burst": 1.6,
+     "burst": 1.5,
      "sustained": null
     },
     {
      "spell": "Arcane beam",
-     "burst": 2.2,
+     "burst": 2.1,
      "sustained": null
     },
     {
@@ -423,7 +423,7 @@
     },
     {
      "spell": "Frost spray",
-     "burst": 5.2,
+     "burst": 4.9,
      "sustained": null
     },
     {
@@ -443,7 +443,7 @@
     },
     {
      "spell": "Fireball",
-     "burst": 0.9,
+     "burst": 0.8,
      "sustained": null
     },
     {
@@ -463,7 +463,7 @@
     },
     {
      "spell": "Frost boulder",
-     "burst": 1.2,
+     "burst": 1.3,
      "sustained": null
     }
    ]
@@ -479,22 +479,22 @@
     },
     {
      "spell": "Flamethrower",
-     "burst": 18.1,
+     "burst": 17.4,
      "sustained": null
     },
     {
      "spell": "Arcane beam",
-     "burst": 25.2,
+     "burst": 24.6,
      "sustained": null
     },
     {
      "spell": "Arcane beam",
-     "burst": 13.9,
+     "burst": 13.7,
      "sustained": null
     },
     {
      "spell": "Fire beam",
-     "burst": 11.8,
+     "burst": 11.4,
      "sustained": null
     },
     {
@@ -514,7 +514,7 @@
     },
     {
      "spell": "Frost spray",
-     "burst": 59.5,
+     "burst": 56.2,
      "sustained": null
     },
     {
@@ -529,17 +529,17 @@
     },
     {
      "spell": "Rock",
-     "burst": 7.1,
+     "burst": 6.9,
      "sustained": null
     },
     {
      "spell": "Fireball",
-     "burst": 9.9,
+     "burst": 9.5,
      "sustained": null
     },
     {
      "spell": "Rock",
-     "burst": 4.3,
+     "burst": 4.1,
      "sustained": null
     },
     {
@@ -549,12 +549,12 @@
     },
     {
      "spell": "Arcane boulder",
-     "burst": 11.2,
+     "burst": 11,
      "sustained": null
     },
     {
      "spell": "Frost boulder",
-     "burst": 14.2,
+     "burst": 14.6,
      "sustained": null
     }
    ]
@@ -570,12 +570,12 @@
     },
     {
      "spell": "Flamethrower",
-     "burst": 7.1,
+     "burst": 6.8,
      "sustained": null
     },
     {
      "spell": "Arcane beam",
-     "burst": 9.9,
+     "burst": 9.6,
      "sustained": null
     },
     {
@@ -585,7 +585,7 @@
     },
     {
      "spell": "Fire beam",
-     "burst": 4.6,
+     "burst": 4.4,
      "sustained": null
     },
     {
@@ -605,7 +605,7 @@
     },
     {
      "spell": "Frost spray",
-     "burst": 23.3,
+     "burst": 22,
      "sustained": null
     },
     {
@@ -620,17 +620,17 @@
     },
     {
      "spell": "Rock",
-     "burst": 2.8,
+     "burst": 2.7,
      "sustained": null
     },
     {
      "spell": "Fireball",
-     "burst": 3.9,
+     "burst": 3.7,
      "sustained": null
     },
     {
      "spell": "Rock",
-     "burst": 1.7,
+     "burst": 1.6,
      "sustained": null
     },
     {
@@ -640,12 +640,12 @@
     },
     {
      "spell": "Arcane boulder",
-     "burst": 4.4,
+     "burst": 4.3,
      "sustained": null
     },
     {
      "spell": "Frost boulder",
-     "burst": 5.6,
+     "burst": 5.7,
      "sustained": null
     }
    ]
@@ -661,12 +661,12 @@
     },
     {
      "spell": "Flamethrower",
-     "burst": 3.6,
+     "burst": 3.4,
      "sustained": null
     },
     {
      "spell": "Arcane beam",
-     "burst": 5,
+     "burst": 4.8,
      "sustained": null
     },
     {
@@ -676,7 +676,7 @@
     },
     {
      "spell": "Fire beam",
-     "burst": 2.3,
+     "burst": 2.2,
      "sustained": null
     },
     {
@@ -696,7 +696,7 @@
     },
     {
      "spell": "Frost spray",
-     "burst": 11.7,
+     "burst": 11.1,
      "sustained": null
     },
     {
@@ -736,7 +736,7 @@
     },
     {
      "spell": "Frost boulder",
-     "burst": 2.8,
+     "burst": 2.9,
      "sustained": null
     }
    ]
@@ -752,12 +752,12 @@
     },
     {
      "spell": "Flamethrower",
-     "burst": 4.7,
+     "burst": 4.5,
      "sustained": null
     },
     {
      "spell": "Arcane beam",
-     "burst": 6.6,
+     "burst": 6.4,
      "sustained": null
     },
     {
@@ -767,7 +767,7 @@
     },
     {
      "spell": "Fire beam",
-     "burst": 3.1,
+     "burst": 3,
      "sustained": null
     },
     {
@@ -787,7 +787,7 @@
     },
     {
      "spell": "Frost spray",
-     "burst": 15.5,
+     "burst": 14.7,
      "sustained": null
     },
     {
@@ -802,12 +802,12 @@
     },
     {
      "spell": "Rock",
-     "burst": 1.9,
+     "burst": 1.8,
      "sustained": null
     },
     {
      "spell": "Fireball",
-     "burst": 2.6,
+     "burst": 2.5,
      "sustained": null
     },
     {
@@ -827,7 +827,7 @@
     },
     {
      "spell": "Frost boulder",
-     "burst": 3.7,
+     "burst": 3.8,
      "sustained": null
     }
    ]
@@ -843,12 +843,12 @@
     },
     {
      "spell": "Flamethrower",
-     "burst": 3.1,
+     "burst": 3,
      "sustained": null
     },
     {
      "spell": "Arcane beam",
-     "burst": 4.4,
+     "burst": 4.3,
      "sustained": null
     },
     {
@@ -878,7 +878,7 @@
     },
     {
      "spell": "Frost spray",
-     "burst": 10.3,
+     "burst": 9.8,
      "sustained": null
     },
     {
@@ -898,7 +898,7 @@
     },
     {
      "spell": "Fireball",
-     "burst": 1.7,
+     "burst": 1.6,
      "sustained": null
     },
     {
@@ -913,7 +913,7 @@
     },
     {
      "spell": "Arcane boulder",
-     "burst": 2,
+     "burst": 1.9,
      "sustained": null
     },
     {
@@ -969,7 +969,7 @@
     },
     {
      "spell": "Frost spray",
-     "burst": 1.7,
+     "burst": 1.6,
      "sustained": null
     },
     {
@@ -1060,7 +1060,7 @@
     },
     {
      "spell": "Frost spray",
-     "burst": 2.1,
+     "burst": 2,
      "sustained": null
     },
     {
@@ -1175,19 +1175,21 @@
  "waves": [
   {
    "name": "current",
-   "cleared": 5.3,
-   "clearedMin": 5,
-   "clearedMax": 6,
-   "downs": 5.5,
-   "wipes": 2.3,
-   "kills": 37,
-   "damageTaken": 1355.3,
+   "cleared": 5.8,
+   "clearedMin": 4,
+   "clearedMax": 7,
+   "downs": 5,
+   "wipes": 1.8,
+   "kills": 38.5,
+   "damageTaken": 1305,
    "clearSeconds": [
-    12.4,
-    19.6,
     8.2,
-    48.4,
-    12.6
+    18,
+    9.8,
+    51.2,
+    27.1,
+    31.3,
+    67.9
    ]
   },
   {
@@ -1195,82 +1197,84 @@
    "cleared": 4.5,
    "clearedMin": 3,
    "clearedMax": 5,
-   "downs": 6.3,
-   "wipes": 2.8,
-   "kills": 35.5,
-   "damageTaken": 1401.8,
+   "downs": 7.8,
+   "wipes": 3.3,
+   "kills": 33,
+   "damageTaken": 1503.5,
    "clearSeconds": [
-    12.4,
-    37.1,
-    9.3
+    8.2,
+    24.4,
+    17.6,
+    41.7,
+    21.3
    ]
   },
   {
    "name": "faster regen (R 1.4)",
-   "cleared": 4.8,
-   "clearedMin": 1,
+   "cleared": 5.5,
+   "clearedMin": 5,
    "clearedMax": 6,
-   "downs": 4.8,
-   "wipes": 1.8,
-   "kills": 32.3,
-   "damageTaken": 1704.5,
+   "downs": 4.5,
+   "wipes": 1.5,
+   "kills": 36.8,
+   "damageTaken": 1294,
    "clearSeconds": [
-    12.4,
-    42.3,
-    6.2,
-    78.9,
-    19.5,
-    19.3
+    8.2,
+    15.7,
+    9.3,
+    109,
+    9.3
    ]
   },
   {
    "name": "enemies hit 1.5x harder",
-   "cleared": 4.5,
+   "cleared": 4.3,
    "clearedMin": 3,
    "clearedMax": 5,
-   "downs": 10.8,
-   "wipes": 4.5,
-   "kills": 32,
-   "damageTaken": 1413,
+   "downs": 9.8,
+   "wipes": 4,
+   "kills": 37.8,
+   "damageTaken": 1543.5,
    "clearSeconds": [
-    12.4,
-    26.5,
-    8.4,
-    43.7,
-    13.5
+    8.2,
+    18,
+    11.7,
+    41.7,
+    16.8
    ]
   },
   {
    "name": "enemies 1.5x tougher",
-   "cleared": 4.3,
-   "clearedMin": 3,
+   "cleared": 5,
+   "clearedMin": 5,
    "clearedMax": 5,
    "downs": 3.8,
-   "wipes": 1.5,
-   "kills": 29,
-   "damageTaken": 1211.5,
+   "wipes": 1,
+   "kills": 30.8,
+   "damageTaken": 1321.8,
    "clearSeconds": [
-    70.3,
-    47.4,
-    13,
-    64.4,
-    27.6
+    32.1,
+    31.1,
+    19.9,
+    49.8,
+    27.5
    ]
   },
   {
    "name": "heavier casts (windup x2)",
-   "cleared": 4.8,
-   "clearedMin": 4,
-   "clearedMax": 6,
-   "downs": 4.8,
-   "wipes": 1.3,
-   "kills": 32.5,
-   "damageTaken": 1530,
+   "cleared": 5,
+   "clearedMin": 5,
+   "clearedMax": 5,
+   "downs": 7.3,
+   "wipes": 2.8,
+   "kills": 31.3,
+   "damageTaken": 1357.8,
    "clearSeconds": [
-    21,
-    38.2,
-    6.1,
-    64.5
+    11,
+    22.1,
+    7.9,
+    62.9,
+    21.5
    ]
   }
  ],
@@ -1279,57 +1283,57 @@
    "seed": 1,
    "cleared": 2,
    "fell": true,
-   "clearSeconds": "40.3 23.6",
+   "clearSeconds": "17.5 10.4",
    "minHp": 0
   },
   {
    "seed": 2,
-   "cleared": 3,
-   "fell": true,
-   "clearSeconds": "72.8 44.6 39.4",
-   "minHp": 0
+   "cleared": 4,
+   "fell": false,
+   "clearSeconds": "17.5 22.1 45 28.3",
+   "minHp": 38
   },
   {
    "seed": 3,
-   "cleared": 2,
+   "cleared": 3,
    "fell": true,
-   "clearSeconds": "41.9 62.2",
+   "clearSeconds": "16.8 46.1 44.2",
    "minHp": 0
   },
   {
    "seed": 4,
    "cleared": 1,
    "fell": true,
-   "clearSeconds": "33.5",
+   "clearSeconds": "14.7",
    "minHp": 0
   },
   {
    "seed": 5,
    "cleared": 1,
    "fell": true,
-   "clearSeconds": "15",
+   "clearSeconds": "12.5",
    "minHp": 0
   },
   {
    "seed": 6,
-   "cleared": 3,
+   "cleared": 2,
    "fell": true,
-   "clearSeconds": "43.4 25.8 49.1",
+   "clearSeconds": "17.4 37.1",
    "minHp": 0
   },
   {
    "seed": 7,
-   "cleared": 3,
+   "cleared": 2,
    "fell": true,
-   "clearSeconds": "43.8 29.9 51.8",
+   "clearSeconds": "15 68.4",
    "minHp": 0
   },
   {
    "seed": 8,
-   "cleared": 2,
-   "fell": true,
-   "clearSeconds": "49.2 19.1",
-   "minHp": 0
+   "cleared": 4,
+   "fell": false,
+   "clearSeconds": "41.5 61.8 99.2 38.8",
+   "minHp": 13
   }
  ]
 }

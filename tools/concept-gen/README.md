@@ -139,3 +139,13 @@ Four images for the [road stones](../../docs/explorations/2026-11-24-road-stones
 - "A thick, white-hot core... surges... halo" gave thin lasers and a wide pink wash. Saying what it must not be ("not a thin laser: a thick, heavy rope of plasma about as wide as the wizard's hat") and where the light goes ("in a narrow strip under the beam only") fixed both; "swellings racing along it" can turn into a string of beads.
 - Earth dust disappears on the warm floor unless asked for "darker ochre-brown than the floor"; name the value, not just the colour.
 - "Chunkier" barely changes a rock, and on an impact turned the shards into floor slabs (reads as a quake). "Crisper" gave a real alternative on the nova.
+
+### 2026-11-26, fire element (breakdowns)
+
+The first try of concept art as breakdowns (`docs/explorations/2026-11-26-spell-effects-lessons.md`, section 7) for Fire's element pass: one parts sheet and five storyboards (burst, ring, patch, Burn, Burning), each with two references: a frame of the approved spray and its flame flipbook (`fire-burn.png`). Kept as `docs/reference/spell-concepts/fire/el-*.jpg`. Five of six came back on the first try, three in parallel; Burn on the second (below).
+
+- A storyboard ("N panels in one row, left to right in time, the same camera... the panels: (1)... (5)") kept the camera, the scale and the characters steady across panels, and every beat landed in order, aftermath included. It reads like a motion breakdown, not a splash painting.
+- Telling it that every flame is one of the attached flipbook's sprites carried the approved look into each cast: none came back as one sculpted volume.
+- The parts sheet ("each building block alone on black, a short life strip of four to six frames") gave clean rows to rebuild from, and asked-for new parts (a hollow ring flame, a wave-front segment, a scorch cooling) came out as usable as the copied one.
+- Sizes need saying in game terms (metres, wizard heights); the ring came back a little wide, so read radii off the sim, not the art.
+- Words about hurting yourself trip the image model's filter: "sets him alight... a desperate, self-harming spell" was refused (self-harm, violence). The same look as "a mantle of fire around himself" passed.

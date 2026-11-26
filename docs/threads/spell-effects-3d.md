@@ -11,6 +11,7 @@ To set the tone, four pieces were taken from Codex concept art the user picked t
 
 **The code.** `game/packages/client/src/view3d/fx/` (hosted by `view3d/spells3d.ts`):
 - the core: `particles.ts` (stateless shader particles: a pure function of time, seed and params, so rollback and frozen frames stay right), `decal.ts` (ground decals on the floor's height), `lights.ts` (a pool of 8 spell lights), `stage.ts` (an HDR multisampled target, effects depth-faded against the scene), `aim-trail.ts` (a sweep bends like a hose), `from-sim.ts` (reads the sim);
+- shapes shared across elements (the shape half of a cast; each element brings its look): `ring-shape.ts` (the ring's front, timing, caster path and tracker);
 - primitives: `beam-strip.ts` (a camera-facing strip), `nova-ring.ts` (a ring wall on the floor), `rock-mesh.ts`, `dust-mesh.ts` (noise-eroded meshes);
 - the four pieces: `fire-body.ts` / `fire.ts` / `fire-floor.ts`, `arcane.ts`, `earth.ts` / `earth-impact.ts`, `cold.ts`;
 - a `draw<Element>` switch per piece in `standins.ts` puts the stand-in back.
@@ -91,10 +92,10 @@ This replaces the shape-first order ("every other family in batches: sprays, bea
 
 The spray is the anchor. What's locked so far: flipbook flames that burn out (Codex-painted, after Magicka 1's method), a raindrop from the hands, ash-flake embers, dark smoke, the phases. Open verdicts first: `r15-fire`, `r16-impacts`.
 
-- [ ] **Fire's parts sheet and storyboards** (Codex): the parts the spray already uses (burn flipbook, rolls, smoke, ash flakes, weld, char), plus what the other casts will need (a flame wave front, a ground-fire carpet, a flare on the caster), each alone; a storyboard per cast.
+- [x] **Fire's parts sheet and storyboards** (Codex, 2026-11-26; `docs/reference/spell-concepts/fire/el-*.jpg`, prompts in `tools/concept-gen/prompts/2026-11-26-fire-element/`): a parts sheet of seven parts (the burn-out puff, a hollow ring flame, a ground lick, smoke, an ash flake, a wave-front segment, a cooling scorch) and storyboards for the burst, the ring, the patch, Burn and Burning on a goblin. The format worked: every beat in order, aftermath included, and nothing came back as one sculpted volume.
 - [ ] **Flamethrower, to close:** the hollow, bright-edged flames in one stream (round 9, if it still reads as sprites); Codex's iteration 11 notes (larger, hotter rolls, less red confetti at the edges, [critique](../reference/spell-critiques/2026-11-26-codex-fire-iter11.md)); the nozzle on the animated staff tip, not the fixed `NOZZLE`; the haze pass (shown only on the beam so far); the char under the spray (round 10: "looks odd, and really reveals the spells shape").
 - [ ] **Fire burst** (Shift+LMB, a one-shot cone, stretching with aim): the spray's flames as one thrown puff. It builds the shared **burst** shape.
-- [ ] **Fire ring:** a wave of flame going out as one surface (the pixel rule, novas are one surface) on the frost ring's blast-wave structure. It builds the shared **ring** shape out of `cold.ts`.
+- [ ] **Fire ring:** a wave of flame going out as one surface (the pixel rule, novas are one surface), after `el-story-ring.jpg`: a white flash at the feet, a thin ring of flipbook flames racing out bright on its front, burning out behind it, breaking into separate flames at the radius, a faint sooty ring left. Its shape is done: `fx/ring-shape.ts` (the front's radius and timing, following the caster, the path kept for rollback, `RingTracker`) taken out of `cold.ts`, and the Frost ring drawn through it pixel-identical (2026-11-26); the Fire ring supplies only its parts.
 - [ ] **Fire patch** (Place): `fire-floor.ts` reviewed as the Place itself, with a grow, a burn and an aftermath of char and ash. The surface it shares with burning ground from other spells.
 - [ ] **Burn** (Self, the caster set alight): a flare on the caster and Burning on their own body. It builds the shared **self** shape.
 - [ ] **Burning on bodies:** `statuses.ts`'s licks redone with the burn flipbook and the ash flakes, following the model.
@@ -109,6 +110,8 @@ The spray is the anchor. What's locked so far: flipbook flames that burn out (Co
 - **The spell-look guide**: first draft, [lessons from the first four](../explorations/2026-11-26-spell-effects-lessons.md); it gains an identity card per element, and a critic calibrated on the user's verdicts.
 
 ## Done
+
+- 2026-11-26 The work order (the user): one element at a time, then combinations per shape, then Shield and Sigil; Fire first. Fire's parts sheet and storyboards from Codex; the ring's shape split from its look (`fx/ring-shape.ts`, the Frost ring on it, pixel-identical).
 
 - 2026-11-26 Round 16 (branch `p3d-react`, merged to main): `fx/phase.ts`, the shared phases (the beam and fire on it); a hit recoil on bodies, away from who dealt it; the hit flash about 40 % softer; the rock's contact burst as grit, its gravel lying about 2 s longer, its dust hanging longer. The lessons written ([exploration](../explorations/2026-11-26-spell-effects-lessons.md)).
 - 2026-11-26 Round 15 (branch `p3d-react`): the beam's parting effect: once it stops, its core and pulses go out in 0.14 s but the core becomes a band of smoke that widens, meanders, curls into strands and thins away, and the outer wisps linger and spread (`arcane.ts` `LINGER` 1.6 s, `uOnL`, `uAfter`); the fire's floating embers made ash flakes: a third as many, carried out of the hand with the flames, a small lift then a slow fluttering, tumbling settle, cooling to dark ash ([record](../explorations/2026-11-25-spell-effects-study.md#round-15-the-beam-goes-out-like-a-candle-ash-flakes-2026-11-26)).

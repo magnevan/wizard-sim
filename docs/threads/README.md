@@ -14,7 +14,7 @@ One file per line of work that runs across sessions. How they work: [tasks.md](.
 | [How we make particle VFX](vfx.md) | active | the user tries the VFX Lab; knobs per effect as it's reworked |
 | [Height, outlines and building order](height.md) | active | phases 1, 2, 4 (minimal), 6 and 7 on main; next: a sim test up a stair, then phase 3 (shots and height) |
 | [The port to 3D](port-3d.md) | active | steps 0 to 2 on `port-3d`; next: the swap (the 3D page becomes the game) |
-| [Spell effects in 3D](spell-effects-3d.md) | active | handed off 2026-11-25: study what made the pixel effects work, then fire, cold, the beam and the rock again |
+| [Spell effects in 3D](spell-effects-3d.md) | active | one element at a time (all five casts, then combinations per shape, then Shield and Sigil); Fire first: its parts sheet, then burst, ring, patch, Burn |
 | [Spell sounds, music and ambience](sound.md) | paused | the user's picks in the Sound Lab |
 
 Finished threads move to `docs/archive/`.

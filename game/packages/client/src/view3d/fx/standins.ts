@@ -32,7 +32,7 @@ import {
 } from '@wizard-sim/sim';
 import * as X from '../../art/px';
 import { isColdNova } from './cold';
-import { isFireBurst, isFireNova } from './fire-wave';
+import { isFireBurst, isFireNova, isFirePatch } from './fire-wave';
 import { plainRock } from './earth-sheets';
 import type { SpellLights } from './lights';
 import { Batch, type RGB } from './standins-batch';import { sprayDrop } from '../../spray-drop';
@@ -138,7 +138,7 @@ export class Standins {
       case 'burst': {
         if (e.ev === EV.dismiss || e.ev === EV.wellDry || e.ev === EV.gutter) return;
         const sp = seatSpec();
-        add(e.who >= MAX_SEATS ? 'slam' : 'burst', { r: e.amount ?? 1, look: e.look ?? (sp ? sp.look || sp.form : 0), heal: !!sp?.heal, coldNova: e.who < MAX_SEATS && isColdNova(sp), fireWave: e.who < MAX_SEATS && isFireNova(sp) });
+        add(e.who >= MAX_SEATS ? 'slam' : 'burst', { r: e.amount ?? 1, look: e.look ?? (sp ? sp.look || sp.form : 0), heal: !!sp?.heal, coldNova: e.who < MAX_SEATS && isColdNova(sp), fireWave: e.who < MAX_SEATS && (isFireNova(sp) || isFirePatch(sp)) });
         return;
       }
       case 'zap': {

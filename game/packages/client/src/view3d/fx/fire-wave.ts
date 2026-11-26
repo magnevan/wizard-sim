@@ -26,7 +26,7 @@
  * Stateless in the kit's sense: every frame is a function of the clock, the event and the kept path.
  */
 import * as THREE from 'three';
-import { EL, MAX_SEATS, type SpellSpec, type World } from '@wizard-sim/sim';
+import { EL, MAX_SEATS, specOf, type SpellSpec, type World } from '@wizard-sim/sim';
 import { GroundDecal } from './decal';
 import { FIRE_TEX, SHEET_GLSL } from './fire-sheets';
 import type { SpellLights } from './lights';
@@ -40,6 +40,10 @@ const TAU = Math.PI * 2;
 /** Is this spell the Fire ring (drawn here; the stand-ins skip it)? Mixed rings (steam, a healing ring) aren't, yet. */
 export const isFireNova = (s: SpellSpec | null | undefined): boolean =>
   !!s && s.shape === 'nova' && (s.look || s.form) === EL.fire && !s.heal && !s.scald && !s.freeze;
+
+/** Is this spell the Fire patch (a Place)? Its landing splash is drawn here (the ring's opening burst, no wave). */
+export const isFirePatch = (s: SpellSpec | null | undefined): boolean =>
+  !!s && s.shape === 'patch' && (s.look || s.form) === EL.fire && !s.heal && !s.scald && !s.freeze;
 
 /** Is this imbue event (a `move` with text 'imbue') a pure Fire burst? Its element mask holds Fire alone. */
 export const isFireBurst = (e: { text?: string; els?: number }): boolean => e.text === 'imbue' && e.els === 1 << EL.fire;
@@ -64,7 +68,7 @@ export const FIRE_WAVE = {
 const lifeOf = (): number => FIRE_WAVE.scorchEnd + 0.1;
 
 /** A burst's or a ring's wave: a ring is a fan of half-angle π. */
-interface Wave { rec: RingRec; face: number; half: number; ring: boolean }
+interface Wave { rec: RingRec; face: number; half: number; ring: boolean; splash?: boolean }
 
 const SMOKE_CAP = 90, SPARK_CAP = 96, EMBER_CAP = 700;
 
@@ -111,7 +115,7 @@ const VOL_COMMON = /* glsl */ `
 ${HASH}
 ${NOISE}
 ${WAVE_GLSL}
-uniform float uWidth, uLift, uRoll, uSpitN;
+uniform float uWidth, uLift, uRoll, uSpitN, uTube;
 uniform vec3 uBoxC, uBoxH;
 // the band's depth behind the front: thin as it leaves the caster, full by mid-way, narrowing as it dies
 float bandW(float age, float Rf) { float q = age / uTr; return min(Rf * 0.42, uWidth * mix(0.45, 1.0, smoothstep(0.0, 0.6, q)) * mix(1.0, 0.75, smoothstep(1.0, 1.7, q))); }
@@ -203,14 +207,14 @@ vec2 gas(vec3 p) {
   // the tube (only near the band), its tail, then the burst and the spits
   float tube = -1.0, e = edgeOf(th);
   float bc = gW * 0.34, yc = gH * 0.42;
-  if (b > -0.5 && b < gW + 0.3 && e > 0.0) {
+  if (uTube > 0.5 && b > -0.5 && b < gW + 0.3 && e > 0.0) {
     vec2 l = vec2((b - bc) / (gW * 0.42), (y - yc) / (gH * 0.5));
     tube = 1.0 - length(l);
     // the low smoky tail behind it
     tube = max(tube, (1.0 - smoothstep(0.0, 1.0, (b - bc) / max(gW - bc, 0.05))) * step(bc, b) * (0.35 - 1.6 * y / max(gH, 0.05)));
     tube = tube * 1.15 - mix(0.0, 1.25, smoothstep(0.6, 1.6, gQ)) - (1.0 - e) * 1.1;
   }
-  float bu = burstBase(p), extra = max(bu, b < 0.6 ? spitBase(r, th, y) : -1.0) * 1.3;
+  float bu = burstBase(p), extra = max(bu, b < 0.6 && uTube > 0.5 ? spitBase(r, th, y) : -1.0) * 1.3;
   float base = max(tube, extra);
   if (base < -0.55) return vec2(0.0, 1.0);
   // the noise turns round the tube's axis (rolling forward over the top): a lobe rolls over from frame to frame
@@ -472,7 +476,7 @@ class Slot {
       new ParticleBatch({ motion, look, cap, order, soft, upright, uniforms: { ...this.P, uCount: { value: 0 }, ...extra } });
     this.ground = new GroundDecal({ look: GROUND, uniforms: this.D, order: -1, step: 0.25 });
     this.smoke = batch(SMOKE, LOOK_SMOKE, SMOKE_CAP, 1, { uSheet: { value: FIRE_TEX.smokeburn } }, false, 0.5);
-    this.S = { ...this.P, uCount: { value: 0 }, uSeed: { value: 0 }, ...FX_U, uBoxC: { value: new THREE.Vector3() }, uBoxH: { value: new THREE.Vector3(1, 1, 1) }, uWidth: { value: FIRE_WAVE.width }, uLift: { value: FIRE_WAVE.lift }, uRoll: { value: FIRE_WAVE.roll }, uSpitN: { value: 12 } };
+    this.S = { ...this.P, uCount: { value: 0 }, uSeed: { value: 0 }, ...FX_U, uBoxC: { value: new THREE.Vector3() }, uBoxH: { value: new THREE.Vector3(1, 1, 1) }, uWidth: { value: FIRE_WAVE.width }, uLift: { value: FIRE_WAVE.lift }, uRoll: { value: FIRE_WAVE.roll }, uSpitN: { value: 12 }, uTube: { value: 1 } };
     this.sheet = volumeMesh(this.S);
     this.flash = batch(FLASH, LOOK_FLASH, 1, 4, {}, false, 0.6);
     this.sparks = batch(SPARKS, LOOK_SPARK, SPARK_CAP, 4, {}, false, 0.2);
@@ -509,7 +513,11 @@ class Slot {
     // the spits: one cell about a unit of the front's arc wide
     this.S.uSpitN.value = Math.max(3, Math.round(arc / FIRE_WAVE.spitEvery));
     count(this.embers, FIRE_WAVE.embersPerU, EMBER_CAP, age < Tr * 1.3 + 2.0);
-    this.sparks.u.uCount.value = w.ring ? SPARK_CAP : Math.round(SPARK_CAP * 0.45); this.sparks.count = SPARK_CAP; this.sparks.mesh.visible = age < 0.6;
+    // a patch's landing splash: only the opening burst (its pop, racing ring, sparks, shock line and flash); the floor
+    // under it burns and chars by itself (fire-floor.ts)
+    this.S.uTube.value = w.splash ? 0 : 1;
+    if (w.splash) { this.smoke.mesh.visible = false; this.embers.mesh.visible = false; }
+    this.sparks.u.uCount.value = w.ring || w.splash ? SPARK_CAP : Math.round(SPARK_CAP * 0.45); this.sparks.count = SPARK_CAP; this.sparks.mesh.visible = age < 0.6;
     this.flash.count = 1; this.flash.mesh.visible = age < 0.17;
     // the ground: the hot line under the front, then the scorch
     const qq = Math.min(1, q), Rn = q <= 1 ? frontR(r.r, qq) : r.r * (1 + FIRE_WAVE.overrun * (1 - Math.exp(-(q - 1) * 2.2)));
@@ -523,10 +531,11 @@ class Slot {
     this.D.uShockA.value = age < Tb * 1.1 ? Math.min(1, age * 40) * (1 - 0.7 * Math.min(1, age / (Tb * 1.1))) * (age > Tb ? 1 - (age - Tb) / (Tb * 0.1) : 1) : 0;
     this.D.uHot.value = Math.exp(-Math.max(0, age - Tr * 0.5) * 2.2) * Math.min(1, q * 2);
     this.D.uScorch.value = Math.min(1, q * 1.5) * (1 - Math.min(1, Math.max(0, (age - FIRE_WAVE.scorchHold) / (FIRE_WAVE.scorchEnd - FIRE_WAVE.scorchHold))));
-    const pad = r.r * (1 + FIRE_WAVE.overrun) + 1.5, key = `${r.tick}:${r.who}:${w.ring}`;
+    if (w.splash) this.D.uFront.value = this.D.uHot.value = this.D.uScorch.value = 0;
+    const pad = r.r * (1 + FIRE_WAVE.overrun) + 1.5, key = `${r.tick}:${r.who}:${w.ring}:${!!w.splash}`;
     if (this.covered !== key) { this.covered = key; this.ground.heightAt = heightAt; this.ground.cover({ x0: r.x - pad, z0: r.y - pad, x1: r.x + pad, z1: r.y + pad }); }
     this.group.visible = true;
-    return front;
+    return w.splash ? 0 : front;
   }
 
   hide(): void { this.group.visible = false; this.wave = null; }
@@ -558,6 +567,12 @@ export class FireWaves {
       if (this.bursts.some((b) => b.rec.tick === tick && b.rec.who === e.who)) continue;
       const face = Math.atan2((e.y2 ?? e.y) - e.y, (e.x2 ?? e.x) - e.x);
       this.bursts.push({ rec: { tick, who: e.who, x: e.x, y: e.y, r: e.amount ?? 2.5, seed: (tick * 37 + e.who * 11) % 9973, path: [] }, face, half: (e.half ?? 0.17) * TAU, ring: false });
+    }
+    // a Fire patch landing: its splash (the burst event a Place gives, at the patch's middle, its radius)
+    for (const e of w.events) {
+      if (e.kind !== 'burst' || e.who < 0 || e.who >= MAX_SEATS || !w.seats.active[e.who] || !isFirePatch(specOf(w, e.who))) continue;
+      if (this.bursts.some((b) => b.rec.tick === tick && b.rec.who === e.who && b.splash)) continue;
+      this.bursts.push({ rec: { tick, who: e.who, x: e.x, y: e.y, r: e.amount ?? 2, seed: (tick * 41 + e.who * 13) % 9973, path: [] }, face: 0, half: Math.PI, ring: false, splash: true });
     }
     this.bursts = this.bursts.filter((b) => (tick - b.rec.tick) / 60 < lifeOf() + 0.1);
   }

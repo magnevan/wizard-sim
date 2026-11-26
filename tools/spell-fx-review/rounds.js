@@ -430,4 +430,24 @@ window.ROUNDS = [
     ],
     general: 'Anything else',
   },
+  {
+    id: 'fire-8',
+    group: 'Fire',
+    topic: 'Patch',
+    tab: '1 · gas',
+    el: 'fire',
+    date: '2026-11-26',
+    title: 'Fire patch, take 1: the same burning gas, on the ground',
+    lead: 'The Place, after the storyboard you kept (“edges can be a little fuzzier”) and the ring’s lesson: the patch’s flames are now the ring’s ray-marched gas instead of a sheet pushed up into tongues (which read as an opaque yellow mat). Fable’s point carries: one field, not pieces, and not a surface.',
+    items: [
+      {
+        id: 'patch',
+        title: 'Fire patch',
+        text: 'It lands with the ring’s opening burst at its middle (a pop, a ring of fire racing out to the patch’s edge, sparks, a shock line), replacing the red stand-in circle. Then the floor burns: a dark char bed with glowing cracks, and over it a low volume of burning gas whose tongues rise in clusters that drift slowly, so the char shows between them; hot at their base, red at their tips. It is one connected body, never separate geysers. The char’s rim is fuzzy and ragged (two scales of noise). Two runes, then five. (The lab loops its cast every few seconds, so the full burn and the char cooling after are best seen in the game: cast it there and watch it go out. Not built yet from the storyboard: smoke wisps over the dying patch, ember specks in the cold char.)',
+        vid: ['p1-patch-14.mp4', 'p1-patch5-14.mp4'],
+        ask: 'Build from this?',
+      },
+    ],
+    general: 'Anything else about the patch',
+  },
 ];

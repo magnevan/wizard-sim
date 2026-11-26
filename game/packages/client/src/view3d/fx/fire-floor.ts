@@ -22,7 +22,8 @@
 import * as THREE from 'three';
 import { CELL_GLSL, MAX_BURNING, type SurfGrid } from './from-sim';
 import { GroundDecal } from './decal';
-import { ParticleBatch } from './particles';
+import { ParticleBatch, premulMaterial } from './particles';
+import { FX_U } from './stage';
 import { FIRE_TEX } from './fire-sheets';
 import { HASH, NOISE } from './glsl';
 import type { SpellLights } from './lights';
@@ -31,6 +32,8 @@ import type { SpellLights } from './lights';
 const EMBERS_PER_CELL = 2;
 /** Seconds a cell's char lingers after it goes out; seconds a lit cell takes to flare up. */
 const CHAR_LIFE = 3, GROW = 0.4;
+/** How tall (u) the tongues stand where the patch burns hardest. */
+const FLAME_H = 0.95;
 
 const FLOOR_HEAD = /* glsl */ `
 ${CELL_GLSL}
@@ -41,54 +44,105 @@ float litFor(float ci) { return texelFetch(uAge, ivec2(int(mod(ci, 64.0)), int(c
 `;
 
 /**
- * The flames as one low sheet over the burning cells: a fine grid draped over the floor whose points rise into
- * tongues where the patch burns (noise rising through it), tallest in the patch's middle, low and ragged at its edge,
- * growing as a cell flares up and sinking as it dies.
+ * The flames: a low volume of burning gas over the burning cells, ray-marched like the Fire wave (fire-wave.ts), so the
+ * patch is the same stuff as the ring (the user on the sheet before it, for the wave: "a solid sheet with holes through
+ * it, rather than something composed of gas/plasma"). Tongues rise through it (noise climbing, bent by a slower noise),
+ * gathered into clusters that drift slowly, so the charred bed and its glowing cracks show between them; hot at their
+ * base, red at their tips. Its height follows each cell's burn: up as a cell flares, down over its last second.
  */
-const SHEET_VERT = /* glsl */ `
+const GAS_STEPS = 24;
+
+const GAS_COMMON = /* glsl */ `
 ${HASH}
 ${NOISE}
 ${CELL_GLSL}
-uniform sampler2D uChar; uniform float uClock;
-out vec3 vWp; out float vH; out float vBurn;
+uniform sampler2D uChar; uniform float uClock, uGy, uH;
+uniform vec3 uBoxC, uBoxH;
+`;
+
+const GAS_VERT = /* glsl */ `
+${GAS_COMMON}
+out vec3 vWorld;
 void main() {
-  vec4 w = modelMatrix * vec4(position, 1.0);
-  vec2 guv = (w.xz - uSurfDims.xy) / (uSurfDims.z * uSurfSize);
-  vec4 s = texture(uSurf, guv); vec2 ch = texture(uChar, guv).rg;
-  float life = s.r > 0.01 ? clamp(s.g / s.r, 0.0, 1.0) : 0.0;
-  float burn = smoothstep(0.3, 0.85, s.r) * clamp(ch.r, 0.0, 1.0) * mix(0.25, 1.0, life);
-  // tongues: peaks of a noise that rises through the sheet, sharpened
-  float n = fbm3(vec3(w.x * 3.0, w.z * 3.0, -uClock * 1.9));
-  float tongue = pow(clamp(n * 1.9 - 0.55, 0.0, 1.0), 1.6);
-  float h = burn * (0.04 + 1.0 * tongue) * (0.85 + 0.3 * s.b);
-  w.y += h;
-  vWp = w.xyz; vH = h; vBurn = burn;
-  gl_Position = projectionMatrix * viewMatrix * w;
+  vec3 wp = uBoxC + position * uBoxH;
+  vWorld = wp;
+  gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0);
 }`;
 
-/** The sheet's colour: toon bands, hot at its base, deep red at its tips, eroded at the tips and the patch's edge. */
-const SHEET_LOOK = /* glsl */ `
-uniform float uClock;
-in float vH; in float vBurn;
-vec4 decal(vec3 wp) {
-  if (vBurn < 0.03) return vec4(0.0);
-  float n2 = fbm3(vec3(wp.xz * 4.5, uClock * 2.6 - wp.y * 5.0));
-  float k = vH / max(vBurn * 0.8, 0.05);
-  // the low ground between tongues thins out, so the charred bed and its glowing cracks show through
-  float a = smoothstep(0.03, 0.12, vBurn) * (1.0 - smoothstep(0.62, 0.8, k + (n2 - 0.5) * 0.6)) * smoothstep(0.02, 0.14, k + (n2 - 0.5) * 0.15);
-  if (a <= 0.0) return vec4(0.0);
-  float h = 0.26 + k * 0.7 + (0.5 - n2) * 0.45 + (1.0 - vBurn) * 0.3;
-  vec3 white = vec3(2.6, 2.3, 1.6), yellow = vec3(2.0, 1.05, 0.12), orange = vec3(1.25, 0.3, 0.03), red = vec3(0.6, 0.07, 0.015);
-  float e = 0.02;
-  vec3 c = mix(white, yellow, smoothstep(0.2 - e, 0.2 + e, h));
-  c = mix(c, orange, smoothstep(0.48 - e, 0.48 + e, h));
-  c = mix(c, red, smoothstep(0.74 - e, 0.74 + e, h));
-  // toon shading from the sheet's own slope: flanks turned from the camera's light are darker, so tongues read as forms
-  vec3 N = normalize(cross(dFdx(wp), dFdy(wp)));
-  c *= mix(0.72, 1.08, smoothstep(0.2, 0.9, abs(N.y)));
-  float cover = 0.92 * a;
-  return vec4(c * cover, cover);
+const GAS_FRAG = /* glsl */ `
+#include <packing>
+${GAS_COMMON}
+uniform sampler2D uDepth; uniform vec2 uRes; uniform float uNear, uFar;
+in vec3 vWorld;
+out vec4 fxColor;
+// 0 hottest .. 1 going out: saturated, as the wave's (fire-wave.ts gasRamp)
+vec3 gasRamp(float h) {
+  h = clamp(h, 0.0, 1.0);
+  vec3 c0 = vec3(3.2, 1.6, 0.08), c1 = vec3(2.5, 0.8, 0.03), c2 = vec3(1.6, 0.3, 0.012), c3 = vec3(0.7, 0.08, 0.01), c4 = vec3(0.12, 0.02, 0.01);
+  if (h < 0.2) return mix(c0, c1, h / 0.2);
+  if (h < 0.45) return mix(c1, c2, (h - 0.2) / 0.25);
+  if (h < 0.7) return mix(c2, c3, (h - 0.45) / 0.25);
+  return mix(c3, c4, (h - 0.7) / 0.3);
+}
+vec2 gas(vec3 p) {
+  vec2 guv = (p.xz - uSurfDims.xy) / (uSurfDims.z * uSurfSize);
+  vec4 s = texture(uSurf, guv);
+  float grow = texture(uChar, guv).r;
+  float life = s.r > 0.01 ? clamp(s.g / s.r, 0.0, 1.0) : 0.0;
+  // the patch's own edge, roughened so it never follows the grid's cells
+  float rough = vnoise3(vec3(p.xz * 1.7, 5.0)) - 0.5;
+  float burn = smoothstep(0.3, 0.85, s.r + rough * 0.45) * grow * mix(0.25, 1.0, life);
+  if (burn < 0.02) return vec2(0.0, 1.0);
+  float y = p.y - uGy;
+  // clusters where the flames gather, drifting slowly; between them only low licks
+  float cl = smoothstep(0.38, 0.72, vnoise3(vec3(p.xz * 0.8, uClock * 0.15 + uSeed * 0.01)));
+  float tall = uH * burn * mix(0.3, 1.0, cl) * (0.85 + 0.3 * s.b);
+  if (y > tall + 0.35) return vec2(0.0, 1.0);
+  // tongues: noise climbing through the gas, bent by a slower noise
+  vec3 q = vec3(p.xz * 2.1, y * 1.25 - uClock * 2.3);
+  q.xy += (vec2(vnoise3(q * 0.45 + 3.1), vnoise3(q * 0.45 + 7.7)) - 0.5) * 1.0;
+  float n = fbm3(q);
+  // thick in the clusters, thin between them, so the charred bed and its glowing cracks show through
+  float d = (1.0 - y / max(tall, 0.05)) * burn * mix(0.55, 1.2, cl) + (n - 0.5) * 1.7 - 0.6 + 0.25 * cl;
+  if (d <= 0.0) return vec2(0.0, 1.0);
+  float heat = 1.0 - clamp(d * 1.5, 0.0, 1.0) + 0.38 * clamp(y / max(tall, 0.05), 0.0, 1.0);
+  return vec2(d, heat);
+}
+void main() {
+  vec3 ro = cameraPosition, rd = normalize(vWorld - ro);
+  vec3 inv = 1.0 / rd, t0 = (uBoxC - uBoxH - ro) * inv, t1 = (uBoxC + uBoxH - ro) * inv;
+  vec3 tn = min(t0, t1);
+  float tIn = max(max(max(tn.x, tn.y), tn.z), 0.0), tOut = length(vWorld - ro);
+  vec3 fwd = -vec3(viewMatrix[0][2], viewMatrix[1][2], viewMatrix[2][2]);
+  float scene = -perspectiveDepthToViewZ(texture(uDepth, gl_FragCoord.xy / uRes).r, uNear, uFar);
+  tOut = min(tOut, scene / max(dot(rd, fwd), 1e-3));
+  if (tOut <= tIn) discard;
+  float dt = (tOut - tIn) / ${GAS_STEPS}.0;
+  float t = tIn + dt * fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+  vec3 col = vec3(0.0); float acc = 0.0;
+  for (int i = 0; i < ${GAS_STEPS}; i++) {
+    vec2 g = gas(ro + rd * t);
+    if (g.x > 0.0) {
+      float a = 1.0 - exp(-g.x * 12.0 * dt);
+      col += (1.0 - acc) * a * gasRamp(g.y) * smoothstep(0.02, 0.25, g.x);
+      acc += (1.0 - acc) * a;
+      if (acc > 0.98) break;
+    }
+    t += dt;
+  }
+  if (acc < 0.004) discard;
+  fxColor = vec4(col, acc);
 }`;
+
+/** The gas's box: one draw call (a cube's back faces, placed and sized by uniforms). */
+function gasMesh(u: Record<string, THREE.IUniform>): THREE.Mesh {
+  const m = premulMaterial(new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, uniforms: u, vertexShader: GAS_VERT, fragmentShader: GAS_FRAG, side: THREE.BackSide }));
+  m.depthTest = false;   // the march stops at the world's depth itself
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), m);
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 1;
+  return mesh;
+}
 
 const FLOOR_EMBER = /* glsl */ `${FLOOR_HEAD}
 Particle emitParticle(float slot, float back) {
@@ -125,26 +179,29 @@ vec4 decal(vec3 wp) {
   vec2 ch = texture(uChar, guv).rg;
   if (ch.g < 0.01) return vec4(0.0);
   vec4 s = texture(uSurf, guv);
-  float n = fbm3(vec3(wp.xz * 1.5, 3.0));
-  float m = ch.g + (n - 0.5) * 0.7;
-  float rim = smoothstep(0.12, 0.5, m);
+  // a fuzzy, ragged rim (the user, round 1: "edges can be a little fuzzier"): two scales of noise, a wide soft ramp
+  float n = fbm3(vec3(wp.xz * 1.5, 3.0)), nf = vnoise3(vec3(wp.xz * 6.0, 9.0));
+  float m = ch.g + (n - 0.5) * 0.6 + (nf - 0.5) * 0.25;
+  float rim = smoothstep(0.18, 0.85, m);
   vec3 cr = texture(uCracks, wp.xz / 3.2).rgb;
   float crack = smoothstep(0.32, 0.85, cr.r) * smoothstep(0.05, 0.4, cr.g + 0.1);
   float life = s.r > 0.01 ? clamp(s.g / s.r, 0.0, 1.0) : 0.0;
   float bed = smoothstep(0.4, 0.95, s.r + (n - 0.5) * 0.4) * ch.r * mix(0.25, 1.0, life);
   float flick = 0.65 + 0.35 * vnoise3(vec3(wp.xz * 2.5, uClock * 2.2));
-  float glow = (crack * 1.1 + 0.3) * flick * bed;
+  // the char stays dark between the flames; only its cracks glow (a flat glow washed the whole bed to tan)
+  float glow = (crack * 1.3 + 0.05) * flick * bed;
   vec3 charC = cr * 0.12 + vec3(0.012, 0.008, 0.007);
   vec3 glowC = vec3(1.0, 0.38, 0.07) * glow * 1.6;
-  float a = rim * 0.88;
+  float a = rim * 0.93;
   return vec4(charC * a + glowC, a);
 }`;
 
 export class FireFloor {
   readonly group = new THREE.Group();
   readonly bed: GroundDecal;
-  /** The flames: one low sheet of tongues (SHEET_VERT), not a carpet of sprites. */
-  readonly flames: GroundDecal;
+  /** The flames: a low volume of burning gas (GAS_FRAG), as the wave's; not a sheet, not a carpet of sprites. */
+  readonly flames: THREE.Mesh;
+  private G: Record<string, THREE.IUniform>;
   private embers: ParticleBatch;
   private U: Record<string, THREE.IUniform>;
   /** Seconds each burning cell (in the burning list's order) has been lit. */
@@ -166,11 +223,11 @@ export class FireFloor {
       uClock: { value: 0 }, uBurn: { value: grid.burning }, uAge: { value: this.ages }, uSurf: { value: null }, uSurfDims: { value: grid.dims }, uSurfSize: { value: grid.gridSize },
     };
     this.bed = new GroundDecal({ look: BED, uniforms: { ...this.U, uChar: { value: null }, uCracks: { value: FIRE_TEX.cracks } } }, grid.heightAt);
-    this.flames = new GroundDecal({ look: SHEET_LOOK, vertex: SHEET_VERT, step: 0.1, lift: 0.03, order: 1, uniforms: { ...this.U, uChar: { value: null } } }, grid.heightAt);
-    this.flames.material.polygonOffset = false;
+    this.G = { ...this.U, ...FX_U, uSeed: { value: seed }, uChar: { value: null }, uGy: { value: 0 }, uH: { value: FLAME_H }, uBoxC: { value: new THREE.Vector3() }, uBoxH: { value: new THREE.Vector3(1, 1, 1) } };
+    this.flames = gasMesh(this.G);
     this.embers = new ParticleBatch({ motion: FLOOR_EMBER, look: LOOK_EMBER, cap: MAX_BURNING * EMBERS_PER_CELL, order: 2, uniforms: this.U });
-    this.flames.u.uSeed.value = seed; this.embers.u.uSeed.value = seed + 7; this.bed.u.uSeed.value = seed + 3;
-    this.group.add(this.bed.mesh, this.flames.mesh, this.embers.mesh);
+    this.embers.u.uSeed.value = seed + 7; this.bed.u.uSeed.value = seed + 3;
+    this.group.add(this.bed.mesh, this.flames, this.embers.mesh);
   }
 
   /** Quads drawn this frame. */
@@ -181,8 +238,16 @@ export class FireFloor {
     const g = this.grid;
     this.U.uClock.value = t; this.U.uSurf.value = g.grid;
     const box = this.noteAges(t);
-    this.bed.u.uChar.value = this.char; this.flames.u.uChar.value = this.char;
-    this.bed.cover(box); this.flames.cover(box);
+    this.bed.u.uChar.value = this.char; this.G.uChar.value = this.char;
+    this.bed.cover(box);
+    this.flames.visible = !!box && g.count > 0;
+    if (box) {
+      // the gas's box: over everything burning, from the floor to above the tallest tongue
+      const cx = (box.x0 + box.x1) / 2, cz = (box.z0 + box.z1) / 2, gy = g.heightAt(cx, cz), H = FLAME_H * 1.5 + 0.4;
+      this.G.uGy.value = gy;
+      (this.G.uBoxC.value as THREE.Vector3).set(cx, gy + H / 2 - 0.1, cz);
+      (this.G.uBoxH.value as THREE.Vector3).set((box.x1 - box.x0) / 2, H / 2, (box.z1 - box.z0) / 2);
+    }
     this.embers.count = g.count * EMBERS_PER_CELL;
     this.group.visible = !!box;
     if (!lights || !g.count) return;
@@ -246,5 +311,5 @@ export class FireFloor {
     return x0 === Infinity ? null : { x0: x0 - 1.5, z0: z0 - 1.5, x1: x1 + 1.5, z1: z1 + 1.5 };
   }
 
-  dispose(): void { this.bed.dispose(); this.flames.dispose(); this.embers.dispose(); this.ages.dispose(); this.char?.dispose(); }
+  dispose(): void { this.bed.dispose(); this.flames.geometry.dispose(); (this.flames.material as THREE.Material).dispose(); this.embers.dispose(); this.ages.dispose(); this.char?.dispose(); }
 }

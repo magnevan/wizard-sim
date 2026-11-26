@@ -1,74 +1,50 @@
 [
  {
-  "kind": "curved-flight",
-  "what": "stairs 5 to 3.5 m in a shape the kit has no flight for (a sector or ring)",
-  "at": [
-   -11.0,
-   -6.5
-  ],
-  "at_c": [
-   17.5,
-   20.0
-  ]
- },
- {
-  "kind": "curved-flight",
-  "what": "stairs 5 to 3.5 m in a shape the kit has no flight for (a sector or ring)",
-  "at": [
-   9.0,
-   -5.5
-  ],
-  "at_c": [
-   27.5,
-   20.0
-  ]
- },
- {
   "kind": "building",
-  "what": "greenhouse: a plain wall box for now (needs its facade pieces)",
+  "what": "the great greenhouse: a plain wall box for now (needs its facade pieces)",
   "at": [
-   -22.0,
-   -1.0
+   -53.0,
+   28.0
   ],
   "at_c": [
-   12.0,
-   22.5
-  ]
- },
- {
-  "kind": "building",
-  "what": "stills: a plain wall box for now (needs its facade pieces)",
-  "at": [
-   21.0,
-   -2.0
-  ],
-  "at_c": [
-   33.5,
-   22.0
+   8.5,
+   37.0
   ]
  },
  {
   "kind": "curved-flight",
   "what": "stairs 3.5 to 0 m in a shape the kit has no flight for (a sector or ring)",
   "at": [
-   -11.0,
-   17.5
+   -19.938771314806303,
+   24.702398241704614
   ],
   "at_c": [
-   17.5,
-   32.0
+   25.0,
+   35.5
   ]
  },
  {
   "kind": "curved-flight",
   "what": "stairs 0 to 3.5 m in a shape the kit has no flight for (a sector or ring)",
   "at": [
-   13.0,
-   21.0
+   19.938771314806303,
+   24.702398241704618
   ],
   "at_c": [
-   29.5,
-   33.5
+   45.0,
+   35.5
+  ]
+ },
+ {
+  "kind": "building",
+  "what": "the battery's boiler house: a plain wall box for now (needs its facade pieces)",
+  "at": [
+   63.0,
+   14.0
+  ],
+  "at_c": [
+   66.5,
+   30.0
   ]
  }
 ]

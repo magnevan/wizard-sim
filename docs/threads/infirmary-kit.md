@@ -1,6 +1,6 @@
 # The infirmary on the kit
 
-Status: active; back at stage 1: four new plans (E to H) on the review page for the user's pick, after their notes on the painted plan D; the kit scene and its pieces are plan D's until then · Last touched: 2026-11-26
+Status: active; plan H (the user's pick, rev 2) traced into the kit scene, 0 errors, walkable; its grey-box being painted for the user; next: glyph paths, the broken wall's rubble, the purifier, the boiler house, lanterns, triage dressing · Last touched: 2026-11-26
 Record: [the read](../campaign/01-opening/infirmary-read.md) (stages 0 to 3: plan D rev 9, flow 8/10, sense 9/10) · plan: `tools/place-plans/plans/inf-d.py` · scene: `tools/kit/scenes/infirmary.scene.json` · [building it on the kit](../campaign/making-a-place.md#building-it-on-the-kit) (the steps) · [the opening thread](opening.md) · [the courtyard on the kit](kit-courtyard.md) (the first place built this way)
 
 ## Where it stands
@@ -22,6 +22,8 @@ Branch `worktree-infirmary-kit`.
 - [ ] Dressing notes carried from the read: tents lighter than buildings, the walkways on posts, a different floor on the top tier and the well's tier so the 1.5 m step reads, different beds in the two gardens, the bath's rim on the sand or behind a sea wall, a kerb at the north gate.
 
 ## Done
+
+- 2026-11-26: the user picked plan H ("H looks pretty good"), with more open ground and nits (glyph path on the road out, the stack's building, a larger farm out of sight, lanterns behind the road, urgency). H rev 2 written and walk-checked; three rules from the notes on the veto list. Traced into `scenes/infirmary.scene.json` with `FIXES['infirmary']` (plan D's kept as `infirmary-d`): the cove's beach and sea, a flight at each shoulder (the east one stands in for the broken wall), the jetty and the purifier's platform, the well, six full-size tents round the forecourt's edges, the greenhouse refitted at 26 u (about 7.4 m tall), the smokestack beside the boiler house (a wall box for now). 0 errors; room exported; content:check ok. The old pipes are gone with plan D (glyph paths replace them; the pipe feature stays in the kit).
 
 - 2026-11-26: back to stage 1 after the user's notes on the painted plan D (recorded in [the read](../campaign/01-opening/infirmary-read.md#the-users-notes-on-the-painted-layout-2026-11-26-back-to-stage-1); canon: wells tap the field, not water). Shore climb: a broken wall's rubble; shore piece: a Life-magic sea-water purifier. Plans E (the broad terrace), F (the crescent), G (the prow) pass the walk report; a fresh structure critic: F 7, G 6, E 5, plan D blind 4; its mix drafted as plan H (the crescent with a forecourt; the cove pushed south, the purifier on a jetty). All four painted by an isolated agent and on the review page; the user picks (`q-plan-r2`). The kit scene stays plan D's until then.
 

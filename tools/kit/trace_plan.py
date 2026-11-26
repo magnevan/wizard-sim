@@ -32,7 +32,42 @@ FIXES = {
         ('paint', 'paving at -2 m', 45, 63, 50, 64), ('paint', 'wood at -5 m', 45, 65, 50, 74), ('head', 'sea stair, lower', [[45.0, 64.5], [50.0, 64.5]]),
         ('disc', 'dais at 2 m', 47.5, 40.0, 4.6),   # the armillary's set piece brings its own dais: the floor under it is the sunk plaza's
     ],
-    'infirmary': [   # plan D's stairs are plain stairs() (sectors to the trace), so its four flights are written here (2026-11-26)
+    'infirmary': [   # plan H rev 2 (the user's pick, 2026-11-26): its cove, its two shore climbs and the made pieces
+        ('terrace', 't-sea', dict(name='the deep')), ('terrace', 't-stream', dict(name='the sea')),
+        ('terrace', 'sand at 0 m', dict(name='the beach', mat='sand')),
+        ('terrace', 'stairs at 0 m', dict(name='the jetty', h=0.3, mat='deck', edge='parapet')),
+        ('paint', 'grass at 3.5 m', 0, 0, 88, 0),          # the lattice's first row fell outside the plan's fill
+        # the cove: a beach round its back under the clifftop, the sea inside it and out through its mouth
+        ('disc', 'the beach', 35.0, 40.0, 11.0), ('disc', 'the sea', 35.0, 40.0, 7.0), ('paint', 'the sea', 23, 41, 47, 50),
+        # the built stair down at the west shoulder; the broken wall's climb at the east (a flight until the rubble piece exists)
+        ('paint', 'the beach', 20, 34, 25, 36), ('flight', 'the west stair', [[19.5, 34.0], [19.5, 36.0]]),
+        ('paint', 'the beach', 45, 34, 50, 36), ('flight', 'the broken wall (a flight for now)', [[50.5, 34.0], [50.5, 36.0]]),
+        ('paint', 'the beach', 42, 33, 44, 38), ('paint', 'plaza at 3.5 m', 45, 37, 48, 39), ('paint', 'plaza at 3.5 m', 21, 31, 27, 33), ('paint', 'plaza at 3.5 m', 45, 31, 49, 33),   # the plan's angled stairs' leftovers
+        # the jetty out into the cove, the purifier's platform at its end
+        ('paint', 'the jetty', 34, 33, 36, 38), ('disc', 'the jetty', 35.0, 39.5, 2.2),
+        # the made pieces in place of the plan's boxes and the trace's stand-ins
+        ('drop-setpiece', 'setpiece.post'), ('drop-setpiece', 'setpiece.pier-round'),
+        ('paint', 'grass at 3.5 m', 2, 30, 15, 44),
+        ('object', dict(kind='setpiece', id='greenhouse', name='the great greenhouse', piece='setpiece.greenhouse', at=[8.5, 37.0], front='S')),
+        ('object', dict(kind='setpiece', id='well', name='the well', piece='setpiece.infirmary-well', at=[35.0, 18.0], front='S')),
+        ('object', dict(kind='setpiece', id='battery-stack', name="the battery's smokestack", piece='setpiece.battery-stack', at=[73.6, 29.5], front='S')),
+        # the triage camp: six full-size tents round the forecourt's edges, the middle left open (the user: "negative space")
+        ('object', dict(kind='setpiece', id='tent-nw', name='a tent', piece='setpiece.infirmary-tent', at=[19.5, 13.5], front='E')),
+        ('object', dict(kind='setpiece', id='tent-sw', name='a tent', piece='setpiece.infirmary-tent', at=[19.5, 23.0], front='E')),
+        ('object', dict(kind='setpiece', id='tent-ne', name='a tent', piece='setpiece.infirmary-tent', at=[50.5, 13.5], front='W')),
+        ('object', dict(kind='setpiece', id='tent-se', name='a tent', piece='setpiece.infirmary-tent', at=[50.5, 23.0], front='W')),
+        ('object', dict(kind='setpiece', id='tent-n1', name='a tent', piece='setpiece.infirmary-tent', at=[26.0, 10.8], front='S')),
+        ('object', dict(kind='setpiece', id='tent-n2', name='a tent', piece='setpiece.infirmary-tent', at=[44.0, 10.8], front='S')),
+        # markers
+        ('object', dict(kind='marker', id='start-0', at=[35, 5], name='seat 0 starts on the road in from the main gate')),
+        ('object', dict(kind='marker', id='start-1', at=[34.2, 4.2], name="seat 1's start")),
+        ('object', dict(kind='marker', id='start-2', at=[35.8, 4.2], name="seat 2's start")),
+        ('object', dict(kind='marker', id='start-3', at=[35, 3.4], name="seat 3's start")),
+        ('object', dict(kind='marker', id='gate-court', at=[35, 1.5], name="the road north: back to the courtyard's bridge")),
+        ('object', dict(kind='marker', id='gate-battery', at=[86.5, 37.5], name="the road's east end: on to the battery")),
+        ('object', dict(kind='marker', id='well-mark', at=[35, 18], tag='landmark', name='the well')),
+    ],
+    'infirmary-d': [   # (plan D, kept as history: the scene is plan H's since 2026-11-26) plan D's stairs are plain stairs() (sectors to the trace), so its four flights are written here (2026-11-26)
         ('terrace', 't-sea', dict(name='the deep')), ('terrace', 't-stream-c', dict(name='the bath')),
         ('terrace', 't-stream', dict(name='the sea')), ('terrace', 'stairs at 0 m', dict(name='the shore walk')),
         ('terrace', 'stairs at 4.5 m', dict(name="the east flight's landing", h=4.25, edge='parapet')),

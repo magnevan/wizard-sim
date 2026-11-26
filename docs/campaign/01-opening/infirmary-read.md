@@ -81,3 +81,22 @@ The first in-game round (rev 3, as the engine session built it at `feabfbb`) sco
 Rounds: 7/10 (rev 7: the sea stopped 8 u out), 8/10 (rev 8: void at the sea's east end), then **9/10 at rev 9**: "ready for the beauty stage". The land and the sea run past the camera's view, woods stand outside both gates, and each gate's line is closed.
 
 **For the beauty stage:** the bath's paved rim stands half in the sea, so pull it onto the sand or give it a sea wall; tidy the pale tile scraps at the flights' feet; add a kerb at the north gate; and the dressing listed above.
+
+## The user's notes on the painted layout (2026-11-26): back to stage 1
+
+Plan D was rebuilt on the kit and painted as concept art (`tools/infirmary-review/`). Seen painted, the user sent the place back for three new plans. Their notes, by place in the journey:
+
+- **Arrival:** "too many levels here, it's going to be really cramped with more players". The tents "look too calm, this is for emergency triage of soldiers that got hurt when monsters broke through the wall": more tents, and the conduits should lead to "some sort of device that utilizes healing energy".
+- **Overlook:** the greenhouse "should be a bit grander. The well's primary purpose here is to feed the greenhouse & maybe some sort of farm beyond the wall. The healing is a temporary setup." The connections: not plumbing; "for the battery we had these rune carvings on the ground" (the battery's glyph paths). Some plumbing for other things is fine, "but it should look like you can walk over it".
+- **Shore:** the second grand staircase "looks unnatural", cramped at its foot with no road at its head, and two grand stairs side by side aren't realistic. Its replacement, picked: **a retaining wall that broke this morning, its rubble a rough ramp you climb.** The bath "looks awkward... I can't really tell where this type of water source fits in mechanically". Its replacement: **a structure that purifies sea water with Life magic to feed the greenhouse and the farm** (the user: "something you could imagine life magic could do"; grown from the "tidal rune pool" option).
+- **Wells are not water:** "We should make it really explicit that these structures are not wells of water, they're 'wells' that tap into the magical field, the same way a well taps into ground water." (Now in [canon](../canon.md).) So the shore piece takes in *sea* water and the well's Life cleans it; the well itself holds no water.
+- **The road out:** fine; "maybe there should be some lanterns lighting up the way".
+- **The west side** looked awkward (likely off camera); if it shows, "a span of farmland on that side, and this is the sort of core that feeds the field".
+
+### What the place is now (for the new plans)
+
+- **What it's for:** a Life well that feeds the academy's greenhouse and the farmland beyond the wall, with a sea-water purifier on the shore it powers. The greenhouse is the grand building here. This morning, when monsters broke through the wall, soldiers were hurt, and a triage camp was thrown up round the well in a hurry: many tents, crowded, urgent, with healing devices tapped off the well's lines.
+- **The fix (unchanged in spirit):** vines choke the well and its glyph paths; you cut them (the thorns cut you, so you heal yourself), and the lines relight one at a time out to the greenhouse, the healing devices, the purifier and the fields.
+- **Every plan keeps:** arrival from the north on the well's axis (principle 18); the well as landmark and fix; glowing glyph paths in the ground, walkable, from the well to what it feeds; a grand greenhouse; the triage camp as many tents round the well, open from the start; the shore below with the purifier, reached by one built stair and left by the broken wall (or the reverse); the road out east to the battery, lit by lanterns; farmland beyond a wall to the west.
+- **Fewer levels where people gather:** the arrival, the camp and the well on one broad level, roomy enough for four players and the crowd of patients; height goes into the drop to the shore and the view over it.
+- **Size:** about 2 × 2 screens as before, a little more if the farmland edge shows.

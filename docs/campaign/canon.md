@@ -20,6 +20,7 @@ Only the user approves story facts. Edit the approved facts here and record revi
 
 - Magic runs as fields (broad, like climate) and veins (narrow, like rivers), and civilization grew around them. (`world/elements.md`, premise.)
 - Wells are built by civilizations, great and small. They're magical infrastructure. Legendary builders can exist as colour, like a legendary swordsmith. (Decisions of 2026-11-09.)
+- A well taps the magical field the way a water well taps ground water. It is not a well of water, and nothing in a place should suggest it holds or gives water: "We should make it really explicit that these structures are not wells of water, they're 'wells' that tap into the magical field." (The user, 2026-11-26, on the infirmary.)
 - Veins are part of the world and have no direct gameplay effect. (`r3-6-veins`.)
 - Cancelling elements can share ground, case by case. (`r3-7-hush`.)
 - The academy sits on an Arcane vein, which helps bring out a wizard's natural abilities. (Decision "Pillars 1, 5 and 6 reworded".) That link is why these characters can use the new magic. (The user liked it, 2026-11-09.)

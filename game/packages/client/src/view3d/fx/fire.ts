@@ -81,7 +81,7 @@ const RATE = {
   puff: (n: number) => 26 + 6 * n, puffLife: 0.72,
   ember: (n: number) => (24 + 6 * n) * (n >= 5 ? 1.6 : 1), emberLife: 1.1,
   glow: (n: number) => 12 + 3 * n, glowLife: 0.3,
-  drift: (n: number) => 16 + 5 * n, driftLife: 3.0,
+  drift: (n: number) => 7 + 2 * n, driftLife: 3.2,
 };
 
 /** The core: soft white-hot glows from the staff's tip, out to uCore of the way (0.3 at one rune to 0.46 at five). */
@@ -130,23 +130,33 @@ Particle particle(float k, float age, float ts) {
 
 /**
  * Floating embers (the user, round 12: "try some floating embers like magicka has, so there's some stuff in the air
- * after"): sparks thrown up through the burning bulb that drift slowly upward and sideways on the heat, twinkling,
- * living about 2.5 s, so some hang in the air after the spray has stopped.
+ * after"; round 14: "fewer, but they should also come out from the hand rather than just appear in thin air... too
+ * bright, and the flight looks a little off. It should be like a little flake of ash flying through the air"). Each
+ * rides out from the hand with the flames, breaks free near the bulb, is lifted a little on the heat, then settles
+ * slowly, fluttering side to side and tumbling (it catches the light as it turns), cooling to dark ash.
  */
 const DRIFT = streamMotion(/* glsl */ `${SPRAY_HEAD}
 Particle particle(float k, float age, float ts) {
   vec4 A = aimAt(uTime - ts);
-  float s0 = 0.45 + 0.6 * rnd(k, 81.0), side = (rnd(k, 82.0) * 2.0 - 1.0) * uHalf * 0.85, t = age * uLife;
-  // thrown up out of the flames fast, then floating: the lift eases off, a slow sideways wander on the heat
-  float up = 0.9 * (1.0 - exp(-t * 2.2)) + 0.22 * t;
-  float wx = sin(t * (1.3 + rnd(k, 83.0)) + rnd(k, 84.0) * 6.28) * 0.35 * smoothstep(0.0, 0.8, t);
+  float t = age * uLife, tOut = 0.35 + 0.15 * rnd(k, 88.0);
+  float s0 = 0.5 + 0.5 * rnd(k, 81.0), sd = rnd(k, 82.0) * 2.0 - 1.0, ph = rnd(k, 84.0) * 6.2832;
+  // carried out of the hand with the stream (fast, easing), then free: a slow forward drift
+  float go = smoothstep(0.0, tOut, t), ft = max(t - tOut, 0.0);
+  float s = mix(0.02, s0, 1.0 - (1.0 - go) * (1.0 - go)) + 0.035 * ft;
+  float side = sd * uHalf * 0.7 * go;
+  // lifted on the heat, then settling slowly like a flake (a gentle arc, never a climb)
+  float lift = 0.55 * (1.0 - exp(-ft * 1.6)) - 0.07 * ft * ft;
+  // flutter: a side-to-side sway growing as it slows, and a small bob, each flake at its own pace
+  float fr = 1.6 + 1.2 * rnd(k, 83.0), ramp = smoothstep(0.0, 0.6, ft);
+  float sway = sin(ft * fr + ph) * 0.22 * ramp, bob = sin(ft * fr * 2.0 + ph) * 0.05 * ramp;
   Particle p = P0(); p.alive = true;
-  p.pos = sprayAt(A, s0 + 0.05 * t, side, wx, axisH(s0) + 0.2 + up);
-  p.size = 0.07 + 0.05 * rnd(k, 85.0);
-  p.stretch = 0.0;
-  float tw = 0.6 + 0.4 * sin(t * (9.0 + 6.0 * rnd(k, 86.0)) + rnd(k, 87.0) * 6.28);
-  // cooling from yellow to deep orange as it floats
-  p.col = vec4(0.55 - 0.3 * age, 0.0, age, smoothstep(0.0, 0.04, age) * (1.0 - smoothstep(0.7, 1.0, age)) * tw);
+  p.pos = sprayAt(A, s, side, sway, max(0.05, axisH(s) + 0.1 * go + lift + bob));
+  p.size = 0.08 + 0.05 * rnd(k, 85.0);
+  p.rot = ph + ft * (rnd(k, 86.0) > 0.5 ? 1.8 : -1.8);
+  // tumbling: edge-on and face-on in turn (the look squashes it), catching the light when face-on
+  float turn = abs(cos(ft * (2.5 + 2.0 * rnd(k, 87.0)) + ph));
+  // a dim glow while it's riding the flames, cooling to dark ash over its flight
+  p.col = vec4(0.5 - 0.25 * age, turn, age, smoothstep(0.0, 0.05, age) * (1.0 - smoothstep(0.75, 1.0, age)));
   return p;
 }`);
 
@@ -250,12 +260,20 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   return vec4(fireRamp(col.x) * 1.3 * m, m * 0.95) * col.w;
 }`;
 
-/** A floating ember: a hot point in a soft glow, mostly added light so it shines on the pale stone (bloom catches it). */
+/**
+ * A flake of ash: a small ragged flake squashed as it turns edge-on, glowing dimly while hot and going dark as it cools,
+ * covering more than it adds, so it reads as a thing in the air rather than a light.
+ */
 const LOOK_DRIFT = /* glsl */ `
 vec4 look(vec2 uv, vec4 col, vec4 data) {
-  float r = length(uv), dot0 = 1.0 - smoothstep(0.1, 0.32, r), halo = exp(-r * r * 5.0);
-  vec3 c = fireRamp(col.x) * (dot0 * 3.2 + halo * 0.9);
-  return vec4(c, dot0 * 0.85) * col.w;
+  float turn = 0.25 + 0.75 * col.y, cool = smoothstep(0.15, 0.7, col.z);
+  vec2 q = vec2(uv.x, uv.y / turn);
+  float edge = 0.55 + 0.12 * sin(atan(q.y, q.x) * 3.0 + col.x * 9.0);
+  float m = 1.0 - smoothstep(edge - 0.18, edge, length(q));
+  vec3 hot = fireRamp(col.x) * (0.9 + 0.7 * col.y), ash = vec3(0.05, 0.04, 0.035);
+  vec3 c = mix(hot, ash, cool);
+  float a = m * mix(0.45, 0.8, cool) * col.w;
+  return vec4(c * m * col.w, a);
 }`;
 
 /**

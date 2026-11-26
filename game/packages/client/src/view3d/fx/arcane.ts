@@ -86,7 +86,7 @@ const widthOf = (n: number) => ({
 });
 
 const LINE = /* glsl */ `
-uniform float uClock, uBody, uCore, uHalo, uHaloK, uWide, uWhite, uSurgeSp, uSurgeV, uSurgeL, uHitL;
+uniform float uClock, uBody, uCore, uHalo, uHaloK, uWide, uWhite, uSurgeSp, uSurgeV, uSurgeL, uHitL, uOnL, uAfter;
 // Round 6, the user's pick: plasma core take 2. A white-hot core with no border, falling off sharply into magenta;
 // around it a wispy violet plasma cloud peeling off the beam and drifting outward, thicker toward what it hits; pulses
 // racing down the beam that brighten the core and light up the plasma round them (the user's Disintegrate description).
@@ -100,34 +100,53 @@ vec4 look(float along, float across, float len) {
   // soft at both ends: it rises along its tail and fades over its front 40 %, so no sharp line runs through the wisps
   // (the user, round 11: "a very sharp starting line in the whisps for the traveling glows")
   float px = clamp((f - (1.0 - L)) / L, 0.0, 1.0);
-  float pulse = pow(smoothstep(0.0, 0.6, px), 1.3) * (1.0 - smoothstep(0.6, 1.0, px)) * step(1.0 - L, f) * step(0.14, rnd(floor(ph) + 4096.0, 5.0)) * ends;
+  float pulse = pow(smoothstep(0.0, 0.6, px), 1.3) * (1.0 - smoothstep(0.6, 1.0, px)) * step(1.0 - L, f) * step(0.14, rnd(floor(ph) + 4096.0, 5.0)) * ends * uOnL;
   // the core and the body: gaussian falloffs, no edge to read as a border
   // a bulging glow where it leaves the staff (Diablo 3's Disintegrate), swelling core, body and plasma there
   float bulge = exp(-along * along / 0.35);
   float cw = uCore * uWide * (1.0 + 1.4 * pulse + 1.6 * bulge) + 0.008, bw = uBody * uWide * (1.0 + 2.2 * bulge);
-  float core = exp(-(d * d) / (cw * cw) * 1.5) * ends, body = exp(-(d * d) / (bw * bw) * 1.2) * ends;
+  float core = exp(-(d * d) / (cw * cw) * 1.5) * ends * uOnL, body = exp(-(d * d) / (bw * bw) * 1.2) * ends * uOnL;
   // the plasma: two noises flowing slowly along and outward from the line, cut into wisps, inside an envelope that
   // widens toward the hit
-  float reachW = uHalo * uWide * (0.7 + 0.8 * smoothstep(0.2 * len, len, along) + 1.2 * bulge + 0.7 * exp(-pow(along - len, 2.0) / 0.25) * uHitL);
+  float reachW = uHalo * uWide * (0.7 + 0.8 * smoothstep(0.2 * len, len, along) + 1.2 * bulge * uOnL + 0.7 * exp(-pow(along - len, 2.0) / 0.25) * uHitL) * (1.0 + 0.9 * uAfter);
   vec3 pq = vec3(along * 1.3 - uClock * 1.2, side * 2.4 - uClock * 1.1, uClock * 0.45 + sign(across) * 3.7);
   // tendrils: ridged noise (bright where the noise crosses its middle) gives thin curling filaments with gaps between
   float n = fbm3(pq), n2 = fbm3(pq * 2.2 + vec3(5.0, 1.0, uClock * 0.8));
   float ridge = 1.0 - abs(n * 2.0 - 1.0), ridge2 = 1.0 - abs(n2 * 2.0 - 1.0);
   float env = exp(-(side * side) / (reachW * reachW) * 1.4);
-  float wisp = (smoothstep(0.78, 0.97, ridge) + 0.6 * smoothstep(0.82, 0.98, ridge2)) * env * ends;
-  float haze = env * env * 0.18 * ends;
-  float lit = 0.55 + 1.1 * pulse + 0.8 * bulge;
+  // once the beam stops, the wisps linger as a parting effect (the user, round 14: "I wanted the whisps to persist for a
+  // little bit after the spell ends"): they keep curling, spread outward and thin away, the far ones first
+  float stay = uAfter <= 0.0 ? 1.0 : pow(1.0 - uAfter, 1.1) * (1.0 - smoothstep(0.6, 1.0, uAfter + 0.3 * along / max(len, 1.0)));
+  // and the core itself turns to smoke, like a candle going out (the user, round 14: "the core of the beam after it ends
+  // should become the same kind of whispy material that then dissolves"): a band where the beam was, solid at first,
+  // widening and curling apart into strands, white-violet cooling to violet as it thins away
+  // the band meanders as it spreads (a candle's smoke curls), so the strands wander off the beam's old line
+  float mea = (fbm3(vec3(along * 0.7, uClock * 0.35, 2.0)) - 0.5) * 0.7 * uAfter;
+  float sside = across - mea;
+  float smokeW = (uBody * 1.1 + 0.03) * (1.0 + 1.6 * uAfter);
+  float sEnv = exp(-(sside * sside) / (smokeW * smokeW) * 1.3);
+  vec3 sq = vec3(along * 1.6 - uClock * 0.4, sside * 4.5 - uClock * 0.7, uClock * 0.5 + 11.0);
+  float sn = fbm3(sq), sn2 = fbm3(sq * 2.1 + vec3(3.0, 7.0, uClock * 0.4));
+  float sr = 1.0 - abs(sn * 2.0 - 1.0), sr2 = 1.0 - abs(sn2 * 2.0 - 1.0);
+  // thin curling filaments with clear gaps between, thinning as it fades
+  float strands = smoothstep(mix(0.72, 0.88, uAfter), 0.985, sr) + 0.6 * smoothstep(mix(0.8, 0.9, uAfter), 0.99, sr2);
+  float smoke = step(1e-4, uAfter) * sEnv * mix(1.0, strands, smoothstep(0.0, 0.1, uAfter)) * pow(1.0 - uAfter, 1.1)
+              * (1.0 - smoothstep(0.65, 1.0, uAfter + 0.25 * along / max(len, 1.0))) * ends;
+  float wisp = (smoothstep(0.78, 0.97, ridge) + 0.6 * smoothstep(0.82, 0.98, ridge2)) * env * ends * stay;
+  float haze = env * env * 0.18 * ends * mix(uOnL, stay, 0.5);
+  float lit = (0.55 + 1.1 * pulse + 0.8 * bulge) * mix(0.75, 1.0, uOnL);
   // each pulse's own glow: narrow and strong, about the body's width, so the wisps stay visible round it (the user, round
   // 13: "The new glows are way way way too wide, I want narrow but strong pulses"; round 13's cloud was 1.6x the plasma)
   float cloudW = uBody * uWide * (1.25 + 0.25 * px) + 0.02, around = exp(-(side * side) / (cloudW * cloudW) * 1.4);
   float pulseCloud = pulse * around * (0.85 + 0.3 * n);
   float dHit = length(vec2(along - len, across)), hitR = uHalo * uWide * 1.6;
-  float hitCloud = exp(-(dHit * dHit) / (hitR * hitR) * 1.6) * (0.65 + 0.7 * n2) * step(0.3, len) * uWide * uHitL;
+  float hitCloud = exp(-(dHit * dHit) / (hitR * hitR) * 1.6) * (0.65 + 0.7 * n2) * step(0.3, len) * uWide * uHitL * uOnL;
   vec3 c = vec3(1.2, 0.06, 2.0) * wisp * lit * uHaloK * 1.8 + vec3(0.7, 0.03, 1.0) * haze * lit;
+  c += mix(vec3(3.0, 1.6, 3.4), vec3(1.5, 0.08, 2.4), smoothstep(0.0, 0.3, uAfter)) * smoke * 2.0;
   c += mix(vec3(1.5, 0.18, 1.9), vec3(2.4, 0.9, 2.8), body) * body * (1.0 + 0.4 * pulse + 0.6 * bulge);
   c += mix(vec3(3.0, 2.2, 3.4), vec3(5.0, 4.8, 5.2), max(uWhite, pulse)) * core;
   c += vec3(2.2, 0.5, 2.9) * pulseCloud * 2.4 + vec3(2.0, 0.45, 2.6) * hitCloud * 1.4;
-  float a = clamp(body * 0.85 + wisp * 0.55 * uHaloK + haze * 0.5 + pulseCloud * 0.2 + hitCloud * 0.45, 0.0, 0.95);
+  float a = clamp(body * 0.85 + wisp * 0.55 * uHaloK + haze * 0.5 + pulseCloud * 0.2 + hitCloud * 0.45 + smoke * 0.3, 0.0, 0.95);
   return vec4(c, a);
 }`;
 
@@ -173,6 +192,9 @@ vec3 beamPt(vec4 A, float d) { vec2 dir = vec2(cos(A.z), sin(A.z)), g = A.xy + d
 `;
 
 /** Each layer's births a second and life (s), at n runes and impact variant (0 a, 1 b). */
+/** How long (s) the plasma's wisps linger once the beam stops. */
+const LINGER = 1.6;
+
 const RATE = {
   hit: (n: number, b: number) => (b ? 26 + 6 * n : 34 + 8 * n), hitLife: (b: number) => (b ? 0.42 : 0.32),
   shed: (n: number) => 8 + 6 * n, shedLife: 0.4,
@@ -302,7 +324,7 @@ export class ArcaneBeam {
     uTime: { value: 0 }, uEnd: { value: 1e9 }, uN: { value: 1 }, uImp: { value: 0 }, uLev: { value: new THREE.Vector4(BEAM_FROM.forward, BEAM_FROM.height, 0, 0) }, uAim: this.trail.uniform,
   };
   private L = {
-    uClock: { value: 0 }, uBody: { value: 0.1 }, uCore: { value: 0.03 }, uHalo: { value: 0.15 }, uHaloK: { value: 0.2 }, uWide: { value: 1 }, uWhite: { value: 0 },
+    uClock: { value: 0 }, uBody: { value: 0.1 }, uCore: { value: 0.03 }, uHalo: { value: 0.15 }, uHaloK: { value: 0.2 }, uWide: { value: 1 }, uWhite: { value: 0 }, uOnL: { value: 1 }, uAfter: { value: 0 },
     uSurgeSp: { value: 3 }, uSurgeV: { value: 20 }, uSurgeL: { value: 0.5 }, uHitL: { value: 0 },
   };
   private G = { uFW: { value: 0.5 }, uOnG: { value: 0 }, uHitG: { value: 0 }, uFK: { value: 0.5 } };
@@ -337,32 +359,33 @@ export class ArcaneBeam {
       r.last = t; r.n = beam.n; r.groundY = groundY;
       this.trail.record(t, { x: beam.x, z: beam.z, ang: beam.ang, reach: beam.hit ? beam.reach : -beam.reach });
     } else if (r && r.end === Infinity) r.end = r.last;
-    if (r && t > r.end + RATE.hitLife(1) + 0.05) r = this.rec = null;
+    if (r && t > r.end + Math.max(RATE.hitLife(1), LINGER) + 0.05) r = this.rec = null;
     this.group.visible = !!r;
     if (!r) { this.haze.mesh.visible = false; return; }
     const n = r.n, imp = impact === 'b' ? 1 : 0, gy = r.groundY;
     this.trail.fill(t);
     const now = this.trail.at(t), hit = now.reach > 0, reach = Math.abs(now.reach);
     const grow = 1 - (1 - Math.min(1, Math.max(0, (t - r.t0) / 0.1))) ** 2;
-    const wide = t <= r.end ? 1 : Math.max(0, 1 - (t - r.end) / 0.14);
+    const wide = t <= r.end ? 1 : Math.max(0, 1 - (t - r.end) / 0.14), after = t <= r.end ? 0 : Math.min(1, (t - r.end) / LINGER);
     const cs = Math.cos(now.ang), sn = Math.sin(now.ang), len = Math.max(0, reach - BEAM_FROM.forward) * grow;
     this.a.set(now.x + cs * BEAM_FROM.forward, gy + BEAM_FROM.height, now.z + sn * BEAM_FROM.forward);
     this.b.set(this.a.x + cs * len, this.a.y, this.a.z + sn * len);
     // the line
     const W = widthOf(n), S = surgeOf(n);
     this.L.uClock.value = t; this.L.uBody.value = W.body; this.L.uCore.value = W.core; this.L.uHalo.value = W.halo; this.L.uHaloK.value = W.haloK;
-    this.L.uWide.value = Math.sqrt(wide); this.L.uWhite.value = n >= 4 ? 1 : 0; this.L.uSurgeSp.value = S.sp; this.L.uSurgeV.value = S.v; this.L.uSurgeL.value = S.len;
-    this.line.mesh.visible = wide > 0 && len > 0.01;
-    this.line.set(this.a, this.b, W.halo * 2.6 + 0.2, W.halo * 1.8 + 0.3);
+    // its width holds once it stops (the wisps linger at full size); the beam itself goes out by uOnL
+    this.L.uWide.value = 1; this.L.uOnL.value = wide; this.L.uAfter.value = after; this.L.uWhite.value = n >= 4 ? 1 : 0; this.L.uSurgeSp.value = S.sp; this.L.uSurgeV.value = S.v; this.L.uSurgeL.value = S.len;
+    this.line.mesh.visible = (wide > 0 || after < 1) && len > 0.01;
+    this.line.set(this.a, this.b, W.halo * 2.6 * (1 + 2.0 * after) + 0.2, W.halo * 1.8 + 0.3);
     // its haze: a band about a wizard's arm either side of the line
     this.H.uClock.value = t; this.H.uHazeW.value = 0.5 + 0.04 * n; this.H.uOnH.value = wide * grow;
-    this.haze.mesh.visible = this.line.mesh.visible;
+    this.haze.mesh.visible = wide > 0 && len > 0.01;
     this.haze.set(this.a, this.b, this.H.uHazeW.value + 0.05, 0.3);
     // the floor strip
     const hitOn = hit && grow >= 1 ? wide : 0;
     this.L.uHitL.value = hit ? 1 : 0;
     this.G.uFW.value = 0.7 + 0.1 * n; this.G.uOnG.value = wide * grow; this.G.uHitG.value = hitOn * (imp ? 1.3 : 0.8); this.G.uFK.value = 0.45 + 0.06 * n;
-    this.floor.mesh.visible = this.line.mesh.visible;
+    this.floor.mesh.visible = wide > 0 && len > 0.01;
     this.floor.set(this.a.x, this.a.z, this.b.x, this.b.z, Math.max(this.G.uFW.value * 1.6, 1.2), 1.2);
     // particles
     this.U.uTime.value = t - r.t0; this.U.uEnd.value = r.end === Infinity ? 1e9 : r.end - r.t0; this.U.uN.value = n; this.U.uImp.value = imp;

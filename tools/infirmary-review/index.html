@@ -58,6 +58,8 @@ figcaption b { color: var(--fg); font-weight: 600; }
 .choices button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 .choices button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 textarea { width: 100%; box-sizing: border-box; min-height: 64px; font: 14px/1.5 var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); resize: vertical; }
+.plan { display: grid; gap: 10px; }
+.score { font: 500 13px var(--mono); color: var(--accent); margin-left: 8px; }
 .status { font: 12px var(--mono); color: var(--muted); min-height: 1em; }
 .pieces { display: grid; gap: 18px; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -76,6 +78,58 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
   <h1>The Infirmary on the Kit</h1>
   <p class="lede">The infirmary's layout, the plan you picked on 22 November, rebuilt in 3D from the kit's pieces so it can be walked in the 3D game. Every piece is now its real model: the well, the tents, the greenhouse, the stills, the smokestack and the bath's dressing. The pipes are drawn in code; the vines, flowers and smoke are still to come. This page shows where it stands, so you can review it without loading the game.</p>
 </header>
+
+<section>
+  <h2>Round 2: four new plans</h2>
+  <p>Your notes on the painted plan D sent the infirmary back to the plans stage, as the process asks. The new brief, from your notes: the well (which taps the magical field, not water) mainly feeds a grand greenhouse and the farmland beyond the wall; this morning's triage camp is thrown up round it, crowded and urgent, with healing devices; glowing glyph paths in the ground instead of pipes; one level where people gather; a Life-magic sea-water purifier on the shore; one built stair down, a broken wall's rubble back up; lanterns on the road out. Three plans that really differ, then the structure critic's recommended mix. The paintings were made by an isolated agent; I haven't looked at them. Plan D, shown to the critic blind, scored 4/10.</p>
+  <div class="plan">
+    <h3>E: the broad terrace <span class="score">critic 5/10</span></h3>
+    <p>One wide level for the arrival, the well, the camp and the greenhouse; all the height in the drop to a long shore. Roomy, but a box, and the greenhouse sits in the corner the camera sees least.</p>
+    <div class="trio">
+      <figure><img src="img/inf-e-journey.jpg" alt="Plan E from above with its journey"><figcaption>From above, with the journey.</figcaption></figure>
+      <figure><img src="img/inf-e-game.jpg" alt="Plan E in the game's camera, blocked out"><figcaption>In the game's camera, blocked out.</figcaption></figure>
+      <figure><img src="img/plan-e-1.jpg" alt="Plan E painted, take 1"><figcaption>Painted, take 1.</figcaption></figure>
+      <figure><img src="img/plan-e-2.jpg" alt="Plan E painted, take 2"><figcaption>Painted, take 2.</figcaption></figure>
+    </div>
+  </div>
+  <div class="plan">
+    <h3>F: the crescent <span class="score">critic 7/10</span></h3>
+    <p>The clifftop curves round a sheltered cove: the well at the apex, the camp along both arms, the greenhouse at the west tip, the road out from the east tip. Says what the place is, but the well sits on the narrowest strip, cramped again.</p>
+    <div class="trio">
+      <figure><img src="img/inf-f-journey.jpg" alt="Plan F from above with its journey"><figcaption>From above, with the journey.</figcaption></figure>
+      <figure><img src="img/inf-f-game.jpg" alt="Plan F in the game's camera, blocked out"><figcaption>In the game's camera, blocked out.</figcaption></figure>
+      <figure><img src="img/plan-f-1.jpg" alt="Plan F painted, take 1"><figcaption>Painted, take 1.</figcaption></figure>
+      <figure><img src="img/plan-f-2.jpg" alt="Plan F painted, take 2"><figcaption>Painted, take 2.</figcaption></figure>
+    </div>
+  </div>
+  <div class="plan">
+    <h3>G: the prow <span class="score">critic 6/10</span></h3>
+    <p>The well out on a prow over the sea, the camp on one flat level behind it. Fewest levels; but you cross the whole camp before the well, and the camp is a rectangle again.</p>
+    <div class="trio">
+      <figure><img src="img/inf-g-journey.jpg" alt="Plan G from above with its journey"><figcaption>From above, with the journey.</figcaption></figure>
+      <figure><img src="img/inf-g-game.jpg" alt="Plan G in the game's camera, blocked out"><figcaption>In the game's camera, blocked out.</figcaption></figure>
+      <figure><img src="img/plan-g-1.jpg" alt="Plan G painted, take 1"><figcaption>Painted, take 1.</figcaption></figure>
+      <figure><img src="img/plan-g-2.jpg" alt="Plan G painted, take 2"><figcaption>Painted, take 2.</figcaption></figure>
+    </div>
+  </div>
+  <div class="plan">
+    <h3>H: the crescent with a forecourt <span class="score">the critic's mix</span></h3>
+    <p>F with G's flat camp folded into its head: a broad forecourt about two screens wide where the arrival, the well and the busiest tents share one level; the cove pushed south; the purifier out on a jetty so it shows; the road out from the east arm. Drafted after the critic; not scored yet.</p>
+    <div class="trio">
+      <figure><img src="img/inf-h-journey.jpg" alt="Plan H from above with its journey"><figcaption>From above, with the journey.</figcaption></figure>
+      <figure><img src="img/inf-h-game.jpg" alt="Plan H in the game's camera, blocked out"><figcaption>In the game's camera, blocked out.</figcaption></figure>
+      <figure><img src="img/plan-h-1.jpg" alt="Plan H painted, take 1"><figcaption>Painted, take 1.</figcaption></figure>
+      <figure><img src="img/plan-h-2.jpg" alt="Plan H painted, take 2"><figcaption>Painted, take 2.</figcaption></figure>
+    </div>
+  </div>
+  <div class="answer" data-id="q-plan-r2">
+    <h3>Which plan should the infirmary be built from?</h3>
+    <p class="rec">My pick: <b>H</b>, the critic's mix: the crescent's outline and view across the cove, with the room you asked for where people gather.</p>
+    <div class="choices"><button type="button" data-v="e">E</button><button type="button" data-v="f">F</button><button type="button" data-v="g">G</button><button type="button" data-v="h">H</button><button type="button" data-v="mix">A mix</button></div>
+    <textarea id="n-q-plan-r2" aria-label="Note on the plan" placeholder="What to take from which…"></textarea><div class="status"></div>
+  </div>
+  <p class="rec">Everything below this section is plan D, the layout these replace, kept for reference.</p>
+</section>
 
 <section>
   <h2>Where it stands</h2>

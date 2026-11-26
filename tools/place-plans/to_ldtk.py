@@ -62,7 +62,7 @@ LEVELS = {
     ),
     # the infirmary's second round of plans (2026-11-26): walk reports only, before the structure critic
     **{p: dict(level='Infirmary', gates={'from the main gate': 'gate-court', 'to the battery': 'gate-battery'},
-               landmarks={'the well': 'well'}, start=(0, -34)) for p in ('inf-e', 'inf-f', 'inf-g')},
+               landmarks={'the well': 'well'}, start=(0, -34)) for p in ('inf-e', 'inf-f', 'inf-g', 'inf-h')},
     'yard-d': dict(
         level='Yard',
         # the station spots (sim/src/yard.ts) are the spec's MARKERS; 'gate' and 'focus' are among them, so the gate and

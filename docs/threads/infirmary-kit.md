@@ -1,6 +1,6 @@
 # The infirmary on the kit
 
-Status: active; layout round 2 approved by a fresh critic (7.5/10) with its fixes in; Codex pictures of the seven new pieces wait for the user's picks on the review page before any Meshy model (about 210 credits) · Last touched: 2026-11-26
+Status: active; back at stage 1: four new plans (E to H) on the review page for the user's pick, after their notes on the painted plan D; the kit scene and its pieces are plan D's until then · Last touched: 2026-11-26
 Record: [the read](../campaign/01-opening/infirmary-read.md) (stages 0 to 3: plan D rev 9, flow 8/10, sense 9/10) · plan: `tools/place-plans/plans/inf-d.py` · scene: `tools/kit/scenes/infirmary.scene.json` · [building it on the kit](../campaign/making-a-place.md#building-it-on-the-kit) (the steps) · [the opening thread](opening.md) · [the courtyard on the kit](kit-courtyard.md) (the first place built this way)
 
 ## Where it stands
@@ -22,6 +22,8 @@ Branch `worktree-infirmary-kit`.
 - [ ] Dressing notes carried from the read: tents lighter than buildings, the walkways on posts, a different floor on the top tier and the well's tier so the 1.5 m step reads, different beds in the two gardens, the bath's rim on the sand or behind a sea wall, a kerb at the north gate.
 
 ## Done
+
+- 2026-11-26: back to stage 1 after the user's notes on the painted plan D (recorded in [the read](../campaign/01-opening/infirmary-read.md#the-users-notes-on-the-painted-layout-2026-11-26-back-to-stage-1); canon: wells tap the field, not water). Shore climb: a broken wall's rubble; shore piece: a Life-magic sea-water purifier. Plans E (the broad terrace), F (the crescent), G (the prow) pass the walk report; a fresh structure critic: F 7, G 6, E 5, plan D blind 4; its mix drafted as plan H (the crescent with a forecourt; the cove pushed south, the purifier on a jetty). All four painted by an isolated agent and on the review page; the user picks (`q-plan-r2`). The kit scene stays plan D's until then.
 
 - 2026-11-26: the user, looking closer: the lower ledge "feels way too constrained", and "we didn't really do a grey box concept art step for the actual layout. The concept art has a very different layout than the one we landed on". The shore walk widened from three rows to six (rows 35 to 40, its sea wall on the new edge), a sand beach (the kit's `sand` floor) running on under the cliffs both ways, the sea from row 42. The grey-box painting step put back into the kit steps (`making-a-place.md`, step 3, before pieces; logged in the cycle log and on the veto list). An isolated agent painted six views of the new layout (`tools/infirmary-review/img/paint-*.jpg`; raws in `docs/reference/infirmary-kit/paintovers/`); unseen by me, on the page beside the concept with a question (keep, adjust or rethink the layout). Still to judge: the beach keeps the sea-wall balustrade along its edge.
 

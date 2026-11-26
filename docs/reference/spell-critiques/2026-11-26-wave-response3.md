@@ -1,0 +1,4 @@
+Iteration 3 critique (5/10): mass restored but a uniformly orange wreath, no hot head over a cooling wake; holes from independent birth times; muddy soot/smoke islands at 0.6 s; aftermath not radial enough; moving rings' layers register to different centres; terrain height per particle.
+
+Our response (applied as given): LOOK_PUFF colours (3.2, 1.8, 0.65) to (1.0, 0.42, 0.12) over smoothstep(0.12, 0.75, t); LOOK_RISE (1.8, 0.95, 0.3) to (0.8, 0.24, 0.06); hot line /0.025, x0.65; staggered births tb = (mod(k,4) + rnd) * uTr * (1.3/4) and (1.05/4) for RISE; spokes ring*9, d*0.65, smoothstep(0.45, 0.66), m = clamp(spokes*0.85 + bl*0.15).
+Our own change: the smoke pulled back (smokePerU 1.3, alpha 0.36): the muddy islands were mostly smoke. Terrain height and moving-ring registration noted for later.

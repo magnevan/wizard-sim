@@ -48,9 +48,9 @@ export const FIRE_WAVE = {
   /** How far past the sim's reach the sinking front runs on, as a share of it. */
   overrun: 0.12,
   /** Seconds the scorch lies after the cast: whole until `scorchHold`, gone by `scorchEnd`. */
-  scorchHold: 2.2, scorchEnd: 6.5,
+  scorchHold: 1.5, scorchEnd: 5.0,
   /** Flames a unit of the front's arc: the puffs riding it and the ground flames standing on it. */
-  puffsPerU: 5, risePerU: 6, smokePerU: 1.4,
+  puffsPerU: 9, risePerU: 8, smokePerU: 1.3,
 };
 
 /** Seconds a wave is drawn for, scorch included. */
@@ -72,12 +72,13 @@ float frontAt(float a) {
   return uR * (1.0 + ${FIRE_WAVE.overrun.toFixed(3)} * (1.0 - exp(-(q - 1.0) * 2.2)));
 }
 // how tall the wave stands at age a: up at once, sinking from just before the reach to nothing a little past it
-float tallAt(float a) { float q = a / uTr; return smoothstep(0.0, 0.1, q) * (1.0 - smoothstep(0.78, 1.32, q)); }
+float tallAt(float a) { float q = a / uTr; return smoothstep(0.0, 0.1, q) * (1.0 - smoothstep(0.7, 1.75, q)); }
 bool isRing() { return uHalf > 3.1; }
 // an angle on the fan: anywhere round a ring; on a burst, across the fan and a little past its ends (the fray)
-float angleOf(float k, float s) { return isRing() ? rnd(k, s) * 6.2831853 : uFace + (rnd(k, s) * 2.0 - 1.0) * uHalf * 1.1; }
+// stratified (k's share of the arc, jittered inside it) so the front has no random gaps or clumps
+float angleOf(float k, float s) { float f = (k + rnd(k, s)) / max(uCount, 1.0); return isRing() ? f * 6.2831853 : uFace + (f * 2.0 - 1.0) * uHalf * 1.1; }
 // 1 inside the fan, falling to 0 at and past its ends
-float edgeOf(float th) { if (isRing()) return 1.0; float d = abs(atan(sin(th - uFace), cos(th - uFace))) / uHalf; return 1.0 - smoothstep(0.55, 1.1, d); }
+float edgeOf(float th) { if (isRing()) return 1.0; float d = abs(atan(sin(th - uFace), cos(th - uFace))) / uHalf; return 1.0 - smoothstep(0.82, 1.1, d); }
 `;
 
 /** The puffs: lopsided flames born on the front, carried a little further with it, swelling and breaking up from the inside. */
@@ -86,20 +87,23 @@ ${WAVE_GLSL}
 Particle emitParticle(float k, float back) {
   if (k >= uCount) return P0();
   float th = angleOf(k, 1.0), e = edgeOf(th);
-  float tb = pow(rnd(k, 2.0), 0.85) * uTr * 1.3;
-  float life = (0.3 + 0.22 * rnd(k, 3.0)) * mix(0.7, 1.0, e);
+  // neighbours on the arc are born at staggered times, so the front has no holes where a run of them came together
+  float tb = (mod(k, 4.0) + rnd(k, 2.0)) * uTr * (1.3 / 4.0);
+  float life = (0.22 + 0.14 * rnd(k, 3.0)) * mix(0.7, 1.0, e);
   float a = uAge - back - tb;
   if (a < 0.0 || a > life) return P0();
-  float t = a / life, h = tallAt(tb);
-  if (h * mix(0.35, 1.0, e) < 0.04) return P0();
-  vec2 c = centerAt(tb), d = vec2(cos(th), sin(th));
-  // riding the wave: it keeps up with the front (most of the way) as it burns out, so the inside clears behind it
-  float ride = 0.55 + 0.35 * rnd(k, 4.0);
-  float r = frontAt(tb + a * ride) - 0.12 - 0.3 * rnd(k, 10.0) * t;
-  float sz = (0.5 + 0.22 * rnd(k, 5.0)) * (0.5 + 0.5 * h) * mix(0.45, 1.0, e) * (0.65 + 0.8 * (1.0 - pow(1.0 - t, 2.0))) * (0.88 + 0.06 * uN);
+  // how tall the wave stands now (not when this flame was born), so the whole wave sinks together
+  float t = a / life, h = tallAt(uAge - back);
+  if (h * mix(0.35, 1.0, e) < 0.001) return P0();
+  // on the front as it is now, falling behind it as it ages: the young hot ones outside, the old ones inside, shrinking
+  vec2 c = centerAt(uAge - back), d = vec2(cos(th), sin(th));
+  float r = max(0.0, frontAt(uAge - back) - 0.06 - 0.65 * t * t);
+  float sz = (0.46 + 0.16 * rnd(k, 5.0)) * h * mix(0.45, 1.0, e) * mix(1.0, 0.42, smoothstep(0.15, 1.0, t)) * (0.88 + 0.06 * uN);
   Particle p = P0(); p.alive = true;
-  p.pos = vec3(c.x + d.x * r, uGy + sz * 0.75 + t * 0.3 * h, c.y + d.y * r);
+  p.pos = vec3(c.x + d.x * r, uGy + sz * 0.7 + 0.3 * smoothstep(0.45, 1.0, t), c.y + d.y * r);
   p.size = sz;
+  // flatter, joined heads (no stretch: the kit turns a stretched quad along its motion, undoing its random rotation)
+  p.aspect = 0.85 + 0.15 * rnd(k, 10.0);
   p.rot = rnd(k, 6.0) * 6.2832 + t * (rnd(k, 7.0) - 0.5) * 1.2;
   p.col = vec4(t, h, e, tb / uTr);
   p.data = vec4(rnd(k, 8.0), rnd(k, 9.0), 0.0, 0.0);
@@ -114,12 +118,15 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   float t = col.x, h = col.y, e = col.z;
   vec2 q = uv * 0.5 + 0.5; if (data.y > 0.5) q.x = 1.0 - q.x;
   vec3 s = flipbook(uSheet, q, floor(data.x * 3.0), t, 6.0, 3.0).rgb;
-  float lum = max(s.r, max(s.g, s.b)), m = smoothstep(0.04, 0.3, lum);
-  // the painting burns out on its own; lifted into HDR while young on a tall front, cooler toward the ends
-  vec3 c = s * mix(vec3(2.3, 1.95, 1.45), vec3(1.05), clamp(t * 1.4 + (1.0 - h) * 0.5, 0.0, 1.0));
+  float lum = max(s.r, max(s.g, s.b));
+  float m = smoothstep(0.04, 0.3, lum);
+  // a hot head on the front, cooling to a red wake as it falls behind
+  vec3 c = s * mix(vec3(4.0, 3.0, 1.35), vec3(1.0, 0.3, 0.06), smoothstep(0.08, 0.65, t));
   c *= mix(vec3(1.0, 0.62, 0.45), vec3(1.0), e);
   float fade = smoothstep(0.0, 0.05, t) * (1.0 - smoothstep(0.7, 1.0, t));
-  float cover = m * fade * 0.72;
+  // the wave going down loses cover (it breaks up) rather than shrinking into crumbs
+  float cover = m * fade * mix(0.82, 0.28, smoothstep(0.15, 1.0, t)) * e;
+  // covering, so the painted flame holds its body on the pale stone instead of washing through
   return vec4(c * cover, cover);
 }`;
 
@@ -129,17 +136,20 @@ ${WAVE_GLSL}
 Particle emitParticle(float k, float back) {
   if (k >= uCount) return P0();
   float th = angleOf(k, 21.0), e = edgeOf(th);
-  float tb = pow(rnd(k, 22.0), 0.9) * uTr * 1.25;
-  float life = 0.3 + 0.22 * rnd(k, 23.0);
+  float tb = (mod(k, 4.0) + rnd(k, 22.0)) * uTr * (1.05 / 4.0);
+  float life = 0.2 + 0.12 * rnd(k, 23.0);
   float a = uAge - back - tb;
   if (a < 0.0 || a > life) return P0();
-  float h = tallAt(tb) * mix(0.3, 1.0, e);
-  if (h < 0.05) return P0();
+  float t = a / life;
+  float h = tallAt(uAge - back) * mix(0.3, 1.0, e);
+  if (h < 0.001) return P0();
   vec2 c = centerAt(tb), d = vec2(cos(th), sin(th));
-  float r = frontAt(tb + a * 0.5) - 0.05 + 0.2 * rnd(k, 24.0);
+  // left where the front passed: the dying wake behind it
+  float r = max(0.0, frontAt(tb) - 0.08);
   Particle p = P0(); p.alive = true;
-  p.pos = vec3(c.x + d.x * r, uGy - 0.02, c.y + d.y * r);
-  p.size = (0.42 + 0.22 * rnd(k, 25.0)) * h * (0.9 + 0.05 * uN);
+  // its tip leaves upward as it dies
+  p.pos = vec3(c.x + d.x * r, uGy - 0.02 + 0.28 * smoothstep(0.45, 1.0, t), c.y + d.y * r);
+  p.size = (0.42 + 0.22 * rnd(k, 25.0)) * h * (0.9 + 0.05 * uN) * (1.0 - 0.55 * smoothstep(0.25, 1.0, t));
   p.aspect = 0.75;
   p.rot = (rnd(k, 26.0) - 0.5) * 0.25;
   p.col = vec4(a / life, h, e, 0.0);
@@ -156,9 +166,9 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   vec2 q = vec2(uv.x * 0.5 + 0.5, uv.y); if (data.y > 0.5) q.x = 1.0 - q.x;
   vec3 s = flipbook(uSheet, q, floor(data.x * 3.0), t, 6.0, 3.0).rgb;
   float lum = max(s.r, max(s.g, s.b)), m = smoothstep(0.05, 0.3, lum);
-  vec3 c = s * mix(vec3(2.0, 1.7, 1.3), vec3(1.1), t);
+  vec3 c = s * mix(vec3(1.8, 0.95, 0.3), vec3(0.8, 0.24, 0.06), t);
   c *= mix(vec3(1.0, 0.62, 0.45), vec3(1.0), e);
-  float cover = m * smoothstep(0.0, 0.08, t) * 0.8;
+  float cover = m * smoothstep(0.0, 0.08, t) * 0.8 * (1.0 - smoothstep(0.75, 1.0, t)) * col.y * e;
   return vec4(c * cover, cover);
 }`;
 
@@ -191,7 +201,7 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   vec2 q = uv * 0.5 + 0.5; if (data.y > 0.5) q.x = 1.0 - q.x;
   float lum = flipbook(uSheet, q, 0.0, col.x, 4.0, 1.0).r, m = smoothstep(0.03, 0.7, lum);
   vec3 c = mix(vec3(0.006, 0.006, 0.007), vec3(0.03, 0.026, 0.022), smoothstep(0.4, 0.95, lum));
-  float a = m * 0.4 * col.y * smoothstep(0.0, 0.15, col.x) * (1.0 - smoothstep(0.6, 1.0, col.x));
+  float a = m * 0.36 * col.y * smoothstep(0.0, 0.15, col.x) * (1.0 - smoothstep(0.6, 1.0, col.x));
   return vec4(c * a, a);
 }`;
 
@@ -230,26 +240,29 @@ vec4 decal(vec3 wp) {
   // the hot line on the floor under the front
   float dn = abs(length(wp.xz - uCn) - uRn);
   float sd = length(wp.xz - uCn) - uRn;
-  float g = exp(-sd * sd / 0.06) * uFront * inArc;
-  o.rgb += vec3(2.2, 0.9, 0.22) * g * 0.8;
+  float g = exp(-sd * sd / 0.025) * uFront * inArc;
+  o.rgb += vec3(2.2, 0.9, 0.22) * g * 0.65;
   // just behind the front the stone is freshly sooted: a dark band riding inside it (the dark the pale floor needs)
   float band = exp(-pow((sd + 0.45) / 0.4, 2.0)) * uFront * inArc;
   o.a += band * 0.28; o.rgb += vec3(0.05, 0.015, 0.0) * band;
   // scorch where the front has been, ragged at its outer edge, thin near the caster
-  float reach = smoothstep(uRmax + 0.15, uRmax - 0.45, d + (vnoise3(vec3(th * 3.0, 0.0, uSeed)) - 0.5) * 0.5);
+  float reach = 1.0 - smoothstep(uRmax - 0.45, uRmax + 0.15, d + (vnoise3(vec3(th * 3.0, 0.0, uSeed)) - 0.5) * 0.5);
   float inner = smoothstep(0.35, 1.1, d);
-  vec2 ring = vec2(cos(th), sin(th));
+  // bent a little, so the deposits wander like flame tracks instead of ruled spokes
+  float bend = (vnoise3(vec3(v * 0.9, uSeed * 0.11)) - 0.5) * 0.22;
+  vec2 ring = vec2(cos(th + bend), sin(th + bend));
   // spokes: noise that changes fast round the circle and slowly outward
-  float sp = vnoise3(vec3(ring * 15.0, d * 0.45 + uSeed * 0.13));
-  float spokes = smoothstep(0.56, 0.78, sp);
+  float sp = vnoise3(vec3(ring * 6.0, d * 0.75 + uSeed * 0.13));
+  // broken into deposits along their length, so they read as laid down by rolling flame, not ruled
+  float spokes = smoothstep(0.49, 0.68, sp) * smoothstep(0.32, 0.63, vnoise3(vec3(ring * 11.0, d * 1.8 + uSeed * 0.19)));
   // blotches where the flames sat
-  float bl = smoothstep(0.6, 0.8, vnoise3(vec3(wp.xz * 2.4, uSeed * 0.07)));
-  float m = max(spokes * 0.85, bl * 0.7) * reach * inner * inArc;
-  float a = m * 0.5 * uScorch;
+  float bl = smoothstep(0.48, 0.72, vnoise3(vec3(wp.xz * 2.4, uSeed * 0.07)));
+  float m = clamp(spokes * 0.55 + bl * 0.45, 0.0, 1.0) * reach * inner * inArc;
+  float a = m * 0.65 * uScorch;
   o.a += a;
   o.rgb += vec3(0.018, 0.012, 0.008) * a;
   // a moment of glow in the fresh scorch, cooling
-  o.rgb += vec3(1.3, 0.4, 0.08) * m * uHot * 0.35;
+  o.rgb += vec3(1.3, 0.4, 0.08) * m * uHot * 0.12;
   return o;
 }`;
 
@@ -365,6 +378,7 @@ export class FireWaves {
     }
     for (const k of this.ringWaves.keys()) if (!this.rings.recs.includes(k)) this.ringWaves.delete(k);
     for (const b of this.bursts) { const a = t - b.rec.tick / 60; if (a >= 0 && a <= lifeOf()) live.push(b); }
+    live.sort((a, b) => b.rec.tick - a.rec.tick);
     while (this.slots.length < live.length && this.slots.length < 8) { const s = new Slot(); this.slots.push(s); this.group.add(s.group); }
     this.slots.forEach((s, i) => {
       const wv = live[i];

@@ -1,0 +1,3 @@
+Iteration 4 critique (6/10): substantial and readable at game distance, but the front still a wreath of same-temperature curls; arrival finishes as a shrinking bracelet; scorch a radial stamp of brown petals; moving rings misregistered.
+
+Our response (all applied as given): PUFFS placed at r = frontAt(now) - 0.06 - 0.65 t^2 from centerAt(now), size shrinking to 0.42, colour (4.0, 3.0, 1.35) to (1.0, 0.30, 0.06) over smoothstep(0.08, 0.65, t), cover 0.82 to 0.28; tallAt falls over smoothstep(0.65, 1.65); puff lift 0.55, rise lift 0.6 over smoothstep(0.45, 1); scorch spokes ring*5, d*0.28, smoothstep(0.54, 0.74), deposits wp*5, alpha 0.45.

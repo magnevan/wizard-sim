@@ -1,0 +1,3 @@
+Iteration 5 critique (6/10): cream beads on the crest, scratchy interior, late burst a thin floating claw, scorch weak square-ish patches, scorch centre vs moving front.
+
+Our response (all applied as given): puff lag 1.05 t^2, size seed 0.44 + 0.28 rnd, puffsPerU 7; colour (3.0, 1.6, 0.45) to (0.7, 0.12, 0.025) over smoothstep(0.05, 0.45, t); size mix(0.55, 1, h) and cover x h (puffs), x col.y (rise); spokes ring*9, d*0.38, threshold (0.49, 0.68), deposits from ring*17, d*1.8; scorch alpha 0.55, fresh glow 0.12. The scorch staying at the cast centre is on purpose (it is laid where the fire passed; the ring follows its caster only 80 %).

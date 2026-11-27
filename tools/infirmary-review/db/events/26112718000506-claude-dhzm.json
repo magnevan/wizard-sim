@@ -1,9 +1,9 @@
 {
- "at": "2026-11-27T18:00:05.061Z",
- "by": "claude",
- "task": "t-place-devices",
- "note": "You're right on both counts. The picture was an old render from before the devices, and the stretchers really did lie across the rune lines. Everything is moved clear now, and the compiler warns if a prop ever lands on a line again. From now on there won't be per-task checks: everything I'd like your eye on is in one review ask on Now (rv-1), with today's pictures.",
- "set": {
-  "seen": "2026-11-27T18:00:05.060Z"
- }
+  "at": "2026-11-27T18:00:05.061Z",
+  "by": "claude",
+  "note": "You're right on both counts. The picture was an old render from before the devices, and the stretchers really did lie across the rune lines. Everything is moved clear now, and the compiler warns if a prop ever lands on a line again. From now on there won't be per-task checks: everything I'd like your eye on is in one review ask on Now (rv-1), with today's pictures.",
+  "set": {
+    "seen": "2026-11-27T18:00:05.060Z"
+  },
+  "task": "t-place-devices"
 }

@@ -115,6 +115,42 @@
  ],
  "decisions": [
   {
+   "id": "rv-2",
+   "area": "props",
+   "piece": "devices",
+   "title": "Have a look: the beds out in front, one rune circle per junction",
+   "html": "<p>Your two notes on the last look, done:</p><ol><li><b>The tents stand back from their beds.</b> The cots were part of the tent model, so I split them out: the canopy is now its own piece, moved back about 1.7 m, and the four cots stay where they were, so they stand out in front with their pillows and emitters in view. The two north tents moved half a cell forward so their beds sit on the paving. Is that far enough back, or should the canopy go further or less?</li><li><b>The overlapping circles</b> were where the tent branches met the shared lines half a cell from the lines' own corners. They meet at the corner now, so there is one circle each.</li></ol>",
+   "figures": [
+    {
+     "src": "img/beds-out-fore.jpg",
+     "cap": "The forecourt"
+    },
+    {
+     "src": "img/beds-out-n1.jpg",
+     "cap": "1: the north-west tent"
+    },
+    {
+     "src": "img/beds-out-w.jpg",
+     "cap": "1: the west tents"
+    },
+    {
+     "src": "img/runes-joined.jpg",
+     "cap": "2: the two junctions from above"
+    }
+   ],
+   "rec": "My view: the beds read far better; 1.7 m looks right to me.",
+   "choices": [
+    {
+     "v": "good",
+     "label": "Looks good"
+    },
+    {
+     "v": "changes",
+     "label": "Changes (in the note)"
+    }
+   ]
+  },
+  {
    "id": "rv-1",
    "area": "props",
    "piece": "devices",
@@ -156,7 +192,8 @@
      "v": "changes",
      "label": "Changes (in the note)"
     }
-   ]
+   ],
+   "closed": "changes: tents back so the beds show (canopy and cots now separate pieces), the rune junctions joined into one circle; the rest good"
   },
   {
    "id": "pc7-credits",
@@ -1525,6 +1562,11 @@
    "at": "2026-11-27",
    "title": "Round 11: the triage dressing in the camp",
    "html": "<p>The triage sheet rendered on meshy.ai (35 credits, first try), split into eight props and sixteen placed round the tents. <a href=\"#props-devices2\">The round</a>.</p>"
+  },
+  {
+   "at": "2026-11-27",
+   "title": "Round 12: beds out in front, runes joined",
+   "html": "<p>From your look (rv-1): the tent split into a canopy (<code>setpiece.infirmary-tent-shell</code>, by <code>tools/kit/tent_shell.py</code>) and its cots (<code>dress.cot</code>), the canopy moved back 1.4 cells; the tent branches joined at the shared lines' corners. Props never on a rune line now (a compiler check).</p>"
   }
  ],
  "board": {
@@ -1608,7 +1650,7 @@
      "pieces": [
       "review",
       "devices and triage props in: check",
-      "#decision-rv-1"
+      "#decision-rv-2"
      ],
      "surfaces": [
       "done",
@@ -1644,7 +1686,7 @@
      "dressing": [
       "review",
       "crystal dark till cleared: check",
-      "#decision-rv-1"
+      "#decision-rv-2"
      ],
      "beauty": [
       "later"

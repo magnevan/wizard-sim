@@ -28,20 +28,27 @@ MATMAP = {  # plan material -> (kit floor, walkable, edge)
     'water': ('water', False, 'open'), 'roof': ('roof', False, 'wall'), 'void': ('water', False, 'open'),
 }
 def tent_healing(tid, at, turn, end):
-    """A tent's healing devices (the user's design, 2026-11-27, answers pc5-*, pc6-station c, pc6-emitter b): one station
+    """A tent's beds and healing devices (the user's design, 2026-11-27, answers pc5-*, pc6-station c, pc6-emitter b): the
+    tent's four cots where the tent model had them, its canopy (the shell, without the cots) moved back TENT_BACK so the
+    beds stand out in front of it (the user, rv-1: "move the tents back a little so we see the beds more"), one station
     at the tent's end that faces its glyph line (end +1 east, -1 west, in the tent's frame), a bed emitter at the head of
-    each of its four cots, and a thin lead carved across the tent under the pillows from the station past them. Positions
-    are measured off the tent's model, at 4.2 corners per source unit (16 u wide, G = 2): the cots span source x
-    [-0.58, -0.32], [-0.145, 0.103], [0.222, 0.494] and ~[0.62, 0.88] of its 1.90 width, their heads end at source y 0.21,
-    right at the back posts, so there is no room behind the pillows (the first try stood the emitters out past the posts,
-    hidden by the roof): each emitter stands in the gap to its cot's right, level with the pillow. Returns (fixes, station xy)."""
+    each cot, and a thin lead carved across the tent under the pillows from the station past them. Positions are
+    measured off the tent's model, at 4.18 corners per source unit (fit.py scales it by its height, 8.36 u a unit; G = 2):
+    the cots span source x [-0.58, -0.32], [-0.145, 0.103], [0.222, 0.494] and [0.55, 0.81] (the fused one: its legs
+    at 0.60 to 0.76), y -0.17 to 0.22 (heads at the back). Each emitter stands in the gap to its cot's right, level with
+    the pillow. Returns (fixes, station xy)."""
     t = math.radians(turn); c0, s0 = math.cos(t), math.sin(t)
     rot = lambda x, y: [round(at[0] + x * c0 - y * s0, 2), round(at[1] + x * s0 + y * c0, 2)]   # turn: clockwise on the map
-    K, back = 4.2, -0.15 * 4.2                     # corners per source unit; the pillows' line (north of the middle)
-    xs = [x * K for x in (-0.2325, 0.1625, 0.557, 0.92)]   # the gaps right of each cot
+    K = 4.18                                       # corners per source unit
+    back = -0.15 * K                               # the pillows' line (north of the middle)
+    cots = [x * K for x in (-0.451, -0.021, 0.358, 0.68)]
+    xs = [x * K for x in (-0.2335, 0.1625, 0.522, 0.85)]   # the gaps right of each cot
     st = rot(end * 4.75, 0.0)
     far = min(xs) if end > 0 else max(xs)
-    out = [('object', dict(kind='setpiece', id=f'heal-station-{tid}', name="a tent's healing station", piece='setpiece.heal-station', at=st, front='S', turn=turn))]
+    out = [('object', dict(kind='setpiece', id=f'tent-{tid}', name='a tent', piece='setpiece.infirmary-tent-shell', at=rot(0.0, -TENT_BACK), front='S', turn=turn))]
+    out += [('object', dict(kind='vignette', id=f'cot-{tid}-{k + 1}', name='a cot', piece='dress.cot', at=rot(x, -0.025 * K), front='S', turn=turn))
+            for k, x in enumerate(cots)]
+    out.append(('object', dict(kind='setpiece', id=f'heal-station-{tid}', name="a tent's healing station", piece='setpiece.heal-station', at=st, front='S', turn=turn)))
     out += [('object', dict(kind='setpiece', id=f'heal-emitter-{tid}-{k + 1}', name='a bed emitter', piece='setpiece.bed-emitter', at=rot(x, back), front='S', turn=turn))
             for k, x in enumerate(xs)]
     out.append(('object', dict(kind='glyph', id=f'glyph-lead-{tid}', name=f"the lead in tent {tid}", w=0.35,
@@ -49,8 +56,10 @@ def tent_healing(tid, at, turn, end):
     return out, st
 
 
+TENT_BACK = 1.4    # corners (about 1.7 m) the canopy stands back from its beds
+# the six tents round the forecourt's edges, open sides to the camera at hasty angles (the user, 2026-11-27)
 _HEAL = {tid: tent_healing(tid, at, turn, end) for tid, at, turn, end in (
-    ('n1', (25.0, 10.6), 6, 1), ('n2', (45.0, 10.6), -8, -1), ('w1', (20.6, 17.4), -12, 1),
+    ('n1', (25.0, 11.2), 6, 1), ('n2', (45.0, 11.2), -8, -1), ('w1', (20.6, 17.4), -12, 1),
     ('w2', (21.0, 25.4), 9, 1), ('e1', (49.4, 17.4), 11, -1), ('e2', (49.0, 25.4), -7, -1))}
 _ST = {k: v[1] for k, v in _HEAL.items()}
 
@@ -93,12 +102,6 @@ FIXES = {
         # the triage camp: six full-size tents round the forecourt's edges, the middle left open (the user: "negative space")
         # (the user, 2026-11-27: tents "angled so that we can see the people in it from the camera"): every tent's open side
         # faces the camera, turned a little this way or that as if pitched in a hurry
-        ('object', dict(kind='setpiece', id='tent-n1', name='a tent', piece='setpiece.infirmary-tent', at=[25.0, 10.6], front='S', turn=6)),
-        ('object', dict(kind='setpiece', id='tent-n2', name='a tent', piece='setpiece.infirmary-tent', at=[45.0, 10.6], front='S', turn=-8)),
-        ('object', dict(kind='setpiece', id='tent-w1', name='a tent', piece='setpiece.infirmary-tent', at=[20.6, 17.4], front='S', turn=-12)),
-        ('object', dict(kind='setpiece', id='tent-w2', name='a tent', piece='setpiece.infirmary-tent', at=[21.0, 25.4], front='S', turn=9)),
-        ('object', dict(kind='setpiece', id='tent-e1', name='a tent', piece='setpiece.infirmary-tent', at=[49.4, 17.4], front='S', turn=11)),
-        ('object', dict(kind='setpiece', id='tent-e2', name='a tent', piece='setpiece.infirmary-tent', at=[49.0, 25.4], front='S', turn=-7)),
         # the camp's leftovers on the lawn and paving round the tents: crates, barrels, rope (the user: "building materials for
         # tents strewn on the lawn to give some sense that things happened fast"; tent poles and canvas wait for their own piece)
         ('object', dict(kind='vignette', id='camp-crates-1', name='crates', piece='dress.crates', at=[15.2, 12.0], front='S', turn=14)),
@@ -144,12 +147,13 @@ FIXES = {
         ('object', dict(kind='glyph', id='glyph-purifier', name='the line to the purifier', pts=[[35.0, 23.4], [35.0, 25.4]])),
         ('object', dict(kind='glyph', id='glyph-tents-nw', name='the line to the north-west tent', pts=[[33.4, 16.4], [_ST['n1'][0], 13.4], _ST['n1']])),
         ('object', dict(kind='glyph', id='glyph-tents-ne', name='the line to the north-east tent', pts=[[36.6, 16.4], [_ST['n2'][0], 13.4], _ST['n2']])),
-        ('object', dict(kind='glyph', id='glyph-tents-e', name='the line between the east tents', pts=[[37.4, 19.2], [44.0, 21.2], [44.5, 21.2]])),
-        # each pair of tents off a shared line: a branch to each tent's station (the healing devices, 2026-11-27)
-        ('object', dict(kind='glyph', id='glyph-tent-e1', name='the branch to tent e1', pts=[[44.5, 21.2], _ST['e1']])),
-        ('object', dict(kind='glyph', id='glyph-tent-e2', name='the branch to tent e2', pts=[[44.5, 21.2], _ST['e2']])),
-        ('object', dict(kind='glyph', id='glyph-tent-w1', name='the branch to tent w1', pts=[[25.5, 21.2], _ST['w1']])),
-        ('object', dict(kind='glyph', id='glyph-tent-w2', name='the branch to tent w2', pts=[[25.5, 21.2], _ST['w2']])),
+        ('object', dict(kind='glyph', id='glyph-tents-e', name='the line between the east tents', pts=[[37.4, 19.2], [44.0, 21.2]])),
+        # each pair of tents off a shared line: a branch to each tent's station (the healing devices, 2026-11-27), starting
+        # exactly at the shared line's corner so the medallions there coincide (the user: "overlapping circles for the runes")
+        ('object', dict(kind='glyph', id='glyph-tent-e1', name='the branch to tent e1', pts=[[44.0, 21.2], _ST['e1']])),
+        ('object', dict(kind='glyph', id='glyph-tent-e2', name='the branch to tent e2', pts=[[44.0, 21.2], _ST['e2']])),
+        ('object', dict(kind='glyph', id='glyph-tent-w1', name='the branch to tent w1', pts=[[26.0, 21.2], _ST['w1']])),
+        ('object', dict(kind='glyph', id='glyph-tent-w2', name='the branch to tent w2', pts=[[26.0, 21.2], _ST['w2']])),
         *[fx for v in _HEAL.values() for fx in v[0]],
         # worn footpaths in the lawn (kit-ground.ts): where the nurses and stokers walk
         ('object', dict(kind='wear', id='wear-boiler-west', name="the boiler house's west door to the road", pts=[[65.0, 33.1], [64.6, 35.0], [63.9, 36.9]])),

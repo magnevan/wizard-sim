@@ -264,12 +264,12 @@ async function boot(): Promise<void> {
   // The number keys switch scenarios (scenarios.ts, this page's: 1 the practice ground, 8 the court); not online,
   // where one stray key would move everyone and the host uses the menu.
   if (!headless) addEventListener('keydown', (e) => {
-    // F6: the Fire spray's flames, flipbook or gas (?spray=, on trial), switched at once to compare while casting
+    // F6: the Fire spray's flames, flipbook, gas or mix (?spray=, on trial), cycled at once to compare while casting
     if (e.code === 'F6' && !e.repeat) {
       e.preventDefault();
-      const gas = opt('spray') !== 'gas';
-      setOpt('spray', gas ? 'gas' : null);
-      flashNote(gas ? 'Fire spray: gas' : 'Fire spray: flipbook');
+      const now = opt('spray'), next = now === 'gas' ? 'mix' : now === 'mix' ? null : 'gas';
+      setOpt('spray', next);
+      flashNote(next === 'gas' ? 'Fire spray: gas' : next === 'mix' ? 'Fire spray: mix (gas jet, then flipbook)' : 'Fire spray: flipbook');
       return;
     }
     const s = scenarioForKey(e.code);

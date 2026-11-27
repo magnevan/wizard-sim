@@ -38,7 +38,7 @@ ${NOISE}
 ${head}
 uniform vec3 uBoxC, uBoxH;
 uniform sampler2D uDepth; uniform vec2 uRes; uniform float uNear, uFar;
-uniform float uTime, uEnd, uTravel, uOn;
+uniform float uTime, uEnd, uTravel, uOn, uGasTo;   // uGasTo: ?spray=mix, the gas only this far out (the puffs after)
 in vec3 vWorld;
 out vec4 fxColor;
 // the patch's and the wave's ramp: 0 hottest .. 1 going out
@@ -96,7 +96,7 @@ vec2 gas(vec3 p) {
   float live = smoothstep(-0.03, 0.05, ragged) * (1.0 - smoothstep(uEnd - 0.05, uEnd + 0.03, ragged));
   // and where the sim's channel stops now (a wall or a body cuts it short), a rounded, torn end
   live *= 1.0 - smoothstep(reachNow - 0.4, reachNow + 0.6, along + (n - 0.5) * 1.4 + abs(across) * 0.3);
-  float burn = 1.0 - smoothstep(0.55, 1.25, age + (big - 0.5) * 0.35);
+  float burn = (1.0 - smoothstep(0.55, 1.25, age + (big - 0.5) * 0.35)) * (1.0 - smoothstep(uGasTo - 0.12, uGasTo + 0.12, s + ragS + (n - 0.5) * 0.2));
   if (live * burn <= 0.0) return vec2(0.0, 1.0);
   // a tight jet at the hands, torn into tongues and billows as it opens
   float tear = mix(0.5, 2.0, smoothstep(0.0, 0.35, age));
@@ -141,7 +141,7 @@ export class SprayGas {
   readonly u: Record<string, THREE.IUniform>;
 
   constructor(head: string, shared: Record<string, THREE.IUniform>) {
-    this.u = { ...shared, ...FX_U, uBoxC: { value: new THREE.Vector3() }, uBoxH: { value: new THREE.Vector3(1, 1, 1) }, uTravel: { value: 0.72 }, uOn: { value: 1 } };
+    this.u = { ...shared, ...FX_U, uBoxC: { value: new THREE.Vector3() }, uBoxH: { value: new THREE.Vector3(1, 1, 1) }, uTravel: { value: 0.72 }, uOn: { value: 1 }, uGasTo: { value: 9 } };
     const m = premulMaterial(new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, uniforms: this.u, vertexShader: VERT(head), fragmentShader: FRAG(head), side: THREE.BackSide }));
     m.depthTest = false;   // the march stops at the world's depth itself
     this.mesh = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), m);

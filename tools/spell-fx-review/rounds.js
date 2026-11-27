@@ -658,4 +658,24 @@ window.ROUNDS = [
     ],
     general: 'Anything else about the gas',
   },
+  {
+    id: 'fire-18',
+    group: 'Fire',
+    topic: 'Flamethrower',
+    tab: '3 · mix',
+    el: 'fire',
+    date: '2026-11-27',
+    title: 'The flamethrower as a mix: the gas jet, then the flipbook',
+    lead: 'You on gas take 2: “the start looks really good, but the tip of the effect does not”, you can “make out the shape of the object this texture seems to be wrapped around”, and it still looks odd turning fast. So: each method where it is good.',
+    items: [
+      {
+        id: 'mix',
+        title: 'Mix (?spray=mix)',
+        text: 'The gas jet leaves the hands as in take 2 and fades out a third of the way along, torn by its own noise; the painted puffs fade in over the same stretch and carry the rest: the swell, the tip, the burn-out and fast turns, as the flipbook always did. In the game, F6 now cycles flipbook, gas and mix while you cast (a note at the top says which).',
+        vid: ['t3-mix-9.mp4', 't3-mixsweep-9.mp4'],
+        ask: 'Mix, flipbook or gas?',
+      },
+    ],
+    general: 'Anything else',
+  },
 ];

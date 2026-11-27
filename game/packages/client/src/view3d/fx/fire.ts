@@ -55,8 +55,14 @@ export const NOZZLE = { forward: 0.55, height: 1.3, endHeight: 0.6 };
  */
 const BODY_MESH = false;
 
-/** ?spray=gas: the flames as burning gas (fire-spray-gas.ts) instead of the painted puffs (the default, flip); live (F6 in the 3D game flips it). */
-const sprayGas = (): boolean => opt('spray') === 'gas';
+/**
+ * ?spray=: the flames as the painted puffs (flip, the default), burning gas (gas: fire-spray-gas.ts), or both (mix: the
+ * gas jet from the hands handing over to the puffs a third of the way out; the user on gas take 2: "the start looks
+ * really good, but the tip ... does not"). Live: F6 in the 3D game cycles them.
+ */
+const sprayLook = (): 'flip' | 'gas' | 'mix' => { const v = opt('spray'); return v === 'gas' || v === 'mix' ? v : 'flip'; };
+/** Where the mix hands over (a share of the way out): the gas fades out over it, the puffs fade in. */
+const MIX_AT = 0.32;
 
 const SPRAY_HEAD = /* glsl */ `
 ${AIM_GLSL}
@@ -208,6 +214,7 @@ Particle particle(float k, float age, float ts) {
 
 const LOOK_PUFF = /* glsl */ `
 uniform sampler2D uSheet;
+uniform float uPuffFrom;   // ?spray=mix: puffs only from this far out (the gas jet before it); -1: everywhere
 ${SHEET_GLSL}
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   float age = col.x;
@@ -219,7 +226,7 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   vec3 c = t * mix(vec3(2.0, 1.75, 1.35), vec3(1.1), age);   // the painting already cools from white to red; lifted a little into HDR
   float fade = smoothstep(0.0, 0.04, age) * (1.0 - smoothstep(0.65, 1.0, age));
   // covering, so the painted curls hold their colour on the pale stone instead of adding up to a glare or a fog
-  float cover = m * fade * 0.68;
+  float cover = m * fade * 0.68 * smoothstep(uPuffFrom, uPuffFrom + 0.18, col.y);
   return vec4(c * cover, cover);
 }`;
 
@@ -358,7 +365,7 @@ export class FireSpray {
     // the body: one volume, a mesh (fire-body.ts), its deep-red outline shell first, then the flame
     // the flames: painted puffs over a soft glow, or (?spray=gas) the burning gas of the rest of Fire (fire-spray-gas.ts)
     add(GLOW, LOOK_GLOW, RATE.glow, RATE.glowLife, 2, {}, 7);
-    add(PUFF, LOOK_PUFF, RATE.puff, RATE.puffLife, 3, { uSheet: { value: FIRE_TEX.burn } }, 8);
+    add(PUFF, LOOK_PUFF, RATE.puff, RATE.puffLife, 3, { uSheet: { value: FIRE_TEX.burn }, uPuffFrom: { value: -1 } }, 8);
     this.flip = this.layers.slice(-2).map((l) => l.b);
     this.gas = new SprayGas(SPRAY_HEAD, this.U);
     this.group.add(this.gas.mesh);
@@ -400,9 +407,11 @@ export class FireSpray {
     this.body.uGrow.value = Math.min(1, (t - r.t0) / 1.0);
     // the release erodes outward in the body's shader; this only cleans up after it
     this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - Math.max(0, t - r.end - 0.8) / 0.3);
-    const gas = sprayGas();
+    const look = sprayLook(), gas = look !== 'flip';
     this.gas.mesh.visible = gas;
-    for (const b of this.flip) b.mesh.visible = !gas;
+    for (const b of this.flip) b.mesh.visible = look !== 'gas';
+    this.flip[1].u.uPuffFrom.value = look === 'mix' ? MIX_AT - 0.08 : -1;
+    this.gas.u.uGasTo.value = look === 'mix' ? MIX_AT : 9;
     if (gas) {
       const A = this.trail.at(t);
       this.gas.place(A.x, A.z, Math.max(A.reach, this.U.uRange.value as number), groundY);

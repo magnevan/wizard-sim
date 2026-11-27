@@ -23,12 +23,12 @@ ${HASH}
 ${NOISE}
 uniform vec4 uP[${max}];   // x, ground, z, drawn height
 uniform vec4 uS[${max}];   // burn 0..1, ...
-uniform vec4 uS2[${max}];  // -, radius, seed, -
+uniform vec4 uS2[${max}];  // -, radius, seed, flare 0..1 (the caster's Burn going off)
 uniform float uClock;
 // how tall the flames reach on body i, and its box (centre, half size)
-float topOf(int i) { return uP[i].w * (1.05 + 0.35 * uS[i].x); }
+float topOf(int i) { return uP[i].w * (1.05 + 0.35 * uS[i].x) * (1.0 + 0.3 * uS2[i].w); }
 void boxOf(int i, out vec3 c, out vec3 h) {
-  float top = topOf(i), R = uS2[i].y * 1.9 + 0.25;
+  float top = topOf(i), R = (uS2[i].y * 1.9 + 0.25) * (1.0 + 0.12 * uS2[i].w);
   c = uP[i].xyz + vec3(0.0, top * 0.5 + 0.1, 0.0); h = vec3(R, top * 0.5 + 0.35, R);
 }
 `;
@@ -62,7 +62,8 @@ vec3 gasRamp(float h) {
   return mix(c3, c4, (h - 0.7) / 0.3);
 }
 vec2 gas(vec3 p, int i) {
-  vec4 P = uP[i]; float k = uS[i].x, rad = uS2[i].y, seed = uS2[i].z;
+  // a flare (Burn going off) swells the sheath, thickens it and lifts its tongues
+  vec4 P = uP[i]; float fl = uS2[i].w, k = min(1.0, uS[i].x + fl), rad = uS2[i].y * (1.0 + 0.1 * fl), seed = uS2[i].z;
   float y = p.y - P.y, top = topOf(i);
   if (y < 0.0 || y > top + 0.3) return vec2(0.0, 1.0);
   vec2 o = p.xz - P.xz; float r = length(o);
@@ -77,7 +78,7 @@ vec2 gas(vec3 p, int i) {
   vec3 q = vec3(o * 2.8, y * 1.1 - uClock * 4.0) + vec3(seed * 1.7, seed * 2.3, 0.0);
   q.xy += (vec2(vnoise3(q * 0.5 + 3.1), vnoise3(q * 0.5 + 7.7)) - 0.5) * 1.3;
   float n = fbm3(q);
-  float body = sheath * (0.45 + 0.6 * rise) * smoothstep(-0.1, 0.25, rise) * mix(0.75, 1.1, k) - 0.42;
+  float body = sheath * (0.45 + 0.6 * rise) * smoothstep(-0.1, 0.25, rise) * mix(0.75, 1.1, k) - 0.42 + 0.12 * fl;
   float d = body + (n - 0.5) * 2.0;
   if (d <= 0.0) return vec2(0.0, 1.0);
   // orange to red: only the thickest low core goes yellow (a body's fire white-hot read as a cream pill)

@@ -120,6 +120,14 @@ export class Standins {
     }
   }
 
+  /** Seconds since seat `who`'s latest Fire self-cast (Burn) at tick `now` (fractional), or Infinity: its flare is drawn
+   * by the caster's own burning (fx/body-burn.ts), not by a stand-in. */
+  fireSelfAge(who: number, now: number): number {
+    let age = Infinity;
+    for (const r of this.recs) if (r.kind === 'self' && r.who === who && r.look === EL.fire && r.tick <= now) age = Math.min(age, (now - r.tick) / 60);
+    return age;
+  }
+
   /** A rewind dropped the steps after `tick`: their records go (the replay makes them again). */
   rewind(tick: number): void {
     this.recs = this.recs.filter((r) => r.tick <= tick);
@@ -152,7 +160,8 @@ export class Standins {
       case 'shatter': add('shatter', {}); return;
       case 'cast': {
         const sp = seatSpec();
-        if (sp?.shape === 'self') add('self', { look: sp.look || sp.form, heal: sp.heal });
+        // (a self-cast has no form or look: with Fire in it, it is Burn, drawn by the caster's own flames: fireSelfAge)
+        if (sp?.shape === 'self') add('self', { look: sp.counts[EL.fire - 1] > 0 ? EL.fire : sp.look || sp.form, heal: sp.heal });
         // a Discharge's reach (effects.ts: 4 u and one a rune), shown even when it finds nobody to zap
         if (sp?.shape === 'discharge') add('burst', { r: 4 + Math.max(1, sp.sizeN), look: EL.lightning });
         return;
@@ -688,6 +697,7 @@ export class Standins {
           break;
         }
         case 'self': {
+          if (r.look === EL.fire) break;   // Burn: the caster's own flames flare up instead (fireSelfAge)
           const g = this.ground(r.x, r.y);
           B.band(B.glowBuf, r.x, g + 2.4 * k, r.y, 0.8, g + 2.4 * k + 0.5, P.light, 0.8 * fade, 0);
           B.circle(B.tintBuf, r.x, r.y, 0.9, 0.12, P.deep, fade);

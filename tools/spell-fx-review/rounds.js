@@ -591,4 +591,24 @@ window.ROUNDS = [
     ],
     general: 'Anything else about burning',
   },
+  {
+    id: 'fire-15',
+    group: 'Fire',
+    topic: 'Burn',
+    tab: '1 · flare',
+    el: 'fire',
+    date: '2026-11-27',
+    title: 'Burn (Fire on yourself), take 1: a brief flare',
+    lead: 'Burning is closed (you, on take 1: “pretty good already”). Burn kept small, as you asked on 2026-11-26 (“the effect can be carried by the status”).',
+    items: [
+      {
+        id: 'burn',
+        title: 'Burn',
+        text: 'The generic self-cast stand-in (a lilac ring on the ground and a rising glass band) is gone for Fire. Instead the caster’s own flames, the burning gas from the last round, surge up past the hat for a moment as it goes off and settle into Burning within about 0.3 s, with a brighter light on the body. Three runes, close.',
+        vid: ['s1-burn-7.mp4'],
+        ask: 'Enough?',
+      },
+    ],
+    general: 'Anything else about Burn',
+  },
 ];

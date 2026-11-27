@@ -28,7 +28,7 @@ const MAX = 40;
 const COMMON = /* glsl */ `
 uniform vec4 uP[${MAX}];   // x, ground, z (sim y), drawn height
 uniform vec4 uS[${MAX}];   // burn 0..1, chill 0..1, frozen 0/1, stunned 0/1
-uniform vec4 uS2[${MAX}];  // wet 0/1, radius, seed, -
+uniform vec4 uS2[${MAX}];  // wet 0/1, radius, seed, flare 0..1 (Burn going off: fx/body-burn.ts)
 uniform float uClock; uniform float uN;
 vec3 toCam(vec3 at) { vec2 d = cameraPosition.xz - at.xz; float l = length(d); return l > 1e-4 ? vec3(d.x / l, 0.0, d.y / l) : vec3(0.0, 0.0, 1.0); }
 // a point on the body's surface: angle a round from the camera side, at height hy
@@ -200,7 +200,7 @@ export class BodyStatuses {
   }
 
   /** Each frame: who has what, where each body is drawn (`bodyAt`, sim u), at effect time t (s). */
-  update(w: World, t: number, bodyAt: (i: number) => [number, number], lights: SpellLights | null): void {
+  update(w: World, t: number, bodyAt: (i: number) => [number, number], lights: SpellLights | null, flare: (i: number) => number = () => 0): void {
     const b = w.bodies;
     let n = 0;
     for (let i = 0; i < b.kind.length && n < MAX; i++) {
@@ -212,8 +212,9 @@ export class BodyStatuses {
       const [x, y] = bodyAt(i), g = this.heightAt(x, y), h = bodyHeight(w, i);
       this.P[n].set(x, g, y, h);
       this.S[n].set(burn, chill, frozen, stun);
-      this.S2[n].set(wet, Math.max(0.3, b.r[i]) * 1.15, i * 7 + 3, 0);
-      if (lights && burn) lights.add(x, g + h * 0.5, y, 0xff7020, (h > 3 ? 2.2 : 1.3) * burn * (0.88 + 0.12 * Math.sin(t * 19 + i)), h > 3 ? 4.5 : 3);
+      const fl = burn ? flare(i) : 0;
+      this.S2[n].set(wet, Math.max(0.3, b.r[i]) * 1.15, i * 7 + 3, fl);
+      if (lights && burn) lights.add(x, g + h * 0.5, y, 0xff7020, ((h > 3 ? 2.2 : 1.3) * (0.88 + 0.12 * Math.sin(t * 19 + i)) + 3 * fl) * burn, h > 3 ? 4.5 : 3 + 2 * fl);
       if (lights && frozen) lights.add(x, g + h * 0.5, y, 0xbff4ff, 0.5, 2.5);
       n++;
     }

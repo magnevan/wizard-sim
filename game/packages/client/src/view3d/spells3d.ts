@@ -160,7 +160,14 @@ export class Spells3D {
     if (fireB) this.fireWaves.update(t, this.lights);
     this.earth.meshes.visible = this.earth.group.visible = !this.standins.drawEarth;
     if (!this.standins.drawEarth) { this.earth.update(w, t, o.alpha ?? 0, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]]); this.shakeAt = t + (o.alpha ?? 0) / 60; }
-    this.statuses.update(w, t, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]], this.lights);
+    // Burn's flare: the caster's flames surge up for a moment as the spell goes off, then settle into Burning
+    const now = w.clock[0] + (o.alpha ?? 0);
+    const flare = (i: number): number => {
+      if (i >= MAX_SEATS) return 0;
+      const a = this.standins.fireSelfAge(i, now);
+      return a < 0.06 ? a / 0.06 : Math.max(0, 1 - (a - 0.06) / 0.3);
+    };
+    this.statuses.update(w, t, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]], this.lights, flare);
     this.windups.update(w, o.alpha ?? 0, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]], (x, y) => this.simHeight(x, y));
     this.standins.draw(w, { t, alpha: o.alpha ?? 0, localSeat: o.localSeat ?? -1, cam: this.fxCam, lights: this.lights, bodyAt: o.bodyAt });
     if (fxOff('lights')) this.lights.begin();

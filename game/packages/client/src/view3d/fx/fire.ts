@@ -55,8 +55,8 @@ export const NOZZLE = { forward: 0.55, height: 1.3, endHeight: 0.6 };
  */
 const BODY_MESH = false;
 
-/** ?spray=gas: the flames as burning gas (fire-spray-gas.ts) instead of the painted puffs (the default, flip). */
-const SPRAY_GAS = opt('spray') === 'gas';
+/** ?spray=gas: the flames as burning gas (fire-spray-gas.ts) instead of the painted puffs (the default, flip); live (F6 in the 3D game flips it). */
+const sprayGas = (): boolean => opt('spray') === 'gas';
 
 const SPRAY_HEAD = /* glsl */ `
 ${AIM_GLSL}
@@ -338,8 +338,9 @@ export class FireSpray {
   readonly fan: GroundDecal;
   /** The body: the flame as one volume (fire-body.ts). */
   private body: FireBody;
-  /** The flames as burning gas (?spray=gas), or null: the painted puffs. */
-  private gas: SprayGas | null = null;
+  /** The flames as burning gas (?spray=gas), and the painted puffs and glow: both built, one drawn (switched live). */
+  private gas: SprayGas;
+  private flip: ParticleBatch[] = [];
   private F = { uFan: { value: new THREE.Vector4() }, uFanOn: { value: 0 }, uClock: { value: 0 }, uNozF: { value: NOZZLE.forward + 0.6 } };
 
   /** `look` and `sheets` are the spike's and are ignored (see FxLook, FireSheets). */
@@ -356,13 +357,11 @@ export class FireSpray {
     add(SMOKE, LOOK_SMOKE, RATE.smoke, RATE.smokeLife, 0, { uSheet: { value: FIRE_TEX.smokeburn } });
     // the body: one volume, a mesh (fire-body.ts), its deep-red outline shell first, then the flame
     // the flames: painted puffs over a soft glow, or (?spray=gas) the burning gas of the rest of Fire (fire-spray-gas.ts)
-    if (SPRAY_GAS) {
-      this.gas = new SprayGas(SPRAY_HEAD, this.U);
-      this.group.add(this.gas.mesh);
-    } else {
-      add(GLOW, LOOK_GLOW, RATE.glow, RATE.glowLife, 2, {}, 7);
-      add(PUFF, LOOK_PUFF, RATE.puff, RATE.puffLife, 3, { uSheet: { value: FIRE_TEX.burn } }, 8);
-    }
+    add(GLOW, LOOK_GLOW, RATE.glow, RATE.glowLife, 2, {}, 7);
+    add(PUFF, LOOK_PUFF, RATE.puff, RATE.puffLife, 3, { uSheet: { value: FIRE_TEX.burn } }, 8);
+    this.flip = this.layers.slice(-2).map((l) => l.b);
+    this.gas = new SprayGas(SPRAY_HEAD, this.U);
+    this.group.add(this.gas.mesh);
     this.body = new FireBody(SPRAY_HEAD, this.U, seed);
     this.body.group.visible = BODY_MESH;
     this.group.add(this.body.group);
@@ -401,7 +400,10 @@ export class FireSpray {
     this.body.uGrow.value = Math.min(1, (t - r.t0) / 1.0);
     // the release erodes outward in the body's shader; this only cleans up after it
     this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - Math.max(0, t - r.end - 0.8) / 0.3);
-    if (this.gas) {
+    const gas = sprayGas();
+    this.gas.mesh.visible = gas;
+    for (const b of this.flip) b.mesh.visible = !gas;
+    if (gas) {
       const A = this.trail.at(t);
       this.gas.place(A.x, A.z, Math.max(A.reach, this.U.uRange.value as number), groundY);
       this.gas.u.uTravel.value = RATE.puffLife; this.gas.u.uOn.value = this.body.uOn.value;
@@ -433,5 +435,5 @@ export class FireSpray {
     }
   }
 
-  dispose(): void { for (const l of this.layers) l.b.dispose(); this.body.dispose(); this.gas?.dispose(); this.fan.dispose(); }
+  dispose(): void { for (const l of this.layers) l.b.dispose(); this.body.dispose(); this.gas.dispose(); this.fan.dispose(); }
 }

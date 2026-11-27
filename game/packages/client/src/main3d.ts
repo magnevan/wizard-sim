@@ -264,6 +264,14 @@ async function boot(): Promise<void> {
   // The number keys switch scenarios (scenarios.ts, this page's: 1 the practice ground, 8 the court); not online,
   // where one stray key would move everyone and the host uses the menu.
   if (!headless) addEventListener('keydown', (e) => {
+    // F6: the Fire spray's flames, flipbook or gas (?spray=, on trial), switched at once to compare while casting
+    if (e.code === 'F6' && !e.repeat) {
+      e.preventDefault();
+      const gas = opt('spray') !== 'gas';
+      setOpt('spray', gas ? 'gas' : null);
+      flashNote(gas ? 'Fire spray: gas' : 'Fire spray: flipbook');
+      return;
+    }
     const s = scenarioForKey(e.code);
     if (s && !e.repeat && net?.state !== 'playing') switchScenario(s);
   });
@@ -391,6 +399,19 @@ async function boot(): Promise<void> {
   (window as unknown as { wizardSim: unknown }).wizardSim = {
     world, get recorder() { return recorder; }, tune, tools, stats, view, menu, audio, get net() { return net; }, perf, switchScenario, startWave: (n: number) => devStartWave(world, n, 1),
   };
+}
+
+/** A short note at the top of the screen for a moment (a dev hotkey's new state). */
+let noteEl: HTMLDivElement | null = null, noteTimer = 0;
+function flashNote(text: string): void {
+  if (!noteEl) {
+    noteEl = document.createElement('div');
+    Object.assign(noteEl.style, { position: 'fixed', top: '12px', left: '50%', transform: 'translateX(-50%)', padding: '6px 12px', background: 'rgba(20,16,12,0.8)', color: '#f4e6cc', font: '14px system-ui, sans-serif', borderRadius: '6px', pointerEvents: 'none', zIndex: '50' });
+    document.body.append(noteEl);
+  }
+  noteEl.textContent = text; noteEl.style.display = '';
+  clearTimeout(noteTimer);
+  noteTimer = window.setTimeout(() => { if (noteEl) noteEl.style.display = 'none'; }, 1500);
 }
 
 boot().catch((err: Error) => {

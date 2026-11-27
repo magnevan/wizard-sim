@@ -1,5 +1,5 @@
 {
- "place.json": "3d76b807b240b05f467f5d75e50be73d",
+ "place.json": "19cb9df06151d62a6ecc09a0221fe8f9",
  "whose.js": "067d1a8cf932d1aca049af8de0366e8b",
  "rounds/ground-floor.html": "cb404625de33cae8423b1ed979ecdab6",
  "rounds/ground-green.html": "6d896923454ac4764769b55e771a2fd9",
@@ -62,6 +62,8 @@
  "img/ev-wisteria.jpg": "3be50eed7d2742e0339bd8003c8f94a0",
  "img/floor-after-close-30-24.jpg": "e3297c58a6f4c58d599de1ca391a402b",
  "img/floor-before-35-20.jpg": "61b1d3e1194fdc4c3c95761ca796b04e",
+ "img/foliage-after.jpg": "030fafa9737cc2f1fc778ef4e2051536",
+ "img/foliage-before.jpg": "c6d89d55d211aeeb2f70fcc86eea9191",
  "img/green-after-cove.jpg": "bf3cb62d38dc682bd583beeb6bafee77",
  "img/green-after-forecourt.jpg": "2ed1f12148c9c5fcbb9d10367a9debca",
  "img/green-after-greenhouse.jpg": "9e2954e1eee8809efd59c89a0869e5dd",
@@ -196,5 +198,7 @@
  "img/vines-near-1.jpg": "f97a4d11ef298dcef770c992a41f3200",
  "img/vines-near-half.jpg": "cf44cb69ac1ec87c78c780f0b839e876",
  "img/vines-overview.jpg": "1789e093235f36c405648272b643ec04",
- "img/west.jpg": "902dcc51cf630af9b25adbd820792e66"
+ "img/west.jpg": "902dcc51cf630af9b25adbd820792e66",
+ "img/wisteria-low.jpg": "4fbe74964871d6445f2f85c68ae34f5c",
+ "img/wisteria-top.jpg": "92fd5cbe06b3849c4a262a036abd935f"
 }

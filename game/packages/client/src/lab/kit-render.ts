@@ -934,9 +934,36 @@ const PLANT_PARTS: Record<string, Recipe> = {
   'plant-blossom': { kind: 'bush', r: 0.42, pal: ['green', 'gold'], bloom: { pal: 'pink', amount: 0.8 } },
 };
 /** Grow a recipe into g at height y0 (u): a stone trough of its `box` first, if it has one, then the plant on its soil. */
+/**
+ * A field's bare earth (w by d m) lying flat on the ground at y0, its outline ragged: the lawn creeps in and the
+ * worked earth spills out in an uneven line, round corners, never a ruler edge (t-fields 2026-11-27: the soil was a
+ * raised slab with "straight hard borders"). Seeded, so a field keeps its shape.
+ */
+function soilPatch(w: number, d: number, seed: number, y0: number): THREE.Mesh {
+  const r = seeded(seed, w, d, 7), W = yOf(w) / 2, D = yOf(d) / 2, edge = yOf(0.35), round = Math.min(W, D) * 0.35, pts: THREE.Vector2[] = [];
+  const perim = 4 * (W + D), n = Math.max(24, Math.round(perim / yOf(0.4)));
+  let wob = 0;
+  for (let i = 0; i < n; i++) {
+    const t = (i / n) * perim; let x: number, z: number, nx: number, nz: number;
+    if (t < 2 * W) { x = -W + t; z = -D; nx = 0; nz = -1; } else if (t < 2 * W + 2 * D) { x = W; z = -D + (t - 2 * W); nx = 1; nz = 0; }
+    else if (t < 4 * W + 2 * D) { x = W - (t - 2 * W - 2 * D); z = D; nx = 0; nz = 1; } else { x = -W; z = D - (t - 4 * W - 2 * D); nx = -1; nz = 0; }
+    // round the corners: pull points near a corner in along the diagonal
+    const cx = Math.max(0, Math.abs(x) - (W - round)), cz = Math.max(0, Math.abs(z) - (D - round)), cd = Math.hypot(cx, cz);
+    if (cx > 0 && cz > 0 && cd > round) { x -= Math.sign(x) * cx * (1 - round / cd); z -= Math.sign(z) * cz * (1 - round / cd); }
+    wob = wob * 0.6 + (r() - 0.5) * edge * 1.4;   // a wandering edge, not white noise
+    pts.push(new THREE.Vector2(x + nx * wob, -(z + nz * wob)));
+  }
+  const geo = new THREE.ShapeGeometry(new THREE.Shape(pts)); geo.rotateX(-Math.PI / 2);
+  const mat = (TEX.dirt ?? FLOOR.dirt) as THREE.MeshStandardMaterial;
+  const m = new THREE.Mesh(geo, soilMat ??= Object.assign(mat.clone(), { polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
+  if (TEX.dirt) { soilMat.onBeforeCompile = TEX.dirt.onBeforeCompile; soilMat.customProgramCacheKey = TEX.dirt.customProgramCacheKey; }
+  m.position.y = y0 + yOf(0.01); m.receiveShadow = true;
+  return m;
+}
+let soilMat: THREE.MeshStandardMaterial | undefined;
 function growInto(g: THREE.Group, recipe: Recipe & { box?: [number, number, number]; soil?: [number, number] }, seed: number, y0: number): THREE.Group {
   let y = y0;
-  if (recipe.soil) { const [sw, sd] = recipe.soil.map(yOf); box(g, TEX.dirt ?? MAT.wood, -sw / 2, sw / 2, y0 - yOf(0.05), y0 + yOf(0.03), -sd / 2, sd / 2); }
+  if (recipe.soil) g.add(soilPatch(recipe.soil[0], recipe.soil[1], seed, y0));
   if (recipe.box) {
     const [bw, bd, bh] = recipe.box.map(yOf), stone = TEX['smooth-stone'] ?? PROP.stone, lip = yOf(0.04);
     box(g, stone, -bw / 2, bw / 2, y0, y0 + bh, -bd / 2, bd / 2);

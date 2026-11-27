@@ -115,6 +115,41 @@
  ],
  "decisions": [
   {
+   "id": "rv-4",
+   "area": "ground",
+   "title": "Have a look: birches, wisteria, shrubs and fields",
+   "html": "<p>The four foliage tasks you agreed to (top: before, below: after, in the same order: birch, wisteria, shrub, fields):</p><ol><li><b>Birches</b> have bark now: chalk white with dark horizontal marks, darker at the foot, and a few dark limbs climbing into a looser crown.</li><li><b>The wisteria</b> hangs: a wide, low crown with long lilac and white bunches hanging from its underside, instead of a round ball of blossom. Best seen from low (third picture).</li><li><b>Shrubs</b> get loose sprigs past their outline and less even masses, so they read as leafy rather than as round lobes. <b>This also changes the courtyard's bushes</b> (gold, lilac and pink are shared); it's one setting to keep the court as it was.</li><li><b>The fields</b> sit on flat earth with a ragged, rounded outline instead of a raised slab with straight edges; the rows start and stop unevenly, and the wheat ripens unevenly into olive, so it's less bright.</li></ol>",
+   "figures": [
+    {
+     "src": "img/foliage-before.jpg",
+     "cap": "Before: birch, wisteria, shrub, fields"
+    },
+    {
+     "src": "img/foliage-after.jpg",
+     "cap": "After: birch, wisteria (low), shrub, fields"
+    },
+    {
+     "src": "img/wisteria-low.jpg",
+     "cap": "2: the wisteria from low"
+    },
+    {
+     "src": "img/wisteria-top.jpg",
+     "cap": "2: the wisteria at the game camera"
+    }
+   ],
+   "rec": "My view: all four are clearly better; the court's bushes gain from the sprigs too, so I would keep them shared.",
+   "choices": [
+    {
+     "v": "good",
+     "label": "Looks good"
+    },
+    {
+     "v": "changes",
+     "label": "Changes (in the note)"
+    }
+   ]
+  },
+  {
    "id": "rv-3",
    "area": "ground",
    "title": "Have a look: the beach meets the sea; vines in the purifier bay",
@@ -1614,6 +1649,11 @@
    "at": "2026-11-27",
    "title": "Round 14: the road whole again; the road lamps modelled",
    "html": "<p>The road out reads as one band of paving since the grass merge (its weathering no longer eats the stones). The four road lamps stood as bare stand-in poles: hand-placed pieces never had their parts picked, so <code>compile.py</code> now picks one of each, seeded by the piece's id.</p><figure><img src=\"img/road-now.jpg\" alt=\"The road\"><figcaption>The road out, the lamps along its far side</figcaption></figure><figure><img src=\"img/road-lamp.jpg\" alt=\"A lamp\"><figcaption>A lamp up close</figcaption></figure>"
+  },
+  {
+   "at": "2026-11-27",
+   "title": "Round 15: birches, wisteria, shrubs, fields",
+   "html": "<p>New options in <code>foliage.ts</code>: a birch's bark texture and limbs, <code>spread</code>, <code>squash</code> and <code>hang</code> on trees (the wisteria), <code>sprigs</code> on bushes; fields' soil a ragged flat patch (<code>kit-render.ts</code>), ragged row ends, an uneven wheat. Asked in rv-4.</p>"
   }
  ],
  "board": {
@@ -1757,9 +1797,9 @@
       "#task-t-fields"
      ],
      "dressing": [
-      "started",
-      "birch, wisteria to fix",
-      "#ground-green"
+      "review",
+      "trees, shrubs and fields",
+      "#decision-rv-4"
      ],
      "beauty": [
       "later"

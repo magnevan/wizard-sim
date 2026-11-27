@@ -297,7 +297,26 @@ function cardMaterial(over = false): THREE.MeshLambertMaterial {
   return (cardMats[over ? 1 : 0] = m);
 }
 const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4030, roughness: 1 });
-const birchMat = new THREE.MeshStandardMaterial({ color: 0xe8e2d4, roughness: 0.9 });
+// a birch's bark (t-birch, 2026-11-27: "plain pale sticks"): chalk white, dark horizontal marks scattered up it and
+// thickening into a dark rough foot; painted once into a canvas wrapped round the stem (u round it, v up it)
+let birchTex: THREE.CanvasTexture | null = null;
+function birchBark(): THREE.CanvasTexture {
+  if (birchTex) return birchTex;
+  const W = 64, H = 256, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d')!, r = rng(9157);
+  ctx.fillStyle = '#ece6da'; ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 40; i++) { ctx.fillStyle = `rgba(190,180,160,${0.12 + r() * 0.15})`; ctx.fillRect(r() * W, r() * H, 6 + r() * 20, 2 + r() * 5); }   // soft grey bands
+  for (let i = 0; i < 70; i++) {   // the marks: short dark dashes across the stem, more toward the foot
+    const y = H * Math.pow(r(), 0.7), w = 4 + r() * 16, h = 1.5 + r() * 2.5 + (y / H) * 3;
+    ctx.fillStyle = `rgba(${40 + r() * 20},${34 + r() * 16},${30 + r() * 12},${0.7 + r() * 0.3})`; ctx.fillRect(r() * W, y, w, h);
+  }
+  const g = ctx.createLinearGradient(0, H * 0.82, 0, H); g.addColorStop(0, 'rgba(60,50,42,0)'); g.addColorStop(1, 'rgba(60,50,42,0.85)');
+  ctx.fillStyle = g; ctx.fillRect(0, H * 0.82, W, H * 0.18);   // the dark, rough foot (canvas y down: the stem's foot is at the bottom)
+  birchTex = new THREE.CanvasTexture(cv); birchTex.colorSpace = THREE.SRGBColorSpace; birchTex.wrapS = THREE.RepeatWrapping;
+  return birchTex;
+}
+const birchMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+const twigMat = new THREE.MeshStandardMaterial({ color: 0x6a5c52, roughness: 1 });
 const proxyMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
 let contactTex: THREE.CanvasTexture | null = null;
 function contactMaterial(): THREE.Material {
@@ -323,6 +342,7 @@ export class Foliage {
   private pos: number[] = []; private nrm: number[] = []; private corner: number[] = []; private uv: number[] = [];
   private a: number[] = []; private b: number[] = []; private c: number[] = []; private idx: number[] = [];
   private stems: { x: number; y: number; z: number; h: number; r: number; pale: boolean }[] = [];
+  private limbs: { p: V3; d: V3; len: number; r: number }[] = [];
   private lobes: { c: V3; r: V3 }[] = []; private contacts: { x: number; z: number; y: number; rx: number; rz: number }[] = [];
   private og: number[] = []; private orest: number[] = [];
   cards = 0;
@@ -349,6 +369,8 @@ export class Foliage {
   lobe(c: V3, r: V3) { this.lobes.push({ c, r }); }
   /** A bare woody stem (a tree's trunk), r at the foot; pale for a birch. */
   stem(x: number, y: number, z: number, h: number, r: number, pale = false) { this.stems.push({ x, y, z, h, r, pale }); }
+  /** A branch: from p along d (a direction), len m, r at its foot, tapering (a birch's limbs into its crown). */
+  limb(p: V3, d: V3, len: number, r: number) { this.limbs.push({ p, d, len, r }); }
   /** A soft dark patch on the ground under the plant. */
   contact(x: number, z: number, rx: number, rz = rx, y = 0.012) { this.contacts.push({ x, z, y, rx, rz }); }
 
@@ -376,7 +398,13 @@ export class Foliage {
       const m = new THREE.Mesh(geo, proxyMat); m.castShadow = true; m.userData.foliageProxy = true; g.add(m);
     }
     for (const t of this.stems) {
+      if (t.pale && !birchMat.map) { birchMat.map = birchBark(); birchMat.needsUpdate = true; }
       const c = new THREE.Mesh(new THREE.CylinderGeometry(t.r * 0.6, t.r, t.h, 7), t.pale ? birchMat : barkMat); c.position.set(t.x, t.y + t.h / 2, t.z); c.castShadow = c.receiveShadow = true; g.add(c);
+    }
+    const up = new THREE.Vector3(0, 1, 0);
+    for (const l of this.limbs) {
+      const d = new THREE.Vector3(...l.d).normalize(), c = new THREE.Mesh(new THREE.CylinderGeometry(l.r * 0.35, l.r, l.len, 5), twigMat);
+      c.quaternion.setFromUnitVectors(up, d); c.position.set(l.p[0] + d.x * l.len / 2, l.p[1] + d.y * l.len / 2, l.p[2] + d.z * l.len / 2); c.castShadow = true; g.add(c);
     }
     for (const c of this.contacts) {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(c.rx * 2, c.rz * 2), (contactMat ??= contactMaterial()));
@@ -460,16 +488,34 @@ export function blossom(F: Foliage, p: V3, n: V3, s: number, pal: Pal, ao: numbe
 // ---------------------------------------------------------------------------------------------------------------
 // recipes
 // ---------------------------------------------------------------------------------------------------------------
-export type BushOpt = { r?: number; h?: number; pal?: Pal | Pal[]; sprites?: Sprite[]; leaf?: number; bloom?: Bloom; lobes?: number; at?: [number, number]; y?: number; density?: number };
+export type BushOpt = { r?: number; h?: number; pal?: Pal | Pal[]; sprites?: Sprite[]; leaf?: number; bloom?: Bloom; lobes?: number; at?: [number, number]; y?: number; density?: number;
+  /** 0 to 1: loose sprigs standing out past the skin, and lobes less even, so the outline breaks up instead of
+   *  reading as round lobes (t-shrubs 2026-11-27: "the bushes read as clusters of round lobes") */
+  sprigs?: number };
 /** A shrub: a main mass with smaller ones crowding its foot. r: half its width, h: its height (m). */
 export function bush(F: Foliage, o: BushOpt = {}) {
-  const r = F.r, R = o.r ?? 0.6, H = o.h ?? R * 1.5, [x, z] = o.at ?? [0, 0], y = o.y ?? 0, leafS = o.leaf ?? 0.17;
-  const lobes: Lobe[] = [{ c: [x, y + H * 0.52, z], r: [R * 0.78, H * 0.5, R * 0.78] }], n = o.lobes ?? 4 + Math.floor(r() * 3), a0 = r() * 6.283;
+  const r = F.r, R = o.r ?? 0.6, H = o.h ?? R * 1.5, [x, z] = o.at ?? [0, 0], y = o.y ?? 0, leafS = o.leaf ?? 0.17, sg = o.sprigs ?? 0;
+  const lobes: Lobe[] = [{ c: [x, y + H * 0.52, z], r: [R * 0.78, H * 0.5, R * 0.78] }], n = o.lobes ?? 4 + Math.floor(r() * 3) + Math.round(sg * 3), a0 = r() * 6.283;
   for (let i = 0; i < n; i++) {
-    const a = a0 + (i / n) * 6.283 + (r() - 0.5) * 0.7, d = R * (0.42 + r() * 0.3), rr = R * (0.36 + r() * 0.26), hh = H * (0.22 + r() * 0.26);
-    lobes.push({ c: [x + Math.cos(a) * d, y + hh * (0.75 + r() * 0.5), z + Math.sin(a) * d], r: [rr, hh, rr] });
+    const a = a0 + (i / n) * 6.283 + (r() - 0.5) * 0.7, d = R * (0.42 + r() * 0.3), rr = R * (0.36 + r() * 0.26) * (1 - sg * 0.25 * r()), hh = H * (0.22 + r() * 0.26);
+    const lift = sg ? (r() - 0.3) * H * 0.35 * sg : 0;   // a ragged bush's masses sit at uneven heights, some higher up its flank
+    lobes.push({ c: [x + Math.cos(a) * d, y + hh * (0.75 + r() * 0.5) + Math.max(0, lift), z + Math.sin(a) * d], r: [rr * (1 + (r() - 0.5) * sg * 0.5), hh, rr] });
   }
   fill(F, lobes, { pal: o.pal ?? 'gold', sprites: o.sprites ?? [...LEAF_BROAD, ...LEAF_BROAD, ...LEAF_ROUND], size: leafS, bloom: o.bloom, floor: y + 0.03, density: o.density });
+  if (sg) {   // sprigs: short shoots of two or three leaves reaching out past the skin, most on the upper half
+    const pals = Array.isArray(o.pal) ? o.pal : [o.pal ?? 'gold'];
+    for (const l of lobes) for (let i = 0; i < Math.round(sg * 9 * Math.max(...l.r) / 0.3); i++) {
+      const a = r() * 6.283, e = -0.1 + r() * 1.3, dir: V3 = [Math.cos(a) * Math.cos(e), Math.sin(e), Math.sin(a) * Math.cos(e)];
+      const base: V3 = [l.c[0] + dir[0] * l.r[0] * 0.95, l.c[1] + dir[1] * l.r[1] * 0.95, l.c[2] + dir[2] * l.r[2] * 0.95];
+      if (base[1] < y + 0.08) continue;
+      const reach = leafS * (1.2 + r() * 1.8), pal = pick(r, pals);
+      for (let k = 1; k <= 2 + Math.floor(r() * 2); k++) {
+        const t = (k / 3) * reach;
+        F.card([base[0] + dir[0] * t, base[1] + dir[1] * t + 0.02 * k, base[2] + dir[2] * t], [dir[0], dir[1] + 0.4, dir[2]], leafS * (0.75 - k * 0.1) * (0.85 + r() * 0.3),
+          pick(r, [...LEAF_BROAD, ...LEAF_DROOP]), pal, 0.65 + r() * 0.35, { roll: (r() - 0.5) * 1.6, sway: 1.3, flip: r() < 0.5 });
+      }
+    }
+  }
   F.contact(x, z, R * 1.25, R * 1.25, y + 0.012);
 }
 
@@ -567,20 +613,53 @@ export function cascade(F: Foliage, o: CascadeOpt) {
 }
 
 export type TreeOpt = { h?: number; r?: number; pal?: Pal | Pal[]; bloom?: Bloom; at?: [number, number]; y?: number;
-  /** a birch: a tall pale stem, the crown high, narrow and loose (as the concept's woods) */
-  birch?: boolean };
+  /** a birch: a tall pale stem with its bark marked, the crown high, narrow and loose, limbs showing into it */
+  birch?: boolean;
+  /** how far the crown's masses spread out (1: as round as it is tall) and how flat they are (1: round); a wisteria's
+   *  crown is wide and low */
+  spread?: number; squash?: number;
+  /** long flower bunches hanging from the crown's underside (a wisteria, t-wisteria 2026-11-27: "it should hang in
+   *  long drooping clusters"): n of them, len [min, max] m long */
+  hang?: { pal: Pal | Pal[]; n?: number; len?: [number, number]; size?: number } };
 /** A small round-headed tree (a flowering cherry, a clipped standard): a bare stem and a crown of several masses. */
 export function tree(F: Foliage, o: TreeOpt = {}) {
-  const r = F.r, H = o.h ?? 3.2, R = o.r ?? 1.2, [x, z] = o.at ?? [0, 0], y = o.y ?? 0, b = !!o.birch;
-  const cy = y + H - R * (b ? 1.15 : 0.85);
-  const lobes: Lobe[] = [{ c: [x, cy, z], r: b ? [R * 0.7, R * 1.15, R * 0.7] : [R * 0.8, R * 0.72, R * 0.8] }];
+  const r = F.r, H = o.h ?? 3.2, R = o.r ?? 1.2, [x, z] = o.at ?? [0, 0], y = o.y ?? 0, b = !!o.birch, sp = o.spread ?? 1, sq = o.squash ?? 1;
+  const cy = y + H - R * (b ? 1.15 : 0.85) * sq;
+  const lobes: Lobe[] = [{ c: [x, cy, z], r: b ? [R * 0.7, R * 1.15, R * 0.7] : [R * 0.8 * sp, R * 0.72 * sq, R * 0.8 * sp] }];
   for (let i = 0; i < (b ? 9 : 6); i++) {
-    const a = (i / (b ? 9 : 6)) * 6.283 + r(), d = R * (0.5 + r() * 0.25), rr = R * (b ? 0.34 + r() * 0.2 : 0.42 + r() * 0.2);
-    lobes.push({ c: [x + Math.cos(a) * d, cy + (r() - 0.45) * R * (b ? 1.5 : 0.6), z + Math.sin(a) * d], r: [rr, rr * (b ? 1.1 : 0.85), rr] });
+    const a = (i / (b ? 9 : 6)) * 6.283 + r(), d = R * (0.5 + r() * 0.25) * sp, rr = R * (b ? 0.34 + r() * 0.2 : 0.42 + r() * 0.2);
+    lobes.push({ c: [x + Math.cos(a) * d, cy + (r() - 0.45) * R * (b ? 1.5 : 0.6) * sq, z + Math.sin(a) * d], r: [rr, rr * (b ? 1.1 : 0.85) * sq, rr] });
   }
-  fill(F, lobes, { pal: o.pal ?? 'green', sprites: b ? [...LEAF_ROUND, ...LEAF_DROOP] : [...LEAF_BROAD, ...LEAF_ROUND], size: b ? 0.17 : 0.2, bloom: o.bloom, floor: y + 0.4, aoLo: 0.2, density: b ? 0.8 : 1 });
-  F.contact(x, z, R * 1.1, R * 1.1, y + 0.012);
-  F.stem(x, y, z, cy - y + (b ? R * 0.6 : 0), b ? 0.07 + R * 0.03 : 0.09 + R * 0.05, b);
+  fill(F, lobes, { pal: o.pal ?? 'green', sprites: b ? [...LEAF_ROUND, ...LEAF_DROOP] : [...LEAF_BROAD, ...LEAF_ROUND], size: b ? 0.17 : 0.2, bloom: o.bloom, floor: y + 0.4, aoLo: 0.2, density: b ? 0.62 : 1 });
+  F.contact(x, z, R * 1.1 * sp, R * 1.1 * sp, y + 0.012);
+  const stemR = b ? 0.07 + R * 0.03 : 0.09 + R * 0.05;
+  F.stem(x, y, z, cy - y + (b ? R * 0.6 : 0), stemR, b);
+  if (b) {   // limbs: a few dark branches leaving the upper stem and climbing out into the loose crown, where they show
+    const n = 4 + Math.floor(r() * 3), a0 = r() * 6.283;
+    for (let i = 0; i < n; i++) {
+      const a = a0 + (i / n) * 6.283 + (r() - 0.5) * 0.6, h0 = cy - R * (0.95 - 0.8 * (i / n)) + (r() - 0.5) * 0.2, out = 0.55 + r() * 0.35;
+      F.limb([x, h0, z], [Math.cos(a) * out, 1, Math.sin(a) * out], R * (0.7 + r() * 0.45), stemR * (0.38 + r() * 0.15));
+    }
+  }
+  if (o.hang) {   // bunches hanging from the crown's lower skin: chains of flower cards, full at the top, thinning to a tip
+    const pals = Array.isArray(o.hang.pal) ? o.hang.pal : [o.hang.pal], [l0, l1] = o.hang.len ?? [0.45, 1.1], s0 = o.hang.size ?? 0.13;
+    const leafPals = Array.isArray(o.pal) ? o.pal : [o.pal ?? 'green'];
+    for (let i = 0; i < (o.hang.n ?? 60); i++) {
+      const l = pick(r, lobes), a = r() * 6.283, e = -0.15 - r() * 0.65;   // the underside and lower flank of a mass
+      const top: V3 = [l.c[0] + Math.cos(a) * Math.cos(e) * l.r[0] * 0.95, l.c[1] + Math.sin(e) * l.r[1] * 0.95, l.c[2] + Math.sin(a) * Math.cos(e) * l.r[2] * 0.95];
+      if (top[1] < y + 1.2) continue;   // never down to the ground: a person walks under a wisteria
+      const L = Math.min(l0 + r() * (l1 - l0), top[1] - y - 1.0), pal = pick(r, pals), nrm: V3 = [Math.cos(a) * 0.6, 0.35, Math.sin(a) * 0.6];
+      let px = top[0], pz = top[2];
+      for (let t = 0; t < L; t += s0 * 1.05) {
+        const k = t / Math.max(0.01, L), sz = s0 * lerp(1.1, 0.55, Math.pow(k, 1.2)) * (0.85 + r() * 0.3);
+        px += (r() - 0.5) * 0.03; pz += (r() - 0.5) * 0.03;
+        F.card([px, top[1] - t - sz * 0.6, pz], nrm, sz, pick(r, SPIKE_HANG), pal, lerp(0.95, 0.7, k) + (r() - 0.5) * 0.15,
+          { roll: (r() - 0.5) * 0.25, sway: 0.5 + k * 1.6, glow: 0.8, lift: 0.9, flip: r() < 0.5 });
+      }
+      if (r() < 0.5) F.card([top[0], top[1] - s0 * 0.3, top[2]], nrm, s0 * 1.2, pick(r, LEAF_DROOP), pick(r, leafPals), 0.5,
+        { roll: (r() - 0.5) * 0.8, sway: 0.6, flip: r() < 0.5, lift: 0.4 });   // a leaf at the bunch's head
+    }
+  }
 }
 
 export type PatchOpt = { r?: number; h?: number; pal?: Pal[]; n?: number; spikes?: Pal[]; blooms?: Pal[]; bloom?: number;
@@ -616,16 +695,18 @@ export type FieldOpt = { w: number; d: number; crop?: 'wheat' | 'greens' | 'bean
  */
 export function field(F: Foliage, o: FieldOpt) {
   const r = F.r, crop = o.crop ?? 'wheat', gap = o.row ?? (crop === 'greens' ? 0.8 : 1.0), greens = crop === 'greens';
-  const H = crop === 'wheat' ? 0.7 : crop === 'beans' ? 0.85 : 0.3, pal: Pal[] = crop === 'wheat' ? ['straw', 'straw', 'gold'] : crop === 'beans' ? ['green', 'deep'] : ['green', 'sage'];
+  // (t-fields 2026-11-27, "bright with hard edges") the wheat ripening unevenly into the lawn's olive, the rows'
+  // ends ragged so a field frays at its edges instead of stopping on a line
+  const H = crop === 'wheat' ? 0.7 : crop === 'beans' ? 0.85 : 0.3, pal: Pal[] = crop === 'wheat' ? ['straw', 'lawn', 'straw', 'gold'] : crop === 'beans' ? ['green', 'deep', 'sage'] : ['green', 'sage', 'sage'];
   for (let z = -o.d / 2 + gap / 2; z <= o.d / 2 - gap / 3; z += gap) {
-    const lobes: Lobe[] = [], step = greens ? 0.5 : 1.1;
-    for (let x = -o.w / 2 + step / 2; x < o.w / 2; x += step * (0.85 + r() * 0.3)) {
+    const lobes: Lobe[] = [], step = greens ? 0.5 : 1.1, x0 = -o.w / 2 + step / 2 + r() * 0.9, x1 = o.w / 2 - r() * 0.9;
+    for (let x = x0; x < x1; x += step * (0.85 + r() * 0.3)) {
       const rr = greens ? 0.17 + r() * 0.05 : 0.2 + r() * 0.05, hh = H * (0.85 + r() * 0.3);
       lobes.push({ c: [x, hh * (greens ? 0.45 : 0.5), z + (r() - 0.5) * 0.05], r: [greens ? rr : step * 0.7, hh * 0.55, rr] });
     }
     fill(F, lobes, { pal, sprites: crop === 'greens' ? [...LEAF_BROAD, ...LEAF_ROUND] : [...LEAF_TUFT, ...LEAF_TUFT], size: crop === 'greens' ? 0.11 : 0.13,
       floor: 0.0, aoLo: 0.1, upright: crop !== 'greens', sway: crop === 'wheat' ? 1.6 : 0.8, density: crop === 'wheat' ? 0.8 : 1,
-      bloom: crop === 'beans' ? { pal: 'white', amount: 0.5, size: 0.07 } : undefined });
+      bloom: crop === 'beans' ? { pal: 'white', amount: 0.3, size: 0.07 } : undefined });
     F.contact(0, z, o.w * 0.52, gap * 0.4, 0.012);
   }
 }

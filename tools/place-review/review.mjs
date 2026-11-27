@@ -66,10 +66,10 @@ switch (cmd) {
     if (pend) console.log(`! ${pend} staged writes not sent yet (outbox, then sent)\n`);
     const snap = fs.existsSync(P('db', 'tasks')) ? fs.statSync(P('db', 'tasks')).mtime : null;
     console.log(`db copy from ${snap ? snap.toISOString().slice(0, 16) : 'never: pull tasks, events, answers first'}\n`);
-    const mine = list.filter((t) => W.why(t)[0] === 'claude');
+    const mine = list.filter((t) => W.why(t, S.answers)[0] === 'claude');
     console.log(`CLAUDE'S MOVE (${mine.length})`);
     for (const t of mine) {
-      console.log(`- ${t.id} [${W.why(t)[1]}] ${t.title}  (${t.status}${t.ack ? ', ' + t.ack : ''})`);
+      console.log(`- ${t.id} [${W.why(t, S.answers)[1]}] ${t.title}  (${t.status}${t.ack ? ', ' + t.ack : ''})`);
       if (t.status === 'triage' && t.body) console.log(`    ${short(t.body, 300)}`);
       for (const n of t.notes.filter((n) => W.noteUnread(t, n))) console.log(`    you, ${n.at.slice(0, 16)}: ${short(n.text, 400)}${n.imgs ? ` [${n.imgs.length} picture(s): ${n.imgs.join(' ')}]` : ''}`);
     }
@@ -79,17 +79,17 @@ switch (cmd) {
     for (const [id, a] of unreadA) console.log(`- ${id}${open.some((d) => d.id === id) ? '' : ' (closed or unknown decision)'}: choice=${a.choice ?? '-'}${a.note ? `  note: ${short(a.note, 400)}` : ''}`);
     const blank = open.filter((d) => !S.answers[d.id]?.choice && !S.answers[d.id]?.note);
     console.log(`\nDECISIONS OPEN (${open.length}; ${blank.length} unanswered: ${blank.map((d) => d.id).join(', ') || 'none'})`);
-    const you = list.filter((t) => W.why(t)[0] === 'you');
-    const reasons = {}; for (const t of you) reasons[W.why(t)[1]] = (reasons[W.why(t)[1]] || 0) + 1;
+    const you = list.filter((t) => W.why(t, S.answers)[0] === 'you');
+    const reasons = {}; for (const t of you) reasons[W.why(t, S.answers)[1]] = (reasons[W.why(t, S.answers)[1]] || 0) + 1;
     console.log(`\nTHE USER'S MOVE: ${you.length} tasks (${Object.entries(reasons).map(([k, v]) => `${v} ${k}`).join(', ') || 'none'})`);
-    const queue = list.filter((t) => W.LIVE.has(t.status) && !W.why(t)[0]);
+    const queue = list.filter((t) => W.LIVE.has(t.status) && !W.why(t, S.answers)[0]);
     console.log(`\nQUEUE (${queue.length}, no one's move: Claude's work)`);
     for (const t of queue.sort((a, b) => W.ORDER.indexOf(a.status) - W.ORDER.indexOf(b.status))) console.log(`- ${t.id} (${t.status}${t.ack ? ', ' + t.ack : ''}${t.zone ? ', ' + t.zone : ''}) ${t.title}`);
     break;
   }
   case 'show': {
     const t = S.tasks[rest[0]]; need(t, `no task ${rest[0]}`);
-    const { notes, ...f } = t; console.log(JSON.stringify(f, null, 1)); console.log(`whose move: ${W.why(t).join(', ') || 'no one'}`);
+    const { notes, ...f } = t; console.log(JSON.stringify(f, null, 1)); console.log(`whose move: ${W.why(t, S.answers).join(', ') || 'no one'}`);
     for (const n of notes) console.log(`- ${n.by} ${n.at}: ${n.text}${n.imgs ? ' ' + n.imgs.join(' ') : ''}`);
     break;
   }

@@ -147,6 +147,8 @@ figcaption b { color: var(--fg); font-weight: 600; }
 .board td.review { border-top-color: var(--you); background: var(--you-soft); }
 .board td.review b { color: var(--you); }
 .board td.next { border-top: 4px dashed var(--doing); }
+.board td.answered { border-top: 4px dashed var(--you); }
+.board td.answered b { color: var(--doing); }
 .board td.later { opacity: .55; }
 .board td.na { background: transparent; border-top-color: transparent; }
 .board td.open { border-top-color: transparent; background: transparent; text-align: right; font: 500 12px var(--mono); }
@@ -215,7 +217,7 @@ const openTasks = new Set();
 
 /* ---------- whose move (rules in whose.js) ---------- */
 const { why, lastBy } = W;
-const ball = (t) => why(t)[0];
+const ball = (t) => why(t, answers)[0];
 const taskList = () => Object.values(tasks);
 const openDecisions = () => (place.decisions || []).filter((d) => !d.closed);
 const youCount = () => openDecisions().filter((d) => !answers[d.id]?.choice && !answers[d.id]?.note).length + taskList().filter((t) => ball(t) === 'you').length;
@@ -234,7 +236,7 @@ function decisionCard(d) {
     <div class="row space"><span class="status"></span><span class="answer-state"></span></div></div>`;
 }
 function chipsFor(t) {
-  const [b, reason] = why(t), st = t.status || 'open';
+  const [b, reason] = why(t, answers), st = t.status || 'open';
   const out = [];
   if (b === 'you') out.push(`<span class="chip you" title="Your move">you: ${esc(reason)}</span>`);
   if (b === 'claude') out.push(`<span class="chip doing" title="Claude's move">Claude: ${esc(reason)}</span>`);
@@ -290,7 +292,16 @@ const tasksHtml = (list, empty) => list.length ? `<div class="tasks">${list.map(
 const byOrder = (a, b) => ORDER.indexOf(a.status || 'open') - ORDER.indexOf(b.status || 'open') || String(b.updated || b.created || '').localeCompare(String(a.updated || a.created || ''));
 
 /* ---------- the board ---------- */
-const CELL = { done: 'Done', started: 'In progress', review: 'Waiting on you', next: 'Next for Claude', later: 'Later', na: '' };
+const CELL = { done: 'Done', started: 'In progress', review: 'Waiting on you', answered: "Answered, Claude's move", next: 'Next for Claude', later: 'Later', na: '' };
+// a cell waiting on you turns to answered once what it links to is answered: a decision, a task off your move,
+// or a piece whose open decisions are all answered
+function cellAnswered(href) {
+  const m = /^#(decision|task|piece)-(.+)$/.exec(href || ''); if (!m) return false;
+  if (m[1] === 'decision') return W.answered(answers[m[2]]);
+  if (m[1] === 'task') return !!tasks[m[2]] && ball(tasks[m[2]]) !== 'you';
+  const decs = openDecisions().filter((d) => d.piece === m[2]);
+  return decs.length > 0 && decs.every((d) => W.answered(answers[d.id]));
+}
 function renderBoard() {
   const B = place.board; if (!B || !(B.rows || []).length) return '';
   const stages = place.stages || DEFAULT_STAGES;
@@ -304,13 +315,14 @@ function renderBoard() {
     const mine = live.filter((t) => r.id === 'whole' ? !t.zone : t.zone === r.id);
     const yours = mine.filter((t) => ball(t) === 'you').length;
     const name = okHref(r.href) ? `<a href="${r.href}">${esc(r.name)}</a>` : esc(r.name);
-    const cells = cols.map(([c]) => { const [st, text, href] = (r.cells || {})[c] || ['na'];
+    const cells = cols.map(([c]) => { let [st, text, href] = (r.cells || {})[c] || ['na'];
+      if (st === 'review' && cellAnswered(href)) st = 'answered';
       const inner = `<b>${esc(CELL[st] ?? st)}</b>${text ? esc(text) : ''}`;
       return `<td class="${esc(st)}">${st === 'na' ? '' : okHref(href) ? `<a href="${href}">${inner}</a>` : inner}</td>`; }).join('');
     const open = mine.length ? `<a href="#tasks" data-zone="${esc(r.id)}">${mine.length} task${mine.length > 1 ? 's' : ''}${yours ? `<br><span class="y">${yours} yours</span>` : ''}</a>` : '';
     return `<tr><th scope="row">${name}${r.sub ? `<span class="sub">${esc(r.sub)}</span>` : ''}</th>${cells}<td class="open">${open}</td></tr>`;
   }).join('');
-  const legend = Object.entries(CELL).filter(([k]) => k !== 'na').map(([k, l]) => `<span><i style="background:${{ done: 'var(--accent)', started: 'var(--doing)', review: 'var(--you)', next: 'repeating-linear-gradient(90deg,var(--doing) 0 4px,transparent 4px 7px)', later: 'var(--line)' }[k]}"></i>${l}</span>`).join('');
+  const legend = Object.entries(CELL).filter(([k]) => k !== 'na').map(([k, l]) => `<span><i style="background:${{ done: 'var(--accent)', started: 'var(--doing)', review: 'var(--you)', answered: 'repeating-linear-gradient(90deg,var(--you) 0 4px,transparent 4px 7px)', next: 'repeating-linear-gradient(90deg,var(--doing) 0 4px,transparent 4px 7px)', later: 'var(--line)' }[k]}"></i>${l}</span>`).join('');
   return `<section><h2>Where it stands</h2><div class="scroll"><table class="board"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
     <div class="legend">${legend}</div>${B.note ? `<p class="muted">${B.note}</p>` : ''}</section>`;
 }
@@ -322,12 +334,14 @@ function renderNow() {
   const flight = all.filter((t) => (t.status === 'doing' || t.status === 'waiting') && ball(t) !== 'you');
   const claude = all.filter((t) => ball(t) === 'claude');
   const queue = all.filter((t) => t.status === 'open' && !ball(t));
-  const dec = openDecisions();
+  const dec = openDecisions().filter((d) => !W.answered(answers[d.id]));
+  const decDone = openDecisions().filter((d) => W.answered(answers[d.id]));
   const recent = all.filter((t) => t.status === 'done').slice(0, 5);
   const offline = dbState !== 'live' ? `<p class="status ${dbState === 'offline' ? 'bad' : ''}">${dbState === 'offline' ? 'Tasks and answers did not load (signed out, or the store is unavailable). The decisions below are from the page itself.' : 'Loading tasks and answers…'}</p>` : '';
   return `${offline}${renderBoard()}
     <section><h2>Decisions for you <span class="n">${dec.length}</span></h2>
       ${dec.length ? dec.map(decisionCard).join('') : '<p class="muted">Nothing waiting on a decision.</p>'}</section>
+    ${decDone.length ? `<section><h2>Answered, Claude's move <span class="n">${decDone.length}</span></h2><p class="muted">You can still change an answer here until Claude acts on it and closes the decision.</p>${decDone.map(decisionCard).join('')}</section>` : ''}
     <div class="cols">
       <section><h2>Your move <span class="n">${yours.length}</span></h2><p class="muted">To acknowledge, to check, or a reply from Claude.</p>${tasksHtml(yours, 'Nothing else waiting on you.')}</section>
       <section><h2>In flight <span class="n">${flight.length}</span></h2><p class="muted">Being worked on, or waiting on a render or a credit OK.</p>${tasksHtml(flight, 'Nothing in progress.')}</section>

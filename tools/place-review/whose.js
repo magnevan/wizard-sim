@@ -25,6 +25,7 @@
       const t = out[e.task];
       if (e.set) Object.assign(t, e.set);
       if (e.set && 'ack' in e.set) t.ackAt = e.at;
+      if (e.set && ('waitingOn' in e.set || e.set.status === 'waiting')) t.waitingAt = e.at;
       if (e.note || (e.imgs || []).length) t.notes.push({ by: e.by, at: e.at, text: e.note || '', ...(e.imgs ? { imgs: e.imgs } : {}) });
       t.updated = e.at;
     }
@@ -43,8 +44,18 @@
     return out;
   }
   const lastBy = (t, who) => { const n = (t.notes || []).filter((x) => x.by === who); return n.length ? n[n.length - 1].at : ''; };
-  // [whose move: 'you' | 'claude' | '', why]
-  function why(t) {
+  const answered = (a) => !!a && !!(a.choice || a.note);
+  // a task waiting on the user is answered once the user has acted on it since it started waiting: answered every
+  // decision it names (`decision`, `decisions`), or acknowledged or noted on the task itself
+  function answeredSince(t, answers) {
+    const since = t.waitingAt || t.created || '';
+    const decs = [t.decision, ...(t.decisions || [])].filter(Boolean);
+    if (decs.length && decs.every((d) => answered((answers || {})[d]))) return true;
+    if ((t.ackAt || '') > since) return true;
+    return lastBy(t, 'user') > since;
+  }
+  // [whose move: 'you' | 'claude' | '', why]; pass the folded answers so answered decisions count
+  function why(t, answers) {
     const st = t.status || 'open';
     if (st === 'triage') return ['claude', 'to triage'];
     if (st === 'review') return ['you', 'check it'];
@@ -53,7 +64,7 @@
     if (u && u > c && !(t.seen && t.seen >= u)) return ['claude', 'your note'];
     if (t.ack === 'disagree' && !(c && c > (t.ackAt || ''))) return ['claude', 'you disagreed'];
     if (c && c > u && c > (t.userSeen || '')) return ['you', 'Claude replied'];
-    if (st === 'waiting' && t.waitingOn === 'user') return ['you', 'waiting on you'];
+    if (st === 'waiting' && t.waitingOn === 'user') return answeredSince(t, answers) ? ['claude', 'you answered'] : ['you', 'waiting on you'];
     if (t.by !== 'user' && !t.ack) return ['you', 'acknowledge'];
     return ['', ''];
   }
@@ -62,6 +73,6 @@
   const noteUnread = (t, n) => n.by === 'user' && !(t.seen && t.seen >= n.at) && !(lastBy(t, 'claude') > n.at);
   const eventId = (at, by) => at.replace(/[-:.TZ]/g, '').slice(2, 16) + '-' + by + '-' + Math.random().toString(36).slice(2, 6);
 
-  const W = { STATUS, ORDER, LIVE, fold, foldAnswers, why, lastBy, answerUnread, noteUnread, eventId };
+  const W = { STATUS, ORDER, LIVE, fold, foldAnswers, why, answered, lastBy, answerUnread, noteUnread, eventId };
   if (typeof module !== 'undefined' && module.exports) module.exports = W; else root.W = W;
 })(typeof window !== 'undefined' ? window : globalThis);

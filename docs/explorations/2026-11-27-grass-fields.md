@@ -103,6 +103,13 @@ What it costs: the lawn's fragment shader does about 30 texture reads (hex tilin
 ## Next
 
 - ~~Round 3~~ done 2026-11-27, after the user's round 2 verdict (`r2-verdict`: "go"; the road frame marked good; "Looks good so far!"): the critic's last notes from [r5-answer.md](../reference/grass/critiques/r5-answer.md) applied: deeper olive hollows, fewer and calmer tuft stamps, a sparser and shorter margin fringe. [The road frame](../reference/grass/r3-road.jpg), [close](../reference/grass/r3-close.jpg).
+- ~~Round 4, flowers~~ done 2026-11-27. The user, on round 3: "It looks pretty good for now ... My main critique right now is that the flowers feel like it clashes with the grass in a way that it feels artificially placed on top rather than smoothly flowing. Also some more random wild flowers would be nice." Changes:
+  - Each flowering plant, bush or patch spills a few of its own blossoms into the grass round it, broken up by noise. This is a second ground map, `grFlw`, holding an amount and a palette index.
+  - Long grass and a little contact shade grow round the foot of flower patches, which also raises margin fans there.
+  - Patch leaves use a new `lawn` palette, the meadow's own olive.
+  - Wild flowers grow in drifts of one kind each (white, buttercup, clover pink, lilac, a little orange), plus strays. They come from the painted blossom sheet and are partly hidden in long grass.
+
+  The critic (5/10 on the first try; [r6-answer.md](../reference/grass/critiques/r6-answer.md)) called the first spill "confetti and pale halos". Its fixes were taken, except that the wild flowers stayed denser than it asked for, because the user wants more of them. [The road frame](../reference/grass/r4-road.jpg), [the lower field](../reference/grass/r4-low.jpg).
 - **Ground types**, after the advisor (in [advisor-r4-answer.md](../reference/grass/critiques/advisor-r4-answer.md)). Replace the `mat === 'meadow'` test with a lookup. Each type names a painted tile and scale, a worn substrate, a value ramp, its tuft-sheet rows, its sweep size, wind strength and margin density. Dry grass, heath, moss and reeds would come next, from p8's vocabulary. Levels would paint types and wear in the editor.
 - Spells on grass: one small top-down map of trample, scorch, frost and wet that the ground and margin cards read.
 - Measure the cost on the user's machine.

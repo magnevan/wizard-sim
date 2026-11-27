@@ -13,12 +13,13 @@
  *  - cloud shadows over the whole level, on every lit material (cloudify), so ground, plants and roofs darken together.
  */
 import * as THREE from 'three';
-import { FOLIAGE_TIME } from './foliage';
+import { FOLIAGE_TIME, PALETTES } from './foliage';
 
 type Pt = number[];
 type GFloor = { h: number; mat: string; polys: number[][][][] };
 type GInst = { p: string; x: number; y: number; rot: number; scale?: number; pts?: number[][]; w?: number };
-type GPiece = { class?: string; shape?: string; footprint?: [number, number]; height?: number; grow?: { kind?: string } };
+type GPiece = { class?: string; shape?: string; footprint?: [number, number]; height?: number;
+  grow?: { kind?: string; blooms?: readonly string[]; spikes?: readonly string[]; bloom?: unknown } };
 
 /** The last ground map's fields, for the margin grass (marginGrass). */
 let FIELDS: { nx: number; ny: number; x0: number; y0: number; top: Float32Array; lawn: Uint8Array; R: Float32Array; G: Float32Array; B: Float32Array; dHard: Float32Array; dWear: Float32Array } | null = null;
@@ -34,9 +35,15 @@ export const GROUND_U = {
   grEarth: { value: null as THREE.Texture | null }, grEarthS: { value: 3 }, grEarthOn: { value: 0 },
   /** the lawn's own tile and its size (u), so a margin tuft takes the colour of the ground at its root */
   grLawn: { value: null as THREE.Texture | null }, grLawnS: { value: 5 },
+  /** flowers: the blossom sheet (foliage-blossoms.png) and a second map per cell: how much a flowering plant spills
+   * its blossoms into the grass round it (A) and their colour (RGB) */
+  grBloom: { value: null as THREE.Texture | null }, grBloomOn: { value: 0 }, grFlw: { value: null as THREE.Texture | null },
+  /** the spill's colours: R of grFlw is how much, G which of these eight (i / 7) */
+  grFlwPal: { value: Array.from({ length: 8 }, () => new THREE.Vector3(1, 1, 1)) },
 };
 /** Hand the ground its painted tufts and its earth tile (either may be missing: the ground then does without). */
-export function setGroundArt(tuft: THREE.Texture | undefined, earth: THREE.Texture | undefined, earthTile: number, lawn?: THREE.Texture, lawnTile = 5) {
+export function setGroundArt(tuft: THREE.Texture | undefined, earth: THREE.Texture | undefined, earthTile: number, lawn?: THREE.Texture, lawnTile = 5, bloom?: THREE.Texture) {
+  GROUND_U.grBloom.value = bloom ?? null; GROUND_U.grBloomOn.value = bloom ? 1 : 0;
   GROUND_U.grLawn.value = lawn ?? null; GROUND_U.grLawnS.value = lawnTile;
   GROUND_U.grTuft.value = tuft ?? null; GROUND_U.grTuftOn.value = tuft ? 1 : 0;
   GROUND_U.grEarth.value = earth ?? null; GROUND_U.grEarthS.value = earthTile; GROUND_U.grEarthOn.value = earth ? 1 : 0;
@@ -128,7 +135,7 @@ export function buildGround(floors: GFloor[], instances: GInst[], piece: (p: str
     const j0 = Math.max(0, Math.floor((it.y - reach - y0) / CELL)), j1 = Math.min(ny - 1, Math.ceil((it.y + reach - y0) / CELL));
     for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) fn(j * nx + i, x0 + (i + 0.5) * CELL, y0 + (j + 0.5) * CELL);
   };
-  const standing: { it: GInst; k: GPiece; sd: (x: number, y: number) => number; r: number }[] = [];
+  const standing: { it: GInst; k: GPiece; sd: (x: number, y: number) => number; r: number }[] = [], patches: typeof standing = [];
   for (const it of instances) {
     const k = piece(it.p);
     if (!k || !/^(setpiece|dress)\./.test(it.p)) continue;
@@ -138,7 +145,13 @@ export function buildGround(floors: GFloor[], instances: GInst[], piece: (p: str
       each(it, r + 1, (q, x, y) => { G[q] = Math.max(G[q], 1 - smooth(r * 0.55, r, Math.hypot(x - it.x, y - it.y))); });
       continue;
     }
-    if (g === 'patch' || g === 'field') continue;          // low drifts and worked fields: no ring
+    if (g === 'field') continue;                            // worked fields: nothing
+    if (g === 'patch') {   // low drifts: their flowers spill, and grass grows up round their foot so they rise out of the lawn
+      const b = box(it, k); patches.push({ it, k, ...b });
+      each(it, b.r + 1.5, (q, x, y) => { const d = b.sd(x, y) + 0.4; if (d > 1.2) return;
+        G[q] = Math.max(G[q], (1 - smooth(0.2, 1.2, d)) * 0.9); B[q] = Math.max(B[q], (1 - smooth(-0.2, 0.9, d)) * 0.2); });
+      continue;
+    }
     const b = box(it, k);
     if (!g && (k.height ?? 0) >= 2.5 && k.shape !== 'round') { each(it, b.r + 1, (q, x, y) => { if (b.sd(x, y) < 0) hard[q] = 1; }); }
     standing.push({ it, k, ...b });
@@ -178,6 +191,37 @@ export function buildGround(floors: GFloor[], instances: GInst[], piece: (p: str
       G[q] = Math.max(G[q], g);
     });
   }
+  // flowering plants spill their blossoms into the grass round them, thinning out over a couple of metres, so a clump
+  // grows out of the lawn instead of sitting on it (the user, 2026-11-27: the flowers "feel artificially placed on top")
+  const FL = new Float32Array(N), FI = new Uint8Array(N), used: string[] = [];
+  const palOf = (g: GPiece['grow']): string[] => {
+    if (!g) return [];
+    if (g.blooms) return [...g.blooms]; if (g.spikes) return [...g.spikes];
+    const bl = g.bloom as { pal?: string } | undefined;
+    if (bl && typeof bl === 'object' && bl.pal) return [bl.pal];
+    return [];
+  };
+  for (const s of [...standing, ...patches]) {
+    const pals = palOf(s.k.grow).filter((n) => n in PALETTES);
+    if (!pals.length) continue;
+    const idx = pals.map((n) => { let i = used.indexOf(n); if (i < 0 && used.length < 8) { used.push(n); i = used.length - 1; } return Math.max(0, i); });
+    const reach = 0.9 + s.r * 0.35;
+    each(s.it, s.r + reach, (q, x, y) => {
+      if (!lawn[q]) return;
+      const d = s.sd(x, y), v = (1 - smooth(-0.3, reach * (0.55 + 0.9 * vnoise(x * 0.35 + 7, y * 0.35)), d)) ** 2 * smooth(0.42, 0.75, vnoise(x * 0.8, y * 0.8));
+      if (v <= FL[q]) return;
+      FL[q] = v; FI[q] = idx[Math.floor(hash(x * 3.1, y * 1.7) * idx.length) % idx.length];
+    });
+  }
+  used.forEach((n, i) => {
+    const c = parseInt(PALETTES[n as keyof typeof PALETTES][5].slice(1), 16);
+    GROUND_U.grFlwPal.value[i].set((c >> 16) / 255, ((c >> 8) & 255) / 255, (c & 255) / 255);
+  });
+  const fpx = new Uint8Array(N * 4);
+  for (let q = 0; q < N; q++) { fpx[q * 4] = Math.round(Math.min(1, FL[q]) * 255); fpx[q * 4 + 1] = Math.round((FI[q] / 7) * 255); fpx[q * 4 + 3] = 255; }
+  const ft = new THREE.DataTexture(fpx, nx, ny, THREE.RGBAFormat, THREE.UnsignedByteType);
+  ft.magFilter = ft.minFilter = THREE.NearestFilter; ft.generateMipmaps = false; ft.needsUpdate = true;
+  GROUND_U.grFlw.value?.dispose(); GROUND_U.grFlw.value = ft;
   const px = new Uint8Array(N * 4);
   for (let q = 0; q < N; q++) {
     px[q * 4] = Math.round(R[q] * 255); px[q * 4 + 1] = Math.round(Math.min(1, G[q]) * 255);
@@ -198,7 +242,7 @@ export function buildGround(floors: GFloor[], instances: GInst[], piece: (p: str
  * before) and groundLawn (all of it together). A material using it gets GROUND_U in its uniforms.
  */
 export const GROUND_GLSL = `
-uniform float grOn, grTime, grTuftOn, grEarthS, grEarthOn; uniform sampler2D grMap, grTuft, grEarth; uniform vec2 grO, grS;
+uniform float grOn, grTime, grTuftOn, grEarthS, grEarthOn, grBloomOn; uniform sampler2D grMap, grTuft, grEarth, grBloom, grFlw; uniform vec2 grO, grS; uniform vec3 grFlwPal[8];
 float lwH(vec2 q) { return fract(sin(dot(q, vec2(127.1, 311.7))) * 43758.5453); }
 vec2 lwH2(vec2 q) { return fract(sin(vec2(dot(q, vec2(127.1, 311.7)), dot(q, vec2(269.5, 183.3)))) * 43758.5453); }
 float lwN(vec2 x) { vec2 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
@@ -276,6 +320,33 @@ vec2 grBomb(vec2 p, float cell, float row0, float rows, float size, float dens, 
   }
   return acc;
 }
+#ifdef GR_NO_FLOWERS
+#define GR_SPILL 0.0
+#else
+#define GR_SPILL 1.0
+#endif
+// Wild flowers stamped over the grass: a jittered grid of cell u, a blossom (the painted sheet's front faces, row 0) in a
+// cell with chance dens, size u across, coloured col with its golden eye kept. Returns (colour, coverage).
+vec4 grFlowers(vec2 p, float cell, float size, float dens, vec3 col, float seed) {
+  vec2 i = floor(p / cell), gx = dFdx(p), gy = dFdy(p);
+  vec4 acc = vec4(0.0);
+  for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
+    vec2 c = i + vec2(float(dx), float(dy));
+    if (lwH(c + seed + 9.1) > dens) continue;
+    vec2 h = lwH2(c + seed);
+    float sc = size * (0.7 + 0.6 * lwH(c + seed + 4.4));
+    vec2 d = (p - (c + 0.15 + 0.7 * h) * cell) / sc;
+    vec2 uv = vec2(0.5 + d.x, 0.5 - d.y * 0.72);
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) continue;
+    float k = floor(lwH(c + seed + 6.3) * 4.0);
+    vec4 tx = textureGrad(grBloom, (vec2(k, 3.0) + clamp(uv, 0.02, 0.98)) / 4.0, gx / sc / 4.0, gy / sc / 4.0 * 0.72);
+    float eye = clamp((tx.r - tx.b - 0.18) / 0.2, 0.0, 1.0);
+    float v = dot(tx.rgb, vec3(0.3, 0.59, 0.11));
+    vec3 fc = mix(col * mix(0.62, 1.12, v), vec3(0.95, 0.72, 0.18) * (0.6 + 0.5 * v), eye);
+    acc.rgb = mix(acc.rgb, fc, tx.a); acc.a = acc.a + tx.a * (1.0 - acc.a);
+  }
+  return acc;
+}
 // all of it: the lawn's colour at p (u) from its tile t (tile u across)
 vec3 groundLawn(sampler2D t, float tile, vec2 p) {
   vec3 c = lawnVary(grHex(t, p / tile), p);
@@ -314,6 +385,26 @@ vec3 groundLawn(sampler2D t, float tile, vec2 p) {
   c = mix(c, c * vec3(0.72, 0.86, 0.62), lg * lush * 0.8);
   float comb = sweep;
   c += vec3(0.1, 0.085, 0.025) * lg * (0.45 + 0.55 * grGust(p, grTime)) * smoothstep(0.35, 0.8, comb);
+  // wild flowers: drifts of one kind each (daisies, buttercups, clover pink, a little lilac) wandering over the lawn,
+  // a few strays anywhere, and each flowering plant's own blossoms spilling into the grass round it; fewer in long grass
+  // (hidden in it) and none on bare earth
+  if (grBloomOn > 0.5) {
+    float dn = lwN(p * 0.075 + 41.0) * 0.65 + lwN(p * 0.23 + 3.0) * 0.35;
+    float drift = smoothstep(0.58, 0.8, dn);
+    float kind = lwN(p * 0.04 + 77.0);
+    vec3 wc = kind < 0.3 ? vec3(0.96, 0.95, 0.9) : kind < 0.55 ? vec3(1.0, 0.8, 0.18) : kind < 0.72 ? vec3(0.92, 0.5, 0.66) : kind < 0.86 ? vec3(0.62, 0.52, 0.92) : vec3(0.98, 0.58, 0.28);
+    float open = (1.0 - bare) * (1.0 - fringe * 0.7) * (1.0 - 0.6 * lg);
+    #ifdef GR_NO_FLOWERS
+    open = 0.0;
+    #endif
+    vec4 fw = grFlowers(p, 0.45, 0.3, (drift * 0.5 + 0.022) * open, wc, 23.0);
+    vec4 fs = grOn > 0.5 ? texture2D(grFlw, (p - grO) / grS) : vec4(0.0);
+    vec4 sp = grFlowers(p, 0.3, 0.3, fs.r * 0.35 * (1.0 - bare) * GR_SPILL, grFlwPal[int(fs.g * 7.0 + 0.5)], 37.0);
+    // grass in front of the blossoms in longer grass, so they read as in it, not stuck on it
+    float flowerCover = mix(1.0, 0.55, lg * smoothstep(0.45, 0.8, tA.x));
+    c = mix(c, fw.rgb * vec3(0.96, 0.95, 0.92), fw.a * flowerCover);
+    c = mix(c, sp.rgb, sp.a * flowerCover);
+  }
   // the earth: the weathered paving's own, so paths and paving share one ground
   vec3 earth = grEarthOn > 0.5 ? mix(vec3(dot(texture2D(grEarth, p / grEarthS).rgb, vec3(0.3, 0.59, 0.11))), texture2D(grEarth, p / grEarthS).rgb, 0.6) * vec3(1.0, 0.88, 0.6) : vec3(0.32, 0.27, 0.18);
   earth *= 0.8 + 0.35 * lwN(p * 2.7 + 2.0);
@@ -362,6 +453,7 @@ function marginMaterial(): THREE.MeshLambertMaterial {
         vMgUv = vec2(aFan.z < 0.0 ? 0.5 - aCorner.x : 0.5 + aCorner.x, aCorner.y);
         vMgRoot = aRoot.xz;`);
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+      #define GR_NO_FLOWERS
       ${GROUND_GLSL}
       uniform sampler2D grLawn; uniform float grLawnS;
       varying vec2 vMgUv; varying vec2 vMgRoot; varying float vMgCol;`)
@@ -377,7 +469,7 @@ function marginMaterial(): THREE.MeshLambertMaterial {
         diffuseColor.rgb = g * mix(0.82, 1.5, tx.r) * mix(0.95, 1.08, vMgUv.y);
       }`);
   };
-  m.customProgramCacheKey = () => 'margin-grass-1';
+  m.customProgramCacheKey = () => 'margin-grass-2';
   return (marginMat = m);
 }
 /** Raised grass fans along the margins of the last ground map (buildGround first); null where there are none. */

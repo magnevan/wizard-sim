@@ -215,7 +215,7 @@ async function loadTextures() {
   // (the meadow where there is one: the infirmary's lawns since 2026-11-27)
   const lawn = RAW.meadow ? 'meadow' : 'lawn';
   STONE_U.stLawn.value = RAW[lawn] ?? RAW.weathered ?? null; STONE_U.stLawnS.value = TILE[lawn] ?? 4; STONE_U.stLawnV.value = VARY.has(lawn) ? 1 : 0;
-  setGroundArt(RAW['foliage-tufts'], RAW.weathered, TILE.weathered ?? 3, RAW.meadow, TILE.meadow ?? 5);   // the ground's painted tufts and its earth (kit-ground.ts)
+  setGroundArt(RAW['foliage-tufts'], RAW.weathered, TILE.weathered ?? 3, RAW.meadow, TILE.meadow ?? 5, RAW['foliage-blossoms']);   // the ground's painted tufts and its earth (kit-ground.ts)
 }
 /**
  * A material that samples tex by world position, blended over the three axes by the surface's facing. stone: the

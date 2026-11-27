@@ -48,6 +48,8 @@ export const PALETTES = {
   lavender: ['#24164e', '#34206a', '#462c88', '#5a3ca2', '#7052ba', '#8868cc', '#a084da', '#baa2e6'],
   straw:    ['#5a4218', '#74581e', '#8e6e26', '#a88630', '#bea03e', '#d0b44e', '#e0c868', '#eedc8e'],
   sage:     ['#1c3020', '#2a4428', '#3a5830', '#4c6c38', '#608040', '#76944c', '#8ea85c', '#a8bc72'],
+  // (2026-11-27, grass round 4) the meadow lawn's own olive and gold, for flower patches that grow out of it, not on it
+  lawn:     ['#1e2a12', '#2c3c16', '#3e521c', '#546a22', '#6c822a', '#869834', '#a2ae44', '#bec45e'],
 } as const;
 export type Pal = keyof typeof PALETTES;
 const PAL_NAMES = Object.keys(PALETTES) as Pal[];

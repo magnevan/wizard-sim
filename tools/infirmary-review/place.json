@@ -5,6 +5,97 @@
  "note": "Branch <code>worktree-infirmary-kit</code>. Credits: 330 Meshy this session.",
  "decisions": [
   {
+   "id": "pc6-station",
+   "title": "The tent station: one per tent, where its glyph line ends",
+   "html": "<p>Your design: the well feeds a station per tent, which feeds an emitter behind each pillow. Three stations, each on a sandstone base with the Life rune and four flat leads to the cots; or the pylon (b) between two cots instead, which needs no separate emitters. The last picture is one whole tent dressed (Codex drew its own mix there), to judge whether it gets busy.</p>",
+   "figures": [
+    {
+     "src": "img/dev2-station-a.jpg",
+     "cap": "a: lamp b's bowl on legs"
+    },
+    {
+     "src": "img/dev2-station-b.jpg",
+     "cap": "b: a brass urn with spouts"
+    },
+    {
+     "src": "img/dev2-station-c.jpg",
+     "cap": "c: a pedestal holding a goblet of green stones"
+    },
+    {
+     "src": "img/dev2-pylon-a.jpg",
+     "cap": "Pylon a: a post feeding two emitters"
+    },
+    {
+     "src": "img/dev2-pylon-b.jpg",
+     "cap": "Pylon b: one post, two arms behind the pillows, no emitters"
+    },
+    {
+     "src": "img/dev2-tent-dressed.jpg",
+     "cap": "A whole tent dressed"
+    }
+   ],
+   "rec": "My pick: <b>c</b>: the leads come straight out of its frame and the glyph line reads into the base. (a is closest to lamp b.)",
+   "choices": [
+    {
+     "v": "a",
+     "label": "a"
+    },
+    {
+     "v": "b",
+     "label": "b"
+    },
+    {
+     "v": "c",
+     "label": "c"
+    },
+    {
+     "v": "pylon-b",
+     "label": "Pylon b instead"
+    },
+    {
+     "v": "redo",
+     "label": "Redo"
+    }
+   ]
+  },
+  {
+   "id": "pc6-emitter",
+   "title": "The bed emitter: behind each pillow, leaving the patient clear",
+   "figures": [
+    {
+     "src": "img/dev2-emitter-a.jpg",
+     "cap": "a: a swan-neck arm with a small Life ring"
+    },
+    {
+     "src": "img/dev2-emitter-b.jpg",
+     "cap": "b: a short post with a halo behind the pillow"
+    },
+    {
+     "src": "img/dev2-emitter-c.jpg",
+     "cap": "c: a folding tripod with a dish over the pillow"
+    }
+   ],
+   "rec": "My pick: <b>b</b>: the calmest, the pillow fully clear, and the halo reads at once. (Not needed if you pick pylon b above.)",
+   "choices": [
+    {
+     "v": "a",
+     "label": "a"
+    },
+    {
+     "v": "b",
+     "label": "b"
+    },
+    {
+     "v": "c",
+     "label": "c"
+    },
+    {
+     "v": "redo",
+     "label": "Redo"
+    }
+   ]
+  },
+  {
    "id": "pc6-sheet2",
    "title": "Triage dressing, redrawn so it splits: OK to render on meshy.ai?",
    "html": "<p>Sheet b fused into one object through the API. Redrawn with every prop standing alone and wide gaps (the tray of instruments is now its own prop). If you OK it, it renders on the meshy.ai website in Chrome so its free retries can be used, then splits into eight props at 1.8x life size. About 30 credits.</p>",
@@ -118,20 +209,12 @@
    "id": "t-devices2",
    "kind": "build",
    "status": "doing",
-   "title": "Healing devices, round 2 pictures",
-   "html": "Your design: one station per tent fed by the glyph line, a small emitter behind each pillow. Codex is drawing the station, the emitter, the pylon as a two-bed station, and one whole tent dressed, for your pick.",
+   "title": "Healing devices, round 2: waiting on your picks",
+   "html": "Pictures of the station, the bed emitter, the pylon as a two-bed station and a dressed tent are under Decisions pending. Then model (about 30 credits each) and place.",
    "evidence": [
     {
-     "src": "img/dev-lamp-b.jpg",
-     "cap": "Lamp b: the station look you liked"
-    },
-    {
-     "src": "img/dev-pylon-a.jpg",
-     "cap": "Pylon a: the two-bed alternative"
-    },
-    {
-     "src": "img/dev-frame-b.jpg",
-     "cap": "Frame b: hides the patient"
+     "src": "img/dev2-tent-dressed.jpg",
+     "cap": "A whole tent dressed"
     }
    ]
   },

@@ -10,7 +10,7 @@ game/content/generated/layouts/<scene>-stones.json:
   {"fp": fingerprint, "v": 1, "mats": {mat: how its stones are painted (tess_proof.LAY)}, "stones": [{"m": mat, "h": metres, "q": [[x, y], ...], "r": u, "c": [x, y], "t": radians, "a": u, "b": u}]}
 Each stone's outline is q drawn out by r with round corners (its cut drawn in by half a joint plus r, so the shader
 gets exact rounded corners as distance to q minus r); c, t, a, b are its middle, row direction and half-sizes, for its
-grain. Every floor of a laid material (tess_proof.LAY: road, cobble) is laid per height and per connected piece, so a
+grain; a weathered stone also has its wear w, and a missing one (a hole, x: 1) has no outline (WEAR, below). Every floor of a laid material (tess_proof.LAY: road, cobble, weathered) is laid per height and per connected piece, so a
 step between two terraces is an edge the rows follow, and paving beside a road stops at the kerb's back. A building
 (a set piece kit.json marks "paving": "edge") is an edge too: its floor is laid up to the base of its model
 (model_base.py), drawn in by INSET so the stones run a little under its walls, never under the whole building.
@@ -18,7 +18,7 @@ The pattern's code is tess_proof.py's (rows from the edges, relaxed along a dire
 """
 import hashlib, json, os, sys, time
 import numpy as np
-from shapely.geometry import Polygon
+from shapely.geometry import Point, Polygon
 from shapely.ops import unary_union
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -31,8 +31,54 @@ import model_base                                  # noqa: E402
 
 ROOT = os.path.join(HERE, '..', '..')
 OUT_DIR = os.path.join(ROOT, 'game', 'content', 'generated', 'layouts')
-LAID = ('road', 'cobble')
-KIT = os.path.join(HERE, 'kit.json')
+LAID = ('road', 'cobble', 'weathered')
+# Weathered materials (old paving going back to the garden; the shader's half is kit-stones.ts WEATHERED): each stone
+# gets a wear w (0 to 1) from how near it lies to where the paving meets lawn (within `edge` u) and soft noise, and is
+# left out with a chance growing with w, so the paving breaks up into the lawn; in patches of trodden earth (noise at
+# `patch` u over `dirt`), and a few (`loose`) anywhere.
+WEAR = {'weathered': dict(edge=1.5, patch=3.5, dirt=0.76, loose=0.03)}
+NEAR_LAWN = 0.35   # u: an edge of the paving within this of a lawn floor (at about its height) is where it meets the lawn
+
+
+def vnoise(x, y, scale, seed):
+    """Soft value noise (0 to 1) at points x, y, varying over about `scale` u."""
+    x, y = np.asarray(x, float) / scale, np.asarray(y, float) / scale
+    ix, iy = np.floor(x), np.floor(y); fx, fy = x - ix, y - iy
+    fx, fy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
+    def h(i, j): return (np.sin((i * 127.1 + j * 311.7 + seed * 74.7) * 0.0174533 * 57.0) * 43758.5453) % 1.0
+    a, b, c, d = h(ix, iy), h(ix + 1, iy), h(ix, iy + 1), h(ix + 1, iy + 1)
+    return (a + (b - a) * fx) * (1 - fy) + (c + (d - c) * fx) * fy
+
+
+def lawn_edge(scene_data, h, poly):
+    """Where a piece of paving meets lawn at about its height: its outline's stretches beside a lawn floor (or None)."""
+    lawn = [Polygon(p[0], p[1:]).buffer(0) for f in scene_data['floors'] if f['mat'] == 'lawn' and abs(f['h'] - h) <= ON for p in f['polys']]
+    if not lawn: return None
+    e = poly.boundary.intersection(unary_union(lawn).buffer(NEAR_LAWN))
+    return None if e.is_empty else e
+
+
+def weather(m, st, edge, seed):
+    """Weathered stones: each gets its wear w, and some are left out (see WEAR)."""
+    W = WEAR[m]; rr = np.random.default_rng(seed + 1)
+    c = np.array([s['c'] for s in st]).reshape(-1, 2)
+    if not len(c): return st
+    d = np.array([edge.distance(Point(x, y)) for x, y in c]) if edge is not None else np.full(len(c), 99.0)
+    n1 = vnoise(c[:, 0], c[:, 1], 2.2, 1); n2 = vnoise(c[:, 0], c[:, 1], W['patch'], 2)
+    e = np.clip(1 - d / W['edge'], 0, 1)
+    w = np.clip(e * (0.55 + 0.7 * n1) + 0.3 * (n1 - 0.45), 0, 1)
+    dirt = np.clip((n2 - W['dirt']) / 0.12, 0, 1)
+    w = np.maximum(w, dirt * 0.55)
+    drop = np.maximum(w ** 2.2 * 0.85 * (e > 0), dirt) + W['loose']
+    out = []
+    for s, wi, p in zip(st, w, drop):
+        if rr.uniform() < p:   # a missing stone: kept as a hole (no outline), so the shader's wear field knows the ground there
+            out.append(dict(m=s['m'], h=s['h'], q=[], r=0, c=s['c'], t=s['t'], a=s['a'], b=s['b'], w=round(float(wi), 2), x=1))
+        else: out.append(s | {'w': round(float(wi), 2)})
+    return out
+
+
+KIT =os.path.join(HERE, 'kit.json')
 INSET = 0.12    # u: a building's outline drawn in by this, so the stones run on a little under its walls (no seam of tile)
 ON = 0.4        # m: a building stands on the laid floors within this of its own height
 
@@ -106,7 +152,8 @@ def lay_scene(name, data, force=False, log=print):
     if not ps:
         if os.path.exists(out): os.remove(out)
         return dict(path=None, laid=0, kept=0)
-    keys = [hashlib.md5(f'{CODE}|{m}|{h}|{poly.wkt}'.encode()).hexdigest()[:16] for m, h, poly in ps]
+    edges = [lawn_edge(data, h, poly) if m in WEAR else None for m, h, poly in ps]
+    keys = [hashlib.md5(f'{CODE}|{m}|{h}|{poly.wkt}|{e.wkt if e is not None else ""}'.encode()).hexdigest()[:16] for (m, h, poly), e in zip(ps, edges)]
     fp = hashlib.md5(''.join(keys).encode()).hexdigest()
     old = {}
     if not force and os.path.exists(out):
@@ -115,11 +162,13 @@ def lay_scene(name, data, force=False, log=print):
         prev = json.loads(text); at = 0
         for k, n in prev.get('parts', []): old[k] = prev['stones'][at:at + n]; at += n
     t0, allst, parts, laid = time.time(), [], [], 0
-    for key, (m, h, poly) in zip(keys, ps):
+    for key, (m, h, poly), edge in zip(keys, ps, edges):
         if key in old: st = old[key]
         else:
             seed = int(hashlib.md5(f'{m}{h}{poly.wkt[:200]}'.encode()).hexdigest()[:8], 16)   # the same piece lays the same
-            try: st = stones(m, h, poly, seed)
+            try:
+                st = stones(m, h, poly, seed)
+                if m in WEAR: st = weather(m, st, edge, seed)
             except Exception as e:   # (one piece the pattern can't lay keeps its tile; the rest are laid)
                 log(f'{name}: {m} at h={h} ({poly.area:.0f} u2) could not be laid: {type(e).__name__}: {e}'); st = []
             laid += 1

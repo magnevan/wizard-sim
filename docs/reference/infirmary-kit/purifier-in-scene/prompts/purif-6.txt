@@ -1,0 +1,13 @@
+Generate one image with your image generation tool, then save it as purif-6.png in the current directory. Reply with just the file name.
+
+The first attached image is a screenshot of a level in our game at its three-quarter camera: a grey-box of a small sheltered cove below a clifftop forecourt. On the west a built sandstone double stair goes down to a sandy crescent beach; a curved cliff of rock stands at the back of the beach; a tall sandstone retaining wall stands on the east; balustraded sea walls run round the beach; a timber jetty runs out from the middle of the beach to a round balustraded platform at its end; the sea fills the bottom, with rocky cliffs on both sides; at the top is the edge of the paved forecourt with tents. The second attached image is a painting of this same cove, showing the look and mood we want.
+
+Paint the first image as finished concept art of a stylised 3D game level in the look of the second: soft warm morning light with sea haze, warm sandstone, worn flagstones on the forecourt, a sandy beach, rock cliffs with flowering vines and grass on their tops, the clear turquoise sea with gentle waves. A glowing green rune glyph path carved into the paving runs from the forecourt above to the head of the purifier.
+
+The sea-water purifier is a great rune screw that lifts the water up the cliff:
+- At the end of the jetty, the round platform is a round sandstone intake basin rising out of the sea, its rim at the jetty's level, arched brass grates round its base at the waterline.
+- A stone channel lined with brass runs back along the side of the jetty and across the sand to the foot of the back cliff.
+- There, an Archimedes screw climbs the middle of the cliff face at a steep slant from the beach to the clifftop: a long half-open trough of sandstone on stone piers, and turning inside it a big brass screw whose spiral blade is engraved with green and gold Life runes along its whole length.
+- At the bottom of the screw, on the sand, a small round sandstone housing with a deep blue tiled cap, a gold eight-pointed star and a carved Life rune panel; at the top, on the forecourt's edge, a matching small sandstone head house where the clean water pours into a brass pipe that runs on toward the greenhouse.
+
+Keep the layout exactly: the same camera, the same framing and image size, every stair, retaining wall, balustrade, cliff, the beach, the jetty and the line of the shore in the same place at the same size. No text.

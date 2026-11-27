@@ -1,7 +1,7 @@
 """Cuts a Codex sheet of separate stones (drawn apart on plain magenta) into an atlas of equal cells: the stones'
 grain in the tessellation proof (tess_proof.py).
 
-  python tools/kit/stones.py <sheet.png> <name> [--cols 4] [--cell 256x96]
+  python tools/kit/stones.py <sheet.png> <name> [--cols 4] [--cell 256x96] [--margin 0.07,0.1]
 
 Each stone is found as a patch that isn't magenta; its middle (the patch less a margin, so no magenta and no painted
 rim shadow) is resized to one cell, and the cells are packed in reading order into
@@ -25,6 +25,7 @@ def opt(k, d):
 if __name__ == '__main__':
     src, name = sys.argv[1], sys.argv[2]
     cols = int(opt('--cols', 4)); cw, ch = (int(v) for v in opt('--cell', '256x96').split('x'))
+    MX, MY = (float(v) for v in opt('--margin', '0.07,0.1').split(','))   # the share cut off each side (painted rims, chipped corners)
     img = Image.open(src).convert('RGB'); a = np.asarray(img).astype(int)
     stone = ~((a[..., 0] > 170) & (a[..., 2] > 170) & (a[..., 1] < 120))
     lab, n = ndimage.label(ndimage.binary_opening(stone, iterations=3))
@@ -40,7 +41,7 @@ if __name__ == '__main__':
     rows = -(-len(cells) // cols)
     atlas = Image.new('RGB', (cols * cw, rows * ch))
     for i, (ys, xs) in enumerate(cells):
-        mx, my = (xs.stop - xs.start) * 0.07, (ys.stop - ys.start) * 0.1
+        mx, my = (xs.stop - xs.start) * MX, (ys.stop - ys.start) * MY
         cut = img.crop((int(xs.start + mx), int(ys.start + my), int(xs.stop - mx), int(ys.stop - my))).resize((cw, ch), Image.LANCZOS)
         atlas.paste(cut, ((i % cols) * cw, (i // cols) * ch))
     os.makedirs(os.path.join(OUT, 'src'), exist_ok=True)

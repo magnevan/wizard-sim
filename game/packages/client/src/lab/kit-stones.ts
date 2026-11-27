@@ -4,43 +4,63 @@
  * and the floor shader draws each stone from that: exact outlines with rounded corners at any zoom, no repeat, no seam.
  *
  * The stones go to the GPU as two data textures:
- *  - the table, 8 texels a stone: its middle and row direction, its half-sizes, corner radius, corner count and
- *    material, then up to 12 corners of its core (the stone drawn in by half a joint plus its corner radius);
+ *  - the table, 8 texels a stone: its middle and row direction, its half-sizes, corner radius, corner count, material
+ *    and wear, then up to 12 corners of its core (the stone drawn in by half a joint plus its corner radius);
  *  - the grid, 0.5 u cells over the scene, each listing up to 8 stones that reach into it.
  * A fragment looks up its cell, takes the stone it is deepest inside (distance to the core less the radius), and
  * paints it as tess_proof.py does: a tone from the palette varied per stone, painted grain from a Codex sheet laid
  * along the stone, mortar in the joints, and a bevel, here lit by the scene's own light through the normal.
+ * Weathered materials (WEATHERED) add a third, small texture: how worn the ground is round each cell.
  */
 import * as THREE from 'three';
 
-type Stone = { m: string; h: number; q: number[][]; r: number; c: number[]; t: number; a: number; b: number };
+type Stone = { m: string; h: number; q: number[][]; r: number; c: number[]; t: number; a: number; b: number; w?: number; x?: number };
 /** How a material's stones are painted (tess_proof.py LAY). */
 type MatPaint = { pal: number[][]; jointc: number[]; tone: number; bevel: number; joint: number; grain: number; sheet: string };
 type Layout = { v: number; mats: Record<string, MatPaint>; stones: Stone[] };
+type Sheet = { cols: number; rows: number; n: number };
 
 const layoutUrls = import.meta.glob<string>('../../../../content/generated/layouts/*-stones.json', { query: '?url', import: 'default', eager: true });
-const sheetUrl = import.meta.glob<string>('../../../../content/generated/textures/src/stones-sett.png', { query: '?url', import: 'default', eager: true });
-const SHEET = { cols: 6, rows: 4, n: 24 };   // (textures/src/stones.json, 'sett')
+const sheetUrls = import.meta.glob<string>(['../../../../content/generated/textures/src/stones-sett.png', '../../../../content/generated/textures/src/stones-weathered.png'], { query: '?url', import: 'default', eager: true });
+const SHEETS = Object.values(import.meta.glob<Record<string, Sheet>>('../../../../content/generated/textures/src/stones.json', { eager: true, import: 'default' }))[0] ?? {};
 
 const PER = 8, ROW = 128, MAXV = 12, CELL = 0.5, CANDS = 8;
 const MORTAR = 0.012;   // u: added to each joint, so it reads at the game camera
 /** The materials laid stone by stone, in the order the shader numbers them. */
-export const STONE_MATS = ['road', 'cobble'];
+export const STONE_MATS = ['road', 'cobble', 'weathered'];
+/** Each laid material's sheet of painted stones (textures/src/stones-<sheet>.png; tess_proof.py LAY's `sheet`). */
+const MAT_SHEET: Record<string, string> = { road: 'sett', cobble: 'sett', weathered: 'weathered' };
+/**
+ * Weathered materials: old paving going back to the garden. Their stones are chipped and stained (more where the
+ * layout's wear w is high), grass and moss grow in the joints and creep over the stones' rims, and where stones are
+ * missing (tess_layout.py leaves them out: along the paving's edge onto lawn, in patches of trodden earth, a few
+ * anywhere) the floor's own tile (packed earth) shows, going over to the lawn's own texture toward the lawn, so the
+ * paving frays out into the grass with no seam.
+ */
+export const WEATHERED = new Set(['weathered']);
+const sheetOf = (m: string): Sheet => SHEETS[MAT_SHEET[m]] ?? { cols: 6, rows: 4, n: 24 };
 
 /** Shared by every laid floor's material: set by loadStones, read by the shader. */
 export const STONE_U = {
   stOn: { value: 0 }, stTab: { value: null as THREE.Texture | null }, stGrid: { value: null as THREE.Texture | null },
   stGridO: { value: new THREE.Vector2() }, stGridN: { value: new THREE.Vector2() },
-  stSheet: { value: null as THREE.Texture | null }, stMean: { value: Array.from({ length: SHEET.n }, () => new THREE.Vector3(1, 1, 1)) },
+  /** How weathered the ground is round each grid cell (0 to 1, filtered): the stones' wear, spread over the gaps. */
+  stWear: { value: null as THREE.Texture | null },
+  /** The lawn's tile and its size in u (kit-render sets them), for weathered floors fraying into grass. */
+  stLawn: { value: null as THREE.Texture | null }, stLawnS: { value: 4 },
 };
-/** Per material: its palette (linear), joint colour, tone, bevel and grain. */
-export const STONE_PAINT: Record<string, { pal: { value: THREE.Vector3[] }; joint: { value: THREE.Vector3 }; k: { value: THREE.Vector4 } }> = {};
-for (const m of STONE_MATS) STONE_PAINT[m] = { pal: { value: Array.from({ length: 6 }, () => new THREE.Vector3(1, 1, 1)) }, joint: { value: new THREE.Vector3(0.3, 0.3, 0.3) }, k: { value: new THREE.Vector4(0.06, 0.035, 0.7, 0) } };
+/** Per material: its palette (linear), joint colour, tone, bevel and grain, and its sheet of painted stones with each cell's mean. */
+export const STONE_PAINT: Record<string, { pal: { value: THREE.Vector3[] }; joint: { value: THREE.Vector3 }; k: { value: THREE.Vector4 }; sheet: { value: THREE.Texture | null }; mean: { value: THREE.Vector3[] } }> = {};
+for (const m of STONE_MATS) {
+  STONE_PAINT[m] = { pal: { value: Array.from({ length: 6 }, () => new THREE.Vector3(1, 1, 1)) }, joint: { value: new THREE.Vector3(0.3, 0.3, 0.3) }, k: { value: new THREE.Vector4(0.06, 0.035, 0.7, 0) },
+    sheet: { value: null }, mean: { value: Array.from({ length: sheetOf(m).n }, () => new THREE.Vector3(1, 1, 1)) } };
+}
+const SHEET_TEX: Record<string, Promise<{ tex: THREE.Texture; mean: THREE.Vector3[] }>> = {};
 
 const lin = (c: number[]) => { const k = new THREE.Color().setRGB(c[0] / 255, c[1] / 255, c[2] / 255, THREE.SRGBColorSpace); return new THREE.Vector3(k.r, k.g, k.b); };
 
 /** Each sheet cell's mean colour (as the proof divides by it), from the picture itself. */
-async function sheetMeans(tex: THREE.Texture): Promise<THREE.Vector3[]> {
+async function sheetMeans(tex: THREE.Texture, SHEET: Sheet): Promise<THREE.Vector3[]> {
   const img = tex.image as HTMLImageElement, cv = document.createElement('canvas');
   cv.width = img.width; cv.height = img.height;
   const cx = cv.getContext('2d')!; cx.drawImage(img, 0, 0);
@@ -67,7 +87,8 @@ export async function loadStones(scene: string, server = false): Promise<boolean
   const rows = Math.ceil(st.length / ROW), tab = new Float32Array(ROW * PER * rows * 4);
   st.forEach((s, i) => {
     const o = ((Math.floor(i / ROW) * ROW * PER) + (i % ROW) * PER) * 4;
-    tab.set([s.c[0], s.c[1], Math.cos(s.t), Math.sin(s.t), s.a, s.b, s.r, s.q.length + 32 * STONE_MATS.indexOf(s.m)], o);
+    // (the last value packs the corner count, the material * 32 and the wear, in 32 steps, * 1024)
+    tab.set([s.c[0], s.c[1], Math.cos(s.t), Math.sin(s.t), s.a, s.b, s.r, s.q.length + 32 * STONE_MATS.indexOf(s.m) + 1024 * Math.round((s.w ?? 0) * 31)], o);
     s.q.forEach((p, k) => { tab[o + 8 + k * 2] = p[0]; tab[o + 9 + k * 2] = p[1]; });
   });
   const tabT = new THREE.DataTexture(tab, ROW * PER, rows, THREE.RGBAFormat, THREE.FloatType);
@@ -98,12 +119,17 @@ export async function loadStones(scene: string, server = false): Promise<boolean
   if (over) console.warn(`[stones] ${scene}: ${over} cells hold more than ${CANDS} stones`);
   const gridT = new THREE.DataTexture(grid, nx * 2, ny, THREE.RGBAFormat, THREE.FloatType);
   for (const t of [tabT, gridT]) { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; }
-  // the painted grain (loaded once)
-  if (!STONE_U.stSheet.value) {
-    const sheet = await new THREE.TextureLoader().loadAsync(Object.values(sheetUrl)[0]);
-    sheet.colorSpace = THREE.SRGBColorSpace; sheet.anisotropy = 8;
-    STONE_U.stMean.value = await sheetMeans(sheet);
-    STONE_U.stSheet.value = sheet;
+  const wearT = wearField(st, L.stones.filter((s) => s.x && WEATHERED.has(s.m)), lists, new THREE.Vector2(x0, y0), nx, ny);
+  // the painted grain: each sheet loaded once
+  for (const m of STONE_MATS) {
+    const name = MAT_SHEET[m], sheetUrl = Object.entries(sheetUrls).find(([p]) => p.endsWith(`/stones-${name}.png`))?.[1];
+    if (!sheetUrl || STONE_PAINT[m].sheet.value) continue;
+    SHEET_TEX[name] ??= new THREE.TextureLoader().loadAsync(sheetUrl).then(async (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+      return { tex, mean: await sheetMeans(tex, sheetOf(m)) };
+    });
+    const S = await SHEET_TEX[name];
+    STONE_PAINT[m].sheet.value = S.tex; STONE_PAINT[m].mean.value = S.mean;
   }
   for (const m of STONE_MATS) {
     const P = L.mats[m]; if (!P) continue;
@@ -111,17 +137,62 @@ export async function loadStones(scene: string, server = false): Promise<boolean
     STONE_PAINT[m].k.value.set(P.tone, P.bevel, P.grain, 0);
   }
   // (the editor loads them again after each edit: the old ones are let go)
-  STONE_U.stTab.value?.dispose(); STONE_U.stGrid.value?.dispose();
-  STONE_U.stTab.value = tabT; STONE_U.stGrid.value = gridT;
+  STONE_U.stTab.value?.dispose(); STONE_U.stGrid.value?.dispose(); STONE_U.stWear.value?.dispose();
+  STONE_U.stTab.value = tabT; STONE_U.stGrid.value = gridT; STONE_U.stWear.value = wearT;
   STONE_U.stGridO.value.set(x0, y0); STONE_U.stGridN.value.set(nx, ny);
   STONE_U.stOn.value = 1;
   return true;
 }
 
-/** The fragment shader's declarations for a laid floor. */
-export const STONE_DECL = `
-uniform float stOn; uniform sampler2D stTab, stGrid, stSheet; uniform vec2 stGridO, stGridN;
-uniform vec3 stMean[${SHEET.n}]; uniform vec3 stPal[6]; uniform vec3 stJoint; uniform vec4 stK;
+/**
+ * How weathered the ground is round each grid cell, for weathered floors: the mean wear of the weathered stones listed
+ * in it, spread into the cells that have none (gaps, and past the paving's edge, climbing toward 1 as it goes), then
+ * softened once. A small byte texture, filtered, so it varies smoothly under the shader.
+ */
+function wearField(st: Stone[], holes: Stone[], lists: number[][], o: THREE.Vector2, nx: number, ny: number): THREE.DataTexture {
+  let f = new Float32Array(nx * ny).fill(-1);
+  const sum = new Float32Array(nx * ny), cnt = new Float32Array(nx * ny);
+  lists.forEach((l, k) => { for (const i of l) if (WEATHERED.has(st[i].m)) { sum[k] += st[i].w ?? 0; cnt[k]++; } });
+  for (const s of holes) {   // a missing stone counts in every cell it would have covered
+    const R = Math.max(s.a, s.b);
+    for (let y = Math.floor((s.c[1] - R - o.y) / CELL); y <= Math.floor((s.c[1] + R - o.y) / CELL); y++) {
+      for (let x = Math.floor((s.c[0] - R - o.x) / CELL); x <= Math.floor((s.c[0] + R - o.x) / CELL); x++) {
+        if (x >= 0 && y >= 0 && x < nx && y < ny) { sum[y * nx + x] += s.w ?? 0; cnt[y * nx + x]++; }
+      }
+    }
+  }
+  for (let k = 0; k < nx * ny; k++) if (cnt[k]) f[k] = sum[k] / cnt[k];
+  for (let it = 0; it < 8; it++) {
+    const g = f.slice();
+    for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) {
+      if (f[y * nx + x] >= 0) continue;
+      let s = 0, n = 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const X = x + dx, Y = y + dy;
+        if (X >= 0 && Y >= 0 && X < nx && Y < ny && f[Y * nx + X] >= 0) { s += f[Y * nx + X]; n++; }
+      }
+      if (n) g[y * nx + x] = Math.min(1, s / n + 0.15);
+    }
+    f = g;
+  }
+  const out = new Uint8Array(nx * ny * 4);
+  for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) {
+    let s = 0, n = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const X = x + dx, Y = y + dy;
+      if (X >= 0 && Y >= 0 && X < nx && Y < ny) { const v = f[Y * nx + X]; s += v < 0 ? 1 : v; n++; }
+    }
+    out[(y * nx + x) * 4] = Math.round((s / n) * 255);
+  }
+  const t = new THREE.DataTexture(out, nx, ny, THREE.RGBAFormat, THREE.UnsignedByteType);
+  t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true;
+  return t;
+}
+
+/** The fragment shader's declarations for a laid floor (matId: its place in STONE_MATS). */
+export const stoneDecl = (matId: number) => `
+uniform float stOn; uniform sampler2D stTab, stGrid, stSheet${WEATHERED.has(STONE_MATS[matId]) ? ', stWear, stLawn; uniform float stLawnS' : ''}; uniform vec2 stGridO, stGridN;
+uniform vec3 stMean[${sheetOf(STONE_MATS[matId]).n}]; uniform vec3 stPal[6]; uniform vec3 stJoint; uniform vec4 stK;
 vec3 stNrm = vec3(0.0, 1.0, 0.0); float stLaid = 0.0;
 float stHash(float n) { return fract(sin(n * 12.9898 + 78.233) * 43758.5453); }
 // soft value noise for broad change over the ground (as the proof's patches)
@@ -148,7 +219,9 @@ float stSd(vec2 p, float i, int n, out vec2 dir) {
 `;
 
 /** The fragment code, after the tile's colour is in diffuseColor: paints a laid floor's stones over it (matId: its place in STONE_MATS). */
-export const stoneFrag = (matId: number) => `
+export const stoneFrag = (matId: number) => {
+  const SHEET = sheetOf(STONE_MATS[matId]), weath = WEATHERED.has(STONE_MATS[matId]);
+  return `
   if (stOn > 0.5 && tpW.y > 0.6) {
     vec2 p = vTpPos.xz;
     ivec2 cell = ivec2(floor((p - stGridO) / ${CELL.toFixed(2)}));
@@ -159,12 +232,25 @@ export const stoneFrag = (matId: number) => `
         for (int c = 0; c < 4; c++) {
           float id = ids[c] - 1.0; if (id < 0.0) continue;
           vec4 h1 = stTx(id, 1); float meta = h1.w;
-          if (floor(meta / 32.0) != ${matId}.0) continue;
+          if (mod(floor(meta / 32.0), 32.0) != ${matId}.0) continue;
           vec2 dir; float e = stSd(p, id, int(mod(meta, 32.0)), dir) - h1.z;
           if (e < bestE) { bestE = e; bestI = id; bestDir = dir; }
         }
       }
-    }
+    }${weath ? `
+    // the ground between and round the stones: the tile's trodden earth, going over to the lawn where the paving frays out
+    float wf = texture2D(stWear, (p - stGridO) / (${CELL.toFixed(2)} * stGridN)).r;
+    float gN = stNoise(p * 1.1) * 0.45 + stNoise(p * 3.7 + 11.0) * 0.35 + stNoise(p * 9.0 + 5.0) * 0.2;
+    vec3 lawnC = texture2D(stLawn, p / stLawnS).rgb;
+    vec3 earth = mix(vec3(dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11))), diffuseColor.rgb, 0.75) * vec3(0.9, 0.86, 0.82);   // (the painting is more orange than the stones)
+    vec3 ground = mix(earth, lawnC, smoothstep(0.35, 0.65, wf + (gN - 0.5) * 0.8));
+    diffuseColor.rgb = ground;
+    float sw = 0.0;
+    if (bestI >= 0.0) {
+      sw = floor(stTx(bestI, 1).w / 1024.0) / 31.0;
+      bestE += (stNoise(p * 9.0 + bestI) - 0.4) * (0.025 + 0.09 * sw);          // chipped, uneven rims: more on worn stones
+      bestE += smoothstep(0.7, 1.05, wf + (gN - 0.5) * 0.7) * 0.3;              // grass growing over them toward the lawn
+    }` : ''}
     if (bestI >= 0.0 && bestE < 0.12) {
       stLaid = 1.0;
       vec4 h0 = stTx(bestI, 0), h1 = stTx(bestI, 1);
@@ -188,11 +274,22 @@ export const stoneFrag = (matId: number) => `
       // (the joint a little wider than the cut's, so it reads at the game camera as the proof's does)
       float depth = -bestE - ${MORTAR.toFixed(3)}, aa = fwidth(bestE) * 1.2 + 0.002, wb = stK.y * 1.8;
       float k = smoothstep(-aa, aa, depth);
-      float ao = 0.84 + 0.16 * clamp(depth / (wb * 1.6), 0.0, 1.0);
-      diffuseColor.rgb = mix(stJoint, col * ao, k);
+      float ao = 0.84 + 0.16 * clamp(depth / (wb * 1.6), 0.0, 1.0);${weath ? `
+      // stains, then moss creeping in over the rim in patches (more on worn stones and toward the lawn)
+      float mn = stNoise(p * 5.0 + 3.0) * 0.6 + stNoise(p * 1.6) * 0.4;
+      col *= 1.0 - 0.2 * smoothstep(0.45, 0.9, stNoise(p * 2.7 + 7.0)) * (0.4 + 0.6 * sw);
+      vec3 moss = mix(lawnC, vec3(dot(lawnC, vec3(0.3, 0.59, 0.11))), 0.35) * vec3(0.66, 0.76, 0.5);
+      float rim = 1.0 - clamp(depth / 0.1, 0.0, 1.0);
+      col = mix(col, moss, 0.85 * smoothstep(0.5, 0.8, mn + 0.4 * max(sw, wf)) * rim);
+      // the joint: dark earth, or grass and moss in patches, fading out into the ground past the stone
+      vec3 jointC = mix(ground * 0.42, moss * 0.85, smoothstep(0.38, 0.6, mn + wf * 0.5));
+      jointC = mix(jointC, ground, smoothstep(0.03, 0.12, bestE));
+      diffuseColor.rgb = mix(jointC, col * ao, k);` : `
+      diffuseColor.rgb = mix(stJoint, col * ao, k);`}
       float bev = clamp(depth / wb, 0.0, 1.0);
       float slope = k * (1.0 - bev) * (1.0 - bev) * 2.2;   // steepest at the stone's edge, flat on its face
       stNrm = normalize(vec3(bestDir.x * slope, 1.0, bestDir.y * slope));
     }
   }
 `;
+};

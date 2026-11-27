@@ -1,0 +1,11 @@
+Generate one image with your image generation tool, then save it as iso-6.png in the current directory. Reply with just the file name.
+
+The first attached image shows the stylised 3D look of the academy's finished set pieces: smooth hand-painted textures, warm sandstone, deep blue with gold trim and the gold eight-pointed star emblem, polished brass, soft warm light. The second attached image is a painting of a cove with a sea-water purifier: a great rune screw climbing the cliff, fed from an intake at the jetty's end.
+
+Draw that purifier alone as a game asset sheet in the look of the first image, on a plain solid light grey background, seen from slightly above in a three-quarter view from the front corner so the front and one side of each part show. Show only the built structure, each part on its own flat stone footing, with every channel and pipe ending in a neat brass flange or a clean stone end where it would join the rest of the scene.
+
+The purifier, as in the painting, in two parts standing a little apart side by side:
+- On the left, the intake: a round sandstone drum, its top a ring walk with a low gold-capped balustrade round an empty round basin, arched openings with brass grates round its base, and a short straight stone channel lined with brass leaving its back.
+- On the right, the screw: a long half-open sandstone trough rising at a steep slant on arched stone piers, and lying in it a big brass Archimedes screw whose spiral blade is engraved with green and gold Life runes along its length; at its foot a small round sandstone housing with a deep blue tiled dome, a gold eight-pointed star finial and a carved green Life rune panel; at its head a matching taller round head house with a deep blue tiled dome and a gold finial, a brass pipe leaving its side and bending away level.
+
+Both parts centered together on the plain grey background, the structure crisp, dry and still.

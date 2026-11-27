@@ -64,6 +64,11 @@ LAY = {
     'cobble': dict(a=0.52, b=0.36, vary=0.2, sizes=[0.75, 1.0, 1.0, 1.3], joint=0.03, bevel=0.04, relax=5,
                    pal=[(214, 168, 150), (224, 180, 158), (204, 158, 146), (230, 190, 166), (210, 172, 160), (196, 152, 140)],
                    jointc=(142, 104, 96), tone=0.06, sheet='sett'),
+    # old paving going back to the garden (the infirmary): flags and cobbles mixed, wide joints for grass to grow in;
+    # tess_layout.py WEAR leaves stones out and the shader (kit-stones.ts WEATHERED) chips, stains and mosses them
+    'weathered': dict(a=0.4, b=0.3, vary=0.25, sizes=[0.6, 0.8, 1.0, 1.0, 1.25, 1.5], joint=0.05, bevel=0.05, relax=5,
+                      pal=[(150, 112, 70), (164, 124, 78), (140, 104, 66), (172, 134, 88), (136, 104, 72), (158, 120, 80)],
+                      jointc=(110, 92, 64), tone=0.09, sheet='weathered', grain=0.85),
 }
 KERB_W = float(opt('--kerb', 0.32))           # u: the kerb's width, as the renderer draws it (kit3d ?kerbw=)
 LAY['road']['a'] *= ROAD_SCALE; LAY['road']['b'] *= ROAD_SCALE

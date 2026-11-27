@@ -1,0 +1,9 @@
+Generate one image with your image generation tool, then save it as iso-5.png in the current directory. Reply with just the file name.
+
+The first attached image shows the stylised 3D look of the academy's finished set pieces: smooth hand-painted textures, warm sandstone, deep blue with gold trim and the gold eight-pointed star emblem, polished brass, soft warm light. The second attached image is a painting of a cove with a sea-water purifier built at the end of its jetty, a walled tidal pool.
+
+Draw that purifier alone as a single game asset in the look of the first image, on a plain solid light grey background, seen from slightly above in a three-quarter view from its front corner so its front and inside both show. Show only the built structure, standing on its own flat stone footing, with every pipe ending in a neat brass flange where it would join the rest of the scene.
+
+The purifier, as in the painting, a tidal sluice pool: a round ring of thick sandstone wall, its top a walkway with a low gold-capped balustrade. In the front of the ring, three tall arched sluice openings, each closed by a heavy brass gate in stone grooves, lifted by a brass screw rod and a hand wheel standing on the walkway above. The pool inside is empty and dry, showing its floor: a great round mosaic of pale rune tiles in concentric rings round a carved green and gold Life rune. At the back of the ring, a small square sandstone sluice house with a deep blue slate roof, gold ridge trim, a gold eight-pointed star in its gable, an arched door and two brass lanterns; a brass pipe leaves its side and bends away level. The whole piece is about twice as wide as it is tall.
+
+Standalone and perfectly centered on the plain grey background, the structure crisp, dry and still.

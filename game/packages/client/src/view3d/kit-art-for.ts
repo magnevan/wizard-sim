@@ -18,6 +18,7 @@ export function kitArtFor(data: KitData, pieces: Record<string, KitPiece>, has: 
   // textures kit-render dresses walls, kerbs, treads, floors' rock sides, quays and soil with
   for (const t of ['ashlar', 'smooth-stone', 'tread', 'kerb', 'rock', 'deck', 'dirt']) textures.add(t);
   for (const f of data.floors) textures.add(f.mat);
+  if (data.floors.some((f) => f.mat === 'weathered')) textures.add('lawn');   // weathered paving frays out into the lawn's texture (kit-stones.ts)
   for (const it of data.instances) {
     const [cls, kind] = it.p.split('.');
     const k = pieces[it.p] as (KitPiece & { texture?: string; sheet?: string; channels?: { texture?: string } }) | undefined;

@@ -1,0 +1,9 @@
+Generate one image with your image generation tool, then save it as iso-1.png in the current directory. Reply with just the file name.
+
+The first attached image shows the stylised 3D look of the academy's finished set pieces: smooth hand-painted textures, warm sandstone, deep blue with gold trim and the gold eight-pointed star emblem, polished brass, soft warm light. The second attached image is a painting of a cove with a sea-water purifier built at the end of its jetty.
+
+Draw that purifier alone as a single game asset in the look of the first image, on a plain solid light grey background, seen from slightly above in a three-quarter view from its front corner so its front and one side show. Show only the built structure, standing on its own flat stone footing, with every pipe ending in a neat brass flange where it would join the rest of the scene.
+
+The purifier, as in the painting: a round sandstone pier, its top a round deck with a low gold-capped balustrade. On the deck, a wide low round settling tank of sandstone blocks, waist-high, with a flat lid of deep blue tiles, a gold eight-pointed star at its centre and blue star pennants round its side; beside it a square sandstone pump tower about twice the tank's height, with a carved green and gold Life rune panel on its face, a brass pipe bending from the tank into the panel, a brass beam-pump arm and flywheel on its side, and a brass pipe rising from the tower's top and bending away level. A short stone intake ramp with a brass grate runs down the pier's side. The whole piece is a little wider than it is tall.
+
+Standalone and perfectly centered on the plain grey background, the structure crisp, dry and still.

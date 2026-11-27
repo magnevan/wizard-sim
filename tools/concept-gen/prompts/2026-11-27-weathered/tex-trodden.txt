@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-trodden.png in the current directory. Reply with just the file name.
+
+The attached image is the infirmary garden this ground is for: stylised, hand-painted, warm light, worn paths of packed earth between grass.
+
+Paint a square, seamlessly tileable ground texture in exactly that painted style, seen from straight above and evenly lit: packed, trodden earth in warm sandy brown and ochre, with a scatter of small pebbles and grit, a few flat chips of broken tan stone half sunk in it, and small tufts of short green grass and moss growing here and there, more in some places than others. It fills the whole square edge to edge, with the same density of detail everywhere.

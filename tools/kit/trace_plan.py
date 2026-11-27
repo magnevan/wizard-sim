@@ -37,6 +37,10 @@ FIXES = {
         ('terrace', 'sand at 0 m', dict(name='the beach', mat='sand')),
         ('new-terrace', dict(name='the jetty', h=0.3, mat='deck', edge='parapet')),
         ('paint', 'grass at 3.5 m', 0, 0, 88, 0),          # the lattice's first row fell outside the plan's fill
+        # old paving going back to the garden, laid stone by stone (kit-stones.ts WEATHERED, 2026-11-27): the concept's worn flags
+        ('terrace', 'path at 3.5 m', dict(mat='weathered')), ('terrace', 'plaza at 3.5 m', dict(mat='weathered')),
+        ('terrace', 'road at 3.5 m', dict(mat='weathered')), ('terrace', 'dais at 3.8 m', dict(mat='weathered')),
+        ('terrace', 'stairs at 2 m', dict(mat='weathered')),
         # the cove: a beach round its back under the clifftop, the sea inside it and out through its mouth
         ('disc', 'the beach', 35.0, 40.0, 11.0), ('disc', 'the sea', 35.0, 40.0, 7.0), ('paint', 'the sea', 23, 41, 47, 50),
         # the built stair down at the west shoulder (rev 3, the user 2026-11-27: the broken wall dropped; down and back)
@@ -50,6 +54,8 @@ FIXES = {
         ('object', dict(kind='setpiece', id='greenhouse', name='the great greenhouse', piece='setpiece.greenhouse', at=[8.5, 37.0], front='S')),
         ('object', dict(kind='setpiece', id='well', name='the well', piece='setpiece.infirmary-well', at=[35.0, 18.0], front='S')),
         ('object', dict(kind='setpiece', id='battery-stack', name="the battery's smokestack", piece='setpiece.battery-stack', at=[73.6, 29.5], front='S')),
+        ('paint', 'grass at 3.5 m', 62, 27, 71, 33),       # the plan's wall box for the boiler house, replaced by its model
+        ('object', dict(kind='setpiece', id='boiler-house', name="the battery's boiler house", piece='setpiece.boiler-house', at=[66.5, 30.0], front='S')),
         # the triage camp: six full-size tents round the forecourt's edges, the middle left open (the user: "negative space")
         # (the user, 2026-11-27: tents "angled so that we can see the people in it from the camera"): every tent's open side
         # faces the camera, turned a little this way or that as if pitched in a hurry
@@ -69,6 +75,20 @@ FIXES = {
         ('object', dict(kind='vignette', id='camp-barrel-2', name='a barrel', piece='dress.barrel', at=[52.9, 21.4], front='S')),
         ('object', dict(kind='vignette', id='camp-crates-3', name='crates', piece='dress.crates', at=[15.6, 28.6], front='S', turn=-9)),
         ('object', dict(kind='vignette', id='camp-crates-4', name='crates', piece='dress.crates', at=[52.6, 28.0], front='S', turn=22)),
+        # the camp kit (one Meshy sheet, split): poles, canvas and stakes left where they were dropped, stretchers and
+        # medical crates where the triage is happening (the user: "some sense that things happened fast")
+        ('object', dict(kind='vignette', id='camp-stretcher-1', name='stretcher', piece='dress.stretcher', at=[24.0, 21.0], front='S', turn=20)),
+        ('object', dict(kind='vignette', id='camp-stretcher-2', name='stretcher', piece='dress.stretcher', at=[46.0, 21.0], front='S', turn=-15)),
+        ('object', dict(kind='vignette', id='camp-stretcher-3', name='stretcher', piece='dress.stretcher', at=[28.0, 14.6], front='S', turn=80)),
+        ('object', dict(kind='vignette', id='camp-medcrate-1', name='medical crate', piece='dress.medical-crate', at=[26.6, 21.8], front='S', turn=0)),
+        ('object', dict(kind='vignette', id='camp-medcrate-2', name='medical crate', piece='dress.medical-crate', at=[44.0, 21.8], front='S', turn=15)),
+        ('object', dict(kind='vignette', id='camp-blankets-1', name='blankets', piece='dress.blankets', at=[18.0, 21.2], front='S', turn=0)),
+        ('object', dict(kind='vignette', id='camp-blankets-2', name='blankets', piece='dress.blankets', at=[52.0, 21.2], front='S', turn=-10)),
+        ('object', dict(kind='vignette', id='camp-poles-1', name='tent poles', piece='dress.tent-poles', at=[31.0, 12.6], front='S', turn=30)),
+        ('object', dict(kind='vignette', id='camp-poles-2', name='tent poles', piece='dress.tent-poles', at=[41.0, 25.8], front='S', turn=-25)),
+        ('object', dict(kind='vignette', id='camp-canvas-1', name='tent canvas', piece='dress.tent-canvas', at=[39.2, 13.0], front='S', turn=-10)),
+        ('object', dict(kind='vignette', id='camp-canvas-2', name='tent canvas', piece='dress.tent-canvas', at=[29.6, 27.8], front='S', turn=12)),
+        ('object', dict(kind='vignette', id='camp-stakes-1', name='tent stakes', piece='dress.tent-stakes', at=[33.4, 13.8], front='S', turn=0)),
         # lanterns on the road's far (north) side, so they never stand between the camera and the walkers (the user)
         ('object', dict(kind='vignette', id='road-lamp-1', name='a lamp post', piece='dress.lamp', at=[58.0, 35.4], front='S')),
         ('object', dict(kind='vignette', id='road-lamp-2', name='a lamp post', piece='dress.lamp', at=[66.0, 35.4], front='S')),
@@ -81,7 +101,7 @@ FIXES = {
         ('object', dict(kind='marker', id='start-3', at=[35, 3.4], name="seat 3's start")),
         ('object', dict(kind='marker', id='gate-court', at=[35, 1.5], name="the road north: back to the courtyard's bridge")),
         ('object', dict(kind='marker', id='gate-battery', at=[86.5, 37.5], name="the road's east end: on to the battery")),
-        ('object', dict(kind='marker', id='well-mark', at=[35, 18], tag='landmark', name='the well')),
+        ('object', dict(kind='marker', id='well', at=[35, 18], tag='landmark', name='the well')),   # the sim's infirmary looks for 'well'
     ],
     'infirmary-d': [   # (plan D, kept as history: the scene is plan H's since 2026-11-26) plan D's stairs are plain stairs() (sectors to the trace), so its four flights are written here (2026-11-26)
         ('terrace', 't-sea', dict(name='the deep')), ('terrace', 't-stream-c', dict(name='the bath')),

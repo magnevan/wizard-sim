@@ -105,6 +105,10 @@ FIXES = {
         ('object', dict(kind='glyph', id='glyph-tents-nw', name='the line to the north-west tent', pts=[[33.4, 16.4], [30.0, 13.4], [27.0, 13.4]])),
         ('object', dict(kind='glyph', id='glyph-tents-ne', name='the line to the north-east tent', pts=[[36.6, 16.4], [40.0, 13.4], [43.0, 13.4]])),
         ('object', dict(kind='glyph', id='glyph-tents-e', name='the line between the east tents', pts=[[37.4, 19.2], [44.0, 21.2], [49.0, 21.2]])),
+        # worn footpaths in the lawn (kit-ground.ts): where the nurses and stokers walk
+        ('object', dict(kind='wear', id='wear-boiler-west', name="the boiler house's west door to the road", pts=[[65.0, 33.1], [64.6, 35.0], [63.9, 36.9]])),
+        ('object', dict(kind='wear', id='wear-boiler-east', name="the boiler house's east door, joining the west door's path", pts=[[68.4, 33.1], [67.2, 34.6], [64.8, 35.5]], w=1.0)),
+        ('object', dict(kind='wear', id='wear-tents-boiler', name="from the tents round the boiler house's corner to its door", pts=[[54.3, 24.8], [57.0, 27.8], [60.2, 31.6], [62.0, 33.5], [64.9, 33.4]])),
         # lanterns on the road's far (north) side, so they never stand between the camera and the walkers (the user)
         ('object', dict(kind='vignette', id='road-lamp-1', name='a lamp post', piece='dress.lamp', at=[58.0, 35.4], front='S')),
         ('object', dict(kind='vignette', id='road-lamp-2', name='a lamp post', piece='dress.lamp', at=[66.0, 35.4], front='S')),

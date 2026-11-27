@@ -13,6 +13,7 @@
  * Weathered materials (WEATHERED) add a third, small texture: how worn the ground is round each cell.
  */
 import * as THREE from 'three';
+import { GROUND_GLSL } from './kit-ground';
 
 type Stone = { m: string; h: number; q: number[][]; r: number; c: number[]; t: number; a: number; b: number; w?: number; x?: number };
 /** How a material's stones are painted (tess_proof.py LAY). */
@@ -191,24 +192,8 @@ function wearField(st: Stone[], holes: Stone[], lists: number[][], o: THREE.Vect
   return t;
 }
 
-/**
- * The meadow's broad change over the ground (2026-11-27, the user: the lawn "very rough", a flat bright lime): the
- * painted tile (meadow.png) a little less saturated, drifting between straw-warm and cool blue-green over about 20 u,
- * with lusher darker patches and a soft light-and-dark mottle, so a large lawn never reads as one flat colour. The
- * meadow floor (kit-render.ts) and the weathered paving's fray into it (below) both run it, so their edge has no seam.
- */
-export const LAWN_VARY = `
-float lwH(vec2 q) { return fract(sin(dot(q, vec2(127.1, 311.7))) * 43758.5453); }
-float lwN(vec2 x) { vec2 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(lwH(i), lwH(i + vec2(1.0, 0.0)), f.x), mix(lwH(i + vec2(0.0, 1.0)), lwH(i + vec2(1.0, 1.0)), f.x), f.y); }
-vec3 lawnVary(vec3 c, vec2 p) {
-  float big = lwN(p * 0.045) * 0.6 + lwN(p * 0.11 + 7.3) * 0.4, mid = lwN(p * 0.17 + 3.1) * 0.7 + lwN(p * 0.5 + 9.0) * 0.3;
-  c = mix(vec3(dot(c, vec3(0.3, 0.59, 0.11))), c, 0.78);
-  c *= mix(vec3(0.8, 0.95, 1.0), vec3(1.18, 1.05, 0.7), smoothstep(0.28, 0.78, big));
-  c *= mix(vec3(1.0), vec3(0.66, 0.82, 0.7), smoothstep(0.48, 0.8, mid));
-  return c * (0.84 + 0.3 * lwN(p * 0.8 + 1.7));
-}
-`;
+/** The meadow's GLSL (lawnVary, groundLawn: kit-ground.ts), for weathered floors fraying into it with no seam. */
+export const LAWN_VARY = GROUND_GLSL;
 
 /** The fragment shader's declarations for a laid floor (matId: its place in STONE_MATS). */
 export const stoneDecl = (matId: number) => `${WEATHERED.has(STONE_MATS[matId]) ? LAWN_VARY : ''}
@@ -262,8 +247,7 @@ export const stoneFrag = (matId: number) => {
     // the ground between and round the stones: the tile's trodden earth, going over to the lawn where the paving frays out
     float wf = texture2D(stWear, (p - stGridO) / (${CELL.toFixed(2)} * stGridN)).r;
     float gN = stNoise(p * 1.1) * 0.45 + stNoise(p * 3.7 + 11.0) * 0.35 + stNoise(p * 9.0 + 5.0) * 0.2;
-    vec3 lawnC = texture2D(stLawn, p / stLawnS).rgb;
-    if (stLawnV > 0.5) lawnC = lawnVary(lawnC, p);
+    vec3 lawnC = stLawnV > 0.5 ? groundLawn(stLawn, stLawnS, p) : texture2D(stLawn, p / stLawnS).rgb;
     vec3 earth = mix(vec3(dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11))), diffuseColor.rgb, 0.75) * vec3(0.9, 0.86, 0.82);   // (the painting is more orange than the stones)
     vec3 ground = mix(earth, lawnC, smoothstep(0.35, 0.65, wf + (gN - 0.5) * 0.8));
     diffuseColor.rgb = ground;

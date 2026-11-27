@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as p1-concept.png in the current directory. Reply with just the file name.
+
+The first attached image is a frame from our game, at the game camera. Repaint this exact frame: keep the camera, the composition, the building, the brick tower, the tents, the cobbled road, the lamp posts, the flowering bushes, the trees and the balustrade exactly where they are and the same size. Change only the grass and the bare ground, so the whole picture reads as one hand-painted, warm, sunlit stylised scene.
+
+The second attached image is our concept art: paint the grass the way it is painted there. Short, dense painterly grass made of many small overlapping tufts, each tuft lit on its sunny side with a darker gap beneath it. The colour drifts in broad soft patches between olive, warm yellow-green and a few cooler deeper greens, never one flat tone. Worn earth shows through in soft patches where people walk, and the grass frays into the edges of the road with tufts growing between its stones. Small white and yellow wildflowers are scattered thinly.

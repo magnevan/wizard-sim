@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as p3-blades.png in the current directory. Reply with just the file name.
+
+The first attached image is a frame from our game, at the game camera. Repaint this exact frame: keep the camera, the composition, the building, the brick tower, the tents, the cobbled road, the lamp posts, the flowering bushes, the trees and the balustrade exactly where they are and the same size. Change only the grass and the bare ground, so the whole picture reads as one hand-painted, warm, sunlit stylised scene.
+
+Paint the grass as a lush, thick carpet of individual blades standing up, as in a modern stylised 3D adventure game: every blade has a dark root and a bright sunlit tip, so the field glitters with tiny highlights and the blades lean softly with the wind in one direction. Soft cloud shadows drift over parts of the lawn, darkening it to a cool blue-green. The blades thin out and bend aside right at the edge of the road and the building.

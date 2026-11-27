@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as p6-edges.png in the current directory. Reply with just the file name.
+
+The first attached image is a frame from our game, at the game camera: a paved forecourt with tents round a caged well, with lawn round it. Repaint this exact frame: keep the camera, the composition, the well, the tents, the cots, the crates, the flower beds and the paving pattern exactly where they are. Change only how the grass meets the stone, so the whole picture reads as one hand-painted, warm, sunlit stylised scene.
+
+Where the paving meets the lawn, the edge should feel grown, not cut: grass spills over the outer stones in soft tufts, grass and moss grow in the joints between stones for a stride or two in from the edge, a few stones are missing with grass in their place, and the lawn itself is a dense painterly grass with soft colour drift between olive, warm yellow-green and deeper green. Keep the middle of the forecourt round the well clean, worn stone.

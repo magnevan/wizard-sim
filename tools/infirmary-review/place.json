@@ -115,6 +115,50 @@
  ],
  "decisions": [
   {
+   "id": "rv-1",
+   "area": "props",
+   "piece": "devices",
+   "title": "Have a look: the healing devices, the triage camp and the crystal",
+   "html": "<p>First, your note: stretchers, crates and blankets lay across the rune lines. They are all moved clear (the stretchers now in front of their tents), and the map compiler now warns whenever a line runs through any prop, so it can't creep back. Then four things I'd like your eye on, all in the scene now:</p><ol><li><b>Emitters beside the pillows, not behind them.</b> The tent model's cots run right up to its back posts, so behind the pillow they stood outside the tent under the roof, unseen. Beside each cot's head they show between the cots. I think this keeps your idea; does it?</li><li><b>The stations</b> stand at each tent's end where its line arrives, 1.26 m tall. Big enough to read as the thing the line feeds, or should they be larger?</li><li><b>The triage props</b>: 16 round the six tents (tables, stools, chests, trays, washstands, cloak stands, a lantern post), the middle round the well kept open. Right amount, or should the camp look busier?</li><li><b>The crystal</b>, from your answer: dull grey glass while the vines choke it, lighting up as they are cut, most at the last cuts.</li></ol><p>A note with what to change is enough; each point becomes its own task.</p>",
+   "figures": [
+    {
+     "src": "img/camp-clear-fore.jpg",
+     "cap": "The whole camp, nothing on the lines"
+    },
+    {
+     "src": "img/dev-models-close.jpg",
+     "cap": "1: an emitter beside each pillow (close, low)"
+    },
+    {
+     "src": "img/camp-clear-w.jpg",
+     "cap": "2 and 3: the west tents, a station on each branch, a stretcher and tray in front"
+    },
+    {
+     "src": "img/camp-clear-e.jpg",
+     "cap": "3: the east tents"
+    },
+    {
+     "src": "img/triage-n1.jpg",
+     "cap": "3: the north-west tent"
+    },
+    {
+     "src": "img/crystal-glow.jpg",
+     "cap": "4: the crystal choked, half cut, cleared"
+    }
+   ],
+   "rec": "My view: all four work as they are; the stations could go a little larger if they read small to you.",
+   "choices": [
+    {
+     "v": "good",
+     "label": "Looks good"
+    },
+    {
+     "v": "changes",
+     "label": "Changes (in the note)"
+    }
+   ]
+  },
+  {
    "id": "pc7-credits",
    "area": "props",
    "piece": "devices",
@@ -1564,7 +1608,7 @@
      "pieces": [
       "review",
       "devices and triage props in: check",
-      "#props-devices2"
+      "#decision-rv-1"
      ],
      "surfaces": [
       "done",
@@ -1600,7 +1644,7 @@
      "dressing": [
       "review",
       "crystal dark till cleared: check",
-      "#magic-vines"
+      "#decision-rv-1"
      ],
      "beauty": [
       "later"

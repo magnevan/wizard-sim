@@ -266,7 +266,7 @@ def glyphs(objs, floor_u, T, G, nx, ny, placed, err, label):
     pulse runs on through a junction), w, tint, state. Dressing for walking: they never block.
     Checks: glyph-point (a point off the map, or over no walkable floor, or fewer than two), glyph-floor (a run over no
     walkable floor or water), glyph-drop (a run crossing a drop of more than GLYPH_DRAPE without points with z), glyph-state;
-    warnings glyph-wall (a run over a building) and glyph-setpiece (through a set piece)."""
+    warnings glyph-wall (a run over a building) and glyph-setpiece (through a set piece or a piece of dressing)."""
     from shapely.prepared import prep
     if not objs: return []
     fl = [(T[ch]['h'], ch, prep(u.buffer(1e-6))) for ch, u in floor_u.items()]
@@ -281,7 +281,9 @@ def glyphs(objs, floor_u, T, G, nx, ny, placed, err, label):
     building = lambda g: g is not None and T[g].get('edge') == 'wall'
     solids = []
     for v in placed:
-        if v.get('kind') != 'setpiece': continue
+        # set pieces and dressing alike: a stretcher left across a rune line reads as dropped on the road (the user,
+        # 2026-11-27: "beds placed randomly right on the rune road")
+        if v.get('kind') not in ('setpiece', 'vignette'): continue
         box, pc = footprint(v, G)
         # a piece the line feeds (kit.json "glyph_fed": the infirmary's healing devices) stands on it by design
         if box is not None and not (pc or {}).get('glyph_fed'): solids.append((v, box))
@@ -1165,7 +1167,7 @@ def compile_scene(sc):
                     if len(inst) > n0: taken.append((px, py))
 
     inst += pipes(kind('pipe'), floor_u, T, G, nx, ny, kind('setpiece') + kind('vignette'), err, label)
-    inst += glyphs(kind('glyph'), floor_u, T, G, nx, ny, kind('setpiece'), err, label)
+    inst += glyphs(kind('glyph'), floor_u, T, G, nx, ny, kind('setpiece') + kind('vignette'), err, label)
     inst += wears(kind('wear'), G, nx, ny, err, label)
 
     # ---- reachability: cells by terrace, joined where steps are small, plus flights ----

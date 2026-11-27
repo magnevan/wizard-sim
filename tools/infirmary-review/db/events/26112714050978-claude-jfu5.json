@@ -1,8 +1,8 @@
 {
- "at": "2026-11-27T14:05:09.782Z",
- "by": "claude",
- "task": "t-devices2",
- "set": {
-  "decision": "pc7-credits"
- }
+  "at": "2026-11-27T14:05:09.782Z",
+  "by": "claude",
+  "set": {
+    "decision": "pc7-credits"
+  },
+  "task": "t-devices2"
 }

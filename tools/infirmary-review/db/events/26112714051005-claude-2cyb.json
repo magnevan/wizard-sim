@@ -1,10 +1,10 @@
 {
- "at": "2026-11-27T14:05:10.052Z",
- "by": "claude",
- "task": "t-place-devices",
- "note": "Placed as grey stand-ins: 6 stations, 24 emitters, leads and branch lines (Buildings & props, Devices placed). Models next, after pc7-credits.",
- "set": {
-  "seen": "2026-11-27T14:05:10.050Z",
-  "status": "doing"
- }
+  "at": "2026-11-27T14:05:10.052Z",
+  "by": "claude",
+  "note": "Placed as grey stand-ins: 6 stations, 24 emitters, leads and branch lines (Buildings & props, Devices placed). Models next, after pc7-credits.",
+  "set": {
+    "seen": "2026-11-27T14:05:10.050Z",
+    "status": "doing"
+  },
+  "task": "t-place-devices"
 }

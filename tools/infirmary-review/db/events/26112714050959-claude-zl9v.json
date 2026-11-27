@@ -1,12 +1,12 @@
 {
- "at": "2026-11-27T14:05:09.591Z",
- "by": "claude",
- "task": "t-devices2",
- "note": "Your picks are in: station c (leads snipped, per your note) and emitter b, placed as stand-ins. The models wait on pc7-credits.",
- "set": {
-  "seen": "2026-11-27T14:05:09.589Z",
-  "status": "waiting",
-  "waitingOn": "user",
-  "waitingFor": "your credit OK in pc7-credits"
- }
+  "at": "2026-11-27T14:05:09.591Z",
+  "by": "claude",
+  "note": "Your picks are in: station c (leads snipped, per your note) and emitter b, placed as stand-ins. The models wait on pc7-credits.",
+  "set": {
+    "seen": "2026-11-27T14:05:09.589Z",
+    "status": "waiting",
+    "waitingFor": "your credit OK in pc7-credits",
+    "waitingOn": "user"
+  },
+  "task": "t-devices2"
 }

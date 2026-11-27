@@ -103,19 +103,20 @@ FIXES = {
         # tents strewn on the lawn to give some sense that things happened fast"; tent poles and canvas wait for their own piece)
         ('object', dict(kind='vignette', id='camp-crates-1', name='crates', piece='dress.crates', at=[15.2, 12.0], front='S', turn=14)),
         ('object', dict(kind='vignette', id='camp-rope-1', name='a coil of rope', piece='dress.rope-coil', at=[30.2, 8.2], front='S')),
-        ('object', dict(kind='vignette', id='camp-barrel-1', name='a barrel', piece='dress.barrel', at=[15.4, 21.0], front='S')),
+        ('object', dict(kind='vignette', id='camp-barrel-1', name='a barrel', piece='dress.barrel', at=[14.2, 22.8], front='S')),
         ('object', dict(kind='vignette', id='camp-crates-2', name='crates', piece='dress.crates', at=[52.8, 12.2], front='S', turn=-20)),
         ('object', dict(kind='vignette', id='camp-rope-2', name='a coil of rope', piece='dress.rope-coil', at=[40.0, 8.4], front='S')),
         ('object', dict(kind='vignette', id='camp-barrel-2', name='a barrel', piece='dress.barrel', at=[52.9, 21.4], front='S')),
-        ('object', dict(kind='vignette', id='camp-crates-3', name='crates', piece='dress.crates', at=[15.6, 28.6], front='S', turn=-9)),
+        ('object', dict(kind='vignette', id='camp-crates-3', name='crates', piece='dress.crates', at=[14.0, 28.6], front='S', turn=-9)),
         ('object', dict(kind='vignette', id='camp-crates-4', name='crates', piece='dress.crates', at=[52.6, 28.0], front='S', turn=22)),
         # the camp kit (one Meshy sheet, split): poles, canvas and stakes left where they were dropped, stretchers and
-        # medical crates where the triage is happening (the user: "some sense that things happened fast")
-        ('object', dict(kind='vignette', id='camp-stretcher-1', name='stretcher', piece='dress.stretcher', at=[24.0, 21.0], front='S', turn=20)),
-        ('object', dict(kind='vignette', id='camp-stretcher-2', name='stretcher', piece='dress.stretcher', at=[46.0, 21.0], front='S', turn=-15)),
+        # medical crates where the triage is happening, never on a rune line (the user, 2026-11-27: "beds placed randomly
+        # right on the rune road"; compile.py now warns when a line runs through dressing) (the user: "some sense that things happened fast")
+        ('object', dict(kind='vignette', id='camp-stretcher-1', name='stretcher', piece='dress.stretcher', at=[23.3, 20.1], front='S', turn=3)),
+        ('object', dict(kind='vignette', id='camp-stretcher-2', name='stretcher', piece='dress.stretcher', at=[47.6, 20.1], front='S', turn=-4)),
         ('object', dict(kind='vignette', id='camp-stretcher-3', name='stretcher', piece='dress.stretcher', at=[28.0, 14.6], front='S', turn=80)),
-        ('object', dict(kind='vignette', id='camp-medcrate-1', name='medical crate', piece='dress.medical-crate', at=[26.6, 21.8], front='S', turn=0)),
-        ('object', dict(kind='vignette', id='camp-medcrate-2', name='medical crate', piece='dress.medical-crate', at=[44.0, 21.8], front='S', turn=15)),
+        ('object', dict(kind='vignette', id='camp-medcrate-1', name='medical crate', piece='dress.medical-crate', at=[27.6, 23.0], front='S', turn=0)),
+        ('object', dict(kind='vignette', id='camp-medcrate-2', name='medical crate', piece='dress.medical-crate', at=[42.6, 23.0], front='S', turn=15)),
         # the triage sheet (b, the user's OK 2026-11-27): a few things at each tent's open front and free end, a tray and
         # supplies by the stretchers; the middle round the well stays open
         *[('object', dict(kind='vignette', id=f'triage-{n}', name=nm, piece=f'dress.{pc}', at=at, front='S', turn=tu)) for n, nm, pc, at, tu in (
@@ -123,14 +124,14 @@ FIXES = {
             ('cloaks-n1', 'a cloak stand', 'cloak-stand', [19.8, 10.9], 8),
             ('wash-n2', 'a washstand', 'washstand', [50.2, 10.4], -10), ('buckets-n2', 'buckets', 'buckets', [49.9, 12.7], 0),
             ('stool-n2', 'a camp stool', 'camp-stool', [47.4, 13.1], -20),
-            ('tray-w1', 'an instrument tray', 'instrument-tray', [22.2, 20.1], 12), ('chest-w1', 'a potion chest', 'potion-chest', [17.6, 19.9], -6),
+            ('tray-w1', 'an instrument tray', 'instrument-tray', [20.4, 20.3], 12), ('chest-w1', 'a potion chest', 'potion-chest', [17.6, 19.9], -6),
             ('lantern-w2', 'a lantern post', 'lantern-post', [17.4, 27.7], 0), ('buckets-w2', 'buckets', 'buckets', [24.6, 27.8], 10),
             ('table-e1', 'a supply table', 'supply-table', [51.4, 19.8], -6), ('chest-e1', 'a potion chest', 'potion-chest', [53.2, 19.9], 14),
             ('wash-e2', 'a washstand', 'washstand', [53.0, 28.0], 8), ('stool-e2', 'a camp stool', 'camp-stool', [51.0, 27.6], 25),
-            ('tray-e2', 'an instrument tray', 'instrument-tray', [47.9, 22.4], -10), ('cloaks-e2', 'a cloak stand', 'cloak-stand', [46.2, 27.9], -4))],
-        ('object', dict(kind='vignette', id='camp-blankets-1', name='blankets', piece='dress.blankets', at=[18.0, 21.2], front='S', turn=0)),
+            ('tray-e2', 'an instrument tray', 'instrument-tray', [50.4, 22.4], -10), ('cloaks-e2', 'a cloak stand', 'cloak-stand', [46.2, 27.9], -4))],
+        ('object', dict(kind='vignette', id='camp-blankets-1', name='blankets', piece='dress.blankets', at=[18.6, 22.8], front='S', turn=0)),
         ('object', dict(kind='vignette', id='camp-blankets-2', name='blankets', piece='dress.blankets', at=[52.0, 21.2], front='S', turn=-10)),
-        ('object', dict(kind='vignette', id='camp-poles-1', name='tent poles', piece='dress.tent-poles', at=[31.0, 12.6], front='S', turn=30)),
+        ('object', dict(kind='vignette', id='camp-poles-1', name='tent poles', piece='dress.tent-poles', at=[32.6, 12.4], front='S', turn=30)),
         ('object', dict(kind='vignette', id='camp-poles-2', name='tent poles', piece='dress.tent-poles', at=[41.0, 25.8], front='S', turn=-25)),
         ('object', dict(kind='vignette', id='camp-canvas-1', name='tent canvas', piece='dress.tent-canvas', at=[39.2, 13.0], front='S', turn=-10)),
         ('object', dict(kind='vignette', id='camp-canvas-2', name='tent canvas', piece='dress.tent-canvas', at=[29.0, 26.4], front='S', turn=12)),

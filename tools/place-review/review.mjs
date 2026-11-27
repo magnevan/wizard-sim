@@ -96,13 +96,11 @@ switch (cmd) {
   case 'note': {
     const [id, text, ...more] = rest; need(S.tasks[id] && text, 'note <task> "text" [k=v ...]');
     const set = { seen: now(), ...kv(more) };
-    if (set.status === 'done') console.error('note: Claude sets review, not done; the user confirms');
     console.log('staged', event({ task: id, note: text, set }));
     break;
   }
   case 'set': {
     const [id, ...more] = rest; const set = kv(more); need(S.tasks[id] && Object.keys(set).length, 'set <task> k=v ...');
-    if (set.status === 'done') console.error('set: Claude sets review, not done; the user confirms');
     console.log('staged', event({ task: id, set }));
     break;
   }

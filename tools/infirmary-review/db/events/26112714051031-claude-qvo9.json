@@ -1,12 +1,12 @@
 {
- "at": "2026-11-27T14:05:10.319Z",
- "by": "claude",
- "task": "t-triage",
- "note": "Sheet b OK'd. The website render waits on pc7-credits (you at the download).",
- "set": {
-  "seen": "2026-11-27T14:05:10.314Z",
-  "status": "waiting",
-  "waitingOn": "user",
-  "waitingFor": "pc7-credits"
- }
+  "at": "2026-11-27T14:05:10.319Z",
+  "by": "claude",
+  "note": "Sheet b OK'd. The website render waits on pc7-credits (you at the download).",
+  "set": {
+    "seen": "2026-11-27T14:05:10.314Z",
+    "status": "waiting",
+    "waitingFor": "pc7-credits",
+    "waitingOn": "user"
+  },
+  "task": "t-triage"
 }

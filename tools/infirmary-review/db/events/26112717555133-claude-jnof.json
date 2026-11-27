@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-27T17:55:51.339Z",
+  "by": "claude",
+  "set": {
+    "outcome": "scene: tent_healing() in trace_plan.py; your look is in rv-1",
+    "status": "done"
+  },
+  "task": "t-place-devices"
+}

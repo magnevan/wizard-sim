@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-27T17:55:51.229Z",
+  "by": "claude",
+  "set": {
+    "outcome": "pieces: setpiece.heal-station, setpiece.bed-emitter (in the scene); your look is in rv-1",
+    "status": "done"
+  },
+  "task": "t-devices2"
+}

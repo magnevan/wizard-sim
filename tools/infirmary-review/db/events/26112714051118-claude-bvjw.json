@@ -1,8 +1,8 @@
 {
- "at": "2026-11-27T14:05:11.182Z",
- "by": "claude",
- "task": "t-triage",
- "set": {
-  "decision": "pc7-credits"
- }
+  "at": "2026-11-27T14:05:11.182Z",
+  "by": "claude",
+  "set": {
+    "decision": "pc7-credits"
+  },
+  "task": "t-triage"
 }

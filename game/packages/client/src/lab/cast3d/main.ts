@@ -27,9 +27,14 @@
  *   &sheet=channels          a contact sheet instead: one tile per spell of a group (channels, missiles, areas, places,
  *                            walls, self, sigil, weapons, previews, all), or &spells=a;b;c (a recipe each, `|t` after it
  *                            for its own moment); &cols=4, &tile=480x300
- * Live (no ?t= and no sheet): the cast loops every 4 s. window.__ready is set once a frozen frame or sheet is drawn;
- * window.__lab holds the stand-ins' triangle counts. A frozen frame also sets window.__seek(t): the same cast drawn at t
- * (stepping on from the frame shown, or again from the start for an earlier t), for scripts/arcane3d-clips.mjs's clips.
+ *   &fxoff=floor.gas         named parts of the effects not drawn (dev-options.ts, view3d/fx-off.ts)
+ * Live (no ?t= and no sheet): the cast loops every 4 s. With ?t= (or ?clip=1) the page is frozen: it draws that moment
+ * once and nothing moves until a script calls window.__seek(t), the same cast drawn at t (stepping on from the frame
+ * shown, or again from the start for an earlier t); window.__fxoff('a,b') switches parts off and draws it again.
+ * window.__ready is set once a frozen frame or sheet is drawn (cleared while __seek works); window.__lab holds the
+ * stand-ins' triangle counts. Every step is shown to the fire floor (Spells3D.watchFloor), so a frozen frame or a tile
+ * draws each cell at its true age, and each tile starts from its own world (Spells3D.reset). scripts/fx-sheet.mjs
+ * drives all of this: frame sheets and clips, one server and one browser for a batch.
  */
 import * as THREE from 'three';
 import {
@@ -46,6 +51,7 @@ import { dropOutline } from '../../spray-drop';
 import { SCENES as PIXEL_SCENES } from '../vfx-lab/scenes';
 import { FOV, PITCH } from '../../view3d/camera3d';
 import { liveModel, liveSlugs } from '../../art/model-pose';
+import { setOpt } from '../../dev-options';
 
 const q = new URLSearchParams(location.search);
 const T_AT = q.has('t') ? Number(q.get('t')) : null;
@@ -110,6 +116,8 @@ function recipe(src: string, fallbackT: number): Recipe | null {
 const sheetName = q.get('sheet'), list = q.get('spells')?.split(';').filter(Boolean) ?? (sheetName ? GROUPS[sheetName] ?? GROUPS.all : null);
 const recipes: Recipe[] = list ? list.map((s) => recipe(s, T_AT ?? 0.4)).filter((r): r is Recipe => !!r) : [recipe(q.get('spell') ?? 'water,water,water/force', T_AT ?? 0.4)!];
 const SHEET = !!list;
+/** One cast held at a moment (?t= or ?clip=1) until __seek: no loop, the bodies posed on the sim's clock. */
+const FROZEN = !SHEET && (CLIP || T_AT !== null);
 const rows = SHEET ? Math.ceil(recipes.length / COLS) : 1;
 const W = SHEET ? TW * Math.min(COLS, recipes.length) : innerWidth, H = SHEET ? TH * rows : innerHeight;
 
@@ -213,6 +221,8 @@ function stepTo(run: Run, d: Demo, end: number): void {
     stepLab(w, run.next, d, run.t0 - 12);
     bodies.afterStep(w);
     spells.afterStep(w);
+    // every step, not only the frame drawn: each floor cell then shows its true age (Spells3D.watchFloor)
+    spells.watchFloor(w);
     for (const e of w.events) if (e.kind === 'burst' && e.who >= 0) bursts.push({ x: e.x, y: e.y, r: e.amount ?? 0, tick: w.clock[0] });
   }
 }
@@ -259,7 +269,7 @@ function draw(run: Run, box?: { x: number; y: number; w: number; h: number }): v
   place(box ? box.w / box.h : W / H);
   renderer.info.reset();
   // a film's frames pose the bodies on the sim's clock, so every frame is the same however long it took to draw
-  run.bodies.update(run.w, 0, CLIP ? (run.w.clock[0] * 1000) / 60 : performance.now(), (x, y) => new THREE.Vector3(x, 0, y));
+  run.bodies.update(run.w, 0, FROZEN || SHEET ? (run.w.clock[0] * 1000) / 60 : performance.now(), (x, y) => new THREE.Vector3(x, 0, y));
   spells.frame(run.w, run.w.clock[0] / 60, { alpha: 0, localSeat: 0, cam });
   if (HIT) drawHits(run);
   spells.render(renderer, scene, cam, box);
@@ -285,33 +295,26 @@ if (SHEET) {
   }
   info.textContent = `${sheetName ?? 'spells'} · scene ${SCENE} · view ${VIEW_H} u${HIT ? ' · hit shapes' : ''}`;
   (window as unknown as { __ready: boolean }).__ready = true;
-} else if (CLIP) {
-  const r = recipes[0], run = runTo({ ...r, t: T_AT ?? -0.1 }), lab = window as unknown as { __ready: boolean; __seek: (t: number) => void };
+} else if (FROZEN) {
+  // frozen (?t= or ?clip=1): nothing moves until a script calls __seek(t), which steps the cast on (or runs it again
+  // from the start, for an earlier t) and draws that moment
+  const r = recipes[0];
+  const lab = window as unknown as { __ready: boolean; __seek: (t: number) => void; __fxoff: (list: string) => void };
+  let run = runTo({ ...r, t: T_AT ?? -0.1 }), shownT = T_AT ?? -0.1;
   lab.__seek = (t: number) => {
     lab.__ready = false;
-    stepTo(run, r.demo, Math.max(run.next, run.t0 + Math.round(t * 60)));
+    const end = run.t0 + Math.round(t * 60);
+    if (end < run.next) { scene.remove(run.bodies.group); run = runTo({ ...r, t }); }
+    stepTo(run, r.demo, end);
     draw(run);
-    info.textContent = `${r.label} · t = ${((run.next - run.t0) / 60).toFixed(2)} s`;
+    shownT = t;
+    info.textContent = `${r.label} · t = ${t.toFixed(2)} s · stand-ins: ${stats.glow + stats.tint + stats.solid} tris`;
     lab.__ready = true;
   };
-  label(0, 0, recipes[0].label);
-  lab.__seek(T_AT ?? -0.1);
-} else if (T_AT !== null) {
-  const run = runTo(recipes[0]);
-  draw(run);
-  info.textContent = `${recipes[0].label} · t = ${T_AT} s · stand-ins: ${stats.glow + stats.tint + stats.solid} tris`;
-  label(0, 0, recipes[0].label);
-  // window.__seek(t): the same cast at t s after it went off
-  let cur = run, curT = T_AT, tick = run.t0 + Math.round(T_AT * 60);
-  (window as unknown as { __seek: (t: number) => void }).__seek = (t: number) => {
-    const end = cur.t0 + Math.round(t * 60);
-    if (t < curT) { scene.remove(cur.bodies.group); cur = runTo({ ...recipes[0], t }); tick = end; }
-    for (; tick < end; tick++) { cur.bodies.beforeStep(cur.w); stepLab(cur.w, tick, recipes[0].demo, cur.t0 - 12); cur.bodies.afterStep(cur.w); spells.afterStep(cur.w); }
-    curT = t;
-    draw(cur);
-    info.textContent = `${recipes[0].label} · t = ${t.toFixed(2)} s`;
-  };
-  (window as unknown as { __ready: boolean }).__ready = true;
+  // ?fxoff= changed live (view3d/fx-off.ts), the moment drawn again
+  lab.__fxoff = (list: string) => { setOpt('fxoff', list || null, false); lab.__seek(shownT); };
+  label(0, 0, r.label);
+  lab.__seek(shownT);
 } else {
   // live: the cast loops; the effects' clock is the sim's
   const r = recipes[0], LOOP = 240;
@@ -322,8 +325,7 @@ if (SHEET) {
     while (acc >= 1 / 60) {
       acc -= 1 / 60;
       if (tick >= run.t0 + LOOP) { scene.remove(run.bodies.group); run = runTo({ ...r, t: -99 }); tick = 0; }
-      run.bodies.beforeStep(run.w); stepLab(run.w, tick, r.demo, run.t0 - 12); run.bodies.afterStep(run.w); spells.afterStep(run.w);
-      for (const e of run.w.events) if (e.kind === 'burst' && e.who >= 0) run.bursts.push({ x: e.x, y: e.y, r: e.amount ?? 0, tick: run.w.clock[0] });
+      stepTo(run, r.demo, tick + 1);
       tick++;
     }
     draw(run);

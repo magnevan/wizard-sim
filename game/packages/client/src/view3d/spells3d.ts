@@ -23,6 +23,7 @@ import { FxStage } from './fx/stage';
 import { Standins } from './fx/standins';
 import { BodyStatuses } from './fx/statuses';
 import { WindupTells } from './fx/windup';
+import { applyFxOff, fxOff } from './fx-off';
 import { sceneX, sceneZ } from './scene-map';
 
 const fxUrls = import.meta.glob<string>('../../../../content/generated/fx/fire-*.png', { eager: true, query: '?url', import: 'default' });
@@ -85,6 +86,10 @@ export class Spells3D {
     this.stage.scene.add(this.earth.group);
     this.statuses = new BodyStatuses((x, z) => this.simHeight(x, z));
     this.stage.scene.add(this.statuses.group);
+    // the whole effects' names for ?fxoff= (view3d/fx-off.ts)
+    this.cold.group.name = 'cold'; this.fireWaves.group.name = 'wave'; this.windups.group.name = 'windup'; this.arcane.group.name = 'arcane';
+    this.arcane.haze.name = 'arcane.haze'; this.earth.group.name = 'earth'; this.earth.meshes.name = 'earth.rocks'; this.statuses.group.name = 'statuses';
+    this.standins.group.name = 'standins';
   }
 
   /** The floor's height (u) under sim point (x, z); 0 off the scene. */
@@ -102,11 +107,13 @@ export class Spells3D {
     const simHeight = (x: number, z: number) => this.simHeight(x, z);
     for (let s = 0; s < MAX_SEATS; s++) {
       const f = new FireSpray('b', sheets, 11 + s * 17);
+      f.group.name = 'spray';
       f.fan.heightAt = simHeight;
       this.spraysBy.push(f); this.stage.scene.add(f.group);
     }
     this.grid = new SurfGrid(simHeight);
     this.floor = new FireFloor('b', sheets, this.grid, 23);
+    this.floor.group.name = 'floor';
     this.stage.scene.add(this.floor.group);
   }
 
@@ -156,7 +163,9 @@ export class Spells3D {
     this.statuses.update(w, t, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]], this.lights);
     this.windups.update(w, o.alpha ?? 0, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]], (x, y) => this.simHeight(x, y));
     this.standins.draw(w, { t, alpha: o.alpha ?? 0, localSeat: o.localSeat ?? -1, cam: this.fxCam, lights: this.lights, bodyAt: o.bodyAt });
+    if (fxOff('lights')) this.lights.begin();
     this.lights.end();
+    applyFxOff([this.stage.scene, this.stage.distort, this.lightRoot]);
   }
 
   private syncCam(cam: THREE.PerspectiveCamera): void {
@@ -175,8 +184,19 @@ export class Spells3D {
     if (jolt) { cam.position.sub(jolt); cam.updateMatrixWorld(); this.syncCam(cam); }
   }
 
-  /** Forget every remembered event (a lab drawing another world with the same effects). */
-  reset(): void { this.standins.rewind(-1); this.cold.reset(); this.fireWaves.reset(); this.earth.reset(); }
+  /** Forget every remembered event and the floor's burn ages (a lab drawing another world with the same effects). */
+  reset(): void { this.standins.rewind(-1); this.cold.reset(); this.fireWaves.reset(); this.earth.reset(); this.floor?.reset(); }
+
+  /**
+   * After each step, when the host doesn't draw every step (a lab stepping a world on to a frozen moment): the fire
+   * floor notes which cells lit and went out this tick, as a game frame would, so a frame drawn later shows each cell at
+   * its true age (flaring, burning, charring) rather than all of it found burning at once.
+   */
+  watchFloor(w: World): void {
+    if (!this.grid || !this.floor || this.standins.drawFire) return;
+    this.grid.update(w);
+    this.floor.update(w.clock[0] / 60, null);
+  }
 
   private groundUnder(w: World, s: number): number { return this.simHeight(w.bodies.x[s], w.bodies.y[s]); }
 }

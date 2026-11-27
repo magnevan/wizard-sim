@@ -60,6 +60,10 @@
     "perf": "npm run build && node scripts/perf.mjs",
     "perf:3d": "npm run build && node scripts/perf3d.mjs",
     "vfx-sheet": "node scripts/vfx-sheet.mjs",
+    "fx-sheet": "node scripts/fx-sheet.mjs",
+    "fx-serve": "node scripts/fx-sheet.mjs --serve",
+    "probe": "vitest run --config vitest.probe.config.ts",
+    "edit-replace": "node scripts/edit-replace.mjs",
     "shot:bodies": "node scripts/bodies-shots.mjs"
   },
   "devDependencies": {

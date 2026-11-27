@@ -40,6 +40,11 @@ npm run build && npm run shot -- --ms 4000 --out shots/run.png   # headless scre
 npm run shots:tutorial # build, then one screenshot per tutorial beat, a bot playing it (shots/tutorial; --beats 1,2 --ms 2500)
 node scripts/foliage-shot.mjs out.png --q "floor=cobble"   # (--frames 60 --dt 0.1 films the wind) the foliage lab (foliage.html: plants grown in code, lab/foliage.ts) from a dev server on port 5197
 npm run shot:lab -- out 32,26 --query "layout=patch-b"   # a lab page (--page kit3d, the default) from the dev server, one shot per x,y (shots/lab)
+npm run fx-sheet -- "fire,fire,fire,fire,fire/place" --t 0.1,1.5,4   # a 3D effect frozen at each moment, one labelled sheet per job (shots/fx;
+                       # several jobs, --off floor.gas, --clip 3 for an mp4 and its frame sheet, --tiles; scripts/fx-sheet.mjs's head)
+npm run fx-serve       # keep its lab server up (port 5199, HMR off), so each fx-sheet run takes seconds
+npm run probe -- tools/example.probe.ts   # a quick sim probe with console.log shown (any *.probe.ts; vitest.probe.config.ts)
+npm run edit-replace -- edits.json        # exact old -> new edits from a JSON list, all or none (scripts/edit-replace.mjs)
 npm run fps:lab -- 10  # a lab page's frame rate on the real GPU, headed Chrome (--page, --query); the page must animate and walk on WASD
 npm run preview        # serve the last build (vite preview)
 npm run artifact       # build + package artifact/ for a claude.ai link

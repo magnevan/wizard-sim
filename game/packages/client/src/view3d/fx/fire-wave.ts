@@ -482,6 +482,8 @@ class Slot {
     this.sparks = batch(SPARKS, LOOK_SPARK, SPARK_CAP, 4, {}, false, 0.2);
     this.embers = batch(EMBERS, LOOK_EMBERS, EMBER_CAP, 4, {}, false, 0.2);
     this.group.add(this.ground.mesh, this.smoke.mesh, this.sheet, this.flash.mesh, this.sparks.mesh, this.embers.mesh);
+    // ?fxoff= (view3d/fx-off.ts)
+    this.ground.mesh.name = 'wave.ground'; this.smoke.mesh.name = 'wave.smoke'; this.sheet.name = 'wave.gas'; this.flash.mesh.name = 'wave.flash'; this.sparks.mesh.name = 'wave.sparks'; this.embers.mesh.name = 'wave.embers';
   }
 
   /** Draw wave `w` at age `age` s; `heightAt` reads the floor (sim x, y). Returns the light's strength (0: none). */

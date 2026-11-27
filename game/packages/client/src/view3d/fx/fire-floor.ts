@@ -314,7 +314,11 @@ export class FireFloor {
     this.embers = new ParticleBatch({ motion: FLOOR_EMBER, look: LOOK_EMBER, cap: MAX_BURNING * EMBERS_PER_CELL, order: 2, uniforms: this.U });
     this.embers.u.uSeed.value = seed + 7; this.bed.u.uSeed.value = seed;   // the bed's underglow follows the gas's clusters
     this.group.add(this.bed.mesh, this.flames, this.embers.mesh);
+    this.bed.mesh.name = 'floor.bed'; this.flames.name = 'floor.gas'; this.embers.mesh.name = 'floor.embers';   // ?fxoff= (view3d/fx-off.ts)
   }
+
+  /** Forget every cell's lighting and going out (a lab drawing another world): the next frame starts from nothing. */
+  reset(): void { this.lit.clear(); this.out.clear(); this.blank = false; this.lastT = -Infinity; }
 
   /** Quads drawn this frame. */
   get drawn(): number { return this.embers.count; }

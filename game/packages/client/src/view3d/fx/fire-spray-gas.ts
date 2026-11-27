@@ -96,7 +96,7 @@ vec2 gas(vec3 p) {
   float live = smoothstep(-0.03, 0.05, ragged) * (1.0 - smoothstep(uEnd - 0.05, uEnd + 0.03, ragged));
   // and where the sim's channel stops now (a wall or a body cuts it short), a rounded, torn end
   live *= 1.0 - smoothstep(reachNow - 0.4, reachNow + 0.6, along + (n - 0.5) * 1.4 + abs(across) * 0.3);
-  float burn = (1.0 - smoothstep(0.55, 1.25, age + (big - 0.5) * 0.35)) * (1.0 - smoothstep(uGasTo - 0.12, uGasTo + 0.12, s + ragS + (n - 0.5) * 0.2));
+  float burn = (1.0 - smoothstep(0.55, 1.25, age + (big - 0.5) * 0.35)) * (1.0 - smoothstep(uGasTo - 0.28, uGasTo + 0.28, s + ragS + (n - 0.5) * 0.2));
   if (live * burn <= 0.0) return vec2(0.0, 1.0);
   // a tight jet at the hands, torn into tongues and billows as it opens
   float tear = mix(0.5, 2.0, smoothstep(0.0, 0.35, age));
@@ -104,7 +104,8 @@ vec2 gas(vec3 p) {
   float d = body + (n - 0.5) * tear;
   if (d <= 0.0) return vec2(0.0, 1.0);
   // the dense hearts hot, the thin edges red; hot as it leaves the hands, reddening as it ages; more runes run hotter
-  float heat = 0.1 + (big - 0.5) * 0.45 + 0.45 * clamp(age, 0.0, 1.2) + 0.12 * clamp(e, 0.0, 1.0) + 0.45 * (1.0 - clamp(d * 1.8, 0.0, 1.0)) - uHot * 0.8;
+  // (in the mix it reddens toward the puffs' colour as it hands over to them)
+  float heat = 0.1 + 0.3 * smoothstep(uGasTo - 0.3, uGasTo + 0.1, s) + (big - 0.5) * 0.45 + 0.45 * clamp(age, 0.0, 1.2) + 0.12 * clamp(e, 0.0, 1.0) + 0.45 * (1.0 - clamp(d * 1.8, 0.0, 1.0)) - uHot * 0.8;
   return vec2(d, heat);
 }
 void main() {

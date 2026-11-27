@@ -62,7 +62,7 @@ const BODY_MESH = false;
  */
 const sprayLook = (): 'flip' | 'gas' | 'mix' => { const v = opt('spray'); return v === 'gas' || v === 'mix' ? v : 'flip'; };
 /** Where the mix hands over (a share of the way out): the gas fades out over it, the puffs fade in. */
-const MIX_AT = 0.32;
+const MIX_AT = 0.38;
 
 const SPRAY_HEAD = /* glsl */ `
 ${AIM_GLSL}
@@ -226,7 +226,7 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   vec3 c = t * mix(vec3(2.0, 1.75, 1.35), vec3(1.1), age);   // the painting already cools from white to red; lifted a little into HDR
   float fade = smoothstep(0.0, 0.04, age) * (1.0 - smoothstep(0.65, 1.0, age));
   // covering, so the painted curls hold their colour on the pale stone instead of adding up to a glare or a fog
-  float cover = m * fade * 0.68 * smoothstep(uPuffFrom, uPuffFrom + 0.18, col.y);
+  float cover = m * fade * 0.68 * smoothstep(uPuffFrom, uPuffFrom + 0.45, col.y);
   return vec4(c * cover, cover);
 }`;
 
@@ -410,7 +410,9 @@ export class FireSpray {
     const look = sprayLook(), gas = look !== 'flip';
     this.gas.mesh.visible = gas;
     for (const b of this.flip) b.mesh.visible = look !== 'gas';
-    this.flip[1].u.uPuffFrom.value = look === 'mix' ? MIX_AT - 0.08 : -1;
+    // a long overlap (the user on the first mix: "the transition is too jarring"): the puffs come in from near the
+    // hands while the gas thins out over the middle
+    this.flip[1].u.uPuffFrom.value = look === 'mix' ? MIX_AT - 0.3 : -1;
     this.gas.u.uGasTo.value = look === 'mix' ? MIX_AT : 9;
     if (gas) {
       const A = this.trail.at(t);

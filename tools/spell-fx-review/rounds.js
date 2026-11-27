@@ -671,8 +671,8 @@ window.ROUNDS = [
       {
         id: 'mix',
         title: 'Mix (?spray=mix)',
-        text: 'The gas jet leaves the hands as in take 2 and fades out a third of the way along, torn by its own noise; the painted puffs fade in over the same stretch and carry the rest: the swell, the tip, the burn-out and fast turns, as the flipbook always did. In the game, F6 now cycles flipbook, gas and mix while you cast (a note at the top says which).',
-        vid: ['t3-mix-9.mp4', 't3-mixsweep-9.mp4'],
+        text: 'The gas jet leaves the hands as in take 2 and fades out a third of the way along, torn by its own noise; the painted puffs fade in over the same stretch and carry the rest: the swell, the tip, the burn-out and fast turns, as the flipbook always did. Blended over a long stretch since your note (“the transition is too jarring”): the puffs come in from near the hands while the gas thins out over the middle and reddens toward their colour. In the game, F6 now cycles flipbook, gas and mix while you cast (a note at the top says which).',
+        vid: ['t4-mix-9.mp4', 't4-mixsweep-9.mp4'],
         ask: 'Mix, flipbook or gas?',
       },
     ],

@@ -5,6 +5,40 @@
  "note": "Branch <code>worktree-infirmary-kit</code>. Credits: 330 Meshy this session.",
  "decisions": [
   {
+   "id": "pc6-sheet2",
+   "title": "Triage dressing, redrawn so it splits: OK to render on meshy.ai?",
+   "html": "<p>Sheet b fused into one object through the API. Redrawn with every prop standing alone and wide gaps (the tray of instruments is now its own prop). If you OK it, it renders on the meshy.ai website in Chrome so its free retries can be used, then splits into eight props at 1.8x life size. About 30 credits.</p>",
+   "figures": [
+    {
+     "src": "img/dev-sheet2-a.jpg",
+     "cap": "a: tighter gaps (stool to table, tray to chest)"
+    },
+    {
+     "src": "img/dev-sheet2-b.jpg",
+     "cap": "b: smaller props, wider gaps"
+    },
+    {
+     "src": "img/dev-sheet-b.jpg",
+     "cap": "The approved sheet that fused"
+    }
+   ],
+   "rec": "My pick: <b>b</b>: the widest gaps; the closest pair is still just under half a prop apart.",
+   "choices": [
+    {
+     "v": "a",
+     "label": "a"
+    },
+    {
+     "v": "b",
+     "label": "b"
+    },
+    {
+     "v": "redo",
+     "label": "Redo"
+    }
+   ]
+  },
+  {
    "id": "q-crystal",
    "title": "Fully choked, the vines hide the well's crystal. Is that right?",
    "html": "<p>At the start of the fix the cage is wound tight and the green crystal barely shows; it shows clearly at half cut back.</p>",
@@ -106,11 +140,15 @@
    "kind": "build",
    "status": "doing",
    "title": "Triage dressing sheet: redraw so it splits",
-   "html": "Meshy fused sheet b into one object (30 credits lost): its props touched. Codex is redrawing it with wide even gaps; then your OK for a second try.",
+   "html": "Meshy fused sheet b into one object (30 credits lost): its props touched. Redrawn with wide gaps; waiting on your OK (Decisions pending), then a website render with retries.",
    "evidence": [
     {
      "src": "img/dev-sheet-b.jpg",
      "cap": "Sheet b: props too close to split"
+    },
+    {
+     "src": "img/dev-sheet2-b.jpg",
+     "cap": "The redraw"
     }
    ]
   },

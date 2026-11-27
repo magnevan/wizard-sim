@@ -411,6 +411,9 @@ def lay(name, geom, lppu=None):
     pts = np.stack([X0 + (xs + 0.5) / lppu, Y0 + (ys + 0.5) / lppu], 1)
     samp = lambda p: th_f[np.clip(((p[:, 1] - Y0) * lppu).astype(int), 0, mask.shape[0] - 1), np.clip(((p[:, 0] - X0) * lppu).astype(int), 0, mask.shape[1] - 1)]
     sites, size = rows(geom, L)
+    if not len(sites):                            # (a sliver no stone fits: nothing laid, rather than an error)
+        z = np.zeros(0)
+        return dict(quads=[], sites=np.zeros((0, 2)), th=z, a=z, b=z, name=name, geom=geom)
     keep = prune(sites, size, size[:, 3]); sites, size = sites[keep], size[keep]
     n = len(sites)
     if '--packed' in sys.argv:                    # rectangles cut to fit, mason-style (the user: reads as square packing)

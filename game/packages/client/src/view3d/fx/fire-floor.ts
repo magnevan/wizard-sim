@@ -101,7 +101,10 @@ float burnAt(vec2 xz) {
   vec4 s = texture(uSurf, guv);
   float life = s.r > 0.01 ? clamp(s.g / s.r, 0.0, 1.0) : 0.0;
   float rough = vnoise3(vec3(xz * 1.7, 5.0)) - 0.5;
-  return smoothstep(0.3, 0.85, s.r + rough * 0.45) * texture(uChar, guv).r * mix(0.25, 1.0, life);
+  // dying unevenly (Codex, 2026-11-27: every cell went out on the same tick): over the floor's last second each region
+  // goes out at its own moment, a few hot pockets last
+  float o = fbm3(vec3(xz * 0.9, 21.0)) * 1.3 - 0.35;
+  return smoothstep(0.3, 0.85, s.r + rough * 0.45) * texture(uChar, guv).r * smoothstep(o, o + 0.25, life);
 }
 // licks and spits (the user, take 1: "maybe we should vary some fire effects like we did with the wave. Like some spits
 // / licks of fire coming up outside of the effect"): the ground is cut into cells LICK_CELL u across; now and then a
@@ -246,13 +249,16 @@ vec4 decal(vec3 wp) {
   if (ch.g < 0.01) return vec4(0.0);
   vec4 s = texture(uSurf, guv);
   // a fuzzy, ragged rim (the user, round 1: "edges can be a little fuzzier"): two scales of noise, a wide soft ramp
-  float n = fbm3(vec3(wp.xz * 1.5, 3.0)), nf = vnoise3(vec3(wp.xz * 6.0, 9.0));
+  // (layered: one octave of value noise swept by the fading char showed its square lattice as blocky specks)
+  float n = fbm3(vec3(wp.xz * 1.5, 3.0)), nf = fbm3(vec3(wp.xz * 4.5, 9.0));
   float m = ch.g + (n - 0.5) * 0.6 + (nf - 0.5) * 0.25;
   float rim = smoothstep(0.1, 0.9, m);
   vec3 cr = texture(uCracks, wp.xz / 3.2).rgb;
   float crack = smoothstep(0.32, 0.85, cr.r) * smoothstep(0.05, 0.4, cr.g + 0.1);
   float life = s.r > 0.01 ? clamp(s.g / s.r, 0.0, 1.0) : 0.0;
-  float bed = smoothstep(0.4, 0.95, s.r + (n - 0.5) * 0.4) * ch.r * mix(0.25, 1.0, life);
+  // the cracks cool behind the flames as each region goes out (the same regions as the gas: burnAt)
+  float o = fbm3(vec3(wp.xz * 0.9, 21.0)) * 1.3 - 0.35;
+  float bed = smoothstep(0.4, 0.95, s.r + (n - 0.5) * 0.4) * ch.r * smoothstep(o - 0.2, o + 0.15, life);
   // the bed alive between the flames (the user, take 1: "the background looks a bit static where there is no fire";
   // take 3: "tons of little lights blinking on and off, I expected something more like a rolling glow across the cracks"):
   // a dull red underglow beneath the flame clusters (the gas's own cluster noise, same seed), and heat rolling through

@@ -517,4 +517,30 @@ window.ROUNDS = [
     ],
     general: 'Anything else about the patch',
   },
+  {
+    id: 'fire-12',
+    group: 'Fire',
+    topic: 'Patch',
+    tab: '5 · Codex, the ending',
+    el: 'fire',
+    date: '2026-11-27',
+    title: 'Fire patch, take 5: Codex’s review, and how it goes out',
+    lead: 'Codex reviewed take 4 from frames of two and five runes, the play distance, the concept and your notes (the critique is kept in docs/reference/spell-critiques/2026-11-27-codex-patch.md). Score 7.5/10, “presentable as done for this pass: yes”, no rendering bugs.',
+    items: [
+      {
+        id: 'ending',
+        title: 'The ending (built)',
+        text: 'Codex’s second point: nobody had seen the patch go out. A probe showed why the lab never did: a fire floor burns 14.4 s (not the patch’s 8), and the lab demo cast again before then; the lab now has ?once=1. And every cell went out on the same tick. Now over the floor’s last second each region goes out at its own moment, a few hot pockets last, the cracks cool behind them, and the char fades over three seconds in soft patches (it first dissolved in blocky specks: the same noise lesson as before). Frames from 13.7 to 17 s.',
+        img: ['p5-patch-end.jpg'],
+        ask: 'Does it go out well?',
+      },
+      {
+        id: 'codex',
+        title: 'Codex’s other two points (not built: your call)',
+        text: '1. “Connect the flame pockets with a quieter, living bed”: lift the darkest char toward warm brown and let low flame join neighbouring clusters now and then, so the bed isn’t a black slab under bright pockets (it notes the five-rune char reads as a solid dark disk). 2. “Refine the perimeter”: shallow burnt tendrils and small gaps at the edge and a softer soot transition, and an ignition that reads as a broad flash hugging the ground (at 0.05 s it reads as a faint dusty disturbance). Also: thin smoke wisps as it goes out. You said take 4 looks good, so I left these to you.',
+        ask: 'Want any of these?',
+      },
+    ],
+    general: 'Anything else about the patch',
+  },
 ];

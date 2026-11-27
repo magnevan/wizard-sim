@@ -64,6 +64,8 @@ const SWEEP = q.get('sweep') === '1', UNDYING = q.get('undying') === '1';
 /** ?sweep=1: the aim swings this far either way (rad), this fast (rad/s of the sine), from the cast on. */
 const SWEEP_AMP = 0.55, SWEEP_RATE = 2.4;
 const MOVE = q.get('move') === '1';
+/** ?once=1: after the cast goes off, seat 0 does nothing more (the demo would cast again), so a floor can burn out. */
+const ONCE = q.get('once') === '1';
 const CLIP = q.get('clip') === '1';
 const COLS = Math.max(1, Number(q.get('cols') ?? 4) | 0);
 const [TW, TH] = (q.get('tile') ?? '480x300').split('x').map(Number);
@@ -183,6 +185,7 @@ function stepLab(w: World, k: number, d: Demo, walkFrom = Infinity): void {
 /** Every seat's input at tick k: seat 0's demo, swung by ?sweep after the cast, walking east by ?move from `walkFrom`. */
 const inputs = (w: World, k: number, d: Demo, walkFrom = Infinity) => Array.from({ length: MAX_SEATS }, (_, p) => {
   if (p !== 0) return NO_INPUT;
+  if (ONCE && k > sweepFrom + 2) return NO_INPUT;
   let i = demoInput(w, k, 0, d);
   if (MOVE && k >= walkFrom) i = { ...i, moveX: 127 };
   if (!SWEEP || k < sweepFrom) return i;
@@ -193,11 +196,13 @@ const inputs = (w: World, k: number, d: Demo, walkFrom = Infinity) => Array.from
 /** The tick whose step casts the spell (its cast event, or a hands move), found on a scratch run. */
 function findCast(d: Demo): number {
   const w = makeWorld(), start = snapshot(w);
-  const hands = d.els.length === 0;
+  const hands = d.els.length === 0, keep = sweepFrom;
+  sweepFrom = Infinity;   // the search runs the demo's own inputs (no ?once cut-off, no ?sweep)
   for (let k = 0; k < 600; k++) {
     step(w, inputs(w, k, d));
-    if (w.events.some((e) => e.who === 0 && (e.kind === 'cast' || (hands && e.kind === 'move')))) { restore(w, start); return k + 1; }
+    if (w.events.some((e) => e.who === 0 && (e.kind === 'cast' || (hands && e.kind === 'move')))) { restore(w, start); sweepFrom = keep; return k + 1; }
   }
+  sweepFrom = keep;
   // nothing went off (a held preview): t counts from the button press
   return 10 + d.els.length * 6;
 }

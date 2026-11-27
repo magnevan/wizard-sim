@@ -497,4 +497,24 @@ window.ROUNDS = [
     ],
     general: 'Anything else about the patch',
   },
+  {
+    id: 'fire-11',
+    group: 'Fire',
+    topic: 'Patch',
+    tab: '4 · rolling glow',
+    el: 'fire',
+    date: '2026-11-27',
+    title: 'Fire patch, take 4: a rolling glow through the cracks',
+    lead: 'Your note on take 3: “there’s tons of little lights blinking on and off, I expected something more like a rolling glow across the cracks in the ground.”',
+    items: [
+      {
+        id: 'patch',
+        title: 'Fire patch',
+        text: 'The twinkling embers, the fast flicker, the narrow heat bands and the molten pockets are gone. The cracks now glow under a broad, soft field of heat that drifts slowly across the patch, so bright regions roll along the cracks and fade; between the cracks the char stays dark, with only a faint warmth. Flames, licks and ignition as in take 3. Two runes, five runes, and at play distance.',
+        vid: ['p4-patch-14.mp4', 'p4-patch5-14.mp4', 'p4-patch-30.mp4'],
+        ask: 'Is that the glow?',
+      },
+    ],
+    general: 'Anything else about the patch',
+  },
 ];

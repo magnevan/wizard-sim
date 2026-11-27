@@ -253,25 +253,18 @@ vec4 decal(vec3 wp) {
   float crack = smoothstep(0.32, 0.85, cr.r) * smoothstep(0.05, 0.4, cr.g + 0.1);
   float life = s.r > 0.01 ? clamp(s.g / s.r, 0.0, 1.0) : 0.0;
   float bed = smoothstep(0.4, 0.95, s.r + (n - 0.5) * 0.4) * ch.r * mix(0.25, 1.0, life);
-  float flick = 0.65 + 0.35 * vnoise3(vec3(wp.xz * 2.5, uClock * 2.2));
-  // the bed alive between the flames (the user, take 1: "the background looks a bit static where there is no fire"):
-  // a dull red underglow beneath the flame clusters (the gas's own cluster noise, same seed), heat moving through the
-  // cracks in slow waves, and patches of embers glowing up and dimming
+  // the bed alive between the flames (the user, take 1: "the background looks a bit static where there is no fire";
+  // take 3: "tons of little lights blinking on and off, I expected something more like a rolling glow across the cracks"):
+  // a dull red underglow beneath the flame clusters (the gas's own cluster noise, same seed), and heat rolling through
+  // the cracks: a broad, soft field drifting slowly across the patch, so bright regions roll along the cracks and fade.
+  // Nothing small blinks.
   float cl = smoothstep(0.45, 0.75, vnoise3(vec3(wp.xz * 0.95, uClock * 0.15 + uSeed * 0.01)));
-  // heat running through the cracks: two crossing trains of waves, sharpened so the bright bands are narrow and travel
-  float w1 = 0.5 + 0.5 * sin(dot(wp.xz, vec2(0.83, 0.56)) * 1.6 - uClock * 2.6 + n * 5.0);
-  float w2 = 0.5 + 0.5 * sin(dot(wp.xz, vec2(-0.47, 0.88)) * 1.1 - uClock * 1.9 + n * 3.0);
-  float wave = pow(max(w1, w2), 4.0);
-  // molten pockets: rare pools of glow that swell and fade, with a speckle of embers round them
-  // (layered and bent noise: one octave of value noise cut sharply shows its square lattice)
-  vec2 pw = wp.xz * 1.5 + (vec2(vnoise3(vec3(wp.xz * 0.7, 2.0)), vnoise3(vec3(wp.xz * 0.7, 6.0))) - 0.5) * 1.6;
-  float pocket = smoothstep(0.56, 0.74, fbm3(vec3(pw, uClock * 0.7 + 4.0)));
-  float embers = pocket * (0.55 + 0.45 * vnoise3(vec3(wp.xz * 9.0, uClock * 2.0)));
-  // embers twinkling all over the char: fine points flaring up and going dark
-  float twinkle = smoothstep(0.78, 0.95, vnoise3(vec3(wp.xz * 14.0, uClock * 3.0))) * smoothstep(0.4, 0.7, vnoise3(vec3(wp.xz * 2.2, uClock * 0.4 + 9.0)));
-  float glow = (crack * (0.35 + 2.6 * wave) + 0.04) * flick * bed;
+  vec2 drift = wp.xz * 0.55 - vec2(0.42, 0.25) * uClock;
+  vec2 dw = (vec2(fbm3(vec3(drift * 0.6, uClock * 0.08 + 1.0)), fbm3(vec3(drift * 0.6, uClock * 0.08 + 5.0))) - 0.5) * 1.4;
+  float roll = smoothstep(0.38, 0.72, fbm3(vec3(drift + dw, uClock * 0.12 + uSeed * 0.01)));
+  float glow = crack * (0.2 + 2.8 * roll) * bed;
   vec3 charC = cr * 0.06 + vec3(0.008, 0.006, 0.005);
-  vec3 glowC = vec3(1.0, 0.38, 0.07) * glow * 1.6 + vec3(0.55, 0.09, 0.02) * cl * bed * 0.9 + vec3(1.5, 0.3, 0.03) * embers * bed * 1.6 + vec3(2.4, 0.8, 0.1) * twinkle * bed * 1.5;
+  vec3 glowC = vec3(1.0, 0.38, 0.07) * glow * 1.6 + vec3(0.45, 0.06, 0.015) * (cl * 0.45 + roll * 0.25) * bed * 0.6;
   // the ignition's flash over everything that just lit
   float ign = ignAt(wp.xz) * smoothstep(0.25, 0.75, fbm3(vec3(wp.xz * 2.2, 11.0)));
   glowC += vec3(2.0, 0.65, 0.08) * ign * ign * (0.7 + 0.3 * n);

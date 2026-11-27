@@ -91,7 +91,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 7
     <li><b>Raised grass at the margins.</b> Fans of painted grass stand along paving, path shoulders and props, coloured and lit as the ground. Open lawn has none.</li>
     <li><b>Cloud shadows</b> drift over everything: ground, plants and roofs together.</li>
   </ul>
-  <p class="muted">Next (round 3, waiting on your marks): the critic's last notes, which are deeper olive hollows, fewer and calmer tuft stamps, and a sparser margin fringe. After that come more ground types (dry grass, heath, moss, reeds) on the same system.</p>
+  <p class="muted">Round 3 is done (the first slider): the critic's last notes, which are deeper olive hollows, fewer and calmer tuft stamps, and a sparser margin fringe. Next come more ground types (dry grass, heath, moss, reeds) on the same system.</p>
   <div class="q" id="r2-verdict-box"></div>
 </section>
 
@@ -169,6 +169,7 @@ const LOOKS = [
     read: ['A vocabulary of grounds for whole regions.', 'Drawn closer than our camera; flowers would be smaller in the game.'] },
 ];
 const R2 = [
+  { id: 'r3-road', title: 'Round 3: the critic\'s last notes (deeper hollows, calmer tufts, a quieter fringe)', before: 'img/r2-road.jpg', after: 'img/r3-road.jpg' },
   { id: 'r2-road', title: 'The road by the boiler house', before: 'img/r2-before-road.jpg', after: 'img/r2-road.jpg' },
   { id: 'r2-close', title: 'Close: worn paths, margin grass, the road\'s verge', before: 'img/now-road.jpg', after: 'img/r2-close.jpg', single: true },
   { id: 'r2-low', title: 'The lower field: long grass, combed', after: 'img/r2-low.jpg', single: true },
@@ -265,7 +266,7 @@ function renderR2() {
       ${!l.single ? `<div class="cmp" style="--cut:50%">
         <img src="${l.before}" alt="This morning">
         <img class="after" src="${l.after}" alt="${esc(l.title)}">
-        <div class="bar"></div><span class="lbl l">this morning</span><span class="lbl r">round 2</span>
+        <div class="bar"></div><span class="lbl l">${l.id === 'r3-road' ? 'round 2' : 'this morning'}</span><span class="lbl r">${l.id === 'r3-road' ? 'round 3' : 'round 2'}</span>
         <input type="range" min="0" max="100" value="50" aria-label="Compare ${esc(l.title)} with this morning" id="cmp-${l.id}">
       </div>` : `<figure class="single" style="margin:0"><img src="${l.after}" alt="${esc(l.title)}"></figure>`}
       <div class="marks" role="group" aria-label="Mark ${esc(l.title)}">

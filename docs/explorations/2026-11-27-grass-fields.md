@@ -102,7 +102,7 @@ What it costs: the lawn's fragment shader does about 30 texture reads (hex tilin
 
 ## Next
 
-- Round 3 (waiting on the user's marks): the critic's last notes, applied and rendered. They are in [r5-answer.md](../reference/grass/critiques/r5-answer.md): deeper olive hollows, fewer and calmer tuft stamps, a sparser and shorter margin fringe.
+- ~~Round 3~~ done 2026-11-27, after the user's round 2 verdict (`r2-verdict`: "go"; the road frame marked good; "Looks good so far!"): the critic's last notes from [r5-answer.md](../reference/grass/critiques/r5-answer.md) applied: deeper olive hollows, fewer and calmer tuft stamps, a sparser and shorter margin fringe. [The road frame](../reference/grass/r3-road.jpg), [close](../reference/grass/r3-close.jpg).
 - **Ground types**, after the advisor (in [advisor-r4-answer.md](../reference/grass/critiques/advisor-r4-answer.md)). Replace the `mat === 'meadow'` test with a lookup. Each type names a painted tile and scale, a worn substrate, a value ramp, its tuft-sheet rows, its sweep size, wind strength and margin density. Dry grass, heath, moss and reeds would come next, from p8's vocabulary. Levels would paint types and wear in the editor.
 - Spells on grass: one small top-down map of trample, scorch, frost and wet that the ground and margin cards read.
 - Measure the cost on the user's machine.

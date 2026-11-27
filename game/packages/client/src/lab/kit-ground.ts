@@ -289,7 +289,7 @@ vec3 groundLawn(sampler2D t, float tile, vec2 p) {
   // wind and gently warped, as a painter lays the lawn in strokes (the concept's broad gold drifts between beds)
   vec2 qw = q + vec2(0.0, 2.2 * (lwN(p * 0.07 + 31.0) - 0.5) + 1.2 * (lwN(p * 0.19 + 5.0) - 0.5));
   float sweep = lwN(vec2(qw.x / 8.0, qw.y / 1.6)) * 0.7 + lwN(vec2(qw.x / 3.5, qw.y / 0.9) + 13.0) * 0.3;
-  c *= mix(vec3(0.74, 0.84, 0.68), vec3(1.16, 1.08, 0.8), smoothstep(0.25, 0.75, sweep));
+  c *= mix(vec3(0.65, 0.77, 0.65), vec3(1.18, 1.08, 0.75), smoothstep(0.25, 0.75, sweep));
   // a soft mottle at clump scale (the cells read as scales if pushed harder)
   vec2 tA = grTufts(p / 0.62);
   c *= mix(0.9, 1.06, tA.x) * mix(0.95, 1.05, tA.y);
@@ -298,22 +298,22 @@ vec3 groundLawn(sampler2D t, float tile, vec2 p) {
   float bare = smoothstep(0.58, 0.95, wn), fringe = smoothstep(0.12, 0.5, wn) * (1.0 - bare);
   // painted tufts: short lawn everywhere, big combed clumps in long grass, sparse ones at a path's fringe; none on bare earth
   if (grTuftOn > 0.5) {
-    vec2 b1 = grBomb(p, 0.85, 0.0, 2.0, 1.45, 0.92 * (1.0 - lg * 0.85) * (1.0 - bare), 1.0);
-    vec2 b2 = grBomb(p, 1.2, 2.0, 1.0, 2.2, lg * (1.0 - bare), 7.0);
+    vec2 b1 = grBomb(p, 0.85, 0.0, 2.0, 1.45, 0.7 * (1.0 - lg * 0.85) * (1.0 - bare), 1.0);
+    vec2 b2 = grBomb(p, 1.2, 2.0, 1.0, 2.2, 0.65 * lg * (1.0 - bare), 7.0);
     vec2 b3 = grBomb(p, 0.5, 3.0, 1.0, 0.7, fringe * 0.9, 13.0);
     vec2 b = b1;
     b = vec2(mix(b.x, b2.x, b2.y), b.y + b2.y * (1.0 - b.y));
     b = vec2(mix(b.x, b3.x, b3.y), b.y + b3.y * (1.0 - b.y));
     // between tufts the ground is the darker underside of the lawn; a tuft takes the lawn's colour at its own value
-    c *= mix(0.7, mix(0.55, 1.6, b.x), b.y);
+    c *= mix(0.82, mix(0.7, 1.4, b.x), b.y);
   }
   // long grass: paler and warmer toward straw, and a sheen rolling across it in the gusts
   // (straw only out in the open; at the foot of things long grass is lush and deep)
   float lush = smoothstep(0.05, 0.4, s.b);
-  c = mix(c, c * vec3(1.18, 1.1, 0.74), lg * 0.5 * (1.0 - lush));
+  c = mix(c, c * vec3(1.18, 1.1, 0.74), lg * 0.3 * (1.0 - lush));
   c = mix(c, c * vec3(0.72, 0.86, 0.62), lg * lush * 0.8);
   float comb = sweep;
-  c += vec3(0.18, 0.15, 0.05) * lg * (0.45 + 0.55 * grGust(p, grTime)) * smoothstep(0.35, 0.8, comb);
+  c += vec3(0.1, 0.085, 0.025) * lg * (0.45 + 0.55 * grGust(p, grTime)) * smoothstep(0.35, 0.8, comb);
   // the earth: the weathered paving's own, so paths and paving share one ground
   vec3 earth = grEarthOn > 0.5 ? mix(vec3(dot(texture2D(grEarth, p / grEarthS).rgb, vec3(0.3, 0.59, 0.11))), texture2D(grEarth, p / grEarthS).rgb, 0.6) * vec3(1.0, 0.88, 0.6) : vec3(0.32, 0.27, 0.18);
   earth *= 0.8 + 0.35 * lwN(p * 2.7 + 2.0);
@@ -374,7 +374,7 @@ function marginMaterial(): THREE.MeshLambertMaterial {
         if (diffuseColor.a < 0.02) discard;
         vec3 g = groundLawn(grLawn, grLawnS, vMgRoot);
         // the ground's colour at its root, lifted toward the tips as the painted blades catch the light
-        diffuseColor.rgb = g * mix(0.82, 1.5, tx.r) * mix(0.95, 1.15, vMgUv.y);
+        diffuseColor.rgb = g * mix(0.82, 1.5, tx.r) * mix(0.95, 1.08, vMgUv.y);
       }`);
   };
   m.customProgramCacheKey = () => 'margin-grass-1';
@@ -385,7 +385,7 @@ export function marginGrass(): THREE.Mesh | null {
   const F = FIELDS;
   if (!F || !GROUND_U.grTuftOn.value) return null;
   const roots: number[] = [], fans: number[] = [];
-  const step = 0.38;   // u: candidate spacing
+  const step = 0.48;   // u: candidate spacing
   for (let y = F.y0; y < F.y0 + F.ny * CELL; y += step) for (let x = F.x0; x < F.x0 + F.nx * CELL; x += step) {
     const jx = x + (hash(x, y) - 0.5) * step, jy = y + (hash(y + 3.1, x) - 0.5) * step;
     const i = Math.floor((jx - F.x0) / CELL), j = Math.floor((jy - F.y0) / CELL);
@@ -397,10 +397,10 @@ export function marginGrass(): THREE.Mesh | null {
     const foot = F.B[q] > 0.12 && F.G[q] > 0.3;                       // round what stands on the lawn
     if (!verge && !shoulder && !foot) continue;
     // broken into irregular runs with gaps
-    if (vnoise(jx * 0.55, jy * 0.55) < (foot ? 0.3 : 0.45)) continue;
+    if (vnoise(jx * 0.55, jy * 0.55) < (foot ? 0.38 : 0.52)) continue;
     if (hash(jx * 1.7, jy * 2.3) < 0.25) continue;
     const tall = Math.max(F.G[q], foot ? 0.6 : 0);
-    const w = 0.65 + 0.4 * hash(jx, jy + 9.0) + 0.3 * tall, h = (0.5 + 0.35 * hash(jx + 4.0, jy)) * (1 + 0.6 * tall);
+    const w = 0.65 + 0.4 * hash(jx, jy + 9.0) + 0.3 * tall, h = 0.7 * (0.5 + 0.35 * hash(jx + 4.0, jy)) * (1 + 0.6 * tall);
     // sprite: short fans and clumps on verges, combed long clumps at the foot of things, sparse ones on a path's shoulder
     const row = shoulder && !verge ? 3 : foot && tall > 0.5 && hash(jx, jy + 2.0) > 0.4 ? 2 : Math.floor(hash(jx + 7.0, jy) * 2);
     const sp = row * 4 + Math.floor(hash(jx + 1.3, jy + 5.1) * 4);

@@ -1,8 +1,8 @@
 {
- "at": "2026-11-27T11:15:43.539Z",
- "by": "claude",
- "task": "t-wisteria",
- "set": {
-  "zone": "greenhouse"
- }
+  "at": "2026-11-27T11:15:43.539Z",
+  "by": "claude",
+  "set": {
+    "zone": "greenhouse"
+  },
+  "task": "t-wisteria"
 }

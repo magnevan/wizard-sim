@@ -1,11 +1,11 @@
 {
- "at": "2026-11-27T13:39:02.667Z",
- "by": "claude",
- "task": "t-devices2",
- "set": {
-  "decisions": [
-   "pc6-station",
-   "pc6-emitter"
-  ]
- }
+  "at": "2026-11-27T13:39:02.667Z",
+  "by": "claude",
+  "set": {
+    "decisions": [
+      "pc6-station",
+      "pc6-emitter"
+    ]
+  },
+  "task": "t-devices2"
 }

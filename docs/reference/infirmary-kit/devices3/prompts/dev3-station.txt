@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as dev3-station.png in the current directory. Reply with just the file name.
+
+The attached image is a healing station from a game's field infirmary, in a stylised 3D look: smooth hand-painted textures, warm sandstone, polished brass, deep blue enamel with gold eight-pointed stars, green crystal stones and the green-and-gold Life rune (a gold sprouting plant).
+
+Redraw exactly this same healing station, same design, same colours, same materials, same three-quarter view from slightly above, as a clean model reference for a 3D modeller. The round sandstone base plate, the knee-high sandstone pedestal with its Life rune panel, the deep brass cup on its cradle of four curved brass ribs, the blue enamel rim band with gold stars and the heap of green crystal stones with the tall central rune stone all stay as they are. Each of the four brass ribs now comes down the pedestal's corner and ends in a small square brass foot bolted onto the top of the round base plate, inside the plate's rim. The base plate's round edge is the outermost part of the whole object: the station is a compact single object, about as wide as it is tall, sitting on its base plate. The round base plate's top shows the green Life rune medallion at the front.
+
+Standalone and perfectly centred on a plain solid light grey background, the whole object in frame with generous empty space all round it, no characters, the ground around it bare and plain, the structure crisp, dry and still, every surface plainly lit with no glow.

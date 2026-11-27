@@ -1,8 +1,8 @@
 {
- "at": "2026-11-27T11:15:44.166Z",
- "by": "claude",
- "task": "t-place-devices",
- "set": {
-  "zone": "forecourt"
- }
+  "at": "2026-11-27T11:15:44.166Z",
+  "by": "claude",
+  "set": {
+    "zone": "forecourt"
+  },
+  "task": "t-place-devices"
 }

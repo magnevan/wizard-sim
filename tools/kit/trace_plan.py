@@ -27,6 +27,31 @@ MATMAP = {  # plan material -> (kit floor, walkable, edge)
     'trees': ('lawn', False, 'open'), 'rock': ('rock', False, 'open'), 'deep': ('water', False, 'open'),
     'water': ('water', False, 'open'), 'roof': ('roof', False, 'wall'), 'void': ('water', False, 'open'),
 }
+def tent_healing(tid, at, turn, end):
+    """A tent's healing devices (the user's design, 2026-11-27, answers pc5-*, pc6-station c, pc6-emitter b): one station
+    at the tent's end that faces its glyph line (end +1 east, -1 west, in the tent's frame), a bed emitter behind each of
+    its four cots' pillows, and a thin lead carved along the back of the tent from the station past them. Positions are
+    measured off the tent's model (cot centres at source x -0.451, -0.021, 0.358, ~0.75 of its 1.90 width; their heads end
+    at source y 0.21 of the back's 0.38), at 4.2 corners per source unit (16 u wide, G = 2). Returns (fixes, station xy)."""
+    t = math.radians(turn); c0, s0 = math.cos(t), math.sin(t)
+    rot = lambda x, y: [round(at[0] + x * c0 - y * s0, 2), round(at[1] + x * s0 + y * c0, 2)]   # turn: clockwise on the map
+    K, back = 4.2, -0.245 * 4.2                    # corners per source unit; the emitters' line behind the pillows (north)
+    xs = [x * K for x in (-0.451, -0.021, 0.358, 0.75)]
+    st = rot(end * 4.75, 0.0)
+    far = min(xs) if end > 0 else max(xs)
+    out = [('object', dict(kind='setpiece', id=f'heal-station-{tid}', name="a tent's healing station", piece='setpiece.heal-station', at=st, front='S', turn=turn))]
+    out += [('object', dict(kind='setpiece', id=f'heal-emitter-{tid}-{k + 1}', name='a bed emitter', piece='setpiece.bed-emitter', at=rot(x, back), front='S', turn=turn))
+            for k, x in enumerate(xs)]
+    out.append(('object', dict(kind='glyph', id=f'glyph-lead-{tid}', name=f"the lead in tent {tid}", w=0.35,
+                               pts=[st, rot(end * 4.2, back), rot(far, back)])))
+    return out, st
+
+
+_HEAL = {tid: tent_healing(tid, at, turn, end) for tid, at, turn, end in (
+    ('n1', (25.0, 10.6), 6, 1), ('n2', (45.0, 10.6), -8, -1), ('w1', (20.6, 17.4), -12, 1),
+    ('w2', (21.0, 25.4), 9, 1), ('e1', (49.4, 17.4), 11, -1), ('e2', (49.0, 25.4), -7, -1))}
+_ST = {k: v[1] for k, v in _HEAL.items()}
+
 FIXES = {
     'court': [   # the kit's flights (0.5 u a step) are longer than plan D's: the sea stair's -2 m landing grows, the lower flight and quay go two cells out
         ('paint', 'paving at -2 m', 45, 63, 50, 64), ('paint', 'wood at -5 m', 45, 65, 50, 74), ('head', 'sea stair, lower', [[45.0, 64.5], [50.0, 64.5]]),
@@ -102,9 +127,15 @@ FIXES = {
         ('object', dict(kind='glyph', id='glyph-fields', name='the line out to the fields', pts=[[15.6, 21.2], [7.0, 21.2]])),
         ('paint', 'plaza at 3.5 m', 33, 24, 37, 25),       # a paved strip through the bed to the cliff top above the pump tower
         ('object', dict(kind='glyph', id='glyph-purifier', name='the line to the purifier', pts=[[35.0, 23.4], [35.0, 25.4]])),
-        ('object', dict(kind='glyph', id='glyph-tents-nw', name='the line to the north-west tent', pts=[[33.4, 16.4], [30.0, 13.4], [27.0, 13.4]])),
-        ('object', dict(kind='glyph', id='glyph-tents-ne', name='the line to the north-east tent', pts=[[36.6, 16.4], [40.0, 13.4], [43.0, 13.4]])),
-        ('object', dict(kind='glyph', id='glyph-tents-e', name='the line between the east tents', pts=[[37.4, 19.2], [44.0, 21.2], [49.0, 21.2]])),
+        ('object', dict(kind='glyph', id='glyph-tents-nw', name='the line to the north-west tent', pts=[[33.4, 16.4], [_ST['n1'][0], 13.4], _ST['n1']])),
+        ('object', dict(kind='glyph', id='glyph-tents-ne', name='the line to the north-east tent', pts=[[36.6, 16.4], [_ST['n2'][0], 13.4], _ST['n2']])),
+        ('object', dict(kind='glyph', id='glyph-tents-e', name='the line between the east tents', pts=[[37.4, 19.2], [44.0, 21.2], [44.5, 21.2]])),
+        # each pair of tents off a shared line: a branch to each tent's station (the healing devices, 2026-11-27)
+        ('object', dict(kind='glyph', id='glyph-tent-e1', name='the branch to tent e1', pts=[[44.5, 21.2], _ST['e1']])),
+        ('object', dict(kind='glyph', id='glyph-tent-e2', name='the branch to tent e2', pts=[[44.5, 21.2], _ST['e2']])),
+        ('object', dict(kind='glyph', id='glyph-tent-w1', name='the branch to tent w1', pts=[[25.5, 21.2], _ST['w1']])),
+        ('object', dict(kind='glyph', id='glyph-tent-w2', name='the branch to tent w2', pts=[[25.5, 21.2], _ST['w2']])),
+        *[fx for v in _HEAL.values() for fx in v[0]],
         # lanterns on the road's far (north) side, so they never stand between the camera and the walkers (the user)
         ('object', dict(kind='vignette', id='road-lamp-1', name='a lamp post', piece='dress.lamp', at=[58.0, 35.4], front='S')),
         ('object', dict(kind='vignette', id='road-lamp-2', name='a lamp post', piece='dress.lamp', at=[66.0, 35.4], front='S')),

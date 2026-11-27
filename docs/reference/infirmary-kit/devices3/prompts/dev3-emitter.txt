@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as dev3-emitter.png in the current directory. Reply with just the file name.
+
+The attached image shows a bed emitter (the carved sandstone post with the gold halo ring on top) standing beside a folding cot, in a game's stylised 3D look: smooth hand-painted textures, warm sandstone, polished brass, deep blue enamel with gold eight-pointed stars, the green-and-gold Life rune (a gold sprouting plant).
+
+Redraw only the emitter, on its own, as a clean model reference for a 3D modeller: exactly the same square carved sandstone post with its gothic carved side, its green-and-gold Life rune panel on the front, its deep blue enamel band with gold eight-pointed stars below a flat sandstone top, its brass corner feet, and above the top the thin upright gold halo ring held on two slim brass prongs with the small green Life rune disc at its centre. Same design, colours and materials, the same three-quarter view from slightly above so its front and one side show. The post sits squarely on its four brass feet on the ground; its back has a small round brass socket low down. The emitter is the whole picture's only object.
+
+Standalone and perfectly centred on a plain solid light grey background, the whole object in frame with generous empty space all round it, no characters, the ground around it bare and plain, the structure crisp, dry and still, every surface plainly lit with no glow.

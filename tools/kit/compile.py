@@ -264,7 +264,8 @@ def glyphs(objs, floor_u, T, G, nx, ny, placed, err, label):
     for v in placed:
         if v.get('kind') != 'setpiece': continue
         box, pc = footprint(v, G)
-        if box is not None: solids.append((v, box))
+        # a piece the line feeds (kit.json "glyph_fed": the infirmary's healing devices) stands on it by design
+        if box is not None and not (pc or {}).get('glyph_fed'): solids.append((v, box))
     done = []
     for o in objs:
         raw = o.get('pts') or []

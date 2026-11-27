@@ -328,6 +328,43 @@ export function cageOvergrowth(o: OvergrowthSpec, seed: number, group: number): 
 }
 
 /**
+ * The choked core's light (the user, 2026-11-27, q-crystal: "it should be off, and then light up more once we've
+ * cleared it"): the green of the model inside the spec's `core` cylinder is dulled and darkened while its vines stand
+ * and glows as they are cut back, read from the same level the vines use (group `group`). Only green texels inside the
+ * core change, so the brass cage round it keeps its look. `model` is the placed model, `frame` the set piece's group
+ * (the spec's frame, in u), `M` u per metre. Each of the model's meshes gets its own material (its own transform).
+ */
+export function coreGlow(model: THREE.Object3D, frame: THREE.Object3D, o: OvergrowthSpec, group: number, M: number) {
+  if (!o.core) return;
+  frame.updateMatrixWorld(true);
+  const toFrame = new THREE.Matrix4().copy(frame.matrixWorld).invert().premultiply(new THREE.Matrix4().makeScale(1 / M, 1 / M, 1 / M));
+  const core = new THREE.Vector3(...o.core);
+  model.traverse((n) => {
+    const mesh = n as THREE.Mesh;
+    if (!mesh.isMesh || Array.isArray(mesh.material)) return;
+    const m = (mesh.material as THREE.MeshStandardMaterial).clone(), toCore = { value: new THREE.Matrix4().multiplyMatrices(toFrame, mesh.matrixWorld) };
+    m.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, { uOver: OVERGROWTH, uToCore: toCore, uCore: { value: core } });
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform mat4 uToCore; varying vec3 vCoreP;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCoreP = (uToCore * vec4(transformed, 1.0)).xyz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>\nuniform float uOver[${OVER_MAX}]; uniform vec3 uCore; varying vec3 vCoreP;`)
+        .replace('#include <color_fragment>', `#include <color_fragment>
+          vec3 coreC = diffuseColor.rgb;
+          float coreIn = (1.0 - smoothstep(uCore.z * 0.95, uCore.z * 1.2, length(vCoreP.xz)))
+            * smoothstep(uCore.x - 0.05, uCore.x + 0.08, vCoreP.y) * (1.0 - smoothstep(uCore.y, uCore.y + 0.15, vCoreP.y));
+          float coreK = coreIn * smoothstep(0.015, 0.08, coreC.g - max(coreC.r, coreC.b));
+          float coreLit = pow(1.0 - uOver[${group}], 1.6);   // slow at first: the last cuts light it most
+          vec3 coreDull = mix(vec3(dot(coreC, vec3(0.3, 0.59, 0.11))), coreC, 0.3) * 0.42;
+          diffuseColor.rgb = mix(coreC, mix(coreDull, coreC * 1.1, coreLit), coreK);`)
+        .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+          totalEmissiveRadiance += (coreC * vec3(0.7, 1.25, 0.8) + vec3(0.02, 0.10, 0.04)) * coreK * coreLit * 1.4;`);
+    };
+    m.customProgramCacheKey = () => `core-glow-${group}`;
+    mesh.material = m;
+  });
+}
+
+/**
  * Vines lying across a glyph path near the overgrown piece, `len` m along it from its start (pts: the route in m, in
  * the group's frame, the path's start first; w its width m): two or three runners weaving over the line from side to
  * side, low on the floor, cut back with the path's own group.

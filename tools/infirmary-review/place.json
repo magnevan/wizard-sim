@@ -115,6 +115,42 @@
  ],
  "decisions": [
   {
+   "id": "pc7-credits",
+   "area": "props",
+   "piece": "devices",
+   "title": "Spend the credits on the healing devices (and the triage sheet)?",
+   "html": "<p>Codex redrew your picks as clean model references: the station with its leads snipped (the ribs end in feet on the base plate; the tent's glyph line does the wiring, so nothing comes out at 45°), and the emitter alone. Meshy 7.1 over the API: <b>about 30 credits each, 60 for both</b>. The triage sheet b (already OK'd) goes through meshy.ai in Chrome for the free retries, about 35 credits, and its download needs you to click Chrome's download bubble. Until then the scene has grey stand-ins in their places (Building and props tab, round 9). The permission check won't let me spend credits on a pick alone, so this asks plainly. Credits left: about 1,134, expiring 2026-12-16.</p>",
+   "figures": [
+    {
+     "src": "img/dev3-station.jpg",
+     "cap": "The station, leads snipped"
+    },
+    {
+     "src": "img/dev3-emitter.jpg",
+     "cap": "The emitter, alone"
+    },
+    {
+     "src": "img/dev-sheet2-b.jpg",
+     "cap": "Triage sheet b (website run)"
+    }
+   ],
+   "rec": "My pick: <b>all</b>. The two devices are single pieces and safe on the API; the sheet when you're at the machine.",
+   "choices": [
+    {
+     "v": "all",
+     "label": "All three (about 95)"
+    },
+    {
+     "v": "devices",
+     "label": "The two devices only (60)"
+    },
+    {
+     "v": "wait",
+     "label": "Not yet"
+    }
+   ]
+  },
+  {
    "id": "pc6-station",
    "title": "The tent station: one per tent, where its glyph line ends",
    "html": "<p>Your design: the well feeds a station per tent, which feeds an emitter behind each pillow. Three stations, each on a sandstone base with the Life rune and four flat leads to the cots; or the pylon (b) between two cots instead, which needs no separate emitters. The last picture is one whole tent dressed (Codex drew its own mix there), to judge whether it gets busy.</p>",
@@ -168,7 +204,8 @@
     }
    ],
    "area": "props",
-   "piece": "devices"
+   "piece": "devices",
+   "closed": "c, its four leads snipped (your note): the ribs end in feet on the base plate, the tent's glyph line feeds it"
   },
   {
    "id": "pc6-emitter",
@@ -207,7 +244,8 @@
     }
    ],
    "area": "props",
-   "piece": "devices"
+   "piece": "devices",
+   "closed": "b, drawn alone (no cot, no cable) for the model; it sits on a thin lead along the tent's back"
   },
   {
    "id": "pc6-sheet2",
@@ -243,7 +281,8 @@
     }
    ],
    "area": "props",
-   "piece": "triage-sheet"
+   "piece": "triage-sheet",
+   "closed": "b, OK to render on meshy.ai: waiting on pc7-credits (the website run needs you at the download)"
   },
   {
    "id": "q-crystal",
@@ -274,7 +313,8 @@
      "label": "Thin the vines"
     }
    ],
-   "area": "magic"
+   "area": "magic",
+   "closed": "hidden: the crystal is dull grey glass while choked and lights up as the vines are cut, most at the last cuts (built)"
   },
   {
    "id": "q-merge",
@@ -300,7 +340,8 @@
      "v": "later",
      "label": "Later"
     }
-   ]
+   ],
+   "closed": "later: more polish first"
   },
   {
    "id": "pc5-frame",
@@ -403,6 +444,18 @@
       }
      ],
      "note": "<code>overgrowth.ts</code>"
+    },
+    {
+     "kind": "code",
+     "at": "2026-11-27",
+     "title": "The crystal: dark till cleared",
+     "imgs": [
+      {
+       "src": "img/crystal-glow.jpg",
+       "cap": "Choked, half cut, cleared"
+      }
+     ],
+     "note": "Your answer to q-crystal: <code>coreGlow</code> in <code>overgrowth.ts</code> dulls the green inside the cage's core while its vines stand and makes it glow as they are cut, read from the same level."
     }
    ]
   },
@@ -975,7 +1028,7 @@
    "id": "devices",
    "name": "Healing devices",
    "area": "props",
-   "status": "pictures, waiting on your pick",
+   "status": "stand-ins placed, model waiting on your credit OK",
    "html": "One station per tent where its glyph line ends, an emitter behind each pillow wired to it.",
    "steps": [
     {
@@ -1052,6 +1105,43 @@
        "cap": "tent-dressed"
       }
      ]
+    },
+    {
+     "kind": "pick",
+     "at": "2026-11-27",
+     "title": "station c, emitter b"
+    },
+    {
+     "kind": "picture",
+     "at": "2026-11-27",
+     "title": "Your picks, leads snipped",
+     "imgs": [
+      {
+       "src": "img/dev3-station.jpg",
+       "cap": "Station c, its ribs ending in feet"
+      },
+      {
+       "src": "img/dev3-emitter.jpg",
+       "cap": "Emitter b alone"
+      }
+     ],
+     "note": "Codex from the picked pictures (<code>docs/reference/infirmary-kit/devices3/</code>), per your note on c: no leads to be bent to 45° in the model."
+    },
+    {
+     "kind": "placed",
+     "at": "2026-11-27",
+     "title": "Grey stand-ins: 6 stations, 24 emitters",
+     "imgs": [
+      {
+       "src": "img/dev-standins-west.jpg",
+       "cap": "The west tents: a station at each tent's end on its branch line"
+      },
+      {
+       "src": "img/dev-standins-low.jpg",
+       "cap": "From low in front: an emitter behind each pillow"
+      }
+     ],
+     "note": "<code>setpiece.heal-station</code>, <code>setpiece.bed-emitter</code> in kit.json (<code>glyph_fed</code>), placed in each tent's frame by <code>tent_healing()</code> in <code>trace_plan.py</code>, positions measured off the tent model's cots."
     }
    ]
   },
@@ -1059,7 +1149,7 @@
    "id": "triage-sheet",
    "name": "Triage dressing sheet",
    "area": "props",
-   "status": "redrawn, waiting on your OK",
+   "status": "OK'd (b); render waiting on pc7-credits",
    "steps": [
     {
      "kind": "picture",
@@ -1156,6 +1246,17 @@
    "label": "Buildings & props",
    "subs": [
     {
+     "id": "devices2",
+     "label": "Devices placed",
+     "at": "2026-11-27",
+     "sections": [
+      {
+       "title": "Round 9: the healing devices, stand-ins",
+       "file": "rounds/props-devices2.html"
+      }
+     ]
+    },
+    {
      "id": "round3",
      "label": "Round 3 pictures",
      "sections": [
@@ -1232,6 +1333,10 @@
      "label": "Vines & smoke",
      "sections": [
       {
+       "title": "The crystal: dark till cleared (your answer)",
+       "html": "<p>Choked, the crystal is dull grey glass; it lights up as the vines are cut back, slowly at first and most at the last cuts (<code>coreGlow</code> in <code>overgrowth.ts</code>, read from the well's overgrowth level). Left to right: choked, half cut, cleared.</p><figure><img src=\"img/crystal-glow.jpg\" alt=\"The crystal\"><figcaption>Choked, half, cleared. The glyph lines still glow at full here: dimming them till the fix is the game session's <code>setGlyphState</code>.</figcaption></figure>"
+      },
+      {
        "title": "Round 8: the well's vines and the stack's smoke",
        "file": "rounds/magic-vines.html"
       }
@@ -1245,6 +1350,11 @@
    "at": "2026-11-27",
    "title": "The page moved to the new template",
    "html": "<p>Tasks now live in the db with who flagged them, your acknowledgement and a note thread; the pieces ledger follows each model from picture to scene. The earlier rounds are in the area tabs, unchanged.</p>"
+  },
+  {
+   "at": "2026-11-27",
+   "title": "Round 9: the devices placed as stand-ins, the crystal dark till cleared",
+   "html": "<p>Your picks acted on: station c and emitter b redrawn as model references (leads snipped), placed as grey stand-ins in every tent with their glyph lines; the well's crystal dull while choked and lighting up as it is cleared. The models wait on <a href=\"#decision-pc7-credits\">your credit OK</a>. <a href=\"#props-devices2\">The round</a>.</p>"
   }
  ],
  "board": {
@@ -1327,8 +1437,8 @@
     "cells": {
      "pieces": [
       "review",
-      "tents in; healing devices: your pick",
-      "#piece-devices"
+      "devices: stand-ins; models need your credit OK",
+      "#decision-pc7-credits"
      ],
      "surfaces": [
       "done",
@@ -1363,8 +1473,8 @@
      ],
      "dressing": [
       "review",
-      "vines in code; crystal hidden or glowing?",
-      "#decision-q-crystal"
+      "crystal dark till cleared: check",
+      "#magic-vines"
      ],
      "beauty": [
       "later"

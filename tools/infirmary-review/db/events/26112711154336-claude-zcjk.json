@@ -1,8 +1,8 @@
 {
- "at": "2026-11-27T11:15:43.365Z",
- "by": "claude",
- "task": "t-cove-vines",
- "set": {
-  "zone": "cove"
- }
+  "at": "2026-11-27T11:15:43.365Z",
+  "by": "claude",
+  "set": {
+    "zone": "cove"
+  },
+  "task": "t-cove-vines"
 }

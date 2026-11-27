@@ -15,7 +15,7 @@ import { glyphMaterial, glyphPick, glyphScene, stepGlyphs, type GlyphRun } from 
 import { waterMesh } from './kit-water';
 import { clearInlays, flowInlays, inlayInto, type InlaySpec } from './kit-inlay';
 import { FOLIAGE_TIME, grow, groundShade, type Recipe } from './foliage';
-import { cageOvergrowth, clearOvergrowth, overgrowthSlot, pathOvergrowth, stepOvergrowth, type OvergrowthSpec } from './overgrowth';
+import { cageOvergrowth, clearOvergrowth, coreGlow, overgrowthSlot, pathOvergrowth, stepOvergrowth, type OvergrowthSpec } from './overgrowth';
 import { smokeMesh, type SmokeSpec } from './kit-smoke';
 import { kerbRows, KERB_ROUND, KERB_W, type KerbSeg } from './kit-road';
 import { LAWN_VARY, STONE_MATS, STONE_PAINT, STONE_U, stoneDecl, stoneFrag } from './kit-stones';
@@ -664,7 +664,9 @@ function piece(it: Inst): THREE.Group | null {
     // vines grown round its structure (lab/overgrowth.ts), their level settable by its scene id (setOvergrowth)
     const slot = k.overgrowth && it.src ? overgrowthSlot(it.src, k.overgrowth.level ?? 1) : undefined;
     if (slot !== undefined) { const v = cageOvergrowth(k.overgrowth!, seedOf(it), slot); v.scale.setScalar(M); v.position.y = y; g.add(v); }
-    if (art(g, kind, 0, y)) { if (k.shade) { const sh = groundShade((k.shade / 2) * M); sh.position.y += y; g.add(sh); } return g; }
+    if (art(g, kind, 0, y)) {
+      if (slot !== undefined) coreGlow(g.children[g.children.length - 1], g, k.overgrowth!, slot, M);   // its core dark till cleared
+      if (k.shade) { const sh = groundShade((k.shade / 2) * M); sh.position.y += y; g.add(sh); } return g; }
     const [w, d] = k.footprint ?? [2, 2], H = yOf(k.height ?? 4), P = yOf(0.35);
     const solid = (sx: number, sz: number, y0: number, y1: number, m: THREE.Material) => {
       if (k.shape === 'round') {

@@ -17,6 +17,10 @@ export const FOLIAGE_TIME = { value: 0 };
 /** 1 draws the raw light on each card as grey, 2 its depth in the plant: for tuning the ramp. */
 export const FOLIAGE_DEBUG = { value: 0 };
 
+/** Overgrowth groups a scene can hold (lab/overgrowth.ts), and each group's level now (0 cut back, 1 fully grown): what the shaders read. */
+export const OVER_MAX = 32;
+export const OVERGROWTH = { value: new Float32Array(OVER_MAX).fill(1) };
+
 export type Rnd = () => number;
 export function rng(seed: number): Rnd {
   let a = (seed * 2654435761) >>> 0 || 0x9e3779b9;
@@ -101,6 +105,8 @@ const LEAF_BROAD: Sprite[] = PAINTED.leaves ? [...seq('pl', 0, 4), 'broadA'] : [
 const LEAF_ROUND: Sprite[] = PAINTED.leaves ? seq('pl', 4, 8) : ['roundA', 'roundB'];
 const LEAF_TUFT: Sprite[] = PAINTED.leaves ? [...seq('pl', 8, 12), 'tuftA'] : ['tuftA', 'tuftB'];
 const LEAF_DROOP: Sprite[] = PAINTED.leaves ? seq('pl', 12, 16) : ['droopA', 'droopB'];
+/** The leaf sprites by habit, for recipes grown outside this file (lab/overgrowth.ts). */
+export const LEAVES = { broad: LEAF_BROAD, round: LEAF_ROUND, tuft: LEAF_TUFT, droop: LEAF_DROOP };
 let loaded: Promise<unknown> = Promise.resolve();
 /** Resolves when the painted sheets are in the atlas (a page waits on it before a screenshot). */
 export const foliageReady = () => loaded;
@@ -190,20 +196,40 @@ function atlasTexture(): THREE.CanvasTexture {
 // ---------------------------------------------------------------------------------------------------------------
 // the material: cards turned to the camera in the vertex stage; colour from the palette ramp in the fragment stage
 // ---------------------------------------------------------------------------------------------------------------
-let cardMat: THREE.MeshLambertMaterial | null = null;
-function cardMaterial(): THREE.MeshLambertMaterial {
-  if (cardMat) return cardMat;
+const cardMats: (THREE.MeshLambertMaterial | null)[] = [null, null];
+/**
+ * The cards' material; `over` the overgrowth variant (lab/overgrowth.ts): each card also carries aGrow (its distance
+ * along its vine m, the vine's length m, its lag, its group) and aRest (the height m it falls to), and as its group's
+ * level falls the front draws back along the vine: cards near it brown, past it they drop to their rest and shrink away.
+ */
+function cardMaterial(over = false): THREE.MeshLambertMaterial {
+  const have = cardMats[over ? 1 : 0];
+  if (have) return have;
   const m = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide, alphaToCoverage: true });
   m.onBeforeCompile = (sh) => {
     sh.uniforms.fTime = FOLIAGE_TIME; sh.uniforms.fDebug = FOLIAGE_DEBUG; sh.uniforms.fMap = { value: atlasTexture() }; sh.uniforms.fPal = { value: paletteTexture() };
+    if (over) sh.uniforms.uOver = OVERGROWTH;
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', `#include <common>
         attribute vec2 aCorner; attribute vec2 aUv; attribute vec4 aA; attribute vec4 aB; attribute vec2 aC;
-        uniform float fTime; varying vec2 vFuv; varying vec3 vFa; varying vec3 vFb;
-        const vec2 FWIND = vec2(0.93, 0.37);   // the wind's heading over the ground (x, z)`)
+        uniform float fTime; varying vec2 vFuv; varying vec3 vFa; varying vec3 vFb; varying float vFw;
+        const vec2 FWIND = vec2(0.93, 0.37);   // the wind's heading over the ground (x, z)
+        ${over ? `attribute vec4 aGrow; attribute float aRest; uniform float uOver[${OVER_MAX}];` : ''}`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
         // wind: the card's centre leans with slow gusts, more the further out on the plant it sits (aB.x), each on its own beat (aB.y)
-        vFuv = aUv; vFa = vec3(aA.z, aA.w, aB.z);`)
+        vFuv = aUv; vFa = vec3(aA.z, aA.w, aB.z);
+        float oK = 1.0; vFw = 0.0;
+        ${over ? `{
+          // the vine's front (m along it) at its group's level: past it the card has been cut. Each vine draws back on its
+          // own beat (its lag: higher goes sooner); at level 1 the front stands half a metre past the tip, so none browns.
+          float oL = uOver[int(aGrow.w + 0.5)];
+          float oD = aGrow.x - (aGrow.y + 0.5) * smoothstep(aGrow.z, 1.0, oL);
+          float oQ = clamp(oD / 0.6, 0.0, 1.0);                     // how far through its fall
+          vFw = max(smoothstep(-0.5, 0.0, oD), oQ);                 // browning as the front nears, dead once past
+          transformed.y = max(aRest, transformed.y - oQ * oQ * 2.4);
+          transformed.xz += FWIND * oQ * 0.5;
+          oK = 1.0 - smoothstep(0.5, 1.0, oQ);
+        }` : ''}`)
       .replace('#include <project_vertex>', `
         vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
         // The wind. One direction for the whole scene; its strength is a field of gusts drifting downwind across the
@@ -220,7 +246,7 @@ function cardMaterial(): THREE.MeshLambertMaterial {
         float fPush = aB.x * (fEnv * 0.06 + fFlut * 0.007) * length(modelMatrix[0].xyz);
         mvPosition.xy += (viewMatrix * vec4(FWIND.x, -0.25 * fEnv, FWIND.y, 0.0)).xy * fPush;
         float fGust = fEnv * 0.7 + fFlut * 0.35;
-        float fSc = length(modelMatrix[0].xyz) * aA.x;
+        float fSc = length(modelMatrix[0].xyz) * aA.x * oK;
         float fRoll = aA.y + fGust * aB.x * 0.09;
         vec2 fC = vec2(aCorner.x * cos(fRoll) - aCorner.y * sin(fRoll), aCorner.x * sin(fRoll) + aCorner.y * cos(fRoll));
         vFb = vec3(fC, aC.y);
@@ -233,7 +259,7 @@ function cardMaterial(): THREE.MeshLambertMaterial {
         gl_Position = projectionMatrix * mvPosition;`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform sampler2D fMap; uniform sampler2D fPal; uniform float fDebug; varying vec2 vFuv; varying vec3 vFa; varying vec3 vFb;`)
+        uniform sampler2D fMap; uniform sampler2D fPal; uniform float fDebug; varying vec2 vFuv; varying vec3 vFa; varying vec3 vFb; varying float vFw;`)
       .replace('#include <map_fragment>', `vec4 fTex = texture2D(fMap, vFuv);
         diffuseColor.a = clamp((fTex.a - 0.42) / max(fwidth(fTex.a), 0.0001) + 0.5, 0.0, 1.0);
         if (diffuseColor.a < 0.02) discard;`)
@@ -259,13 +285,14 @@ function cardMaterial(): THREE.MeshLambertMaterial {
         vec3 fCol = texture2D(fPal, vec2(clamp(fV, 0.0, 1.0) * 0.875 + 0.0625, vFa.x)).rgb;
         fCol *= mix(vec3(0.86, 0.93, 1.1), vec3(1.1, 1.02, 0.88), fLit);   // cool shade, warm sun
         fCol = mix(fCol, vec3(1.0, 0.72, 0.12) * (0.55 + 0.6 * fLit), fEye);
+        fCol = mix(fCol, vec3(0.56, 0.42, 0.22) * (0.5 + 0.5 * fTex.r + 0.3 * fLit), vFw * 0.85);   // an overgrowth's cut leaves wither
         outgoingLight = fCol;
         if (fDebug > 0.5) outgoingLight = vec3(fDebug > 1.5 ? vFa.y : fLit);
       }
       #include <opaque_fragment>`);
   };
-  m.customProgramCacheKey = () => 'foliage-cards-2';
-  return (cardMat = m);
+  m.customProgramCacheKey = () => (over ? 'foliage-cards-over' : 'foliage-cards-3');
+  return (cardMats[over ? 1 : 0] = m);
 }
 const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4030, roughness: 1 });
 const birchMat = new THREE.MeshStandardMaterial({ color: 0xe8e2d4, roughness: 0.9 });
@@ -295,7 +322,12 @@ export class Foliage {
   private a: number[] = []; private b: number[] = []; private c: number[] = []; private idx: number[] = [];
   private stems: { x: number; y: number; z: number; h: number; r: number; pale: boolean }[] = [];
   private lobes: { c: V3; r: V3 }[] = []; private contacts: { x: number; z: number; y: number; rx: number; rz: number }[] = [];
+  private og: number[] = []; private orest: number[] = [];
   cards = 0;
+  /** Set while an overgrowth adds its cards (lab/overgrowth.ts): [m along its vine, the vine's length m, lag, group]. */
+  over: [number, number, number, number] | null = null;
+  /** With `over`: the height (m) a cut card falls to. */
+  rest = 0;
   constructor(readonly r: Rnd) {}
 
   /** One card: centre p (m), the normal it lights by, half-size s (m), its sprite and palette, ao 0 (buried) to 1 (crown). */
@@ -307,6 +339,7 @@ export class Foliage {
     for (const [cx, cy, u, v] of cs) {
       this.pos.push(p[0], p[1], p[2]); this.nrm.push(n[0] / nl, n[1] / nl, n[2] / nl); this.corner.push(cx, cy); this.uv.push(u, v);
       this.a.push(s, o.roll ?? 0, palRow(pal), Math.max(0, Math.min(1, ao))); this.b.push(o.sway ?? 1, phase, o.glow ?? 0, o.lift ?? 0.35); this.c.push(o.tilt ?? 0, 0);
+      if (this.over) { this.og.push(...this.over); this.orest.push(this.rest); }
     }
     this.idx.push(base, base + 1, base + 2, base, base + 2, base + 3); this.cards++;
   }
@@ -323,8 +356,12 @@ export class Foliage {
       const geo = new THREE.BufferGeometry(), f = (xs: number[], n: number) => new THREE.Float32BufferAttribute(xs, n);
       geo.setAttribute('position', f(this.pos, 3)); geo.setAttribute('normal', f(this.nrm, 3)); geo.setAttribute('aCorner', f(this.corner, 2));
       geo.setAttribute('aUv', f(this.uv, 2)); geo.setAttribute('aA', f(this.a, 4)); geo.setAttribute('aB', f(this.b, 4)); geo.setAttribute('aC', f(this.c, 2)); geo.setIndex(this.idx);
+      const over = this.og.length === this.cards * 16;
+      if (over) { geo.setAttribute('aGrow', f(this.og, 4)); geo.setAttribute('aRest', f(this.orest, 1)); }
       geo.computeBoundingSphere(); geo.boundingSphere!.radius += 0.8;
-      const m = new THREE.Mesh(geo, cardMaterial()); m.receiveShadow = true; m.userData.foliage = true; g.add(m);
+      const m = new THREE.Mesh(geo, cardMaterial(over)); m.receiveShadow = true; m.userData.foliage = true; g.add(m);
+      // an overgrowth's cards move with its level: kept out of the kit's batches (kit-batch.ts leaves meshes with a hook)
+      if (over) m.onBeforeRender = () => {};
     }
     if (this.lobes.length) {
       const unit = new THREE.IcosahedronGeometry(1, 1), P: number[] = [], I: number[] = [], up = unit.getAttribute('position'), ui = unit.getIndex();
@@ -410,7 +447,7 @@ function fill(F: Foliage, lobes: Lobe[], o: Fill) {
  * One blossom at p on a surface facing n: a face turned its own way (n, knocked about), drawn as the oval a tilted
  * flower shows, or a painted three-quarter or side view, or a bunch.
  */
-function blossom(F: Foliage, p: V3, n: V3, s: number, pal: Pal, ao: number, sway: number, lift: number, only?: Sprite[]) {
+export function blossom(F: Foliage, p: V3, n: V3, s: number, pal: Pal, ao: number, sway: number, lift: number, only?: Sprite[]) {
   const r = F.r, nl = Math.hypot(n[0], n[1], n[2]) || 1, face: V3 = [n[0] / nl + (r() - 0.5) * 1.1, n[1] / nl + (r() - 0.5) * 0.9, n[2] / nl + (r() - 0.5) * 1.1];
   const k = r(), kind = only ? 3 : k < 0.42 ? 0 : k < 0.72 ? 1 : 2;
   const sprite = kind === 3 ? pick(r, only!) : kind === 0 ? pick(r, BLOOM_FRONT) : kind === 1 ? pick(r, BLOOM_TURNED) : pick(r, BLOOM_BUNCH);

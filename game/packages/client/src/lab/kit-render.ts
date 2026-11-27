@@ -15,6 +15,8 @@ import { glyphMaterial, glyphPick, glyphScene, stepGlyphs, type GlyphRun } from 
 import { waterMesh } from './kit-water';
 import { clearInlays, flowInlays, inlayInto, type InlaySpec } from './kit-inlay';
 import { FOLIAGE_TIME, grow, groundShade, type Recipe } from './foliage';
+import { cageOvergrowth, clearOvergrowth, overgrowthSlot, pathOvergrowth, stepOvergrowth, type OvergrowthSpec } from './overgrowth';
+import { smokeMesh, type SmokeSpec } from './kit-smoke';
 import { kerbRows, KERB_ROUND, KERB_W, type KerbSeg } from './kit-road';
 import { LAWN_VARY, STONE_MATS, STONE_PAINT, STONE_U, stoneDecl, stoneFrag } from './kit-stones';
 
@@ -122,7 +124,11 @@ export type KitPiece = { class?: string; shape?: string; footprint?: [number, nu
   /** a plant grown in code (lab/foliage.ts), with `box` [w, d, h] m for a stone trough or pot under it, or `soil` [w, d] m of bare earth (a field) */
   grow?: Recipe & { box?: [number, number, number]; soil?: [number, number] };
   /** a made tree's shade: a soft dark patch this many m across on the ground under it (darker grass under trees) */
-  shade?: number };
+  shade?: number;
+  /** vines grown in code round its made structure (lab/overgrowth.ts: the infirmary's well), cut back at run time by setOvergrowth */
+  overgrowth?: OvergrowthSpec;
+  /** smoke from its flue (lab/kit-smoke.ts: the battery's stack) */
+  smoke?: SmokeSpec };
 const KIT_PIECES: Record<string, KitPiece> = {};
 export function setKitPieces(p: Record<string, KitPiece>) { Object.assign(KIT_PIECES, p); }
 export const kitPiece = (p: string): KitPiece | undefined => KIT_PIECES[p];
@@ -312,6 +318,7 @@ export function spinKit(t: number) {
   flowInlays(t);       // and the fields in an inlay's channels
   FOLIAGE_TIME.value = t;   // and the wind in the plants
   stepGlyphs(t);            // and the glyph paths' pulse and brightness
+  stepOvergrowth(t);        // and overgrowth being cut back (or growing again)
   for (const s of SPINNERS) s.node.quaternion.copy(s.rest).multiply(spinQ.setFromAxisAngle(s.axis, ((t * s.rpm) / 60) * Math.PI * 2));
 }
 
@@ -654,6 +661,9 @@ function piece(it: Inst): THREE.Group | null {
     g.position.set(it.x, yOf(it.h + (it.up ?? 0)), it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // local +z is the front
     const k = KIT_PIECES[it.p] ?? { shape: 'box', footprint: [2, 2], height: 4 };
     if (k.grow) return growInto(g, k.grow, seedOf(it), y);
+    // vines grown round its structure (lab/overgrowth.ts), their level settable by its scene id (setOvergrowth)
+    const slot = k.overgrowth && it.src ? overgrowthSlot(it.src, k.overgrowth.level ?? 1) : undefined;
+    if (slot !== undefined) { const v = cageOvergrowth(k.overgrowth!, seedOf(it), slot); v.scale.setScalar(M); v.position.y = y; g.add(v); }
     if (art(g, kind, 0, y)) { if (k.shade) { const sh = groundShade((k.shade / 2) * M); sh.position.y += y; g.add(sh); } return g; }
     const [w, d] = k.footprint ?? [2, 2], H = yOf(k.height ?? 4), P = yOf(0.35);
     const solid = (sx: number, sz: number, y0: number, y1: number, m: THREE.Material) => {
@@ -1062,7 +1072,7 @@ function tintGroup(g: THREE.Object3D, tint: string) {
 /** The floors and pieces of a compiled scene, as one group. */
 export function buildKit(data: KitData): THREE.Group {
   const root = new THREE.Group();
-  JOINTS.clear(); SPINNERS.length = 0; clearInlays(); ARCH_FACES.length = 0; BLIND_SEGS.length = 0; FALL_LIPS.length = 0;
+  JOINTS.clear(); SPINNERS.length = 0; clearInlays(); clearOvergrowth(); ARCH_FACES.length = 0; BLIND_SEGS.length = 0; FALL_LIPS.length = 0;
   for (const it of data.instances) if ((it.v === 'blind' || it.v === 'blind-side') && it.x2 != null) BLIND_SEGS.push([it.x, it.y, it.x2, it.y2!]);
   findBays(data.instances);
   for (const it of data.instances) if (it.p.startsWith('arch.')) {   // an arch's two faces, before the floors and water are built
@@ -1118,7 +1128,43 @@ export function buildKit(data: KitData): THREE.Group {
     g.userData.inst = i;
     root.add(g);
   });
+  // what set pieces bring beyond their own group: vines along the glyph paths near an overgrown one, smoke from a flue
+  for (const it of data.instances) {
+    const k = KIT_PIECES[it.p];
+    if (!it.p.startsWith('setpiece.') || !k) continue;
+    if (k.overgrowth?.paths) root.add(...glyphVines(it, k.overgrowth, data.instances));
+    if (k.smoke) {
+      const th = Math.atan2(Math.cos(it.rot), Math.sin(it.rot)), [lx, lz] = (k.smoke.at ?? [0, 0]).map((v) => v * M);
+      const s = smokeMesh(k.smoke, M, seedOf(it));
+      s.position.set(it.x + lx * Math.cos(th) + lz * Math.sin(th), yOf(it.h + (it.up ?? 0) + k.smoke.z), it.y - lx * Math.sin(th) + lz * Math.cos(th));
+      root.add(s);
+    }
+  }
   return root;
+}
+
+/**
+ * Vines lying across the glyph paths that start (or end) within `reach` u of an overgrown set piece, `paths` u along
+ * each from that end (lab/overgrowth.ts), each path's vines in a group of its own (its scene id), so a line's vines are
+ * cut as it relights.
+ */
+function glyphVines(sp: Inst, o: OvergrowthSpec, insts: Inst[]): THREE.Group[] {
+  const out: THREE.Group[] = [], reach = o.reach ?? 7;
+  for (const it of insts) {
+    if (!it.p.startsWith('glyph.') || !it.pts || it.pts.length < 2 || !it.src) continue;
+    const near = (p: number[]) => Math.hypot(p[0] - sp.x, p[1] - sp.y);
+    const pts = near(it.pts[0]) <= reach ? it.pts : near(it.pts[it.pts.length - 1]) <= reach ? [...it.pts].reverse() : null;
+    if (!pts) continue;
+    const slot = overgrowthSlot(it.src, o.level ?? 1);
+    if (slot === undefined) continue;
+    const [x0, y0, z0] = pts[0];
+    const g = pathOvergrowth(pts.map(([x, y, z]) => [(x - x0) / M, z - z0, (y - y0) / M] as [number, number, number]), ((it as Inst & GlyphRun).w ?? 0.9) / M, o.paths! / M,
+      seedOf(it) + 7, slot, o.density ?? 1);
+    g.scale.setScalar(M); g.position.set(x0, yOf(z0), y0);
+    g.userData.noFade = true;
+    out.push(g);
+  }
+  return out;
 }
 
 /** The dark ground beyond the scene, a little below everything. */

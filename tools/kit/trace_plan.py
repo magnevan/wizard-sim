@@ -47,13 +47,20 @@ FIXES = {
         ('paint', 'the beach', 20, 34, 25, 36), ('flight', 'the west stair', [[19.5, 34.0], [19.5, 36.0]]),
         ('paint', 'the beach', 42, 33, 44, 38), ('paint', 'plaza at 3.5 m', 45, 37, 48, 39), ('paint', 'plaza at 3.5 m', 21, 31, 27, 33), ('paint', 'plaza at 3.5 m', 45, 31, 49, 33),   # the plan's angled stairs' leftovers
         # the jetty out into the cove, the purifier's platform at its end
-        ('paint', 'the jetty', 34, 33, 36, 38), ('disc', 'the jetty', 35.0, 39.5, 2.2),
+        ('paint', 'the jetty', 34, 33, 36, 38), ('disc', 'the jetty', 35.0, 39.6, 2.7),
         # the made pieces in place of the plan's boxes and the trace's stand-ins
         ('drop-setpiece', 'setpiece.post'), ('drop-setpiece', 'setpiece.pier-round'),
         ('paint', 'grass at 3.5 m', 2, 30, 15, 44),
         ('object', dict(kind='setpiece', id='greenhouse', name='the great greenhouse', piece='setpiece.greenhouse', at=[8.5, 37.0], front='S')),
         ('object', dict(kind='setpiece', id='well', name='the well', piece='setpiece.infirmary-well', at=[35.0, 18.0], front='S')),
         ('object', dict(kind='setpiece', id='battery-stack', name="the battery's smokestack", piece='setpiece.battery-stack', at=[73.6, 29.5], front='S')),
+        # the purifier (the user's pick, idea 2, 2026-11-27): the settling drum stands in the sea as the jetty's head; the pump
+        # tower stands on the beach in a bay cut into the cliff, its top rising above the forecourt where the glyph path ends
+        ('paint', 'the beach', 33, 27, 37, 30),
+        ('object', dict(kind='setpiece', id='purifier-tower', name="the purifier's pump tower", piece='setpiece.purifier-tower', at=[35.0, 30.4], front='S')),
+        ('object', dict(kind='setpiece', id='purifier-drum', name="the purifier's settling drum", piece='setpiece.purifier-drum', at=[35.0, 39.6], front='S')),
+        ('object', dict(kind='pipe', id='purifier-pipe', name='the pipe along the jetty from the drum to the tower', r=0.3,
+                        pts=[[35.0, 37.8], [35.0, 32.9]])),
         ('paint', 'grass at 3.5 m', 62, 27, 71, 33),       # the plan's wall box for the boiler house, replaced by its model
         ('object', dict(kind='setpiece', id='boiler-house', name="the battery's boiler house", piece='setpiece.boiler-house', at=[66.5, 30.0], front='S')),
         # the triage camp: six full-size tents round the forecourt's edges, the middle left open (the user: "negative space")

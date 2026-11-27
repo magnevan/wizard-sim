@@ -24,7 +24,7 @@ import { CELL_GLSL, MAX_BURNING, type SurfGrid } from './from-sim';
 import { GroundDecal } from './decal';
 import { ParticleBatch, premulMaterial } from './particles';
 import { FX_U } from './stage';
-import { FIRE_TEX } from './fire-sheets';
+import { FIRE_TEX, SHEET_GLSL } from './fire-sheets';
 import { HASH, NOISE } from './glsl';
 import type { SpellLights } from './lights';
 
@@ -32,6 +32,8 @@ import type { SpellLights } from './lights';
 const EMBERS_PER_CELL = 2;
 /** Seconds a cell's char lingers after it goes out; seconds a lit cell takes to flare up. */
 const CHAR_LIFE = 3, GROW = 0.4;
+/** Seconds a lit cell's char takes to come in, after the ignition's flash. */
+const CHAR_IN = 0.7;
 /** How tall (u) the tongues stand where the patch burns hardest. */
 const FLAME_H = 0.95;
 /** The cells (u across) the licks and spits are dealt in: at most one tongue in each at a time. */
@@ -162,11 +164,21 @@ vec2 gas(vec3 p) {
   float n = fbm3(q);
   // thick in the clusters, thin between them, so the charred bed and its glowing cracks show through
   float body = burn > 0.02 ? (1.0 - y / tall) * burn * mix(0.3, 1.25, cl) - 0.82 + 0.3 * cl + 0.45 * ign : -1.0;
+  if (burn > 0.02 && y < 0.45) {
+    // low flame joining the clusters (Codex: "occasionally connect neighbouring clusters with low flame"): slow ridged
+    // veins of short fire along the ground
+    float vein = 1.0 - abs(fbm3(vec3(p.xz * 0.6 + vec2(0.07, 0.04) * uClock, uClock * 0.05 + uSeed * 0.01)) * 2.0 - 1.0);
+    body = max(body, burn * smoothstep(0.6, 0.92, vein) * (1.0 - y / 0.32) * 0.95 - 0.45);
+    // the ignition's flash hugging the ground, under the flare
+    body = max(body, ign * (1.0 - y / 0.3) * 0.9 - 0.2);
+  }
   float d = max(body, lick) + (n - 0.5) * 1.7;
   if (d <= 0.0) return vec2(0.0, 1.0);
   float heat = 1.0 - clamp(d * 1.5, 0.0, 1.0) + (lick > body ? 0.12 + 0.45 * clamp(y / 1.6, 0.0, 1.0) : 0.38 * clamp(y / tall, 0.0, 1.0));
   // a lick stays orange to red (its dense core would otherwise read as a pale pill)
   if (lick > body) heat = max(heat, 0.4);
+  // igniting gas burns orange-red, not white-hot (on the pale floor white-hot reads as a cream wash)
+  heat = max(heat, 0.3 * step(0.05, ign));
   return vec2(d, heat);
 }
 void main() {
@@ -221,6 +233,43 @@ Particle emitParticle(float slot, float back) {
   return p;
 }`;
 
+/** Gone-out cells the smoke list holds at most (a 32 × 32 texture), and the wisps off each. */
+const SMOKE_CELLS = 1024, WISPS = 2;
+
+/**
+ * Smoke going out (Codex, 2026-11-27: "brief, thin smoke wisps and cooler residual char would give the burn a
+ * satisfying finish"): a few thin grey wisps off some of the cells dying or just gone out (the smoke list: cell, seconds
+ * since it started dying (from -1 at the start of its last second), floor height).
+ */
+const FLOOR_SMOKE = /* glsl */ `
+${CELL_GLSL}
+uniform sampler2D uSmoke; uniform float uClock;
+Particle emitParticle(float slot, float back) {
+  float ci = floor(slot / ${WISPS}.0), j = slot - ci * ${WISPS}.0;
+  vec4 S = texelFetch(uSmoke, ivec2(int(mod(ci, 32.0)), int(ci / 32.0)), 0);
+  float cell = S.x, id = cell * 3.0 + j, life = 2.0 + 0.7 * rnd(id, 81.0);
+  float ts = -0.9 + j * 0.5 + 0.4 * rnd(id, 82.0), a = (S.y - back - ts) / life;
+  if (a < 0.0 || a >= 1.0) return P0();
+  Particle p = P0(); p.alive = true;
+  p.pos = cellAt(cell, S.z) + vec3((rnd(id, 83.0) - 0.5) * 0.4 + sin(a * 4.0 + id) * 0.12 + a * 0.3, 0.2 + a * 1.5, (rnd(id, 84.0) - 0.5) * 0.4);
+  p.size = 0.35 + 0.6 * a; p.aspect = 0.55; p.rot = (rnd(id, 85.0) - 0.5) * 0.6 + a * 0.4;
+  p.col = vec4(a, 1.0, 0.0, 1.0);
+  p.data = vec4(rnd(id, 86.0), rnd(id, 87.0), 0.0, 0.0);
+  return p;
+}`;
+
+/** A wisp: the smoke sheet (as the wave's smoke), grey, thin and faint. */
+const LOOK_WISP = /* glsl */ `
+uniform sampler2D uSheet;
+${SHEET_GLSL}
+vec4 look(vec2 uv, vec4 col, vec4 data) {
+  vec2 q = uv * 0.5 + 0.5; if (data.y > 0.5) q.x = 1.0 - q.x;
+  float lum = flipbook(uSheet, q, 0.0, col.x, 4.0, 1.0).r, m = smoothstep(0.05, 0.7, lum);
+  vec3 c = mix(vec3(0.05, 0.045, 0.042), vec3(0.16, 0.145, 0.135), smoothstep(0.4, 0.95, lum));
+  float a = m * 0.55 * smoothstep(0.0, 0.2, col.x) * (1.0 - smoothstep(0.55, 1.0, col.x));
+  return vec4(c * a, a);
+}`;
+
 /** An ember (as the spray's). */
 const LOOK_EMBER = /* glsl */ `
 vec4 look(vec2 uv, vec4 col, vec4 data) {
@@ -243,15 +292,50 @@ float ignAt(vec2 xz) {
   }
   return k / 5.0;
 }
+// the ignition spread wider (taps 1.2 u out), so the flash runs a little ahead over the stone
+float ignWide(vec2 xz) {
+  float k = 0.0;
+  for (int i = 0; i < 4; i++) {
+    vec2 o = vec2(i == 0 ? 1.2 : i == 1 ? -1.2 : 0.0, i == 2 ? 1.2 : i == 3 ? -1.2 : 0.0);
+    k += texture(uChar, (xz + o - uSurfDims.xy) / (uSurfDims.z * uSurfSize)).b;
+  }
+  return k / 4.0;
+}
+// the char spread wider (taps 0.9 u out): x how near the patch a point outside it is (the mean), for the soot haze and
+// tendrils; y the strongest char near (1 only beside burning cells: the fresh char)
+vec2 charNear(vec2 xz) {
+  float k = 0.0, mx = 0.0;
+  for (int i = 0; i < 4; i++) {
+    vec2 o = vec2(i == 0 ? 0.9 : i == 1 ? -0.9 : 0.0, i == 2 ? 0.9 : i == 3 ? -0.9 : 0.0);
+    float g = texture(uChar, (xz + o - uSurfDims.xy) / (uSurfDims.z * uSurfSize)).g;
+    k += g; mx = max(mx, g);
+  }
+  return vec2(k / 4.0, mx);
+}
 vec4 decal(vec3 wp) {
   vec2 guv = (wp.xz - uSurfDims.xy) / (uSurfDims.z * uSurfSize);
-  vec2 ch = texture(uChar, guv).rg;
-  if (ch.g < 0.01) return vec4(0.0);
+  vec3 ch3 = texture(uChar, guv).rgb;
+  vec2 ch = ch3.rg;
+  float ignB = ignWide(wp.xz);
+  vec2 cn = charNear(wp.xz);
+  if (ch.g < 0.01 && cn.x < 0.01 && ch3.b < 0.01 && ignB < 0.01) return vec4(0.0);
   vec4 s = texture(uSurf, guv);
   // a fuzzy, ragged rim (the user, round 1: "edges can be a little fuzzier"): two scales of noise, a wide soft ramp
   // (layered: one octave of value noise swept by the fading char showed its square lattice as blocky specks)
-  float n = fbm3(vec3(wp.xz * 1.5, 3.0)), nf = fbm3(vec3(wp.xz * 4.5, 9.0));
+  // (warped, so the rim isn't a run of like rounded lobes: Codex, 2026-11-27)
+  vec2 wq = wp.xz + (vec2(fbm3(vec3(wp.xz * 0.7, 61.0)), fbm3(vec3(wp.xz * 0.7, 67.0))) - 0.5) * 1.2;
+  // (warped while the char is fresh; fading, the warped noise's contours were left as curly worms, so it fades on plain
+  // noise in soft patches)
+  float near = cn.x, fresh = smoothstep(0.9, 0.99, max(ch.g, cn.y));
+  float n = mix(fbm3(vec3(wp.xz * 1.5, 3.0)), fbm3(vec3(wq * 1.5, 3.0)), fresh), nf = fbm3(vec3(wp.xz * 4.5, 9.0));
   float m = ch.g + (n - 0.5) * 0.6 + (nf - 0.5) * 0.25;
+  // a broken perimeter (Codex: "shallow burnt tendrils, small gaps and a softer soot transition"): thin scorched streaks
+  // reach out over the stone where the char is near, and small bare gaps open just inside the rim
+  float ridge = 1.0 - abs(fbm3(vec3(wq * 1.3, 31.0)) * 2.0 - 1.0);
+  float edgeZone = smoothstep(0.05, 0.45, near) * (1.0 - smoothstep(0.55, 0.95, ch.g));
+  // (only while the char is fresh: as it fades the ridges would be left standing as worms)
+  m += pow(ridge, 6.0) * edgeZone * 0.75 * fresh;
+  m -= smoothstep(0.64, 0.78, fbm3(vec3(wp.xz * 2.6, 41.0))) * (1.0 - smoothstep(0.65, 1.1, m)) * 0.5 * fresh;
   float rim = smoothstep(0.1, 0.9, m);
   vec3 cr = texture(uCracks, wp.xz / 3.2).rgb;
   float crack = smoothstep(0.32, 0.85, cr.r) * smoothstep(0.05, 0.4, cr.g + 0.1);
@@ -269,14 +353,27 @@ vec4 decal(vec3 wp) {
   vec2 dw = (vec2(fbm3(vec3(drift * 0.6, uClock * 0.08 + 1.0)), fbm3(vec3(drift * 0.6, uClock * 0.08 + 5.0))) - 0.5) * 1.4;
   float roll = smoothstep(0.38, 0.72, fbm3(vec3(drift + dw, uClock * 0.12 + uSeed * 0.01)));
   float glow = crack * (0.2 + 2.8 * roll) * bed;
-  vec3 charC = cr * 0.06 + vec3(0.008, 0.006, 0.005);
+  // the char warm brown in broad patches rather than one black slab (Codex: "lift the darkest interior toward warm
+  // brown"), darker in the cracks' seams; once its cell is out it cools to an ashy grey-brown
+  float bro = fbm3(vec3(wp.xz * 0.45, 51.0));
+  vec3 charC = mix(vec3(0.010, 0.007, 0.006), vec3(0.075, 0.036, 0.016), smoothstep(0.3, 0.75, bro) * 0.85 + 0.15) * (0.75 + cr.r * 0.4);
+  charC = mix(charC, vec3(0.055, 0.047, 0.042), (1.0 - smoothstep(0.0, 0.3, s.r)) * 0.7);
   vec3 glowC = vec3(1.0, 0.38, 0.07) * glow * 1.6 + vec3(0.45, 0.06, 0.015) * (cl * 0.45 + roll * 0.25) * bed * 0.6;
   // the ignition's flash over everything that just lit
   float ign = ignAt(wp.xz) * smoothstep(0.25, 0.75, fbm3(vec3(wp.xz * 2.2, 11.0)));
-  glowC += vec3(2.0, 0.65, 0.08) * ign * ign * (0.7 + 0.3 * n);
+  glowC += vec3(0.6, 0.16, 0.02) * ign * ign * (0.7 + 0.3 * n);
+  // the flash covers (Codex: at 0.05 s it "reads as a faint dusty disturbance": additive light on the pale floor washed
+  // to cream): a saturated orange sheet hugging the ground, a little wider than the cells, before the char comes in
+  float flash = smoothstep(0.15, 0.5, ignAt(wp.xz) * 0.5 + ignB * 0.5 + (n - 0.5) * 0.5 + (nf - 0.5) * 0.2);
   // smoky toward the rim: the char's dark thins out into a soot haze rather than ending
   float a = rim * mix(0.55, 0.96, smoothstep(0.35, 0.9, m));
-  return vec4(charC * a + glowC, a);
+  // and past it, a faint soot haze where the char is near
+  float soot = smoothstep(0.02, 0.5, near + (n - 0.5) * 0.3) * 0.2 * (1.0 - rim);
+  vec3 col = charC * a + vec3(0.03, 0.024, 0.02) * soot;
+  a += soot * (1.0 - a);
+  col = mix(col, vec3(0.85, 0.2, 0.02), flash * 0.85);
+  a = mix(a, 1.0, flash * 0.85);
+  return vec4(col + glowC, a);
 }`;
 
 export class FireFloor {
@@ -286,6 +383,10 @@ export class FireFloor {
   readonly flames: THREE.Mesh;
   private G: Record<string, THREE.IUniform>;
   private embers: ParticleBatch;
+  /** Smoke wisps going out, and the cells they rise from (FLOOR_SMOKE). */
+  private smoke: ParticleBatch;
+  private smokeList = new THREE.DataTexture(new Float32Array(SMOKE_CELLS * 4), 32, 32, THREE.RGBAFormat, THREE.FloatType);
+  private smokeN = 0;
   private U: Record<string, THREE.IUniform>;
   /** Seconds each burning cell (in the burning list's order) has been lit. */
   private ages = new THREE.DataTexture(new Float32Array(MAX_BURNING * 4), 64, 64, THREE.RGBAFormat, THREE.FloatType);
@@ -312,15 +413,17 @@ export class FireFloor {
     this.flames = gasMesh(this.G);
     this.embers = new ParticleBatch({ motion: FLOOR_EMBER, look: LOOK_EMBER, cap: MAX_BURNING * EMBERS_PER_CELL, order: 2, uniforms: this.U });
     this.embers.u.uSeed.value = seed + 7; this.bed.u.uSeed.value = seed;   // the bed's underglow follows the gas's clusters
-    this.group.add(this.bed.mesh, this.flames, this.embers.mesh);
-    this.bed.mesh.name = 'floor.bed'; this.flames.name = 'floor.gas'; this.embers.mesh.name = 'floor.embers';   // ?fxoff= (view3d/fx-off.ts)
+    this.smoke = new ParticleBatch({ motion: FLOOR_SMOKE, look: LOOK_WISP, cap: SMOKE_CELLS * WISPS, order: 1, soft: 0.5, uniforms: { ...this.U, uSmoke: { value: this.smokeList }, uSheet: { value: FIRE_TEX.smokeburn } } });
+    this.smoke.u.uSeed.value = seed + 13;
+    this.group.add(this.bed.mesh, this.flames, this.embers.mesh, this.smoke.mesh);
+    this.bed.mesh.name = 'floor.bed'; this.flames.name = 'floor.gas'; this.embers.mesh.name = 'floor.embers'; this.smoke.mesh.name = 'floor.smoke';   // ?fxoff= (view3d/fx-off.ts)
   }
 
   /** Forget every cell's lighting and going out (a lab drawing another world): the next frame starts from nothing. */
   reset(): void { this.lit.clear(); this.out.clear(); this.blank = false; this.lastT = -Infinity; }
 
   /** Quads drawn this frame. */
-  get drawn(): number { return this.embers.count; }
+  get drawn(): number { return this.embers.count + this.smoke.count; }
 
   /** One frame at time t (sim seconds): the grid must have been updated from the sim this frame. */
   update(t: number, lights: SpellLights | null): void {
@@ -338,6 +441,7 @@ export class FireFloor {
       (this.G.uBoxH.value as THREE.Vector3).set((box.x1 - box.x0) / 2, H / 2, (box.z1 - box.z0) / 2);
     }
     this.embers.count = g.count * EMBERS_PER_CELL;
+    this.smoke.count = this.smokeN * WISPS;
     this.group.visible = !!box;
     if (!lights || !g.count) return;
     // light: the burning cells binned 3 u square, the biggest few bins each a light at their middle
@@ -350,7 +454,7 @@ export class FireFloor {
     // the ignition's flash of light, while the newest cells are still flaring
     if (this.youngest < GROW && box) {
       const cx = (box.x0 + box.x1) / 2, cz = (box.z0 + box.z1) / 2;
-      lights.add(cx, g.heightAt(cx, cz) + 1.2, cz, 0xffc070, 9 * (1 - this.youngest / GROW), Math.max(box.x1 - box.x0, box.z1 - box.z0) / 2 + 3);
+      lights.add(cx, g.heightAt(cx, cz) + 1.2, cz, 0xff6a20, 3.5 * (1 - this.youngest / GROW), Math.max(box.x1 - box.x0, box.z1 - box.z0) / 2 + 3);
     }
     for (const b of [...bins.values()].sort((p, q) => q[4] - p[4]).slice(0, 4)) {
       const k = b[4], flick = 0.85 + 0.15 * Math.sin(t * 13 + b[0]) * Math.sin(t * 5.1 + b[1]);
@@ -398,16 +502,30 @@ export class FireFloor {
       const x = g.dims.x + ((c % gw) + 0.5) * g.dims.z, z = g.dims.y + (Math.floor(c / gw) + 0.5) * g.dims.z;
       x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z);
     };
-    for (const [c, t0] of this.lit) mark(c, (t - t0) / GROW, Math.min(1, 0.35 + (t - t0) / GROW), 1 - (t - t0) / GROW);
+    // the char comes in behind the ignition's flash (Codex: by 0.2 s "a dark bed is already strongly established")
+    for (const [c, t0] of this.lit) mark(c, (t - t0) / GROW, Math.max(0, Math.min(1, (t - t0 - 0.06) / CHAR_IN)), 1 - (t - t0) / GROW);
+    // the smoke list: some of the cells dying (their last second) or gone out
+    const S = this.smokeList.image.data as Float32Array, pick = (c: number) => (Math.imul(c, 2654435761) >>> 0) % 100 < 22;
+    let sn = 0;
+    for (let i = 0; i < g.count && sn < SMOKE_CELLS; i++) {
+      const c = L[i * 4], life = L[i * 4 + 1];
+      if (life >= 1 || !pick(c)) continue;
+      S[sn * 4] = c; S[sn * 4 + 1] = -life; S[sn * 4 + 2] = L[i * 4 + 3]; sn++;
+    }
     for (const [c, t1] of this.out) {
       const k = (t - t1) / CHAR_LIFE;
       if (k >= 1 || k < 0) { this.out.delete(c); continue; }
       mark(c, 1, 1 - k);
+      if (sn < SMOKE_CELLS && pick(c)) {
+        S[sn * 4] = c; S[sn * 4 + 1] = t - t1; S[sn * 4 + 2] = g.heightAt(g.dims.x + ((c % gw) + 0.5) * g.dims.z, g.dims.y + (Math.floor(c / gw) + 0.5) * g.dims.z); sn++;
+      }
     }
+    if (sn || this.smokeN) this.smokeList.needsUpdate = true;
+    this.smokeN = sn;
     this.char.needsUpdate = true;
     if (g.count) this.ages.needsUpdate = true;
     return x0 === Infinity ? null : { x0: x0 - 1.5, z0: z0 - 1.5, x1: x1 + 1.5, z1: z1 + 1.5 };
   }
 
-  dispose(): void { this.bed.dispose(); this.flames.geometry.dispose(); (this.flames.material as THREE.Material).dispose(); this.embers.dispose(); this.ages.dispose(); this.char?.dispose(); }
+  dispose(): void { this.bed.dispose(); this.flames.geometry.dispose(); (this.flames.material as THREE.Material).dispose(); this.embers.dispose(); this.smoke.dispose(); this.smokeList.dispose(); this.ages.dispose(); this.char?.dispose(); }
 }

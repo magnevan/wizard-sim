@@ -543,4 +543,32 @@ window.ROUNDS = [
     ],
     general: 'Anything else about the patch',
   },
+  {
+    id: 'fire-13',
+    group: 'Fire',
+    topic: 'Patch',
+    tab: '6 · Codex’s points',
+    el: 'fire',
+    date: '2026-11-27',
+    title: 'Fire patch, take 6: Codex’s points built',
+    lead: 'All four of Codex’s remaining points, on top of take 5. The first clip is the whole life of a two-rune patch, cast once (17 s, through the burn-out).',
+    items: [
+      {
+        id: 'patch',
+        title: 'The whole patch',
+        text: 'The bed: the char is warm brown in broad patches instead of one black slab, and low ridged veins of short flame join the clusters now and then. The edge: burnt tendrils reach out over the stone, small bare gaps open just inside the rim, and a faint soot haze lies past it (only while it burns: as the char fades they’d be left standing as worms). The ending: thin grey smoke wisps rise off some cells as they go out, and the char cools toward ashy grey-brown before it fades.',
+        vid: ['p6-patch-14.mp4', 'p6-patch5-14.mp4', 'p6-patch-30.mp4'],
+        img: ['p6-patch-end.jpg'],
+        ask: 'Better than take 5?',
+      },
+      {
+        id: 'ignition',
+        title: 'The ignition',
+        text: 'Codex: at 0.05 s it read as “a faint dusty disturbance”. The cause was the same as the wave’s: light added on the pale floor washes to cream (the flash, the gas’s white-hot core, and a strong light pop that lit the whole floor). Now a saturated orange sheet covers the ground, a little wider than the cells with a soft edge, and the igniting gas burns orange-red; the light pop is weaker and warmer; and the char comes in over 0.7 s behind the flash instead of being down by 0.2 s. Frames at 0.02, 0.05, 0.1, 0.2, 0.4 and 1.5 s.',
+        img: ['p6-patch-ignition.jpg'],
+        ask: 'Does it catch like a surface now?',
+      },
+    ],
+    general: 'Anything else about the patch',
+  },
 ];

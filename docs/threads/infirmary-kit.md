@@ -1,6 +1,6 @@
 # The infirmary on the kit
 
-Status: active 2026-11-27; the healing devices modelled and in place, the grass session's branch merged in; next the triage sheet on meshy.ai (OK'd) · Last touched: 2026-11-27
+Status: active 2026-11-27; the healing devices and the triage dressing in place, the grass merged in; next the polish tasks on the board and the beauty check · Last touched: 2026-11-27
 Record: [the read](../campaign/01-opening/infirmary-read.md) (stages 0 to 3: plan D rev 9, flow 8/10, sense 9/10) · plan: `tools/place-plans/plans/inf-d.py` · scene: `tools/kit/scenes/infirmary.scene.json` · [building it on the kit](../campaign/making-a-place.md#building-it-on-the-kit) (the steps) · [the opening thread](opening.md) · [the courtyard on the kit](kit-courtyard.md) (the first place built this way)
 
 ## Where it stands
@@ -13,7 +13,6 @@ Branch `worktree-infirmary-kit`.
 
 **Resume here.** The page moved to the template's v2 on 2026-11-27 ([the place review thread](place-review.md)): the live to-do list is its db `tasks` (Now and Tasks tabs of [The Infirmary on the Kit](https://claude.ai/artifact/9xpg4f5Ye54kgLyGKrMEvA)); work it by [the loop](../../tools/place-review/README.md#the-loop-every-session-on-a-place): read `answers` and `tasks` first, answer what's on Claude's move. The branch is `worktree-infirmary-kit` (not merged; `q-merge` asks when).
 
-- [ ] **Triage dressing.** Sheet b is OK'd (`pc6-sheet2`). Render it on the meshy.ai website (free retries) when the user is at the machine for the download (`pc7-credits`), then split, fit at 1.8x (`style_scale`) and dress the camp.
 - [ ] **Glyph lines dark till the fix**: the well's crystal is now dark while choked (`coreGlow`, the user's `q-crystal` answer), but the glyph lines still glow at full. Dimming them is the game session's `setGlyphState` (below); a scene `state: dim` could preview it.
 - [ ] **Polish tasks with evidence** (on the board): the beach's sea-wall balustrade along the water; birch bark; the wisteria tree should hang; vines on the middle cove cliff; the fields' brightness and hard edges; lumpy shrubs; the road out's broken paving.
 - [ ] **Beauty check** at the end, with a Codex second opinion.
@@ -22,6 +21,8 @@ Branch `worktree-infirmary-kit`.
 How the scene is made: `python tools/kit/trace_plan.py inf-h infirmary` re-traces plan H (`tools/place-plans/plans/inf-h.py`) with `FIXES['infirmary']` in `trace_plan.py` (every hand edit lives there: the cove, flights, set pieces, props, glyph paths, markers), then `compile.py infirmary`, `room.py infirmary`, and `npm run content:build` in `game/`. Renders: `npm run dev -w @wizard-sim/client -- --port 5197` in `game/`, then `/__map/view?name=infirmary&cam=game&x=..&y=..&r=..` (`&grow=0..1` for the vines, `&t=` for smoke). Meshy spent this session: 330 credits (1,134 left; they expire 2026-12-16).
 
 ## Done
+
+- 2026-11-27: the triage sheet b on meshy.ai (35 credits, the eight props apart at the first try: wide gaps work; 95 credits this session), split by `split_sheet.py` (`kit-src/infirmary/triage-parts/`), fitted at 1.8x as `dress.buckets`, `washstand`, `camp-stool`, `supply-table`, `instrument-tray`, `potion-chest`, `lantern-post` (3.2 m, as the road lamps), `cloak-stand`; sixteen placed round the tents and stretchers (`triage-*` in `FIXES['infirmary']`). A new kit piece needs the dev server restarted: the editor's hidden page keeps the kit.json it loaded.
 
 - 2026-11-27: with the user's OK (`pc7-credits`), the station and the emitter modelled (Meshy 7.1, 30 credits each, first try; 60 this session), fitted (`setpiece.heal-station` 1.26 m, `setpiece.bed-emitter` 0.91 m) and in place. The tent model's cots run right up to its back posts, so the emitters stand beside each cot's head, not behind it (behind, the roof hid them). The grass session's branch (`worktree-grass-look`: natural ground in `kit-ground.ts`, margin grass, worn paths `kind: wear`, wild flowers) merged in; the scene re-traced from the merged `trace_plan.py`. Tests pass.
 

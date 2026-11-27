@@ -1213,7 +1213,7 @@
    "id": "triage-sheet",
    "name": "Triage dressing sheet",
    "area": "props",
-   "status": "OK'd (b); render waiting on pc7-credits",
+   "status": "in the scene: 16 props",
    "steps": [
     {
      "kind": "picture",
@@ -1264,6 +1264,50 @@
       }
      ],
      "note": "Next: the meshy.ai website (free retries), not the API."
+    },
+    {
+     "kind": "meshy",
+     "at": "2026-11-27",
+     "title": "Sheet b on meshy.ai: eight props apart, first try",
+     "credits": 35,
+     "note": "Meshy 7.5 on the website (its task id is not shown there); the wide gaps worked.",
+     "imgs": [
+      {
+       "src": "img/model-triage-sheet-5.jpg",
+       "cap": "What Meshy sent back"
+      }
+     ],
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/sheet-triage.glb",
+      "game/content/generated/meshy/kit-src/infirmary/sheet-triage.glb"
+     ]
+    },
+    {
+     "kind": "split",
+     "at": "2026-11-27",
+     "title": "buckets, washstand, camp-stool, supply-table, instrument-tray, potion-chest, lantern-post, cloak-stand",
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/triage-parts/"
+     ]
+    },
+    {
+     "kind": "placed",
+     "at": "2026-11-27",
+     "title": "16 props round the tents and stretchers (dress.*, 1.8x life)",
+     "imgs": [
+      {
+       "src": "img/triage-n1.jpg",
+       "cap": "The north-west tent"
+      },
+      {
+       "src": "img/triage-e.jpg",
+       "cap": "The east tents"
+      },
+      {
+       "src": "img/triage-w.jpg",
+       "cap": "The west tents"
+      }
+     ]
     }
    ]
   }
@@ -1311,9 +1355,13 @@
    "subs": [
     {
      "id": "devices2",
-     "label": "Devices in",
+     "label": "Devices and triage in",
      "at": "2026-11-27",
      "sections": [
+      {
+       "title": "Round 11: the triage dressing",
+       "html": "<p>Sheet b on meshy.ai (35 credits) came back with all eight props apart at the first try: the wide gaps worked. Split into buckets, a washstand, a camp stool, a supply table, an instrument tray, a potion chest, a lantern post and a cloak stand, each fitted at 1.8x life like the other camp props. Sixteen are placed round the tents' fronts and free ends and by the stretchers. The middle round the well stays open.</p><figure><img src=\"img/triage-n1.jpg\" alt=\"North-west tent\"><figcaption>The north-west tent: a cloak stand at its end, a supply table and stool in front</figcaption></figure><figure><img src=\"img/triage-e.jpg\" alt=\"East tents\"><figcaption>The east tents: a table and potion chest, an instrument tray by the stretcher</figcaption></figure><figure><img src=\"img/triage-w.jpg\" alt=\"West tents\"><figcaption>The west tents: a potion chest at the end, a tray by the stretcher, a lantern post</figcaption></figure>"
+      },
       {
        "title": "Round 10: the models in place",
        "html": "<p>With your OK, both models came back from Meshy at the first try (30 credits each) and are fitted: the station 1.26 m, the emitter 0.91 m. The cots in the tent model run right up to the back posts, so behind the pillows the emitters stood outside the tent, hidden by the roof. Each now stands in the gap beside its cot's head, its halo above the pillow and in view from the camera.</p><figure><img src=\"img/dev-models-close.jpg\" alt=\"Inside a tent\"><figcaption>Close and low: an emitter beside each pillow, the lead under the pillows</figcaption></figure><figure><img src=\"img/dev-models-west.jpg\" alt=\"The west tents\"><figcaption>The west tents at the game camera: the stations on their lines, the emitters' halos between the cots</figcaption></figure><figure><img src=\"img/dev-models-fore.jpg\" alt=\"The forecourt\"><figcaption>The forecourt, with the grass session's work merged in</figcaption></figure>"
@@ -1428,6 +1476,11 @@
    "at": "2026-11-27",
    "title": "Round 10: the healing devices modelled and in place; the grass merged in",
    "html": "<p>Both devices modelled (60 credits) and placed, the emitters moved beside the pillows. The grass session's branch (natural ground, margin grass, worn paths, wild flowers) merged into this one. <a href=\"#props-devices2\">The round</a>.</p>"
+  },
+  {
+   "at": "2026-11-27",
+   "title": "Round 11: the triage dressing in the camp",
+   "html": "<p>The triage sheet rendered on meshy.ai (35 credits, first try), split into eight props and sixteen placed round the tents. <a href=\"#props-devices2\">The round</a>.</p>"
   }
  ],
  "board": {
@@ -1509,8 +1562,8 @@
     "href": "#layout-planh",
     "cells": {
      "pieces": [
-      "started",
-      "devices in (check); triage sheet rendering",
+      "review",
+      "devices and triage props in: check",
       "#props-devices2"
      ],
      "surfaces": [
@@ -1519,9 +1572,9 @@
       "#ground-floor"
      ],
      "dressing": [
-      "review",
-      "triage sheet: your OK",
-      "#piece-triage-sheet"
+      "started",
+      "triage props placed",
+      "#props-devices2"
      ],
      "beauty": [
       "later"

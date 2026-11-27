@@ -279,7 +279,7 @@ function draw(run: Run, box?: { x: number; y: number; w: number; h: number }): v
   renderer.info.reset();
   // a film's frames pose the bodies on the sim's clock, so every frame is the same however long it took to draw
   run.bodies.update(run.w, 0, FROZEN || SHEET ? (run.w.clock[0] * 1000) / 60 : performance.now(), (x, y) => new THREE.Vector3(x, 0, y));
-  spells.frame(run.w, run.w.clock[0] / 60, { alpha: 0, localSeat: 0, cam });
+  spells.frame(run.w, run.w.clock[0] / 60, { alpha: 0, localSeat: 0, cam, castAt: (i) => { const p = run.bodies.castAt(i); return p ? [p.x, p.y, p.z] : null; } });
   if (HIT) drawHits(run);
   spells.render(renderer, scene, cam, box);
   Object.assign(stats, spells.standins.batch.counts);

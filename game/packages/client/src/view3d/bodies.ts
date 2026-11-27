@@ -17,7 +17,7 @@
 import * as THREE from 'three';
 import { KIND, MAX_BODIES, type World } from '@wizard-sim/sim';
 import type { RigKind, RigState } from '../art/rigs';
-import { fxTime, instance, litLook, liveMeta, liveNow, model, pose, scopedKey, stringOf, type Inst, type LivePose, type Model } from '../art/model-pose';
+import { castPoint, fxTime, instance, litLook, liveMeta, liveNow, model, pose, scopedKey, stringOf, type Inst, type LivePose, type Model } from '../art/model-pose';
 import { livePose, statusTint } from '../art/live-pose';
 import { BodyTrack, modelOf, type Fallen } from './bodies-track';
 
@@ -115,6 +115,17 @@ export class Bodies3D {
     for (const mat of this.standMats) mat.dispose();
     this.standGeo.dispose();
     this.shown.fill(null); this.spare.clear(); this.falls = [];
+  }
+
+  /**
+   * Where body i's spells leave its hands as drawn this frame (art/model-pose.ts castPoint, between the palms: the
+   * user, 2026-11-17, spells leave the hands, not the staff's tip), in world space; null when it isn't drawn as a model.
+   * Call after update().
+   */
+  castAt(i: number, out = new THREE.Vector3()): THREE.Vector3 | null {
+    const sh = this.shown[i], m = sh?.slug ? model(sh.slug) : null;
+    if (!sh?.inst?.hands || !m || !sh.holder.visible) return null;
+    return out.copy(castPoint(sh.inst, m));
   }
 
   /** Body i's holder, with a model copy of `slug` (null: a stand-in), reusing what it had if it still fits. */

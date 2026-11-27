@@ -32,6 +32,8 @@ import { GroundDecal } from './decal';
 import { ParticleBatch, streamMotion } from './particles';
 import { FIRE_TEX, SHEET_GLSL } from './fire-sheets';
 import { FireBody } from './fire-body';
+import { SprayGas } from './fire-spray-gas';
+import { opt } from '../../dev-options';
 import type { SpellLights } from './lights';
 
 export { FireFloor } from './fire-floor';
@@ -52,6 +54,9 @@ export const NOZZLE = { forward: 0.55, height: 1.3, endHeight: 0.6 };
  * the mesh again.
  */
 const BODY_MESH = false;
+
+/** ?spray=gas: the flames as burning gas (fire-spray-gas.ts) instead of the painted puffs (the default, flip). */
+const SPRAY_GAS = opt('spray') === 'gas';
 
 const SPRAY_HEAD = /* glsl */ `
 ${AIM_GLSL}
@@ -286,14 +291,14 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
  * the flames fly above it.
  */
 const FAN = /* glsl */ `
-uniform vec4 uFan; uniform float uHalf, uFanOn, uSootOn, uClock, uNozF, uRange, uRb;
+uniform vec4 uFan; uniform float uHalf, uFanOn, uClock, uNozF, uRange, uRb;
 float dropW(float d) {
   float c = uRange - uRb, at = (c * c - uRb * uRb) / max(c, 1e-3);
   return d < at ? d * tan(min(uHalf, 1.4)) : sqrt(max(uRb * uRb - (d - c) * (d - c), 0.0));
 }
 vec4 decal(vec3 wp) {
   vec2 d = wp.xz - uFan.xy; float r = length(d);
-  if (r > uFan.w + 3.0 || (uFanOn <= 0.0 && uSootOn <= 0.0)) return vec4(0.0);
+  if (r > uFan.w + 3.0 || uFanOn <= 0.0) return vec4(0.0);
   vec2 dir = vec2(cos(uFan.z), sin(uFan.z));
   float along = dot(d, dir), across = abs(d.x * dir.y - d.y * dir.x);
   // the light follows the raindrop (where the flames are), spilling a little past it, never further
@@ -304,17 +309,15 @@ vec4 decal(vec3 wp) {
   float pool = exp(-dot(wp.xz - uFan.xy - dir * uNozF, wp.xz - uFan.xy - dir * uNozF) / 7.0);
   // as wide as the pixel spray's glow (the study): a pool round the caster and the fan, spilling past the flames
   float k = (fan * 1.15 + pool * 1.0) * uFanOn;
-  // soot under the far half (Magicka 2's char): dark, blotchy, taking the stone's colour away
-  vec2 bc = uFan.xy + dir * max(min(uFan.w, uRange) - uRb * 1.1, 0.5);
-  float br = length(wp.xz - bc), wob = fbm3(vec3(wp.xz * 0.7, 9.0)), grain = fbm3(vec3(wp.xz * 2.3, 3.0));
-  float soot = (1.0 - smoothstep(uRb * 0.45, uRb * 1.25, br * (0.75 + 0.6 * wob))) * smoothstep(0.3, 0.65, grain) * uSootOn * 0.85;
+  // (no soot: a blotch of char under the far end, following the aim, "looks odd, and really reveals the spells shape":
+  // the user, round 10; removed 2026-11-27)
   // a warm glaze: it takes a little of the pale stone's own colour away (alpha) and puts saturated firelight back, so the
   // floor under the fire turns orange rather than just brighter (which the tone map would wash to cream)
   vec3 c = mix(vec3(1.0, 0.45, 0.1), vec3(1.0, 0.24, 0.04), clamp(r / max(uFan.w, 1.0), 0.0, 1.0));
-  return vec4(c * k * 0.35 * (1.0 - soot) + vec3(0.035, 0.022, 0.014) * soot * 0.55, clamp(k * 0.12 + soot * 0.9, 0.0, 0.95));
+  return vec4(c * k * 0.35, clamp(k * 0.12, 0.0, 0.95));
 }`;
 
-/** The spray's phases (phase.ts): its light goes out in 0.3 s; the soot, smoke and ash linger 6 s. */
+/** The spray's phases (phase.ts): its light goes out in 0.3 s; the smoke and ash linger 6 s. */
 const PHASE = { fall: 0.3, linger: 6.0 };
 
 /** Its runes' heat: shifts the colours hotter (art/spray-jet.ts: hot = 0.035 per rune past the first). */
@@ -335,7 +338,9 @@ export class FireSpray {
   readonly fan: GroundDecal;
   /** The body: the flame as one volume (fire-body.ts). */
   private body: FireBody;
-  private F = { uFan: { value: new THREE.Vector4() }, uFanOn: { value: 0 }, uSootOn: { value: 0 }, uClock: { value: 0 }, uNozF: { value: NOZZLE.forward + 0.6 } };
+  /** The flames as burning gas (?spray=gas), or null: the painted puffs. */
+  private gas: SprayGas | null = null;
+  private F = { uFan: { value: new THREE.Vector4() }, uFanOn: { value: 0 }, uClock: { value: 0 }, uNozF: { value: NOZZLE.forward + 0.6 } };
 
   /** `look` and `sheets` are the spike's and are ignored (see FxLook, FireSheets). */
   constructor(readonly look: FxLook, sheets: FireSheets | null, seed: number) {
@@ -350,8 +355,14 @@ export class FireSpray {
     };
     add(SMOKE, LOOK_SMOKE, RATE.smoke, RATE.smokeLife, 0, { uSheet: { value: FIRE_TEX.smokeburn } });
     // the body: one volume, a mesh (fire-body.ts), its deep-red outline shell first, then the flame
-    add(GLOW, LOOK_GLOW, RATE.glow, RATE.glowLife, 2, {}, 7);
-    add(PUFF, LOOK_PUFF, RATE.puff, RATE.puffLife, 3, { uSheet: { value: FIRE_TEX.burn } }, 8);
+    // the flames: painted puffs over a soft glow, or (?spray=gas) the burning gas of the rest of Fire (fire-spray-gas.ts)
+    if (SPRAY_GAS) {
+      this.gas = new SprayGas(SPRAY_HEAD, this.U);
+      this.group.add(this.gas.mesh);
+    } else {
+      add(GLOW, LOOK_GLOW, RATE.glow, RATE.glowLife, 2, {}, 7);
+      add(PUFF, LOOK_PUFF, RATE.puff, RATE.puffLife, 3, { uSheet: { value: FIRE_TEX.burn } }, 8);
+    }
     this.body = new FireBody(SPRAY_HEAD, this.U, seed);
     this.body.group.visible = BODY_MESH;
     this.group.add(this.body.group);
@@ -369,7 +380,7 @@ export class FireSpray {
    * One frame at time t (seconds, the effect clock): `spray` is this seat's spray from the sim (from-sim.ts sprays()),
    * or null when it isn't channelling. The floor's height under the caster is `groundY`.
    */
-  update(t: number, spray: SprayIn | null, groundY: number, lights: SpellLights | null): void {
+  update(t: number, spray: SprayIn | null, groundY: number, lights: SpellLights | null, hand: [number, number, number] | null = null): void {
     let r = this.rec;
     if (r && t < r.t0) { r = this.rec = null; this.trail.clear(); }
     if (spray) {
@@ -390,25 +401,37 @@ export class FireSpray {
     this.body.uGrow.value = Math.min(1, (t - r.t0) / 1.0);
     // the release erodes outward in the body's shader; this only cleans up after it
     this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - Math.max(0, t - r.end - 0.8) / 0.3);
+    if (this.gas) {
+      const A = this.trail.at(t);
+      this.gas.place(A.x, A.z, A.reach, groundY);
+      this.gas.u.uTravel.value = RATE.puffLife; this.gas.u.uOn.value = this.body.uOn.value;
+    }
     this.U.uN.value = n; this.U.uHot.value = hotOf(n); this.U.uCore.value = 0.34 + 0.02 * n; this.U.uNoz.value.w = groundY;
+    // the nozzle: the caster's hands as drawn (the casting pose moves them), as far forward and as high as they are now;
+    // NOZZLE without a model
+    const at0 = this.trail.at(t), noz = this.U.uNoz.value;
+    if (hand) {
+      const fwd = (hand[0] - at0.x) * Math.cos(at0.ang) + (hand[2] - at0.z) * Math.sin(at0.ang);
+      noz.x = Math.min(1.1, Math.max(0.15, fwd)); noz.y = Math.min(1.9, Math.max(0.5, hand[1] - groundY));
+    } else { noz.x = NOZZLE.forward; noz.y = NOZZLE.height; }
+    this.F.uNozF.value = noz.x + 0.6;
     for (const l of this.layers) { l.b.u.uRate.value = l.rate(n); l.b.u.uLife.value = l.life(n); }
-    // phases (phase.ts): the stream's light grows in 0.15 s and goes out in 0.3 s; the soot is its aftermath (6 s)
+    // phases (phase.ts): the stream's light grows in 0.15 s and goes out in 0.3 s; the smoke and ash linger after (6 s)
     const ph = phaseOf(t, r.t0, r.end, PHASE), now = this.trail.at(t), on = Math.min(ph.on, Math.min(1, (t - r.t0) / 0.15));
     // the light on the floor runs out with the flames (full length in about 0.45 s), not ahead of them
     const grown = Math.min(1, (t - r.t0) / 0.45);
     this.F.uFan.value.set(now.x, now.z, now.ang, NOZZLE.forward + (now.reach - NOZZLE.forward) * grown); this.F.uFanOn.value = on * (0.75 + 0.07 * n); this.F.uClock.value = t;
-    this.F.uSootOn.value = Math.min(1, (t - r.t0) / 0.3) * (1 - ph.after);
     this.fan.heightAt = () => groundY;
     this.fan.cover({ x0: now.x - now.reach - 3, z0: now.z - now.reach - 3, x1: now.x + now.reach + 3, z1: now.z + now.reach + 3 });
     // light: the staff's flare and the stream, brighter with more runes, only while it's running
     if (lights && t <= r.end) {
       const A = now, cs = Math.cos(A.ang), sn = Math.sin(A.ang), on2 = Math.min(1, (t - r.t0) / 0.12);
-      const at = (f: number) => NOZZLE.forward + f * Math.max(0, A.reach - NOZZLE.forward);
+      const nf = this.U.uNoz.value.x, at = (f: number) => nf + f * Math.max(0, A.reach - nf);
       const flick = 0.85 + 0.15 * Math.sin(t * 23) * Math.sin(t * 7.3);
       lights.add(A.x + cs * at(0.1), groundY + NOZZLE.height, A.z + sn * at(0.1), 0xffc070, (2.2 + 0.5 * n) * on2 * flick, 5 + n);
       lights.add(A.x + cs * at(0.6), groundY + 1.1, A.z + sn * at(0.6), 0xff7a2a, (3.4 + 1.0 * n) * on2 * flick, 6 + 1.5 * n);
     }
   }
 
-  dispose(): void { for (const l of this.layers) l.b.dispose(); this.body.dispose(); this.fan.dispose(); }
+  dispose(): void { for (const l of this.layers) l.b.dispose(); this.body.dispose(); this.gas?.dispose(); this.fan.dispose(); }
 }

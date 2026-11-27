@@ -611,4 +611,31 @@ window.ROUNDS = [
     ],
     general: 'Anything else about Burn',
   },
+  {
+    id: 'fire-16',
+    group: 'Fire',
+    topic: 'Flamethrower',
+    tab: '1 · close-out',
+    el: 'fire',
+    date: '2026-11-27',
+    title: 'Flamethrower close-out, take 1: the hands, no char, and the flames as gas',
+    lead: 'Burn is closed (you: “That works”). The flamethrower’s open items: the nozzle, the char under it, and whether its flames should become the burning gas the rest of Fire now is.',
+    items: [
+      {
+        id: 'fixes',
+        title: 'The nozzle and the char (built, in both looks)',
+        text: 'The stream now leaves the caster’s hands as the model draws them (between the palms, as every spell does since you moved them off the staff’s tip on 2026-11-17), so it follows the casting pose instead of a fixed point. The soot under the spray’s far end is gone (round 10: it “looks odd, and really reveals the spells shape”): it was a blotch following the aim. Only the warm light on the floor stays.',
+        vid: ['t1-flip-9.mp4'],
+        ask: 'Right?',
+      },
+      {
+        id: 'gas',
+        title: 'The flames as gas (on trial: ?spray=gas)',
+        text: 'The painted flame puffs and their glow replaced by one ray-marched volume of the same gas as the wave, patch and burning bodies: the sim’s raindrop shape, a tight jet at the hands torn into tongues and billows as it opens, each slice following the aim it left with (so a sweep bends it like a hose), hot hearts and red edges, its head and tail broken by noise. The white-hot core, embers, smoke and floor light are the same in both. Clips: gas at two runes (compare the flipbook clip above), five runes, a sweep, and the game’s distance. The flipbook stays the default until you choose.',
+        vid: ['t1-gas-9.mp4', 't1-gas5-9.mp4', 't1-sweep-9.mp4', 't1-gas-26.mp4'],
+        ask: 'Gas, flipbook, or a mix?',
+      },
+    ],
+    general: 'Anything else about the flamethrower',
+  },
 ];

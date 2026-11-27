@@ -38,6 +38,8 @@ export interface SpellFrame {
   cam?: THREE.PerspectiveCamera;
   /** Where body i is drawn (sim u), when the view interpolates. */
   bodyAt?: (i: number) => [number, number];
+  /** Where body i's spells leave its hands as drawn (sim x, height, sim y), or null: the spray's nozzle follows it. */
+  castAt?: (i: number) => [number, number, number] | null;
 }
 
 export class Spells3D {
@@ -147,7 +149,7 @@ export class Spells3D {
     if (this.floor) this.floor.group.visible &&= fireB;
     if (this.grid && this.floor && fireB) {
       const all = sprays(w);
-      for (let s = 0; s < MAX_SEATS; s++) this.spraysBy[s].update(t, all.find((p) => p.seat === s && p.kind === 'fire') ?? null, this.groundUnder(w, s), this.lights);
+      for (let s = 0; s < MAX_SEATS; s++) this.spraysBy[s].update(t, all.find((p) => p.seat === s && p.kind === 'fire') ?? null, this.groundUnder(w, s), this.lights, o.castAt?.(s) ?? null);
       this.grid.update(w);
       this.floor.update(t, this.lights);
     }

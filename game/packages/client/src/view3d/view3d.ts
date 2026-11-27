@@ -173,7 +173,11 @@ export class View3D implements GameView {
     };
     this.bodies.update(w, alpha, now, (x, y) => ground(x, y));
     // the effects clock is sim time, as the FX lab runs it
-    this.spells.frame(w, w.clock[0] / 60, { alpha, localSeat: this.localSeat, cam: this.camera.cam, bodyAt: (i) => this.drawnAt(w, i, alpha) });
+    const hand = new THREE.Vector3();
+    this.spells.frame(w, w.clock[0] / 60, {
+      alpha, localSeat: this.localSeat, cam: this.camera.cam, bodyAt: (i) => this.drawnAt(w, i, alpha),
+      castAt: (i) => { const p = this.bodies.castAt(i, hand); return p ? [p.x - sceneX(0), p.y, p.z - sceneZ(0)] : null; },
+    });
     // hidden wizards: a hole through what stands between the camera and each local one (fade.ts)
     const targets: { x: number; y: number; z: number; h: number }[] = [];
     for (let s = 0; s < MAX_SEATS; s++) {

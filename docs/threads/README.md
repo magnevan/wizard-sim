@@ -9,7 +9,8 @@ One file per line of work that runs across sessions. How they work: [tasks.md](.
 | [A map editor the user and an LLM share](map-editor.md) | active | slice A works (`editor.html` on the dev server); next: drawing curves by hand |
 | [Outdoor foliage](foliage.md) | active | paused: plants grown in code approved by the user; branch `foliage` ready to merge into `court-kit` |
 | [The courtyard on the kit](kit-courtyard.md) | parked | built and merged; its leftovers wait for a polish pass |
-| [The infirmary on the kit](infirmary-kit.md) | active | trace infirmary plan D into a scene, walkable in the 3D game; then its pieces |
+| [The infirmary on the kit](infirmary-kit.md) | paused | for the review page's v2; then the healing devices, on the new page |
+| [The place review page and its loop](place-review.md) | active | the user's first look at v2 on the infirmary page |
 | [Waterfalls](waterfall.md) | active | the user's look at the built fall moving in the editor |
 | [The ring merges into the burst](ring-burst-merge.md) | active | the user's playtest of the ring radius, the stretch and the preview |
 | [How we make particle VFX](vfx.md) | active | the user tries the VFX Lab; knobs per effect as it's reworked |

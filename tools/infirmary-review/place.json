@@ -1,8 +1,118 @@
 {
+ "version": 2,
  "title": "The Infirmary on the Kit",
  "eyebrow": "The opening · stop 1 · Life",
- "lede": "Plan H, your pick, built in 3D from the kit's pieces and walkable in the game. <b>Now</b> holds the decisions waiting on you and the task board, each with its pictures; the other tabs hold the work by area, a sub-tab per round.",
- "note": "Branch <code>worktree-infirmary-kit</code>. Credits: 330 Meshy this session.",
+ "lede": "Plan H, your pick, built in 3D from the kit's pieces and walkable in the game. <b>Now</b> shows what waits on you (decisions, tasks to acknowledge or check), what is in flight and what is Claude's to do; <b>Pieces</b> follows every model from its picture to the scene; the area tabs hold each round's work.",
+ "stage": "props",
+ "credits": "Meshy credits: 330 spent on the infirmary (1,134 left on the account; they expire 2026-12-16). Every model call waits for your OK on its picture.",
+ "concepts": [
+  {
+   "id": "concept",
+   "src": "img/concept-v2.jpg",
+   "title": "The concept",
+   "cap": "The well choked in vines, tents of cots, the greenhouse, stills and the bath. A source of ideas; the layout is plan H.",
+   "kind": "concept",
+   "status": "approved",
+   "at": "2026-11-22"
+  },
+  {
+   "id": "paint-h",
+   "src": "img/paint-h-overview.jpg",
+   "title": "Plan H, painted",
+   "cap": "The grey-box of plan H painted in the concept's style (step 3), the layout kept exactly.",
+   "kind": "painted grey-box",
+   "status": "approved",
+   "at": "2026-11-26"
+  },
+  {
+   "id": "paint-h-2",
+   "src": "img/paint-h-overview-2.jpg",
+   "title": "Plan H, painted, take 2",
+   "kind": "painted grey-box",
+   "status": "current",
+   "at": "2026-11-26"
+  },
+  {
+   "id": "paint-h-arrival",
+   "src": "img/paint-h-arrival.jpg",
+   "title": "Plan H painted: arrival",
+   "kind": "painted grey-box",
+   "status": "current",
+   "at": "2026-11-26"
+  },
+  {
+   "id": "paint-h-forecourt",
+   "src": "img/paint-h-forecourt.jpg",
+   "title": "Plan H painted: forecourt",
+   "kind": "painted grey-box",
+   "status": "current",
+   "at": "2026-11-26"
+  },
+  {
+   "id": "paint-h-cove",
+   "src": "img/paint-h-cove.jpg",
+   "title": "Plan H painted: cove",
+   "kind": "painted grey-box",
+   "status": "current",
+   "at": "2026-11-26"
+  },
+  {
+   "id": "paint-h-road",
+   "src": "img/paint-h-road.jpg",
+   "title": "Plan H painted: road",
+   "kind": "painted grey-box",
+   "status": "current",
+   "at": "2026-11-26"
+  },
+  {
+   "id": "concept-v1",
+   "src": "img/concept-v1.jpg",
+   "title": "The first concept",
+   "kind": "concept",
+   "status": "superseded",
+   "at": "2026-11-22"
+  },
+  {
+   "id": "paint-d-overview",
+   "src": "img/paint-overview.jpg",
+   "title": "Plan D painted: overview",
+   "kind": "painted grey-box",
+   "status": "superseded",
+   "at": "2026-11-26"
+  },
+  {
+   "id": "paint-d-overview-2",
+   "src": "img/paint-overview-2.jpg",
+   "title": "Plan D painted: overview-2",
+   "kind": "painted grey-box",
+   "status": "superseded",
+   "at": "2026-11-26"
+  },
+  {
+   "id": "paint-d-arrival",
+   "src": "img/paint-arrival.jpg",
+   "title": "Plan D painted: arrival",
+   "kind": "painted grey-box",
+   "status": "superseded",
+   "at": "2026-11-26"
+  },
+  {
+   "id": "paint-d-overlook",
+   "src": "img/paint-overlook.jpg",
+   "title": "Plan D painted: overlook",
+   "kind": "painted grey-box",
+   "status": "superseded",
+   "at": "2026-11-26"
+  },
+  {
+   "id": "paint-d-shore",
+   "src": "img/paint-shore.jpg",
+   "title": "Plan D painted: shore",
+   "kind": "painted grey-box",
+   "status": "superseded",
+   "at": "2026-11-26"
+  }
+ ],
  "decisions": [
   {
    "id": "pc6-station",
@@ -56,7 +166,9 @@
      "v": "redo",
      "label": "Redo"
     }
-   ]
+   ],
+   "area": "props",
+   "piece": "devices"
   },
   {
    "id": "pc6-emitter",
@@ -93,7 +205,9 @@
      "v": "redo",
      "label": "Redo"
     }
-   ]
+   ],
+   "area": "props",
+   "piece": "devices"
   },
   {
    "id": "pc6-sheet2",
@@ -127,7 +241,9 @@
      "v": "redo",
      "label": "Redo"
     }
-   ]
+   ],
+   "area": "props",
+   "piece": "triage-sheet"
   },
   {
    "id": "q-crystal",
@@ -157,7 +273,8 @@
      "v": "thin",
      "label": "Thin the vines"
     }
-   ]
+   ],
+   "area": "magic"
   },
   {
    "id": "q-merge",
@@ -189,226 +306,810 @@
    "id": "pc5-frame",
    "title": "Healing devices, round 1",
    "closed": "one station per tent (lamp b's look) and an emitter behind each pillow; the frame would hide the patient",
-   "choices": []
+   "choices": [],
+   "area": "props",
+   "piece": "devices"
   },
   {
    "id": "pc4-purifier",
    "title": "The purifier",
    "closed": "idea 2: the drum at the jetty's head, the pump tower in a cliff bay (built)",
-   "choices": []
+   "choices": [],
+   "area": "props",
+   "piece": "purifier"
   },
   {
    "id": "q-plan-r2",
    "title": "Which plan",
    "closed": "plan H, with more open ground (built)",
-   "choices": []
+   "choices": [],
+   "area": "layout"
   }
  ],
- "tasks": [
+ "pieces": [
   {
-   "id": "t-devices2",
-   "kind": "build",
-   "status": "doing",
-   "title": "Healing devices, round 2: waiting on your picks",
-   "html": "Pictures of the station, the bed emitter, the pylon as a two-bed station and a dressed tent are under Decisions pending. Then model (about 30 credits each) and place.",
-   "evidence": [
+   "id": "well",
+   "name": "The caged well",
+   "area": "magic",
+   "status": "in the scene",
+   "steps": [
     {
-     "src": "img/dev2-tent-dressed.jpg",
-     "cap": "A whole tent dressed"
-    }
-   ]
-  },
-  {
-   "id": "t-triage",
-   "kind": "build",
-   "status": "doing",
-   "title": "Triage dressing sheet: redraw so it splits",
-   "html": "Meshy fused sheet b into one object (30 credits lost): its props touched. Redrawn with wide gaps; waiting on your OK (Decisions pending), then a website render with retries.",
-   "evidence": [
-    {
-     "src": "img/dev-sheet-b.jpg",
-     "cap": "Sheet b: props too close to split"
+     "kind": "picture",
+     "at": "2026-11-26",
+     "title": "Round 1",
+     "imgs": [
+      {
+       "src": "img/pc-well-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc-well-b.jpg",
+       "cap": "b"
+      }
+     ],
+     "note": "Your note: structure only, the vines procedural so they can draw back."
     },
     {
-     "src": "img/dev-sheet2-b.jpg",
-     "cap": "The redraw"
+     "kind": "picture",
+     "at": "2026-11-26",
+     "title": "Round 2, no vines",
+     "imgs": [
+      {
+       "src": "img/pc-well-novines-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc-well-novines-b.jpg",
+       "cap": "b"
+      }
+     ]
+    },
+    {
+     "kind": "pick",
+     "at": "2026-11-26",
+     "title": "b"
+    },
+    {
+     "kind": "meshy",
+     "at": "2026-11-26",
+     "credits": 30,
+     "imgs": [
+      {
+       "src": "img/model-well.jpg",
+       "cap": "What Meshy sent back"
+      }
+     ],
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/infirmary-well.glb"
+     ]
+    },
+    {
+     "kind": "fit",
+     "at": "2026-11-26",
+     "title": "setpiece.infirmary-well"
+    },
+    {
+     "kind": "code",
+     "at": "2026-11-27",
+     "title": "Vines grown in code",
+     "imgs": [
+      {
+       "src": "img/vines-near-1.jpg",
+       "cap": "Choked"
+      },
+      {
+       "src": "img/vines-near-0.jpg",
+       "cap": "Cut back"
+      }
+     ],
+     "note": "<code>overgrowth.ts</code>"
     }
    ]
   },
   {
-   "id": "t-place-devices",
-   "kind": "build",
-   "status": "open",
-   "title": "Model and place the healing devices",
-   "html": "After your pick: a station per tent where its glyph line ends, an emitter per cot; about 30 credits a model.",
-   "evidence": [
+   "id": "greenhouse",
+   "name": "Greenhouse",
+   "area": "props",
+   "status": "in the scene",
+   "steps": [
     {
-     "src": "img/h5-forecourt.jpg",
-     "cap": "Where the glyph lines end by the tents"
+     "kind": "picture",
+     "at": "2026-11-26",
+     "imgs": [
+      {
+       "src": "img/pc-greenhouse-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc-greenhouse-b.jpg",
+       "cap": "b"
+      }
+     ]
+    },
+    {
+     "kind": "pick",
+     "at": "2026-11-26",
+     "title": "a"
+    },
+    {
+     "kind": "meshy",
+     "at": "2026-11-26",
+     "credits": 30,
+     "imgs": [
+      {
+       "src": "img/model-greenhouse.jpg",
+       "cap": "What Meshy sent back"
+      }
+     ],
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/greenhouse.glb"
+     ]
+    },
+    {
+     "kind": "fit",
+     "at": "2026-11-26",
+     "title": "setpiece.greenhouse",
+     "note": "Refitted at 26 u (about 7.4 m tall) for plan H."
+    },
+    {
+     "kind": "placed",
+     "at": "2026-11-26",
+     "imgs": [
+      {
+       "src": "img/h4-greenhouse.jpg",
+       "cap": "In the scene"
+      }
+     ]
     }
    ]
   },
   {
-   "id": "t-beauty",
-   "kind": "build",
-   "status": "open",
-   "title": "Beauty check",
-   "html": "The whole place at the game camera, with a Codex second opinion, before calling it done.",
-   "evidence": [
+   "id": "stills",
+   "name": "Stills",
+   "area": "props",
+   "status": "dropped from plan H",
+   "steps": [
     {
-     "src": "img/h5-overview.jpg",
-     "cap": "The place now"
+     "kind": "picture",
+     "at": "2026-11-26",
+     "imgs": [
+      {
+       "src": "img/pc-stills-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc-stills-b.jpg",
+       "cap": "b"
+      }
+     ]
+    },
+    {
+     "kind": "pick",
+     "at": "2026-11-26",
+     "title": "a"
+    },
+    {
+     "kind": "meshy",
+     "at": "2026-11-26",
+     "credits": 30,
+     "imgs": [
+      {
+       "src": "img/model-stills.jpg",
+       "cap": "What Meshy sent back"
+      }
+     ],
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/stills.glb"
+     ]
+    },
+    {
+     "kind": "fit",
+     "at": "2026-11-26",
+     "title": "setpiece.stills",
+     "note": "Placed in plan D; plan H has no stills."
     }
    ]
   },
   {
-   "id": "t-beach-rail",
-   "kind": "polish",
-   "status": "open",
-   "title": "The beach keeps a sea-wall balustrade along the water",
-   "html": "A balustrade runs along the sand at the water's edge, where a beach would just meet the sea.",
-   "evidence": [
+   "id": "tent",
+   "name": "Tent of cots",
+   "area": "props",
+   "status": "in the scene",
+   "steps": [
     {
-     "src": "img/ev-beach-rail.jpg",
-     "cap": "The balustrade along the beach"
+     "kind": "picture",
+     "at": "2026-11-26",
+     "imgs": [
+      {
+       "src": "img/pc-tent-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc-tent-b.jpg",
+       "cap": "b"
+      }
+     ],
+     "note": "Your note: break it up after, the parts are useful alone."
+    },
+    {
+     "kind": "pick",
+     "at": "2026-11-26",
+     "title": "a"
+    },
+    {
+     "kind": "meshy",
+     "at": "2026-11-26",
+     "credits": 30,
+     "imgs": [
+      {
+       "src": "img/model-tent.jpg",
+       "cap": "What Meshy sent back"
+      }
+     ],
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/infirmary-tent.glb"
+     ]
+    },
+    {
+     "kind": "split",
+     "at": "2026-11-26",
+     "title": "Three cots came loose",
+     "note": "The fourth cot, the table and the lantern stay fused to the body.",
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/tent-parts/"
+     ]
+    },
+    {
+     "kind": "placed",
+     "at": "2026-11-26",
+     "title": "Six tents round the forecourt",
+     "imgs": [
+      {
+       "src": "img/h4-arrival.jpg",
+       "cap": "Arriving"
+      }
+     ]
     }
    ]
   },
   {
-   "id": "t-birch",
-   "kind": "polish",
-   "status": "open",
-   "title": "Birches are plain pale sticks",
-   "html": "No bark marks, no branches showing.",
-   "evidence": [
+   "id": "stack",
+   "name": "The battery's smokestack",
+   "area": "props",
+   "status": "in the scene",
+   "steps": [
     {
-     "src": "img/ev-birch.jpg",
-     "cap": "A birch in the north wood"
+     "kind": "picture",
+     "at": "2026-11-26",
+     "title": "Round 1",
+     "imgs": [
+      {
+       "src": "img/pc-smokestack-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc-smokestack-b.jpg",
+       "cap": "b"
+      }
+     ],
+     "note": "Your note: smoke is an effect, not in the picture."
+    },
+    {
+     "kind": "picture",
+     "at": "2026-11-26",
+     "title": "Round 2, no smoke",
+     "imgs": [
+      {
+       "src": "img/pc-smokestack-nosmoke-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc-smokestack-nosmoke-b.jpg",
+       "cap": "b"
+      }
+     ]
+    },
+    {
+     "kind": "pick",
+     "at": "2026-11-26",
+     "title": "b"
+    },
+    {
+     "kind": "meshy",
+     "at": "2026-11-26",
+     "credits": 30,
+     "imgs": [
+      {
+       "src": "img/model-stack.jpg",
+       "cap": "What Meshy sent back"
+      }
+     ],
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/battery-stack.glb"
+     ]
+    },
+    {
+     "kind": "code",
+     "at": "2026-11-27",
+     "title": "Smoke in code",
+     "imgs": [
+      {
+       "src": "img/smoke-1.jpg",
+       "cap": "The plume"
+      }
+     ],
+     "note": "<code>kit-smoke.ts</code>"
     }
    ]
   },
   {
-   "id": "t-wisteria",
-   "kind": "polish",
-   "status": "open",
-   "title": "The wisteria tree reads as a round lilac shrub",
-   "html": "It should hang in long drooping clusters.",
-   "evidence": [
+   "id": "bath",
+   "name": "Bath dressing sheet",
+   "area": "props",
+   "status": "split, six parts",
+   "steps": [
     {
-     "src": "img/ev-wisteria.jpg",
-     "cap": "The wisteria by the greenhouse"
+     "kind": "picture",
+     "at": "2026-11-26",
+     "title": "Round 1",
+     "imgs": [
+      {
+       "src": "img/pc-bath-sheet-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc-bath-sheet-b.jpg",
+       "cap": "b"
+      }
+     ],
+     "note": "Your note: empty pots for procedural flowers; stairs from the editor."
+    },
+    {
+     "kind": "picture",
+     "at": "2026-11-26",
+     "title": "Round 2",
+     "imgs": [
+      {
+       "src": "img/pc-bath-dressing-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc-bath-dressing-b.jpg",
+       "cap": "b"
+      }
+     ]
+    },
+    {
+     "kind": "pick",
+     "at": "2026-11-26",
+     "title": "b"
+    },
+    {
+     "kind": "meshy",
+     "at": "2026-11-26",
+     "credits": 30,
+     "imgs": [
+      {
+       "src": "img/model-bath.jpg",
+       "cap": "What Meshy sent back"
+      }
+     ],
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/sheet-bath.glb"
+     ]
+    },
+    {
+     "kind": "split",
+     "at": "2026-11-26",
+     "title": "Six dress.* pieces",
+     "note": "Planters (bowl, box, trough), two urns, the towel stand.",
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/bath-parts/"
+     ]
     }
    ]
   },
   {
-   "id": "t-cove-vines",
-   "kind": "polish",
-   "status": "open",
-   "title": "Few vines on the middle cove cliff",
-   "html": "The cliff behind the purifier's tower is bare where the sides have vines.",
-   "evidence": [
+   "id": "conduit",
+   "name": "Conduit sheet (pipes)",
+   "area": "props",
+   "status": "replaced by code, then by glyph paths",
+   "steps": [
     {
-     "src": "img/ev-cove-wall.jpg",
-     "cap": "The middle cove cliff"
+     "kind": "picture",
+     "at": "2026-11-26",
+     "imgs": [
+      {
+       "src": "img/pc-conduit-clean-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc-conduit-clean-b.jpg",
+       "cap": "b"
+      }
+     ]
+    },
+    {
+     "kind": "pick",
+     "at": "2026-11-26",
+     "title": "b"
+    },
+    {
+     "kind": "failed",
+     "at": "2026-11-26",
+     "credits": 30,
+     "title": "Fused into one object",
+     "imgs": [
+      {
+       "src": "img/model-conduit.jpg",
+       "cap": "What Meshy sent back"
+      }
+     ],
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/sheet-conduit.glb"
+     ],
+     "note": "Sheets need wide even gaps (now a rule, step 4)."
+    },
+    {
+     "kind": "code",
+     "at": "2026-11-26",
+     "title": "Pipes drawn in code",
+     "imgs": [
+      {
+       "src": "img/pipes-test.jpg",
+       "cap": "Test patch"
+      }
+     ],
+     "note": "<code>kit-pipe.ts</code>; plan H uses glyph paths instead."
     }
    ]
   },
   {
-   "id": "t-fields",
-   "kind": "polish",
-   "status": "open",
-   "title": "Fields are bright with hard edges",
-   "html": "The crop rows sit on bare earth strips with straight hard borders.",
-   "evidence": [
+   "id": "boiler",
+   "name": "Boiler house",
+   "area": "props",
+   "status": "in the scene",
+   "steps": [
     {
-     "src": "img/ev-fields.jpg",
-     "cap": "The fields west of the forecourt"
+     "kind": "picture",
+     "at": "2026-11-26",
+     "imgs": [
+      {
+       "src": "img/pc3-boiler-house-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc3-boiler-house-b.jpg",
+       "cap": "b"
+      }
+     ]
+    },
+    {
+     "kind": "pick",
+     "at": "2026-11-27",
+     "title": "a"
+    },
+    {
+     "kind": "meshy",
+     "at": "2026-11-27",
+     "credits": 30,
+     "imgs": [
+      {
+       "src": "img/model-boiler.jpg",
+       "cap": "What Meshy sent back"
+      }
+     ],
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/boiler-house.glb"
+     ]
+    },
+    {
+     "kind": "placed",
+     "at": "2026-11-27",
+     "imgs": [
+      {
+       "src": "img/h4-road.jpg",
+       "cap": "Under the stack"
+      }
+     ]
     }
    ]
   },
   {
-   "id": "t-shrubs",
-   "kind": "polish",
-   "status": "open",
-   "title": "Shrubs are lumpy up close",
-   "html": "The bushes read as clusters of round lobes.",
-   "evidence": [
+   "id": "camp",
+   "name": "Camp kit sheet",
+   "area": "props",
+   "status": "in the scene",
+   "steps": [
     {
-     "src": "img/ev-shrubs.jpg",
-     "cap": "Shrubs on the bed south of the well"
+     "kind": "picture",
+     "at": "2026-11-26",
+     "imgs": [
+      {
+       "src": "img/pc3-camp-kit-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc3-camp-kit-b.jpg",
+       "cap": "b"
+      }
+     ]
+    },
+    {
+     "kind": "pick",
+     "at": "2026-11-27",
+     "title": "b"
+    },
+    {
+     "kind": "meshy",
+     "at": "2026-11-27",
+     "credits": 30,
+     "imgs": [
+      {
+       "src": "img/model-camp.jpg",
+       "cap": "What Meshy sent back (laid flat)"
+      }
+     ],
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/sheet-camp.glb"
+     ]
+    },
+    {
+     "kind": "split",
+     "at": "2026-11-27",
+     "title": "Six props",
+     "note": "<code>split_flat.py</code>; fitted at 1.8x life size.",
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/camp-parts/"
+     ]
+    },
+    {
+     "kind": "placed",
+     "at": "2026-11-27",
+     "imgs": [
+      {
+       "src": "img/h5-forecourt.jpg",
+       "cap": "Round the tents"
+      }
+     ]
     }
    ]
   },
   {
-   "id": "t-road",
-   "kind": "polish",
-   "status": "open",
-   "title": "The road out's paving is very broken up",
-   "html": "Most of the road is near lawn, so the weathering takes most of its stones.",
-   "evidence": [
+   "id": "purifier",
+   "name": "Sea-water purifier",
+   "area": "props",
+   "status": "in the scene",
+   "steps": [
     {
-     "src": "img/ev-road.jpg",
-     "cap": "The road out to the battery"
+     "kind": "picture",
+     "at": "2026-11-26",
+     "title": "Round 1",
+     "imgs": [
+      {
+       "src": "img/pc3-purifier-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/pc3-purifier-b.jpg",
+       "cap": "b"
+      },
+      {
+       "src": "img/pc3-purifier-c.jpg",
+       "cap": "c"
+      }
+     ],
+     "note": "Your note: leaning to C; hard to picture in the scene, more concepts."
+    },
+    {
+     "kind": "picture",
+     "at": "2026-11-27",
+     "title": "Round 2, painted into the cove",
+     "imgs": [
+      {
+       "src": "img/purif-1.jpg",
+       "cap": "1"
+      },
+      {
+       "src": "img/purif-2.jpg",
+       "cap": "2"
+      },
+      {
+       "src": "img/purif-3.jpg",
+       "cap": "3"
+      },
+      {
+       "src": "img/purif-4.jpg",
+       "cap": "4"
+      },
+      {
+       "src": "img/purif-5.jpg",
+       "cap": "5"
+      },
+      {
+       "src": "img/purif-6.jpg",
+       "cap": "6"
+      }
+     ]
+    },
+    {
+     "kind": "pick",
+     "at": "2026-11-27",
+     "title": "Idea 2"
+    },
+    {
+     "kind": "meshy",
+     "at": "2026-11-27",
+     "credits": 30,
+     "imgs": [
+      {
+       "src": "img/model-purifier.jpg",
+       "cap": "What Meshy sent back"
+      }
+     ],
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/sheet-purifier.glb"
+     ]
+    },
+    {
+     "kind": "split",
+     "at": "2026-11-27",
+     "title": "Drum and tower",
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/purifier-parts/"
+     ]
+    },
+    {
+     "kind": "placed",
+     "at": "2026-11-27",
+     "imgs": [
+      {
+       "src": "img/h6-cove.jpg",
+       "cap": "The cove"
+      }
+     ]
     }
    ]
   },
   {
-   "id": "t-wire",
-   "kind": "build",
-   "status": "open",
-   "title": "Wire the fix into the game (another session)",
-   "html": "The fix can relight the glyph lines (<code>setGlyphState</code>) and draw back the vines (<code>setOvergrowth</code>); nothing calls them yet.",
-   "evidence": []
-  },
-  {
-   "id": "t-planh",
-   "kind": "build",
-   "status": "done",
-   "title": "Plan H picked and built in 3D",
-   "html": "Walkable in the 3D game.",
-   "evidence": [
+   "id": "devices",
+   "name": "Healing devices",
+   "area": "props",
+   "status": "pictures, waiting on your pick",
+   "html": "One station per tent where its glyph line ends, an emitter behind each pillow wired to it.",
+   "steps": [
     {
-     "src": "img/h4-overview.jpg",
-     "cap": "Plan H built"
+     "kind": "picture",
+     "at": "2026-11-27",
+     "title": "Round 1",
+     "imgs": [
+      {
+       "src": "img/dev-lamp-a.jpg",
+       "cap": "lamp-a"
+      },
+      {
+       "src": "img/dev-lamp-b.jpg",
+       "cap": "lamp-b"
+      },
+      {
+       "src": "img/dev-pylon-a.jpg",
+       "cap": "pylon-a"
+      },
+      {
+       "src": "img/dev-pylon-b.jpg",
+       "cap": "pylon-b"
+      },
+      {
+       "src": "img/dev-frame-a.jpg",
+       "cap": "frame-a"
+      },
+      {
+       "src": "img/dev-frame-b.jpg",
+       "cap": "frame-b"
+      }
+     ],
+     "note": "Your design from the answers: a station per tent (lamp b's look), an emitter behind each pillow; the frame hides the patient."
+    },
+    {
+     "kind": "picture",
+     "at": "2026-11-27",
+     "title": "Round 2",
+     "imgs": [
+      {
+       "src": "img/dev2-station-a.jpg",
+       "cap": "station-a"
+      },
+      {
+       "src": "img/dev2-station-b.jpg",
+       "cap": "station-b"
+      },
+      {
+       "src": "img/dev2-station-c.jpg",
+       "cap": "station-c"
+      },
+      {
+       "src": "img/dev2-emitter-a.jpg",
+       "cap": "emitter-a"
+      },
+      {
+       "src": "img/dev2-emitter-b.jpg",
+       "cap": "emitter-b"
+      },
+      {
+       "src": "img/dev2-emitter-c.jpg",
+       "cap": "emitter-c"
+      },
+      {
+       "src": "img/dev2-pylon-a.jpg",
+       "cap": "pylon-a"
+      },
+      {
+       "src": "img/dev2-pylon-b.jpg",
+       "cap": "pylon-b"
+      },
+      {
+       "src": "img/dev2-tent-dressed.jpg",
+       "cap": "tent-dressed"
+      }
+     ]
     }
    ]
   },
   {
-   "id": "t-models",
-   "kind": "build",
-   "status": "done",
-   "title": "The models",
-   "html": "Well, tents, greenhouse, stills, boiler house, smokestack, purifier, camp kit: 330 credits in all (two sheets failed).",
-   "evidence": [
+   "id": "triage-sheet",
+   "name": "Triage dressing sheet",
+   "area": "props",
+   "status": "redrawn, waiting on your OK",
+   "steps": [
     {
-     "src": "img/h4-cove.jpg",
-     "cap": "The purifier in the cove"
-    }
-   ]
-  },
-  {
-   "id": "t-ground",
-   "kind": "build",
-   "status": "done",
-   "title": "Weathered floor, meadow, foliage, fields",
-   "html": "",
-   "evidence": [
+     "kind": "picture",
+     "at": "2026-11-27",
+     "imgs": [
+      {
+       "src": "img/dev-sheet-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/dev-sheet-b.jpg",
+       "cap": "b"
+      }
+     ]
+    },
     {
-     "src": "img/green-after-overview.jpg",
-     "cap": "Foliage and grass"
-    }
-   ]
-  },
-  {
-   "id": "t-magic",
-   "kind": "build",
-   "status": "done",
-   "title": "Glyph paths, vines that draw back, smoke",
-   "html": "",
-   "evidence": [
+     "kind": "pick",
+     "at": "2026-11-27",
+     "title": "b"
+    },
     {
-     "src": "img/vines-near-1.jpg",
-     "cap": "The vines on the well"
+     "kind": "failed",
+     "at": "2026-11-27",
+     "credits": 30,
+     "title": "Fused: the props too close",
+     "imgs": [
+      {
+       "src": "img/model-triage.jpg",
+       "cap": "What Meshy sent back"
+      }
+     ],
+     "files": [
+      "game/content/generated/meshy/kit-src/infirmary/sheet-devices.glb"
+     ]
+    },
+    {
+     "kind": "picture",
+     "at": "2026-11-27",
+     "title": "Redrawn with wide gaps",
+     "imgs": [
+      {
+       "src": "img/dev-sheet2-a.jpg",
+       "cap": "a"
+      },
+      {
+       "src": "img/dev-sheet2-b.jpg",
+       "cap": "b"
+      }
+     ],
+     "note": "Next: the meshy.ai website (free retries), not the API."
     }
    ]
   }
@@ -483,7 +1184,7 @@
    ]
   },
   {
-   "id": "pieces",
+   "id": "props",
    "label": "Buildings & props",
    "subs": [
     {
@@ -569,6 +1270,13 @@
      ]
     }
    ]
+  }
+ ],
+ "log": [
+  {
+   "at": "2026-11-27",
+   "title": "The page moved to the new template",
+   "html": "<p>Tasks now live in the db with who flagged them, your acknowledgement and a note thread; the pieces ledger follows each model from picture to scene. The earlier rounds are in the area tabs, unchanged.</p>"
   }
  ]
 }

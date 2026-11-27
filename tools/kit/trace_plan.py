@@ -87,7 +87,7 @@ FIXES = {
         ('object', dict(kind='vignette', id='camp-poles-1', name='tent poles', piece='dress.tent-poles', at=[31.0, 12.6], front='S', turn=30)),
         ('object', dict(kind='vignette', id='camp-poles-2', name='tent poles', piece='dress.tent-poles', at=[41.0, 25.8], front='S', turn=-25)),
         ('object', dict(kind='vignette', id='camp-canvas-1', name='tent canvas', piece='dress.tent-canvas', at=[39.2, 13.0], front='S', turn=-10)),
-        ('object', dict(kind='vignette', id='camp-canvas-2', name='tent canvas', piece='dress.tent-canvas', at=[29.6, 27.8], front='S', turn=12)),
+        ('object', dict(kind='vignette', id='camp-canvas-2', name='tent canvas', piece='dress.tent-canvas', at=[29.0, 26.4], front='S', turn=12)),
         ('object', dict(kind='vignette', id='camp-stakes-1', name='tent stakes', piece='dress.tent-stakes', at=[33.4, 13.8], front='S', turn=0)),
         # lanterns on the road's far (north) side, so they never stand between the camera and the walkers (the user)
         ('object', dict(kind='vignette', id='road-lamp-1', name='a lamp post', piece='dress.lamp', at=[58.0, 35.4], front='S')),

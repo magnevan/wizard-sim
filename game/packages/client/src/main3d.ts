@@ -40,6 +40,7 @@ import { View3D } from './view3d/view3d';
 import { VIEW_H } from './view3d/camera3d';
 import { setSceneOrigin, simX, simY } from './view3d/scene-map';
 import { hasScene } from './view3d/kit-scene';
+import { weatherControls } from './lab/weather';
 
 usePage('3d');
 const start = fromLocation(location.search, location.hash);
@@ -198,6 +199,7 @@ async function boot(): Promise<void> {
   let recorder = new ReplayRecorder(7, MAX_SEATS);
   const tune = new TunePanel(optOn('tune'));
   const tools = new ToolsPanel(world, view.camera, view.canvas, optOn('tools'), optOn('stage'));
+  tools.addSection('Weather', weatherControls);   // wind and cloud knobs (lab/weather.ts), to see they're there
   const stats = new StatsPanel(world, optOn('stats'));
   const inspect = new Inspect(world, view.camera);
 

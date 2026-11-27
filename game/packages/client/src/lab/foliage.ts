@@ -10,6 +10,7 @@
  * Units: recipes are in metres, y up, the plant's foot at the origin. Scale the returned group to the scene (kit: M).
  */
 import * as THREE from 'three';
+import { WEATHER } from './weather';
 
 /** Seconds, advanced by the page each frame: the wind. */
 export const FOLIAGE_TIME = { value: 0 };
@@ -209,12 +210,12 @@ function cardMaterial(over = false): THREE.MeshLambertMaterial {
   if (have) return have;
   const m = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide, alphaToCoverage: true });
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.fTime = FOLIAGE_TIME; sh.uniforms.fDebug = FOLIAGE_DEBUG; sh.uniforms.fMap = { value: atlasTexture() }; sh.uniforms.fPal = { value: paletteTexture() };
+    sh.uniforms.fTime = FOLIAGE_TIME; sh.uniforms.fWind = WEATHER.wind; sh.uniforms.fDebug = FOLIAGE_DEBUG; sh.uniforms.fMap = { value: atlasTexture() }; sh.uniforms.fPal = { value: paletteTexture() };
     if (over) sh.uniforms.uOver = OVERGROWTH;
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', `#include <common>
         attribute vec2 aCorner; attribute vec2 aUv; attribute vec4 aA; attribute vec4 aB; attribute vec2 aC;
-        uniform float fTime; varying vec2 vFuv; varying vec3 vFa; varying vec3 vFb; varying float vFw;
+        uniform float fTime, fWind; varying vec2 vFuv; varying vec3 vFa; varying vec3 vFb; varying float vFw;
         const vec2 FWIND = vec2(0.93, 0.37);   // the wind's heading over the ground (x, z)
         ${over ? `attribute vec4 aGrow; attribute float aRest; uniform float uOver[${OVER_MAX}];` : ''}`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -245,11 +246,11 @@ function cardMaterial(over = false): THREE.MeshLambertMaterial {
                           + 0.14 * sin(fAl * 0.47 - fTime * 1.57 + fAc * 0.29);
         fEnv = clamp(fEnv, 0.0, 1.0); fEnv *= fEnv;
         float fFlut = (sin(fTime * 4.3 + aB.y) * 0.6 + sin(fTime * 6.9 + aB.y * 2.3) * 0.4) * (0.25 + fEnv);
-        float fPush = aB.x * (fEnv * 0.06 + fFlut * 0.007) * length(modelMatrix[0].xyz);
+        float fPush = fWind * aB.x * (fEnv * 0.06 + fFlut * 0.007) * length(modelMatrix[0].xyz);
         mvPosition.xy += (viewMatrix * vec4(FWIND.x, -0.25 * fEnv, FWIND.y, 0.0)).xy * fPush;
         float fGust = fEnv * 0.7 + fFlut * 0.35;
         float fSc = length(modelMatrix[0].xyz) * aA.x * oK;
-        float fRoll = aA.y + fGust * aB.x * 0.09;
+        float fRoll = aA.y + fWind * fGust * aB.x * 0.09;
         vec2 fC = vec2(aCorner.x * cos(fRoll) - aCorner.y * sin(fRoll), aCorner.x * sin(fRoll) + aCorner.y * cos(fRoll));
         vFb = vec3(fC, aC.y);
         // a tilted card: squashed along the way its normal leans on screen, as a disc turned from the eye would be

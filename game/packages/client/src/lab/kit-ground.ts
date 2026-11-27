@@ -14,6 +14,7 @@
  */
 import * as THREE from 'three';
 import { FOLIAGE_TIME, PALETTES } from './foliage';
+import { CLOUD_TIME, WEATHER } from './weather';
 
 type Pt = number[];
 type GFloor = { h: number; mat: string; polys: number[][][][] };
@@ -29,6 +30,8 @@ const CELL = 0.5;
 export const GROUND_U = {
   grOn: { value: 0 }, grMap: { value: null as THREE.Texture | null },
   grO: { value: new THREE.Vector2() }, grS: { value: new THREE.Vector2(1, 1) }, grTime: FOLIAGE_TIME,
+  /** the weather's wind strength and the sheen's (weather.ts) */
+  grWind: WEATHER.wind, grSheen: WEATHER.sheen,
   /** The painted tufts (textures/foliage-tufts.png: a 4 x 4 sheet of grey tufts, rows short, clumps, long, sparse) and
    * the bare earth worn paths show (the weathered paving's own tile, and its size in u); kit-render sets them. */
   grTuft: { value: null as THREE.Texture | null }, grTuftOn: { value: 0 },
@@ -48,8 +51,8 @@ export function setGroundArt(tuft: THREE.Texture | undefined, earth: THREE.Textu
   GROUND_U.grTuft.value = tuft ?? null; GROUND_U.grTuftOn.value = tuft ? 1 : 0;
   GROUND_U.grEarth.value = earth ?? null; GROUND_U.grEarthS.value = earthTile; GROUND_U.grEarthOn.value = earth ? 1 : 0;
 }
-/** The clouds: on (1) or off, and their time (the foliage's, so a picture at &t= is repeatable). */
-export const CLOUD_U = { clOn: { value: 1 }, clT: FOLIAGE_TIME };
+/** The clouds: on (1) or off, their clock, cover, darkness and size (weather.ts; at their defaults a picture at &t= is as before). */
+export const CLOUD_U = { clOn: WEATHER.clouds, clT: CLOUD_TIME, clCover: WEATHER.cover, clDark: WEATHER.dark, clSize: WEATHER.size };
 
 // ---------------------------------------------------------------------------------------------------------------
 // the ground map
@@ -242,7 +245,7 @@ export function buildGround(floors: GFloor[], instances: GInst[], piece: (p: str
  * before) and groundLawn (all of it together). A material using it gets GROUND_U in its uniforms.
  */
 export const GROUND_GLSL = `
-uniform float grOn, grTime, grTuftOn, grEarthS, grEarthOn, grBloomOn; uniform sampler2D grMap, grTuft, grEarth, grBloom, grFlw; uniform vec2 grO, grS; uniform vec3 grFlwPal[8];
+uniform float grOn, grTime, grWind, grSheen, grTuftOn, grEarthS, grEarthOn, grBloomOn; uniform sampler2D grMap, grTuft, grEarth, grBloom, grFlw; uniform vec2 grO, grS; uniform vec3 grFlwPal[8];
 float lwH(vec2 q) { return fract(sin(dot(q, vec2(127.1, 311.7))) * 43758.5453); }
 vec2 lwH2(vec2 q) { return fract(sin(vec2(dot(q, vec2(127.1, 311.7)), dot(q, vec2(269.5, 183.3)))) * 43758.5453); }
 float lwN(vec2 x) { vec2 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
@@ -385,7 +388,7 @@ vec3 groundLawn(sampler2D t, float tile, vec2 p) {
   c = mix(c, c * vec3(1.18, 1.1, 0.74), lg * 0.3 * (1.0 - lush));
   c = mix(c, c * vec3(0.72, 0.86, 0.62), lg * lush * 0.8);
   float comb = sweep;
-  c += vec3(0.1, 0.085, 0.025) * lg * (0.45 + 0.55 * grGust(p, grTime)) * smoothstep(0.35, 0.8, comb);
+  c += grSheen * vec3(0.1, 0.085, 0.025) * lg * (0.45 + 0.55 * min(1.0, grWind) * grGust(p, grTime)) * smoothstep(0.35, 0.8, comb);
   // wild flowers: drifts of one kind each (daisies, buttercups, clover pink, a little lilac) wandering over the lawn,
   // a few strays anywhere, and each flowering plant's own blossoms spilling into the grass round it; fewer in long grass
   // (hidden in it) and none on bare earth
@@ -436,7 +439,7 @@ function marginMaterial(): THREE.MeshLambertMaterial {
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, GROUND_U);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
-      attribute vec3 aRoot; attribute vec3 aFan; attribute vec2 aCorner; uniform float grTime;
+      attribute vec3 aRoot; attribute vec3 aFan; attribute vec2 aCorner; uniform float grTime, grWind;
       varying vec2 vMgUv; varying vec2 vMgRoot; varying float vMgCol;
       float mgGust(vec2 p, float t) {
         vec2 W = vec2(0.93, 0.37); float al = dot(p, W), ac = dot(p, vec2(-W.y, W.x));
@@ -448,7 +451,7 @@ function marginMaterial(): THREE.MeshLambertMaterial {
         // aFan: width u, height u, sprite (row * 4 + column; negative: mirrored)
         vec3 mgR = normalize(vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]));
         mgR = normalize(vec3(mgR.x, 0.0, mgR.z));
-        float mgH = aCorner.y * aFan.y, mgB = aCorner.y * aCorner.y * (0.12 + 0.3 * mgGust(aRoot.xz, grTime)) * aFan.y;
+        float mgH = aCorner.y * aFan.y, mgB = aCorner.y * aCorner.y * (0.12 + 0.3 * grWind * mgGust(aRoot.xz, grTime)) * aFan.y;
         vec3 transformed = aRoot + mgR * (aCorner.x * aFan.x + mgB) + vec3(0.0, mgH, 0.0);
         float sp = abs(aFan.z); vMgCol = sp;
         vMgUv = vec2(aFan.z < 0.0 ? 0.5 - aCorner.x : 0.5 + aCorner.x, aCorner.y);
@@ -470,7 +473,7 @@ function marginMaterial(): THREE.MeshLambertMaterial {
         diffuseColor.rgb = g * mix(0.82, 1.5, tx.r) * mix(0.95, 1.08, vMgUv.y);
       }`);
   };
-  m.customProgramCacheKey = () => 'margin-grass-2';
+  m.customProgramCacheKey = () => 'margin-grass-3';
   return (marginMat = m);
 }
 /** Raised grass fans along the margins of the last ground map (buildGround first); null where there are none. */
@@ -520,15 +523,16 @@ export function marginGrass(): THREE.Mesh | null {
 // clouds: soft shadows drifting over the whole level, on every lit material
 // ---------------------------------------------------------------------------------------------------------------
 const CLOUD_GLSL = `
-uniform float clOn, clT;
+uniform float clOn, clT, clCover, clDark, clSize;
 float clH(vec2 q) { return fract(sin(dot(q, vec2(41.3, 289.1))) * 15731.7431); }
 float clN(vec2 x) { vec2 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(clH(i), clH(i + vec2(1.0, 0.0)), f.x), mix(clH(i + vec2(0.0, 1.0)), clH(i + vec2(1.0, 1.0)), f.x), f.y); }
 // 0 in sun to 1 under a cloud, at a world point (u)
 float cloudShade(vec3 wp) {
-  vec2 p = wp.xz / 19.0 - vec2(0.93, 0.37) * clT * 0.08;
+  vec2 p = wp.xz / (19.0 * clSize) - vec2(0.93, 0.37) * clT * 0.08 / clSize;
   float n = clN(p) * 0.55 + clN(p * 2.07 + 3.7) * 0.3 + clN(p * 4.3 + 9.1) * 0.15;
-  return smoothstep(0.38, 0.54, n) * clOn;
+  float o = (0.5 - clCover) * 0.7;   // cover 0.5: the tuned band; 0 clear, 1 overcast
+  return smoothstep(0.38 + o, 0.54 + o, n) * clOn;
 }
 `;
 const cloudy = new WeakSet<THREE.Material>();
@@ -549,8 +553,8 @@ export function cloudify(root: THREE.Object3D) {
           .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
             { // a cloud takes most of the sun and some of the sky, and leaves what remains cooler
               vec3 clW = (inverse(viewMatrix) * vec4(-vViewPosition, 1.0)).xyz; float clS = cloudShade(clW);
-              reflectedLight.directDiffuse *= mix(vec3(1.0), vec3(0.34, 0.41, 0.36), clS); reflectedLight.directSpecular *= 1.0 - 0.8 * clS;
-              reflectedLight.indirectDiffuse *= mix(vec3(1.0), vec3(0.8, 0.86, 0.76), clS); }`);
+              reflectedLight.directDiffuse *= mix(vec3(1.0), pow(vec3(0.34, 0.41, 0.36), vec3(clDark)), clS); reflectedLight.directSpecular *= 1.0 - min(1.0, 0.8 * clDark) * clS;
+              reflectedLight.indirectDiffuse *= mix(vec3(1.0), pow(vec3(0.8, 0.86, 0.76), vec3(clDark)), clS); }`);
       };
       m.customProgramCacheKey = () => `${key()}|cl`;
       m.needsUpdate = true;

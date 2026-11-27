@@ -20,6 +20,7 @@ import { smokeMesh, type SmokeSpec } from './kit-smoke';
 import { kerbRows, KERB_ROUND, KERB_W, type KerbSeg } from './kit-road';
 import { LAWN_VARY, STONE_MATS, STONE_PAINT, STONE_U, WEATHERED, stoneDecl, stoneFrag } from './kit-stones';
 import { buildGround, cloudify, GROUND_U, marginGrass, setGroundArt } from './kit-ground';
+import { advanceWeather, WIND_TIME } from './weather';
 
 export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string; ox?: number; oy?: number;
   /** a fall's lip (fall.curtain): its line in u, the lower water on the right */
@@ -321,7 +322,7 @@ const spinQ = new THREE.Quaternion();
 export function spinKit(t: number) {
   TP_TIME.value = t;   // and flowing textures (water) drift
   flowInlays(t);       // and the fields in an inlay's channels
-  FOLIAGE_TIME.value = t;   // and the wind in the plants
+  advanceWeather(t); FOLIAGE_TIME.value = WIND_TIME.value;   // and the wind in the plants, and the clouds (weather.ts)
   stepGlyphs(t);            // and the glyph paths' pulse and brightness
   stepOvergrowth(t);        // and overgrowth being cut back (or growing again)
   for (const s of SPINNERS) s.node.quaternion.copy(s.rest).multiply(spinQ.setFromAxisAngle(s.axis, ((t * s.rpm) / 60) * Math.PI * 2));

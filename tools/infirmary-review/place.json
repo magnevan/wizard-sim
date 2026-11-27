@@ -115,6 +115,41 @@
  ],
  "decisions": [
   {
+   "id": "rv-3",
+   "area": "ground",
+   "title": "Have a look: the beach meets the sea; vines in the purifier bay",
+   "html": "<p>Two polish tasks you agreed to:</p><ol><li><b>No sea wall on the beach.</b> The sea sat 1 m below the sand, so the map put a retaining wall with a balustrade along the water. The sea is now level with the beach: the sand runs straight into the foam. The jetty stands just above the water on its posts, without its rail. Does the jetty want its rail back, or is it right as a low landing stage?</li><li><b>Vines in the purifier bay.</b> It now gets its own denser vine pass, so its cliff tops carry the same flowering fringe as the cove's sides. Vines hanging all the way down a cliff face don't work yet: the rock model stands up to 1.7 m proud of the edge, so a hanging vine disappears inside it. Fixing that means fitting each vine to the rock's surface. Is it worth doing, or is the fringe along the top enough?</li></ol>",
+   "figures": [
+    {
+     "src": "img/cove-beach.jpg",
+     "cap": "1: the cove, sand into the sea"
+    },
+    {
+     "src": "img/cove-beach-west.jpg",
+     "cap": "1: the west end of the beach"
+    },
+    {
+     "src": "img/cove-bay-vines.jpg",
+     "cap": "2: the purifier bay, vines along the tops"
+    },
+    {
+     "src": "img/ev-beach-rail.jpg",
+     "cap": "Before: the balustrade along the water"
+    }
+   ],
+   "rec": "My view: the beach is right as it is; the fringe is enough for now. Vines down the rock are worth doing later for every cliff at once, not just here.",
+   "choices": [
+    {
+     "v": "good",
+     "label": "Looks good"
+    },
+    {
+     "v": "changes",
+     "label": "Changes (in the note)"
+    }
+   ]
+  },
+  {
    "id": "rv-2",
    "area": "props",
    "piece": "devices",
@@ -148,7 +183,8 @@
      "v": "changes",
      "label": "Changes (in the note)"
     }
-   ]
+   ],
+   "closed": "good (the user, in the terminal: \"Looks good\")"
   },
   {
    "id": "rv-1",
@@ -1567,6 +1603,11 @@
    "at": "2026-11-27",
    "title": "Round 12: beds out in front, runes joined",
    "html": "<p>From your look (rv-1): the tent split into a canopy (<code>setpiece.infirmary-tent-shell</code>, by <code>tools/kit/tent_shell.py</code>) and its cots (<code>dress.cot</code>), the canopy moved back 1.4 cells; the tent branches joined at the shared lines' corners. Props never on a rune line now (a compiler check).</p>"
+  },
+  {
+   "at": "2026-11-27",
+   "title": "Round 13: the beach meets the sea; vines in the purifier bay",
+   "html": "<p>The sea raised to the beach's level (no wall along the water); a vine pass of its own for the purifier bay (a dress object can now take an <code>area</code>). Vines down rock faces need fitting to the rock: asked in rv-3.</p>"
   }
  ],
  "board": {
@@ -1648,9 +1689,9 @@
     "href": "#layout-planh",
     "cells": {
      "pieces": [
-      "review",
-      "devices and triage props in: check",
-      "#decision-rv-2"
+      "done",
+      "devices and triage props in",
+      "#props-devices2"
      ],
      "surfaces": [
       "done",
@@ -1684,9 +1725,9 @@
       "#magic-glyphs"
      ],
      "dressing": [
-      "review",
-      "crystal dark till cleared: check",
-      "#decision-rv-2"
+      "done",
+      "crystal dark till cleared",
+      "#props-devices2"
      ],
      "beauty": [
       "later"
@@ -1736,9 +1777,9 @@
       "#task-t-beach-rail"
      ],
      "dressing": [
-      "started",
-      "cliff vines",
-      "#task-t-cove-vines"
+      "review",
+      "beach to the sea, bay vines",
+      "#decision-rv-3"
      ],
      "beauty": [
       "later"

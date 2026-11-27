@@ -2,7 +2,7 @@
   "schema": 1, "name": "infirmary", "G": 2, "notes": "Traced from tools/place-plans/plans/inf-h.py (Infirmary H: the crescent with a forecourt) by tools/kit/trace_plan.py. One grid corner = (U, V) = (-70 + 2x, -46 + 2y) in the plan. Gaps (what the kit cannot say yet) are pins.",
   "terraces": [
     {"id": "t-deep", "glyph": "A", "name": "the deep", "h": -10.0, "mat": "water", "edge": "open", "walk": false},
-    {"id": "t-sea", "glyph": "B", "name": "the sea", "h": -1.0, "mat": "water", "edge": "open", "walk": false},
+    {"id": "t-sea", "glyph": "B", "name": "the sea", "h": 0.0, "mat": "water", "edge": "open", "walk": false},
     {"id": "t-beach", "glyph": "C", "name": "the beach", "h": 0.0, "mat": "sand", "edge": "parapet"},
     {"id": "t-woods", "glyph": "D", "name": "woods", "h": 0.0, "mat": "meadow", "edge": "open", "walk": false},
     {"id": "t-woods-e", "glyph": "E", "name": "woods", "h": 0.3, "mat": "meadow", "edge": "open", "walk": false},
@@ -206,6 +206,7 @@
     {"kind": "scatter", "id": "wood-under", "name": "the woods: undergrowth", "terrace": "t-wood", "seed": 11, "spacing": 3.6, "margin": 0.3, "jitter": 0.5, "pieces": ["setpiece.bush-gold", "setpiece.bush-yellow", "setpiece.bush-lilac", "setpiece.lavender", "setpiece.lavender", "setpiece.meadow-flowers", "setpiece.grass-long"]},
     {"kind": "scatter", "id": "cove-tufts", "name": "the cliff top and the cove corners", "terrace": "t-woods-n", "seed": 8, "spacing": 3.2, "margin": 0.2, "jitter": 0.5, "pieces": ["setpiece.lavender", "setpiece.meadow-flowers", "setpiece.grass-long", "setpiece.bush-yellow"]},
     {"kind": "dress", "id": "garden-vines", "name": "vines over the walls and cliffs", "style": "infirmary-garden", "seed": 3},
+    {"kind": "dress", "id": "cove-vines", "name": "vines down the purifier bay", "style": "infirmary-cove", "seed": 5, "area": [31.5, 25.5, 38.5, 31.0]},
     {"kind": "setpiece", "id": "field-1", "name": "a field", "piece": "setpiece.field-wheat", "at": [4.2, 11.5], "front": "S"},
     {"kind": "setpiece", "id": "field-2", "name": "a field", "piece": "setpiece.field-greens", "at": [4.2, 17.4], "front": "S"},
     {"kind": "setpiece", "id": "field-3", "name": "a field", "piece": "setpiece.field-beans", "at": [4.2, 23.3], "front": "S"},

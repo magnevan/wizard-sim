@@ -1023,13 +1023,17 @@ def compile_scene(sc):
             yy += step
 
     # ---- dress: a style's rules put small pieces on sockets, at places and along roads (kit.json 'styles';
-    # docs/explorations/2026-11-24-dressing-variation.md): {kind: dress, style, seed, terrace? (only there)}
+    # docs/explorations/2026-11-24-dressing-variation.md): {kind: dress, style, seed, terrace? (only there), area? [x0, y0, x1, y1] (only inside)}
     for d_ in kind('dress'):
         style = KIT.get('styles', {}).get(d_.get('style'))
         if not style: err('dress', f"{label(d_)}: no style {d_.get('style')!r} in kit.json", None, [d_['id']], 'warning'); continue
         rng = random.Random(d_.get('seed', d_['id']))
         only_g = glyph_of.get(d_.get('terrace'), d_.get('terrace'))
         only = floor_u.get(only_g) if only_g else None
+        if d_.get('area'):    # area: [x0, y0, x1, y1] (corners), a part of the map to dress on its own (a bay's cliffs)
+            x0, y0, x1, y1 = d_['area']
+            box_ = Polygon([(x0, y0), (x1, y0), (x1, y1), (x0, y1)])
+            only = box_ if only is None else only.intersection(box_)
         def ok_at(px, py):    # in scope, and clear of every flight's path
             pt = Point(px, py)
             return (only is None or only.buffer(1e-6).contains(pt)) and not any(z.contains(pt) for z in fl_paths)

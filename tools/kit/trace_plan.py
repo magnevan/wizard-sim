@@ -69,7 +69,7 @@ FIXES = {
         ('disc', 'dais at 2 m', 47.5, 40.0, 4.6),   # the armillary's set piece brings its own dais: the floor under it is the sunk plaza's
     ],
     'infirmary': [   # plan H rev 2 (the user's pick, 2026-11-26): its cove, its two shore climbs and the made pieces
-        ('terrace', 't-sea', dict(name='the deep')), ('terrace', 't-stream', dict(name='the sea')),
+        ('terrace', 't-sea', dict(name='the deep')), ('terrace', 't-stream', dict(name='the sea', h=0.0)),   # the sea level with the beach, so sand meets water with no wall (t-beach-rail)
         ('terrace', 'sand at 0 m', dict(name='the beach', mat='sand')),
         ('new-terrace', dict(name='the jetty', h=0.3, mat='deck', edge='parapet')),
         ('paint', 'grass at 3.5 m', 0, 0, 88, 0),          # the lattice's first row fell outside the plan's fill
@@ -181,6 +181,7 @@ FIXES = {
         ('object', dict(kind='scatter', id='cove-tufts', name='the cliff top and the cove corners', terrace='t-woods-n', seed=8, spacing=3.2, margin=0.2, jitter=0.5,
                         pieces=['setpiece.lavender', 'setpiece.meadow-flowers', 'setpiece.grass-long', 'setpiece.bush-yellow'])),
         ('object', dict(kind='dress', id='garden-vines', name='vines over the walls and cliffs', style='infirmary-garden', seed=3)),
+        ('object', dict(kind='dress', id='cove-vines', name='vines down the purifier bay', style='infirmary-cove', seed=5, area=[31.5, 25.5, 38.5, 31.0])),
         # the farmland west of the camp, running on out of sight
         *[('object', dict(kind='setpiece', id=f'field-{i}', name='a field', piece=f'setpiece.field-{crop}', at=at, front='S'))
           for i, (crop, at) in enumerate([('wheat', [4.2, 11.5]), ('greens', [4.2, 17.4]), ('beans', [4.2, 23.3]), ('wheat', [4.2, 29.0]),

@@ -25,3 +25,4 @@ The clone is weaker, but its death has smaller consequences. This matters more b
 - **Not built:** a clone you play through while your body stays behind. The Double is a decoy and echo, not a body you control.
 
 - **2026-11-11 (spell audit):** the user isn't a fan of the Double and wants something cooler in its slot (Sigil alone on yourself). The Double stays until a replacement is chosen.
+- **2026-11-27 (spell pass):** the Double is to be cut; Haste takes its slot (pure Sigil on yourself). [Spell pass](../decisions/README.md#2026-11-27-spell-pass-the-shift-casts-swap-haste-replaces-the-double-world-spells-on-shiftspace-glyphs-get-charges).

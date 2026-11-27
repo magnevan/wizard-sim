@@ -1,0 +1,14 @@
+Generate one image with your image generation tool, then save it as tufts.png in the current directory. Reply with just the file name.
+
+The attached images show the game this is for and the grass we want: stylised, hand-painted, warm light, seen from a high three-quarter camera looking down. Look at how the grass is painted there: small fan-shaped tufts of blades, each lit along its upper edge and dark underneath, packed together into a lawn.
+
+Draw a square sprite sheet: a 4 by 4 grid of sixteen separate grass tufts, evenly spaced, each centred in its own equal square cell with clear empty space around it, on a flat, uniform, pure magenta (#ff00ff) background.
+
+Every tuft is painted only in greys, as if made of white porcelain: the blade tips near white where the light catches them, mid greys through the body, dark grey at the base and between the blades. Lit from above and slightly behind, seen from the same high three-quarter camera as the attached game, so each tuft is a little fan wider than it is tall. Painted in that chunky hand-painted game style, with crisp clean edges and blades large enough to read from far away.
+
+Row 1: four short lawn tufts: a low dense fan of short blades, each a little different.
+Row 2: four low rounded clumps: short grass with a few broad blades, like a tussock seen from above.
+Row 3: four long grass clumps: taller, looser blades leaning to the right as if combed by wind, a few thin seed heads.
+Row 4: four sparse tufts: a few blades only, for the ragged edge where grass meets bare earth.
+
+Each tuft fills about two thirds of its cell. The sheet shows the grey tufts only on the flat magenta.

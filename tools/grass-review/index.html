@@ -1,0 +1,301 @@
+<title>Grass Fields</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column; looks as wide before/after panels, each with its marks under it. */
+:root {
+  --bg: #f2f4ee; --panel: #ffffff; --fg: #1d241c; --muted: #5d6857; --line: #d8ddd0;
+  --accent: #5f7424; --accent-soft: #e6ebd3; --lead: #3f7a33; --part: #a2802a; --no: #a3473a;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121612; --panel: #1b211a; --fg: #e3e8dc; --muted: #9aa691; --line: #2e372c;
+  --accent: #b4c76b; --accent-soft: #283019; --lead: #86c070; --part: #d8b25a; --no: #e08a7c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121612; --panel: #1b211a; --fg: #e3e8dc; --muted: #9aa691; --line: #2e372c;
+  --accent: #b4c76b; --accent-soft: #283019; --lead: #86c070; --part: #d8b25a; --no: #e08a7c; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; }
+h2 { font-size: 1.6rem; font-weight: 700; }
+h3 { font-size: 1.15rem; font-weight: 500; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 20px; }
+header { display: grid; gap: 14px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pair figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; display: block; border-radius: 6px; }
+figcaption { font-size: 13px; color: var(--muted); }
+.look { display: grid; gap: 14px; padding-top: 28px; border-top: 1px solid var(--line); }
+.look-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.tag { font-size: 12px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cmp { position: relative; border-radius: 6px; overflow: hidden; aspect-ratio: 16/9; max-width: 100%; background: var(--line); }
+.cmp img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+.cmp .after { clip-path: inset(0 0 0 var(--cut, 0%)); }
+.cmp .bar { position: absolute; top: 0; bottom: 0; left: var(--cut, 0%); width: 2px; background: #fff; box-shadow: 0 0 6px rgba(0,0,0,.5); pointer-events: none; }
+.cmp input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
+.cmp .lbl { position: absolute; top: 10px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,.55); color: #fff; pointer-events: none; }
+.cmp .lbl.l { left: 10px; } .cmp .lbl.r { right: 10px; }
+.single img { border-radius: 6px; }
+.read { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; font-size: 14px; }
+.read div { min-width: 0; }
+.read b { font-weight: 600; }
+.marks { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.marks button, .choices label { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.marks button:focus-visible, .choices input:focus-visible + span, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.marks button[aria-pressed="true"][data-m="lead"] { background: var(--lead); border-color: var(--lead); color: var(--bg); }
+.marks button[aria-pressed="true"][data-m="part"] { background: var(--part); border-color: var(--part); color: var(--bg); }
+.marks button[aria-pressed="true"][data-m="no"] { background: var(--no); border-color: var(--no); color: var(--bg); }
+textarea { width: 100%; box-sizing: border-box; min-height: 64px; font: inherit; font-size: 14px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); resize: vertical; }
+.saved { font-size: 12px; color: var(--muted); min-height: 1em; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 720px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+tr.rec td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+td b { font-weight: 600; }
+.cost { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.q { display: grid; gap: 10px; padding: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choices input { position: absolute; opacity: 0; pointer-events: none; }
+.choices label { display: inline-flex; position: relative; }
+.choices label:has(input:checked) { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.status { font-size: 13px; color: var(--muted); }
+ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 70ch; }
+@media (max-width: 720px) { .pair, .read { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Look development · round 1 · 2026-11-27</div>
+  <h1>Grass Fields</h1>
+  <p>Large lawns and meadows will be behind most of the game. The infirmary's lawn today reads as felt. Below are eight concept pictures from Codex: six repaint our own frame with only the grass changed, and two imagine open country. Mark each one, then answer the four questions at the end. I'll build round 2 from your answers.</p>
+  <p class="status" id="status">Connecting to the feedback store…</p>
+</header>
+
+<section>
+  <div class="eyebrow">Round 2 · built in the game · 2026-11-27</div>
+  <h2>The combined look, in the infirmary</h2>
+  <p>Your picks, built: the combined look (p9), cloud shadows and wind, in the infirmary first, as ground and light first, then tufts. These are renders from the game's own camera. Drag across each picture to compare it with this morning. A Codex critic reviewed five rounds and an advanced model advised once; the critic's last score is 6.5 out of 10, "presentable as a first in-game version".</p>
+  <div id="r2" style="display:grid;gap:40px"></div>
+  <ul class="plain">
+    <li><b>Painted ground.</b> The lawn tile repeats in random hex patches, so no grid shows. Broad warm sweeps run beside cool olive hollows along the wind, and painted tufts from a Codex sheet are stamped over the ground.</li>
+    <li><b>Long grass where it belongs.</b> It grows away from paving and paths, in lush rings at the foot of bushes and posts, and as straw out in the open. The wind combs it with a moving sheen.</li>
+    <li><b>Worn footpaths</b> are a new map object, painted to bare earth: here, the boiler house's doors to the road and to the tents.</li>
+    <li><b>Raised grass at the margins.</b> Fans of painted grass stand along paving, path shoulders and props, coloured and lit as the ground. Open lawn has none.</li>
+    <li><b>Cloud shadows</b> drift over everything: ground, plants and roofs together.</li>
+  </ul>
+  <p class="muted">Round 4 (the first two sliders) answers your note that the flowers sat on the grass: each flowering plant now spills a few of its own blossoms into the grass round it, long grass grows up round the foot of flower patches, their leaves are the lawn's own olive, and wild flowers grow in drifts of one kind each (daisies, buttercups, clover pink, lilac, a little orange) with strays between. Round 3: the critic's last notes, which are deeper olive hollows, fewer and calmer tuft stamps, and a sparser margin fringe. Next come more ground types (dry grass, heath, moss, reeds) on the same system.</p>
+  <div class="q" id="r2-verdict-box"></div>
+</section>
+
+<section>
+  <h2>Where we are</h2>
+  <div class="pair">
+    <figure><img src="img/now-road.jpg" alt="The infirmary lawn in the game today: a flat, evenly mottled green"><figcaption>The game today: one painted tile, drifting in colour over the ground.</figcaption></figure>
+    <figure><img src="img/concept-crop.jpg" alt="The infirmary concept art: olive and yellow tufted grass, worn earth, frayed edges"><figcaption>The concept: tufts, worn earth, edges that fray into the stone.</figcaption></figure>
+  </div>
+  <ul class="plain">
+    <li><b>One scale of detail.</b> We have fine grain and a broad colour wash, and nothing between. Grass at our distance reads as clumps of 30 cm to 1 m, each lit on top with a dark gap beneath.</li>
+    <li><b>Nothing moves.</b> Wind bands and passing cloud shadow are what make a field look alive from above.</li>
+    <li><b>Cut-out edges.</b> The grass stops at stone and props as if trimmed with scissors.</li>
+    <li><b>No story.</b> No worn paths, no shade, no dry patches: the same lawn everywhere.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>The looks</h2>
+  <p class="muted">Drag across a picture to compare it with today's frame.</p>
+  <div id="looks" style="display:grid;gap:40px"></div>
+</section>
+
+<section>
+  <h2>How each look could be built</h2>
+  <p>Our camera is high and steep, so a blade is a few pixels long and seen from the top. Single blades barely read. Colour, clumps, moving light and edges do, and most of that is cheap shader work and placement, not geometry. Costs are my estimates for a basic laptop GPU.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Layer</th><th>What it is</th><th>From our camera</th><th>Cost</th><th>Shows in</th></tr></thead>
+    <tbody>
+      <tr class="rec"><td><b>1. Better painted ground</b></td><td>The tile repeats in random hex patches so no grid shows; a clump mask shades tufts light over dark; baked shade under props; a painted layer for worn earth, shade lawn and dry patches.</td><td>Fixes most of the felt look on its own</td><td class="cost">nearly free</td><td>p1, p5, p8</td></tr>
+      <tr class="rec"><td><b>2. Moving light</b></td><td>Cloud shadows scrolling over the whole level; wind sheen bands rolling across long grass with the gusts our bushes already sway in.</td><td>Big, calm movement. The field feels alive</td><td class="cost">nearly free</td><td>p2, p3</td></tr>
+      <tr class="rec"><td><b>3. Painted tuft cards</b></td><td>Thousands of small camera-facing cards (like our bushes) of painted grass clumps, coloured and lit as the ground under them, so they merge instead of reading as spots.</td><td>Real height at edges, round posts, in long grass</td><td class="cost">moderate</td><td>p5 rings, p7</td></tr>
+      <tr><td><b>4. Instanced blades</b></td><td>Every blade a few triangles, swayed on the GPU (Ghost of Tsushima, the three.js tutorials).</td><td>Wasted on open ground from above; fine for a hero spot</td><td class="cost">high</td><td>p3</td></tr>
+      <tr><td><b>5. Shell texturing</b></td><td>The ground drawn 8 to 16 times, stacked like fur.</td><td>Velvet moss; looks like CG fur on a meadow</td><td class="cost">high fill</td><td>none</td></tr>
+      <tr><td><b>6. Interaction</b></td><td>A small top-down map of trampling, scorch, frost and wet that the ground and cards read.</td><td>Wizards leave trails; Fire, Cold and Water mark the field</td><td class="cost">small</td><td>later</td></tr>
+    </tbody>
+  </table></div>
+  <p>My recommendation: layers 1 and 2 first, since every grassy level gets them, then 3 where grass is long or meets an edge. Where grass is long, worn or shaded is level dressing, painted in the editor the way paving is laid.</p>
+</section>
+
+<section>
+  <h2>Questions</h2>
+  <div id="qs" style="display:grid;gap:16px"></div>
+</section>
+</div>
+
+<script>
+const LOOKS = [
+  { id: 'p1-concept', title: 'The concept\'s grass', cmp: true,
+    ask: 'Short dense tufts in the concept\'s olive and warm yellow-green, worn earth, grass fraying into the road.',
+    read: ['Closest to the concept; edges and the road shoulder are much better.', 'Over a big area the tufts are even and a little busy, and it leans yellow.'] },
+  { id: 'p2-tall-meadow', title: 'Tall meadow in wind', cmp: true,
+    ask: 'Knee-high meadow with wind sheen bands; mown strips along the road and the building.',
+    read: ['The most alive. In the game the bands would roll across the field.', 'The mown strip gives paths a clear frame. Very bright and saturated.'] },
+  { id: 'p3-blades', title: 'Upright blades, cloud shadows', cmp: true,
+    ask: 'A thick carpet of standing blades with bright tips; soft cloud shadows drifting over the lawn.',
+    read: ['The cloud shadows carry it and give the ground real depth.', 'The blades themselves read only as velvet: blades are texture from up here. Greener than the concept.'] },
+  { id: 'p4-soft-shapes', title: 'Soft painted masses', cmp: true,
+    ask: 'Like an animated-film background: big soft clumps lit like pillows, detail only near things.',
+    read: ['Calm and graphic, with clear clump-scale form.', 'Over a large field it turns lumpy; less natural than the others.'] },
+  { id: 'p5-lived-in', title: 'Lived in', cmp: true,
+    ask: 'Footpaths worn between tents, doors and road; long tufts at the foot of things; clover in shade; molehills.',
+    read: ['The most natural. The long tufts root every bush and post in the ground.', 'Most of it is placement, not rendering: a worn-path layer and rings of long grass.'] },
+  { id: 'p9-combo', title: 'Combined', cmp: true,
+    ask: 'p1\'s colour, p5\'s paths and rings, p3\'s cloud shadows, p2\'s sheen only where the grass is long.',
+    read: ['The strongest of the set: the concept\'s olive, worn paths to the doors, long tufts rooting every post and bush, and big soft cloud shadows.', 'The lower field\'s long grass is wind-combed without p2\'s glare. This is the recommended layers together, and my pick.'] },
+  { id: 'p6-edges', title: 'Grass meeting paving', cmp: true, before: 'img/green-after-forecourt.jpg',
+    ask: 'The forecourt: tufts spilling over the outer stones, grass in the joints, missing stones.',
+    read: ['A subtle change; this frame has too little lawn to show it.', 'p1 and p5 show the edges better.'] },
+  { id: 'p7-countryside', title: 'Open countryside', cmp: false,
+    ask: 'Open country at roughly our camera: long meadow, grazed pasture, dry-stone walls, oaks, a stream.',
+    read: ['A target for mood: dappled shade, combed meadow against short pasture, walls rooted in flowers.', 'The camera came out lower and closer than ours.'] },
+  { id: 'p8-grass-palette', title: 'Nine kinds of ground', cmp: false,
+    ask: 'Lawn, clover lawn, wind meadow, dry grass, shade and moss, reeds, heath, trodden path, grass meeting cobbles.',
+    read: ['A vocabulary of grounds for whole regions.', 'Drawn closer than our camera; flowers would be smaller in the game.'] },
+];
+const R2 = [
+  { id: 'r4-low', title: 'Round 4, flowers: plants grow out of the lawn; wild flowers in drifts', before: 'img/r3-low.jpg', after: 'img/r4-low.jpg' },
+  { id: 'r4-road', title: 'Round 4, the road frame', before: 'img/r3-road.jpg', after: 'img/r4-road.jpg' },
+  { id: 'r3-road', title: 'Round 3: the critic\'s last notes (deeper hollows, calmer tufts, a quieter fringe)', before: 'img/r2-road.jpg', after: 'img/r3-road.jpg' },
+  { id: 'r2-road', title: 'The road by the boiler house', before: 'img/r2-before-road.jpg', after: 'img/r2-road.jpg' },
+  { id: 'r2-close', title: 'Close: worn paths, margin grass, the road\'s verge', before: 'img/now-road.jpg', after: 'img/r2-close.jpg', single: true },
+  { id: 'r2-low', title: 'The lower field: long grass, combed', after: 'img/r2-low.jpg', single: true },
+  { id: 'r2-wide', title: 'The whole infirmary', after: 'img/r2-wide.jpg', single: true },
+];
+const QS = [
+  { id: 'r2-verdict', q: 'Round 2: where does the grass stand?', opts: [['go','Good: round 3 as planned'],['tune','Close: tune it (note)'],['wrong','Wrong direction (note)']] },
+  { id: 'q-direction', q: 'Which look should lead?', opts: [['p1','The concept (p1)'],['p5','Lived in (p5)'],['combo','Combined (p9)'],['p2','Tall meadow (p2)'],['other','Other, in the note']] },
+  { id: 'q-light', q: 'Moving light: cloud shadows and wind sheen over the fields?', opts: [['both','Both'],['clouds','Cloud shadows only'],['sheen','Wind sheen only'],['neither','Neither']] },
+  { id: 'q-first', q: 'Where should round 2 be built first?', opts: [['infirmary','The infirmary\'s lawns (recommended)'],['lab','A test field in the lab'],['both','Both']] },
+  { id: 'q-scope', q: 'Round 2 builds layers 1 and 2 (ground and light), then tuft cards. Go?', opts: [['go','Go'],['ground-only','Ground only first'],['change','Change it, in the note']] },
+  { id: 'general', q: 'Anything else about grass?', opts: [] },
+];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let db = null, me = null; const marks = {}, answers = {};
+
+function renderLooks() {
+  const box = document.getElementById('looks');
+  box.innerHTML = LOOKS.map(l => `
+    <article class="look" id="${l.id}" data-optional="${l.optional ? 1 : 0}">
+      <div class="look-head"><span class="tag">${l.id.split('-')[0]}</span><h3>${esc(l.title)}</h3></div>
+      ${l.cmp ? `<div class="cmp" style="--cut:50%">
+        <img src="${l.before || 'img/now-road.jpg'}" alt="Today's frame">
+        <img class="after" src="img/${l.id}.jpg" alt="${esc(l.title)}">
+        <div class="bar"></div><span class="lbl l">today</span><span class="lbl r">${l.id.split('-')[0]}</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Compare ${esc(l.title)} with today" id="cmp-${l.id}">
+      </div>` : `<figure class="single" style="margin:0"><img src="img/${l.id}.jpg" alt="${esc(l.title)}"></figure>`}
+      <div class="read"><div><b>Asked for.</b> ${esc(l.ask)}</div><div><b>My read.</b> ${esc(l.read.filter(Boolean).join(' '))}</div></div>
+      <div class="marks" role="group" aria-label="Mark ${esc(l.title)}">
+        <button type="button" data-m="lead" aria-pressed="false">Lead</button>
+        <button type="button" data-m="part" aria-pressed="false">Take parts</button>
+        <button type="button" data-m="no" aria-pressed="false">No</button>
+      </div>
+      <textarea id="note-${l.id}" placeholder="What works, what doesn't, which parts to take"></textarea>
+      <div class="saved" id="saved-${l.id}"></div>
+    </article>`).join('');
+  box.querySelectorAll('.cmp input').forEach(r => r.addEventListener('input', () => r.parentElement.style.setProperty('--cut', r.value + '%')));
+  box.querySelectorAll('.look').forEach(a => {
+    const id = a.id;
+    const img = a.querySelector('img.after, .single img');
+    if (a.dataset.optional === '1') img.addEventListener('error', () => { a.hidden = true; });
+    a.querySelectorAll('.marks button').forEach(b => b.addEventListener('click', () => {
+      const m = marks[id]?.mark === b.dataset.m ? '' : b.dataset.m;
+      saveMark(id, { mark: m });
+    }));
+    a.querySelector('textarea').addEventListener('change', e => saveMark(id, { note: e.target.value }));
+  });
+}
+function paintMark(id) {
+  const a = document.getElementById(id); if (!a) return;
+  const v = marks[id] || {};
+  a.querySelectorAll('.marks button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === v.mark)));
+  const t = a.querySelector('textarea'); if (document.activeElement !== t && v.note !== undefined) t.value = v.note;
+}
+function renderQs() {
+  document.getElementById('qs').innerHTML = QS.map(q => `
+    <div class="q" id="${q.id}">
+      <h3>${esc(q.q)}</h3>
+      ${q.opts.length ? `<div class="choices" role="radiogroup" aria-label="${esc(q.q)}">${q.opts.map(([v, t]) =>
+        `<label><input type="radio" name="${q.id}" value="${v}" id="${q.id}-${v}"><span>${esc(t)}</span></label>`).join('')}</div>` : ''}
+      <textarea id="ans-${q.id}" placeholder="Note"></textarea>
+      <div class="saved" id="saved-${q.id}"></div>
+    </div>`).join('');
+  QS.forEach(q => {
+    const el = document.getElementById(q.id);
+    el.querySelectorAll('input[type=radio]').forEach(r => r.addEventListener('change', () => saveAns(q.id, { choice: r.value })));
+    el.querySelector('textarea').addEventListener('change', e => saveAns(q.id, { note: e.target.value }));
+  });
+}
+function paintAns(id) {
+  const el = document.getElementById(id); if (!el) return;
+  const v = answers[id] || {};
+  el.querySelectorAll('input[type=radio]').forEach(r => { r.checked = r.value === v.choice; });
+  const t = el.querySelector('textarea'); if (document.activeElement !== t && v.note !== undefined) t.value = v.note;
+}
+function flash(id, msg) { const s = document.getElementById('saved-' + id); if (s) s.textContent = msg; }
+async function saveMark(id, patch) {
+  marks[id] = { ...(marks[id] || {}), ...patch, at: new Date().toISOString() }; paintMark(id);
+  if (!db) return flash(id, 'Not saved: the feedback store is not available here.');
+  try { await db.collection('ratings').doc(id).set(marks[id]); flash(id, 'Saved'); }
+  catch (e) { flash(id, 'Not saved: ' + (e?.message || 'the store refused the write') + '. Try again.'); }
+}
+async function saveAns(id, patch) {
+  answers[id] = { ...(answers[id] || {}), ...patch, at: new Date().toISOString() }; paintAns(id);
+  if (!db) return flash(id, 'Not saved: the feedback store is not available here.');
+  try { await db.collection('answers').doc(id).set(answers[id]); flash(id, 'Saved'); }
+  catch (e) { flash(id, 'Not saved: ' + (e?.message || 'the store refused the write') + '. Try again.'); }
+}
+function renderR2() {
+  const box = document.getElementById('r2');
+  box.innerHTML = R2.map(l => `
+    <article class="look" id="${l.id}">
+      <div class="look-head"><h3>${esc(l.title)}</h3></div>
+      ${!l.single ? `<div class="cmp" style="--cut:50%">
+        <img src="${l.before}" alt="This morning">
+        <img class="after" src="${l.after}" alt="${esc(l.title)}">
+        <div class="bar"></div><span class="lbl l">${l.id.startsWith('r4') ? 'round 3' : l.id === 'r3-road' ? 'round 2' : 'this morning'}</span><span class="lbl r">${l.id.startsWith('r4') ? 'round 4' : l.id === 'r3-road' ? 'round 3' : 'round 2'}</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Compare ${esc(l.title)} with this morning" id="cmp-${l.id}">
+      </div>` : `<figure class="single" style="margin:0"><img src="${l.after}" alt="${esc(l.title)}"></figure>`}
+      <div class="marks" role="group" aria-label="Mark ${esc(l.title)}">
+        <button type="button" data-m="lead" aria-pressed="false">Good</button>
+        <button type="button" data-m="part" aria-pressed="false">Close</button>
+        <button type="button" data-m="no" aria-pressed="false">No</button>
+      </div>
+      <textarea id="note-${l.id}" placeholder="What reads well, what doesn't"></textarea>
+      <div class="saved" id="saved-${l.id}"></div>
+    </article>`).join('');
+  box.querySelectorAll('.cmp input').forEach(r => r.addEventListener('input', () => r.parentElement.style.setProperty('--cut', r.value + '%')));
+  box.querySelectorAll('.look').forEach(a => {
+    const id = a.id;
+    a.querySelectorAll('.marks button').forEach(b => b.addEventListener('click', () => saveMark(id, { mark: marks[id]?.mark === b.dataset.m ? '' : b.dataset.m })));
+    a.querySelector('textarea').addEventListener('change', e => saveMark(id, { note: e.target.value }));
+  });
+}
+renderR2(); renderLooks(); renderQs();
+// the round 2 verdict sits with round 2, not at the end
+{ const v = document.getElementById('r2-verdict'), slot = document.getElementById('r2-verdict-box'); if (v && slot) slot.replaceWith(v); }
+(async () => {
+  const st = document.getElementById('status');
+  const timer = setTimeout(() => { st.textContent = 'The feedback store did not answer. Marks stay on this page only.'; }, 10000);
+  db = await (window.claude?.use?.('db') ?? Promise.resolve(null));
+  if (!db) { clearTimeout(timer); st.textContent = 'Sign in to save marks and answers.'; return; }
+  let n = 0; const done = () => { if (++n === 2) { clearTimeout(timer); st.textContent = 'Your marks and answers save as you go.'; } };
+  db.collection('ratings').onSnapshot(s => { s.docs.forEach(d => { marks[d.id] = d.data(); paintMark(d.id); }); done(); }, () => { clearTimeout(timer); st.textContent = 'Could not read saved marks.'; });
+  db.collection('answers').onSnapshot(s => { s.docs.forEach(d => { answers[d.id] = d.data(); paintAns(d.id); }); done(); }, () => { clearTimeout(timer); st.textContent = 'Could not read saved answers.'; });
+})();
+</script>

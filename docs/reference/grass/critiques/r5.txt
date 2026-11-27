@@ -1,0 +1,12 @@
+Do not generate images. Do not edit any files except the one named below. You are an art director and graphics programmer reviewing stylised grass in a three.js game, seen from a steep (46 degree) game camera.
+
+The attached sheet: TARGET is the approved concept paint-over of the road frame; NOW is the current in-game render of it; then a close-up, the lower field (long grass), the forecourt, and a wide view of the whole infirmary. BEFORE (this morning) is in the last tile.
+
+Since your last review: your round 3 numbers were applied; broad warm sweeps beside cool hollows now set the lawn's resting colour (a senior advisor's suggestion); and raised margin grass was added: camera-facing cards of painted grass fans at the grass side of paving and walls, the shoulders of worn paths and round props, coloured by the ground at their root and lit with the ground's up normal (marginGrass in C:\Users\mvikj\Code\magicka-toy\.claude\worktrees\grass-look\game\packages\client\src\lab\kit-ground.ts; read it).
+
+Constraints: the art direction is the concept (warm, sunlit, painterly, olive and yellow-green); must run on a basic laptop GPU; the plants, buildings and paving are out of scope.
+
+Write your review to r5-answer.md in the current directory:
+1. A score from 1 to 10 for how close NOW is to TARGET, and one line on why. Also say plainly whether this is presentable to the art lead as a first in-game version of the look.
+2. Up to three changes that would close the gap most, ranked, each with the exact change in kit-ground.ts. Include anything that now looks wrong (spots, seams, tiling, repeated stamps, odd margin cards) in any frame.
+Keep it under 450 words.

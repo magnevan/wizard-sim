@@ -1,0 +1,10 @@
+Do not generate images. Do not edit any files except the one named below. You are an art director reviewing stylised grass and flowers in a three.js game, seen from a steep (46 degree) game camera.
+
+The art lead's note on the previous version (BEFORE in the sheet): "the flowers feel like it clashes with the grass in a way that it feels artificially placed on top rather than smoothly flowing. Also some more random wild flowers would be nice."
+
+What changed (NOW, road frame and lower field): each flowering plant now spills its own blossoms into the grass round it, thinning out irregularly; wild flowers grow in drifts of one kind each (white, buttercup yellow, clover pink, lilac, a little orange) plus a few strays; the flower patches' leaves use the lawn's own olive. Code: C:\Users\mvikj\Code\magicka-toy\.claude\worktrees\grass-look\game\packages\client\src\lab\kit-ground.ts (grFlowers, the spill map in buildGround, the wildflower block in groundLawn). TARGET is the approved concept for the look.
+
+Write your review to r6-answer.md in the current directory:
+1. Does NOW answer the art lead's note? Score 1 to 10 for how naturally the flowers sit in the grass, and one line on why.
+2. Up to three ranked changes, each with the exact change in kit-ground.ts (numbers, lines), aimed at making the plants grow out of the lawn rather than sit on it, and the wild flowers read as natural. Name anything that now looks wrong (rings, halos, confetti, flat stickers, colours that clash).
+Keep it under 400 words.

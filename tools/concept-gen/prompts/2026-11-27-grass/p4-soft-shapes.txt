@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as p4-soft-shapes.png in the current directory. Reply with just the file name.
+
+The first attached image is a frame from our game, at the game camera. Repaint this exact frame: keep the camera, the composition, the building, the brick tower, the tents, the cobbled road, the lamp posts, the flowering bushes, the trees and the balustrade exactly where they are and the same size. Change only the grass and the bare ground, so the whole picture reads as one hand-painted, warm, sunlit stylised scene.
+
+Paint the grass like the background of a hand-painted animated film: the lawn is built from big soft rounded masses and clumps of grass, each mass lit like a soft pillow with a warm yellow-green top, a gentle rim of light and a cool blue-green underside, rather than from individual blades. A few brush-stroke tufts break the edges of each mass. Calm, graphic and readable, with large quiet areas and the detail gathered near the road, the building and the bushes.

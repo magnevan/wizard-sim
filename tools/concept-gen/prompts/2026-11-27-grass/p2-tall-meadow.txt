@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as p2-tall-meadow.png in the current directory. Reply with just the file name.
+
+The first attached image is a frame from our game, at the game camera. Repaint this exact frame: keep the camera, the composition, the building, the brick tower, the tents, the cobbled road, the lamp posts, the flowering bushes, the trees and the balustrade exactly where they are and the same size. Change only the grass and the bare ground, so the whole picture reads as one hand-painted, warm, sunlit stylised scene.
+
+Make the grass a long, soft summer meadow, knee high, that the wind is moving: broad silvery-pale sheen bands sweep across it where the blades bend over, with deeper green troughs between them. Along both sides of the road and round the building the grass is mown short in a neat strip, so the long meadow starts a stride away from the paths with a soft ragged edge. Drifts of wildflowers (buttercup yellow, white daisies, a little clover pink) gather in loose patches inside the long grass.

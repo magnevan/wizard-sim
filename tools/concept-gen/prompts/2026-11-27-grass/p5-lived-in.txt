@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as p5-lived-in.png in the current directory. Reply with just the file name.
+
+The first attached image is a frame from our game, at the game camera. Repaint this exact frame: keep the camera, the composition, the building, the brick tower, the tents, the cobbled road, the lamp posts, the flowering bushes, the trees and the balustrade exactly where they are and the same size. Change only the grass and the bare ground, so the whole picture reads as one hand-painted, warm, sunlit stylised scene.
+
+Make the lawn feel lived in and natural: narrow trodden footpaths worn into the grass between the tents, the building's doors and the road, bare earth along them; patchy grass in the shade of the building and the tower, with moss and clover there; longer uncut tufts round the lamp posts, the bushes and the balustrade's foot; a few daisy and clover patches and some molehills on the open lawn. The colour of the grass changes with the ground: lusher and deeper green near the bushes, drier and straw-yellow on the open sunny stretches.

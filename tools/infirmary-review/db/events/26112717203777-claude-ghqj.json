@@ -1,0 +1,11 @@
+{
+ "at": "2026-11-27T17:20:37.775Z",
+ "by": "claude",
+ "task": "t-devices2",
+ "note": "Modelled and in the scene: a station at each tent's end, an emitter beside each pillow (behind them the roof hid them). Pictures in Buildings & props, Devices in.",
+ "set": {
+  "seen": "2026-11-27T17:20:37.773Z",
+  "status": "review",
+  "outcome": "pieces: setpiece.heal-station, setpiece.bed-emitter"
+ }
+}

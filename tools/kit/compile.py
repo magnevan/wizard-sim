@@ -238,6 +238,25 @@ GLYPH_DRAPE = 0.3                # m: a run drapes over a change of floor this h
 GLYPH_STATES = ('lit', 'dim', 'dark')
 
 
+def wears(objs, G, nx, ny, err, label):
+    """Worn footpaths ({kind: wear, pts: [[x, y], ...] corners, w?: u wide, default 1.2}): where people have trodden
+    the lawn down to bare earth, along a line (door to road, tent to tent). Each becomes one ground.wear with pts in u;
+    the renderer paints it into the ground (kit-ground.ts). Dressing only: it never blocks.
+    Checks: wear-point (fewer than two points, or a point off the map)."""
+    out = []
+    for o in objs:
+        raw = o.get('pts') or []
+        if len(raw) < 2:
+            err('wear-point', f"{label(o)}: a worn path needs two points or more", raw[0][:2] if raw else None, [o['id']]); continue
+        off = [p for p in raw if not (0 <= p[0] <= nx and 0 <= p[1] <= ny)]
+        if off:
+            err('wear-point', f"{label(o)}: its point ({off[0][0]},{off[0][1]}) is off the map", tuple(off[0][:2]), [o['id']]); continue
+        pts = [[round(p[0] * G, 3), round(p[1] * G, 3)] for p in raw]
+        out.append({'p': 'ground.wear', 'x': pts[0][0], 'y': pts[0][1], 'h': 0.0, 'rot': 0.0, 'pts': pts,
+                    'w': float(o.get('w', 1.2)), 'src': o['id']})
+    return out
+
+
 def glyphs(objs, floor_u, T, G, nx, ny, placed, err, label):
     """Glyph paths ({kind: glyph, pts: [[x, y] or [x, y, z m]], w?, tint?, state?}): runes carved flush into the floor
     that carry a well's power, drawn to size by the renderer (kit-glyph.ts). Each becomes one glyph.run: pts resolved to
@@ -1147,6 +1166,7 @@ def compile_scene(sc):
 
     inst += pipes(kind('pipe'), floor_u, T, G, nx, ny, kind('setpiece') + kind('vignette'), err, label)
     inst += glyphs(kind('glyph'), floor_u, T, G, nx, ny, kind('setpiece'), err, label)
+    inst += wears(kind('wear'), G, nx, ny, err, label)
 
     # ---- reachability: cells by terrace, joined where steps are small, plus flights ----
     walk = {c for c in T if T[c].get('edge') != 'wall' and T[c].get('walk', True)}

@@ -1,6 +1,6 @@
 # The infirmary on the kit
 
-Status: active again 2026-11-27 (the user: keep working, but stay off the grass, another session has it); the healing devices placed as grey stand-ins, their models waiting on the user's credit OK (`pc7-credits`) · Last touched: 2026-11-27
+Status: active 2026-11-27; the healing devices modelled and in place, the grass session's branch merged in; next the triage sheet on meshy.ai (OK'd) · Last touched: 2026-11-27
 Record: [the read](../campaign/01-opening/infirmary-read.md) (stages 0 to 3: plan D rev 9, flow 8/10, sense 9/10) · plan: `tools/place-plans/plans/inf-d.py` · scene: `tools/kit/scenes/infirmary.scene.json` · [building it on the kit](../campaign/making-a-place.md#building-it-on-the-kit) (the steps) · [the opening thread](opening.md) · [the courtyard on the kit](kit-courtyard.md) (the first place built this way)
 
 ## Where it stands
@@ -13,7 +13,6 @@ Branch `worktree-infirmary-kit`.
 
 **Resume here.** The page moved to the template's v2 on 2026-11-27 ([the place review thread](place-review.md)): the live to-do list is its db `tasks` (Now and Tasks tabs of [The Infirmary on the Kit](https://claude.ai/artifact/9xpg4f5Ye54kgLyGKrMEvA)); work it by [the loop](../../tools/place-review/README.md#the-loop-every-session-on-a-place): read `answers` and `tasks` first, answer what's on Claude's move. The branch is `worktree-infirmary-kit` (not merged; `q-merge` asks when).
 
-- [ ] **Healing devices: the models.** The user picked station c and emitter b (`pc6-*`). Codex redrew them as model references (`docs/reference/infirmary-kit/devices3/`: the station's leads snipped, per the user's note that Meshy would force them to 45°; the emitter alone). Placed as grey stand-ins: `setpiece.heal-station` and `setpiece.bed-emitter` (kit.json, `glyph_fed`), six stations and 24 emitters laid in each tent's frame by `tent_healing()` in `trace_plan.py`, with thin leads and branch lines. The Meshy calls (API, about 30 credits each) were refused by the permission check without an explicit OK, so they wait on decision `pc7-credits`. Then `fit.py`, check the stand-in sizes against the models, and render.
 - [ ] **Triage dressing.** Sheet b is OK'd (`pc6-sheet2`). Render it on the meshy.ai website (free retries) when the user is at the machine for the download (`pc7-credits`), then split, fit at 1.8x (`style_scale`) and dress the camp.
 - [ ] **Glyph lines dark till the fix**: the well's crystal is now dark while choked (`coreGlow`, the user's `q-crystal` answer), but the glyph lines still glow at full. Dimming them is the game session's `setGlyphState` (below); a scene `state: dim` could preview it.
 - [ ] **Polish tasks with evidence** (on the board): the beach's sea-wall balustrade along the water; birch bark; the wisteria tree should hang; vines on the middle cove cliff; the fields' brightness and hard edges; lumpy shrubs; the road out's broken paving.
@@ -23,6 +22,8 @@ Branch `worktree-infirmary-kit`.
 How the scene is made: `python tools/kit/trace_plan.py inf-h infirmary` re-traces plan H (`tools/place-plans/plans/inf-h.py`) with `FIXES['infirmary']` in `trace_plan.py` (every hand edit lives there: the cove, flights, set pieces, props, glyph paths, markers), then `compile.py infirmary`, `room.py infirmary`, and `npm run content:build` in `game/`. Renders: `npm run dev -w @wizard-sim/client -- --port 5197` in `game/`, then `/__map/view?name=infirmary&cam=game&x=..&y=..&r=..` (`&grow=0..1` for the vines, `&t=` for smoke). Meshy spent this session: 330 credits (1,134 left; they expire 2026-12-16).
 
 ## Done
+
+- 2026-11-27: with the user's OK (`pc7-credits`), the station and the emitter modelled (Meshy 7.1, 30 credits each, first try; 60 this session), fitted (`setpiece.heal-station` 1.26 m, `setpiece.bed-emitter` 0.91 m) and in place. The tent model's cots run right up to its back posts, so the emitters stand beside each cot's head, not behind it (behind, the roof hid them). The grass session's branch (`worktree-grass-look`: natural ground in `kit-ground.ts`, margin grass, worn paths `kind: wear`, wild flowers) merged in; the scene re-traced from the merged `trace_plan.py`. Tests pass.
 
 - 2026-11-27: the user's answers acted on (station c, emitter b, sheet b, crystal hidden, merge later). The well's crystal is dull grey glass while choked and glows as the vines are cut, most at the last cuts (`coreGlow` in `overgrowth.ts`, from the overgrowth level; only green texels inside the spec's `core`). The healing devices are placed as stand-ins with their lines (above); `compile.py` skips glyph-through-piece warnings for `glyph_fed` pieces. 0 errors. Review page round 9; the grass is left to the other session.
 

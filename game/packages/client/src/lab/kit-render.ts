@@ -18,13 +18,16 @@ import { FOLIAGE_TIME, grow, groundShade, type Recipe } from './foliage';
 import { cageOvergrowth, clearOvergrowth, coreGlow, overgrowthSlot, pathOvergrowth, stepOvergrowth, type OvergrowthSpec } from './overgrowth';
 import { smokeMesh, type SmokeSpec } from './kit-smoke';
 import { kerbRows, KERB_ROUND, KERB_W, type KerbSeg } from './kit-road';
-import { LAWN_VARY, STONE_MATS, STONE_PAINT, STONE_U, stoneDecl, stoneFrag } from './kit-stones';
+import { LAWN_VARY, STONE_MATS, STONE_PAINT, STONE_U, WEATHERED, stoneDecl, stoneFrag } from './kit-stones';
+import { buildGround, cloudify, GROUND_U, marginGrass, setGroundArt } from './kit-ground';
 
 export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string; ox?: number; oy?: number;
   /** a fall's lip (fall.curtain): its line in u, the lower water on the right */
   pts?: number[][];
   /** per instance (scatters, dressing): size, a colour multiplied in, metres above h, and the parts chosen per slot */
-  scale?: number; tint?: string; up?: number; parts?: Record<string, string> };
+  scale?: number; tint?: string; up?: number; parts?: Record<string, string>;
+  /** a worn path's width (u) */
+  w?: number };
 export type Floor = { t: string; id?: string; h: number; mat: string; polys: number[][][][] };
 export type KitData = { G: number; size: [number, number]; floors: Floor[]; instances: Inst[] };
 
@@ -167,7 +170,7 @@ export async function loadKitArt(): Promise<void> {
 const texUrls = import.meta.glob<string>('../../../../content/generated/textures/*.png', { eager: true, query: '?url', import: 'default' });
 const texTiles = import.meta.glob<Record<string, number>>('../../../../content/generated/textures/tiles.json', { eager: true, import: 'default' });
 /** Textures that dress walls, steps and props, not floors. */
-const NOT_FLOOR = /^(ashlar|smooth-stone|tread|kerb|plaza-disc|magic-flow|tiles|vine-.*|banner-.*|brass|pipe-.*|glyph-.*)$/;
+const NOT_FLOOR = /^(ashlar|smooth-stone|tread|kerb|plaza-disc|magic-flow|tiles|vine-.*|banner-.*|brass|pipe-.*|glyph-.*|foliage-.*)$/;
 /**
  * The floor materials a level can have, for the editor: the flat tones, and every texture (in the textures folder or
  * in tiles.json) that isn't for walls, steps or props, so a new texture shows up as a floor on its own.
@@ -212,6 +215,7 @@ async function loadTextures() {
   // (the meadow where there is one: the infirmary's lawns since 2026-11-27)
   const lawn = RAW.meadow ? 'meadow' : 'lawn';
   STONE_U.stLawn.value = RAW[lawn] ?? RAW.weathered ?? null; STONE_U.stLawnS.value = TILE[lawn] ?? 4; STONE_U.stLawnV.value = VARY.has(lawn) ? 1 : 0;
+  setGroundArt(RAW['foliage-tufts'], RAW.weathered, TILE.weathered ?? 3, RAW.meadow, TILE.meadow ?? 5, RAW['foliage-blossoms']);   // the ground's painted tufts and its earth (kit-ground.ts)
 }
 /**
  * A material that samples tex by world position, blended over the three axes by the surface's facing. stone: the
@@ -223,6 +227,7 @@ function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0
     sh.uniforms.tpMap = { value: tex }; sh.uniforms.tpScale = { value: 1 / tile };
     sh.uniforms.tpFlow = { value: new THREE.Vector2(...flow) }; sh.uniforms.tpTime = TP_TIME;
     if (stone >= 0) { const P = STONE_PAINT[STONE_MATS[stone]]; Object.assign(sh.uniforms, STONE_U, { stPal: P.pal, stJoint: P.joint, stK: P.k, stSheet: P.sheet, stMean: P.mean }); }
+    if (vary || (stone >= 0 && WEATHERED.has(STONE_MATS[stone]))) Object.assign(sh.uniforms, GROUND_U);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTpPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvTpNrm = normalize(mat3(modelMatrix) * objectNormal);');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;\nuniform sampler2D tpMap;\nuniform float tpScale, tpTime;\nuniform vec2 tpFlow;' + (stone >= 0 ? stoneDecl(stone) : '') + (vary ? LAWN_VARY : ''))
@@ -230,7 +235,7 @@ function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0
         vec4 tpC = texture2D(tpMap, vTpPos.zy * tpScale) * tpW.x + texture2D(tpMap, vTpPos.xz * tpScale + tpFlow * tpTime) * tpW.y + texture2D(tpMap, vTpPos.xy * tpScale) * tpW.z;
         ${macro ? `vec3 tpFar = texture2D(tpMap, mat2(0.8, -0.6, 0.6, 0.8) * vTpPos.xz * tpScale * 0.137, 5.0).rgb, tpMean = texture2D(tpMap, vec2(0.5), 20.0).rgb;
         tpC.rgb *= clamp(1.0 + (dot(tpFar, vec3(0.333)) / max(dot(tpMean, vec3(0.333)), 0.02) - 1.0) * ${macro.toFixed(2)}, 0.8, 1.2);` : ''}
-        ${vary ? 'tpC.rgb = lawnVary(tpC.rgb, vTpPos.xz);' : ''}
+        ${vary ? 'tpC.rgb = tpW.y > 0.6 ? groundLawn(tpMap, 1.0 / tpScale, vTpPos.xz) : lawnVary(tpC.rgb, vTpPos.xz);' : ''}
         diffuseColor *= tpC;
         ${stone >= 0 ? stoneFrag(stone) : ''}
 `);
@@ -540,6 +545,7 @@ function wall(g: THREE.Group, L: number, h: number, low: number, v?: string, doo
 function piece(it: Inst): THREE.Group | null {
   const [cls, kind, shape] = it.p.split('.');
   if (isDecal(it.p)) return null;   // a decal draws as a picture on the ground (setDecal), not as a piece
+  if (cls === 'ground') return null;   // painted into the ground (kit-ground.ts): worn paths
   if (KIT_PIECES[it.p]?.class === 'inlay') return inlay(it);
   if (cls === 'fall') return it.pts && it.low != null ? fallMesh(it.pts, yOf(it.h), yOf(it.low), TP_TIME) : null;   // water pouring into lower water (kit-fall.ts)
   if (cls === 'cliff') return it.pts && it.low != null ? cliffFace(it.pts, it.h, it.low) : null;   // a sea cliff laid from the cliff kit
@@ -660,6 +666,7 @@ function piece(it: Inst): THREE.Group | null {
     const g = new THREE.Group(), y = 0;
     g.position.set(it.x, yOf(it.h + (it.up ?? 0)), it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // local +z is the front
     const k = KIT_PIECES[it.p] ?? { shape: 'box', footprint: [2, 2], height: 4 };
+    if (it.p === 'setpiece.grass-long' && GROUND_U.grOn.value) return g;   // long grass is painted into the ground (kit-ground.ts), not grown as cards
     if (k.grow) return growInto(g, k.grow, seedOf(it), y);
     // vines grown round its structure (lab/overgrowth.ts), their level settable by its scene id (setOvergrowth)
     const slot = k.overgrowth && it.src ? overgrowthSlot(it.src, k.overgrowth.level ?? 1) : undefined;
@@ -1083,6 +1090,7 @@ export function buildKit(data: KitData): THREE.Group {
   }
   for (const it of data.instances) if (it.p.startsWith('fall.') && it.pts) for (let i = 0; i + 1 < it.pts.length; i++) FALL_LIPS.push([...it.pts[i], ...it.pts[i + 1], it.h]);
   setDecal(data.instances.find((i) => isDecal(i.p)));
+  buildGround(data.floors, data.instances, kitPiece);   // the lawn's ground map: worn paths, long grass, contact shade (kit-ground.ts)
   for (const it of data.instances) if (it.p.startsWith('joint.')) JOINTS.set(jkey(it.x, it.y), it);
   const bottom = yOf(Math.min(0, ...data.floors.map((f) => f.h)) - 0.4);
   const waters = data.floors.filter((f) => f.mat === 'water');
@@ -1142,6 +1150,8 @@ export function buildKit(data: KitData): THREE.Group {
       root.add(s);
     }
   }
+  const margin = marginGrass(); if (margin) root.add(margin);   // raised grass at the lawn's edges (kit-ground.ts)
+  cloudify(root);   // cloud shadows drifting over everything lit
   return root;
 }
 

@@ -1,0 +1,11 @@
+{
+ "at": "2026-11-27T17:20:37.895Z",
+ "by": "claude",
+ "task": "t-place-devices",
+ "note": "Placed: 6 stations, 24 emitters, with their leads and branch lines.",
+ "set": {
+  "seen": "2026-11-27T17:20:37.894Z",
+  "status": "review",
+  "outcome": "scene: tent_healing() in trace_plan.py"
+ }
+}

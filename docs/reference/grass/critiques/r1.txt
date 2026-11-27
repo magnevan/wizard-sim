@@ -1,0 +1,17 @@
+Do not generate images. Do not edit any files except the one named below. You are an art director and graphics programmer reviewing stylised grass in a three.js game, seen from a steep (46 degree) game camera.
+
+The attached sheet: TARGET (top left) is the approved concept paint-over of this exact frame; NOW (top right) is the current in-game render; BEFORE is where we started this morning; then a close-up, the forecourt where paving meets lawn, and the original concept for colour.
+
+How the ground is made now (code: C:\Users\mvikj\Code\magicka-toy\.claude\worktrees\grass-look\game\packages\client\src\lab\kit-ground.ts, read it; the GLSL function groundLawn is the lawn's colour; its result is the diffuse colour, then lit by three.js MeshStandardMaterial with a sun, a hemisphere light and an environment, then ACES tone mapping):
+- a painted grass tile, hex-tiled, drifted in colour by lawnVary;
+- a ground map per half-u cell (1 u = 0.6 m): R worn path, G long grass, B contact shade, A distance to paving;
+- painted grey grass tufts from a 4x4 sprite sheet stamped over the ground (grBomb), coloured by the lawn: short tufts, long combed clumps where G is high, sparse ones at path fringes;
+- wind sheen on long grass, cloud shadows on everything lit (cloudify), worn paths painted from the weathered paving's earth tile.
+
+Constraints: the art direction is the concept (warm, sunlit, painterly, olive and yellow-green); no per-blade geometry; must run on a basic laptop GPU; the plants, buildings and paving are out of scope (only the lawn, the paths, the cloud shadows and the grass at edges).
+
+Write your review to r1-answer.md in the current directory, in this shape:
+1. A score from 1 to 10 for how close NOW is to TARGET, and one line on why.
+2. The three changes that would close the gap most, ranked. For each: what is wrong in the picture, and the exact change in kit-ground.ts (which line or function, which numbers to what), so it can be applied directly. Prefer changes to colour, value and shapes that are visible at the game camera.
+3. Anything in TARGET that the current approach cannot reach, and what it would take.
+Keep it under 500 words.

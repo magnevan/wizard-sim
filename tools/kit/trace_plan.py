@@ -29,14 +29,16 @@ MATMAP = {  # plan material -> (kit floor, walkable, edge)
 }
 def tent_healing(tid, at, turn, end):
     """A tent's healing devices (the user's design, 2026-11-27, answers pc5-*, pc6-station c, pc6-emitter b): one station
-    at the tent's end that faces its glyph line (end +1 east, -1 west, in the tent's frame), a bed emitter behind each of
-    its four cots' pillows, and a thin lead carved along the back of the tent from the station past them. Positions are
-    measured off the tent's model (cot centres at source x -0.451, -0.021, 0.358, ~0.75 of its 1.90 width; their heads end
-    at source y 0.21 of the back's 0.38), at 4.2 corners per source unit (16 u wide, G = 2). Returns (fixes, station xy)."""
+    at the tent's end that faces its glyph line (end +1 east, -1 west, in the tent's frame), a bed emitter at the head of
+    each of its four cots, and a thin lead carved across the tent under the pillows from the station past them. Positions
+    are measured off the tent's model, at 4.2 corners per source unit (16 u wide, G = 2): the cots span source x
+    [-0.58, -0.32], [-0.145, 0.103], [0.222, 0.494] and ~[0.62, 0.88] of its 1.90 width, their heads end at source y 0.21,
+    right at the back posts, so there is no room behind the pillows (the first try stood the emitters out past the posts,
+    hidden by the roof): each emitter stands in the gap to its cot's right, level with the pillow. Returns (fixes, station xy)."""
     t = math.radians(turn); c0, s0 = math.cos(t), math.sin(t)
     rot = lambda x, y: [round(at[0] + x * c0 - y * s0, 2), round(at[1] + x * s0 + y * c0, 2)]   # turn: clockwise on the map
-    K, back = 4.2, -0.245 * 4.2                    # corners per source unit; the emitters' line behind the pillows (north)
-    xs = [x * K for x in (-0.451, -0.021, 0.358, 0.75)]
+    K, back = 4.2, -0.15 * 4.2                     # corners per source unit; the pillows' line (north of the middle)
+    xs = [x * K for x in (-0.2325, 0.1625, 0.557, 0.92)]   # the gaps right of each cot
     st = rot(end * 4.75, 0.0)
     far = min(xs) if end > 0 else max(xs)
     out = [('object', dict(kind='setpiece', id=f'heal-station-{tid}', name="a tent's healing station", piece='setpiece.heal-station', at=st, front='S', turn=turn))]
@@ -136,6 +138,10 @@ FIXES = {
         ('object', dict(kind='glyph', id='glyph-tent-w1', name='the branch to tent w1', pts=[[25.5, 21.2], _ST['w1']])),
         ('object', dict(kind='glyph', id='glyph-tent-w2', name='the branch to tent w2', pts=[[25.5, 21.2], _ST['w2']])),
         *[fx for v in _HEAL.values() for fx in v[0]],
+        # worn footpaths in the lawn (kit-ground.ts): where the nurses and stokers walk
+        ('object', dict(kind='wear', id='wear-boiler-west', name="the boiler house's west door to the road", pts=[[65.0, 33.1], [64.6, 35.0], [63.9, 36.9]])),
+        ('object', dict(kind='wear', id='wear-boiler-east', name="the boiler house's east door, joining the west door's path", pts=[[68.4, 33.1], [67.2, 34.6], [64.8, 35.5]], w=1.0)),
+        ('object', dict(kind='wear', id='wear-tents-boiler', name="from the tents round the boiler house's corner to its door", pts=[[54.3, 24.8], [57.0, 27.8], [60.2, 31.6], [62.0, 33.5], [64.9, 33.4]])),
         # lanterns on the road's far (north) side, so they never stand between the camera and the walkers (the user)
         ('object', dict(kind='vignette', id='road-lamp-1', name='a lamp post', piece='dress.lamp', at=[58.0, 35.4], front='S')),
         ('object', dict(kind='vignette', id='road-lamp-2', name='a lamp post', piece='dress.lamp', at=[66.0, 35.4], front='S')),

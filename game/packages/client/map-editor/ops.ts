@@ -15,7 +15,7 @@ export type Shift = { axis: 'x' | 'y'; at: number; n: number };
 export class OpError extends Error {}
 
 const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-const KINDS: Record<string, string> = { flight: 'f', curve: 'c', round: 'r', line: 'l', edge: 'e', vignette: 'v', setpiece: 's', scatter: 'w', dress: 'd', pipe: 'pipe' };
+const KINDS: Record<string, string> = { flight: 'f', curve: 'c', round: 'r', line: 'l', edge: 'e', vignette: 'v', setpiece: 's', scatter: 'w', dress: 'd', pipe: 'pipe', glyph: 'glyph' };
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 const slug = (s: string) => s.toLowerCase().replace(/^the /, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'x';
 const num = (v: unknown, what: string): number => {
@@ -42,7 +42,7 @@ function mintId(sc: Scene, prefix: string): string {
 export function eachPoint(o: Obj, f: (p: [number, number]) => [number, number]) {
   for (const k of ['at', 'centre', 'a', 'b']) if (Array.isArray(o[k])) o[k] = f(o[k] as [number, number]);   // a, b: a line's ends
   for (const k of ['head', 'ends']) if (Array.isArray(o[k])) o[k] = (o[k] as [number, number][]).map(f);
-  if (o.kind === 'pipe' && Array.isArray(o.pts)) o.pts = (o.pts as number[][]).map((p) => [...f([p[0], p[1]]), ...p.slice(2)]);   // a pipe's route keeps its heights
+  if ((o.kind === 'pipe' || o.kind === 'glyph') && Array.isArray(o.pts)) o.pts = (o.pts as number[][]).map((p) => [...f([p[0], p[1]]), ...p.slice(2)]);   // a pipe's route keeps its heights
 }
 
 /** Apply a batch of ops to a copy of the scene. Throws OpError on a bad op (nothing is applied). */
@@ -132,6 +132,12 @@ export function applyOps(scene: Scene, ops: Op[]): { scene: Scene; minted: strin
             const ps = obj.pts as unknown[];
             if (!Array.isArray(ps) || ps.length < 2) throw new OpError('a pipe needs pts: [[x, y] or [x, y, z], ...], two or more');
             ps.forEach((p) => { if (!Array.isArray(p) || (p.length !== 2 && p.length !== 3)) throw new OpError("each of a pipe's pts is [x, y] or [x, y, z]"); p.forEach((v) => num(v, 'pts')); });
+          }
+          if (kind === 'glyph') {   // a glyph path carved in the floor (compile.py, kit-glyph.ts): pts [[x, y] or [x, y, z m], ...], w? (u), tint?, state? (lit, dim, dark)
+            const ps = obj.pts as unknown[];
+            if (!Array.isArray(ps) || ps.length < 2) throw new OpError('a glyph path needs pts: [[x, y] or [x, y, z], ...], two or more');
+            ps.forEach((p) => { if (!Array.isArray(p) || (p.length !== 2 && p.length !== 3)) throw new OpError("each of a glyph path's pts is [x, y] or [x, y, z]"); p.forEach((v) => num(v, 'pts')); });
+            if (obj.state != null && !['lit', 'dim', 'dark'].includes(String(obj.state))) throw new OpError("a glyph path's state is lit, dim or dark");
           }
           if (kind === 'curve') { if (typeof obj.terrace === 'string') obj.terrace = terraceOf(sc, obj.terrace).id; pt(obj.centre, 'centre'); obj.out ??= 'S'; }
           if (kind === 'round') {   // a true circle the edges near it snap onto (tools/kit/compile.py): centre, r, tol?, terrace?, from?/to?

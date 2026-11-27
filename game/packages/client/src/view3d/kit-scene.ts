@@ -24,7 +24,7 @@ import { batchKit, type KitBatch } from './kit-batch';
 /** Pieces a body stands on besides the floors: flights and steps. */
 const WALKABLE_PIECE = /^(connector\.flight|edge\.steps|sweep\.steps)/;
 /** Pieces never faded: lying on the ground (kerbs, decals, inlays) or too low to hide anyone. */
-const NEVER_FADE = /^(edge\.kerb|sweep\.kerb|joint\.|setpiece\.plaza-(disc|inlay)|fall\.|pipe\.)/;
+const NEVER_FADE = /^(edge\.kerb|sweep\.kerb|joint\.|setpiece\.plaza-(disc|inlay)|fall\.|pipe\.|glyph\.)/;
 /** Height (u) under which a piece can't hide a standing wizard and isn't worth testing. */
 const LOW = 1.2;
 
@@ -118,6 +118,7 @@ export class KitScene {
     kit.updateMatrixWorld(true);
     for (const o of kit.children) {
       if (o.userData.floor) { this.walkable.push(o); continue; }
+      if (o.userData.noFade) continue;   // drawn flat on the ground over the whole scene (the glyph paths' one mesh)
       const inst = typeof o.userData.inst === 'number' ? this.data.instances[o.userData.inst] : undefined;
       if (inst && WALKABLE_PIECE.test(inst.p)) { this.walkable.push(o); continue; }
       if (inst && NEVER_FADE.test(inst.p)) continue;

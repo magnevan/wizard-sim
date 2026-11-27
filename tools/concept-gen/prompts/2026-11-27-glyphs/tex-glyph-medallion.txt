@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-glyph-medallion.png in the current directory. Reply with just the file name.
+
+The attached painting shows thin green glowing rune paths set into stone paving, with round medallions at their ends and bends, each holding a small leaf sprout emblem.
+
+Draw one of those medallions alone, seen straight from above and centred in a square image: a circular carved emblem for the element of Life. A clean outer ring line, a thinner inner ring line just inside it, and in the middle a sprouting seedling with two rounded leaves on a short curved stem rising from a small seed, symmetrical and bold. Pure white strokes of even, fairly thick width on a flat pure black background, the outer ring nearly touching the image's edges.

@@ -96,6 +96,16 @@ FIXES = {
         ('object', dict(kind='vignette', id='camp-canvas-1', name='tent canvas', piece='dress.tent-canvas', at=[39.2, 13.0], front='S', turn=-10)),
         ('object', dict(kind='vignette', id='camp-canvas-2', name='tent canvas', piece='dress.tent-canvas', at=[29.0, 26.4], front='S', turn=12)),
         ('object', dict(kind='vignette', id='camp-stakes-1', name='tent stakes', piece='dress.tent-stakes', at=[33.4, 13.8], front='S', turn=0)),
+        # the glyph paths (the user: rune carvings in the ground you can walk over, not plumbing): the well's power out to the
+        # greenhouse and fields, the tents, the purifier's tower, and along the road out to the battery
+        ('object', dict(kind='glyph', id='glyph-greenhouse', name='the line to the greenhouse', pts=[[32.6, 19.2], [26.0, 21.2], [15.6, 21.2], [15.6, 33.8]])),
+        ('object', dict(kind='glyph', id='glyph-fields', name='the line out to the fields', pts=[[15.6, 21.2], [7.0, 21.2]])),
+        ('paint', 'plaza at 3.5 m', 33, 24, 37, 25),       # a paved strip through the bed to the cliff top above the pump tower
+        ('object', dict(kind='glyph', id='glyph-purifier', name='the line to the purifier', pts=[[35.0, 23.4], [35.0, 25.4]])),
+        ('object', dict(kind='glyph', id='glyph-tents-nw', name='the line to the north-west tent', pts=[[33.4, 16.4], [30.0, 13.4], [27.0, 13.4]])),
+        ('object', dict(kind='glyph', id='glyph-tents-ne', name='the line to the north-east tent', pts=[[36.6, 16.4], [40.0, 13.4], [43.0, 13.4]])),
+        ('object', dict(kind='glyph', id='glyph-tents-e', name='the line between the east tents', pts=[[37.4, 19.2], [44.0, 21.2], [49.0, 21.2]])),
+        ('object', dict(kind='glyph', id='glyph-road', name='the line along the road to the battery', pts=[[49.0, 21.2], [54.6, 21.2], [54.6, 30.0], [56.0, 37.5], [87.0, 37.5]])),
         # lanterns on the road's far (north) side, so they never stand between the camera and the walkers (the user)
         ('object', dict(kind='vignette', id='road-lamp-1', name='a lamp post', piece='dress.lamp', at=[58.0, 35.4], front='S')),
         ('object', dict(kind='vignette', id='road-lamp-2', name='a lamp post', piece='dress.lamp', at=[66.0, 35.4], front='S')),

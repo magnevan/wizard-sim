@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-glyph-runes.png in the current directory. Reply with just the file name.
+
+The attached painting shows thin green glowing rune paths set into stone paving, with small runes running along inside each path.
+
+Draw a square sheet of sixteen different carved magic runes for the element of Life, arranged in an even 4 by 4 grid, one rune centred in each cell with generous empty space around it. Each rune is a simple, bold sigil built from a few clean strokes: a sprouting stem, a curling tendril, a leaf shape, a seed in a ring, a branching twig, a crescent with a bud, a spiral vine, and similar living forms, every one different, each about as tall as it is wide and filling about two thirds of its cell. Pure white strokes of even, fairly thick width with softly rounded ends, on a flat pure black background.

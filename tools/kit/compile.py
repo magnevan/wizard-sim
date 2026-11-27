@@ -19,7 +19,7 @@ Output (x, y and lengths in u, heights in metres): {G, size, floors, instances, 
   midpoint, in corners) and o (the id of an edge override on it, if any).
 The greybox page (game/.../lab/kit3d.ts) and the map editor (game/.../editor/) draw it. Scene format: tools/kit/README.md.
 """
-import json, math, os, re, runpy, sys
+import itertools, json, math, os, re, runpy, sys
 from shapely.geometry import Polygon, Point, LineString
 from shapely.ops import unary_union
 
@@ -229,6 +229,151 @@ def pipes(objs, floor_u, T, G, nx, ny, placed, err, label):
         out.append(dict(p='pipe.run', x=P[0][0] * G, y=P[0][1] * G, h=min(q[2] for q in P), rot=0, r=r, src=o['id'], name=label(o),
                         pts=[[round(q[0] * G, 4), round(q[1] * G, 4), round(q[2], 4)] for q in P],
                         ends=d['ends'], tees=tees, plugs=d['plugs'], saddles=saddles))
+    return out
+
+
+GLYPH_W = 0.9                    # u: a glyph path's default width
+GLYPH_TINT = '#7ee05a'           # Life green, the infirmary's (docs/world/elements.md)
+GLYPH_DRAPE = 0.3                # m: a run drapes over a change of floor this high or less (a kerb); more needs points with z
+GLYPH_STATES = ('lit', 'dim', 'dark')
+
+
+def glyphs(objs, floor_u, T, G, nx, ny, placed, err, label):
+    """Glyph paths ({kind: glyph, pts: [[x, y] or [x, y, z m]], w?, tint?, state?}): runes carved flush into the floor
+    that carry a well's power, drawn to size by the renderer (kit-glyph.ts). Each becomes one glyph.run: pts resolved to
+    [x u, y u, z m] along the floor (draped over kerbs: a vertical step at the kerb's line; two points with the same x, y
+    and different z climb a wall face as a vertical inlay), nodes [x u, y u, z m, kind] (pad at a free end, junction where
+    an end lies on another glyph's run, bend at a corner), s0 (u: how far its start lies from its network's root, so the
+    pulse runs on through a junction), w, tint, state. Dressing for walking: they never block.
+    Checks: glyph-point (a point off the map, or over no walkable floor, or fewer than two), glyph-floor (a run over no
+    walkable floor or water), glyph-drop (a run crossing a drop of more than GLYPH_DRAPE without points with z), glyph-state;
+    warnings glyph-wall (a run over a building) and glyph-setpiece (through a set piece)."""
+    from shapely.prepared import prep
+    if not objs: return []
+    fl = [(T[ch]['h'], ch, prep(u.buffer(1e-6))) for ch, u in floor_u.items()]
+    near = {ch: prep(u.buffer(0.35)) for ch, u in floor_u.items()}
+
+    def floor_at(x, y):
+        p, best = Point(x, y), (None, None)
+        for h, ch, pu in fl:
+            if (best[0] is None or h > best[0]) and pu.contains(p): best = (h, ch)
+        return best
+    walkable = lambda g: g is not None and T[g].get('walk', True) and T[g].get('mat') != 'water'
+    building = lambda g: g is not None and T[g].get('edge') == 'wall'
+    solids = []
+    for v in placed:
+        if v.get('kind') != 'setpiece': continue
+        box, pc = footprint(v, G)
+        if box is not None: solids.append((v, box))
+    done = []
+    for o in objs:
+        raw = o.get('pts') or []
+        if len(raw) < 2:
+            err('glyph-point', f"{label(o)}: a glyph path needs two points or more", raw[0][:2] if raw else None, [o['id']]); continue
+        state = o.get('state', 'lit')
+        if state not in GLYPH_STATES:
+            err('glyph-state', f"{label(o)}: state {state!r} is not one of {', '.join(GLYPH_STATES)}", raw[0][:2], [o['id']]); state = 'lit'
+        P, bad = [], False
+        for p in raw:
+            x, y = p[0], p[1]
+            if not (0 <= x <= nx and 0 <= y <= ny):
+                err('glyph-point', f"{label(o)}: its point ({x},{y}) is off the map", (x, y), [o['id']]); bad = True; continue
+            fh, g = floor_at(x, y)
+            if len(p) > 2:      # on a wall face: it needs a floor beside it
+                if not any(pu.contains(Point(x, y)) for pu in near.values()):
+                    err('glyph-point', f"{label(o)}: its point ({x},{y}, {p[2]} m) is nowhere near a floor", (x, y), [o['id']]); bad = True; continue
+                q = [float(x), float(y), float(p[2]), True]
+            else:
+                if not (walkable(g) or building(g)):
+                    err('glyph-point', f"{label(o)}: its point ({x},{y}) is over no walkable floor", (x, y), [o['id']]); bad = True; continue
+                q = [float(x), float(y), fh, False]
+            if not P or max(abs(q[i] - P[-1][i]) for i in range(3)) > 1e-6: P.append(q)
+        if bad or len(P) < 2: continue
+        # along the floor: each level run sampled, a vertical step put in where the floor under it changes (a kerb)
+        R, flagged = [P[0][:3]], set()
+        for n, (a, b) in enumerate(zip(P, P[1:])):
+            L = math.hypot(b[0] - a[0], b[1] - a[1])
+            if L < 1e-6 or a[3] or b[3]:          # a climb, or a run to or from a point on a wall face: as given
+                R.append(b[:3]); continue
+            k = max(2, int(L / 0.05) + 1)
+            prev = (a[0], a[1], a[2])
+            for s in range(1, k + 1):
+                t = s / k; x, y = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
+                fh, g = floor_at(x, y)
+                if not (walkable(g) or building(g)):
+                    if ('floor', n) not in flagged:
+                        flagged.add(('floor', n)); err('glyph-floor', f"{label(o)}: runs over no walkable floor at ({x:.1f},{y:.1f})", (x, y), [o['id']])
+                    continue
+                if building(g) and ('wall', n) not in flagged:
+                    flagged.add(('wall', n)); err('glyph-wall', f"{label(o)}: runs over {T[g].get('name', g)} (a building) at ({x:.1f},{y:.1f})", (x, y), [o['id']], 'warning')
+                for v, box in solids:
+                    if ('sp', v['id']) not in flagged and box.contains(Point(x, y)):
+                        flagged.add(('sp', v['id'])); err('glyph-setpiece', f"{label(o)}: runs through {label(v)} at ({x:.1f},{y:.1f})", (x, y), [o['id'], v['id']], 'warning')
+                if abs(fh - prev[2]) > 1e-6:
+                    if abs(fh - prev[2]) > GLYPH_DRAPE + 1e-6:
+                        if ('drop', n) not in flagged:
+                            flagged.add(('drop', n))
+                            err('glyph-drop', f"{label(o)}: crosses a drop of {abs(fh - prev[2]):.2f} m at ({x:.1f},{y:.1f}); climb it with points [x, y, z]", (x, y), [o['id']])
+                    else:   # the kerb's line: bisect between the last sample and this one
+                        lo, hi = 0.0, 1.0
+                        for _ in range(20):
+                            m = (lo + hi) / 2
+                            if abs(floor_at(prev[0] + (x - prev[0]) * m, prev[1] + (y - prev[1]) * m)[0] - prev[2]) < 1e-6: lo = m
+                            else: hi = m
+                        ex, ey = prev[0] + (x - prev[0]) * hi, prev[1] + (y - prev[1]) * hi
+                        R += [[ex, ey, prev[2]], [ex, ey, fh]]
+                prev = (x, y, fh)
+            R.append([b[0], b[1], prev[2]])
+        Q = []
+        for q in R:
+            if not Q or max(abs(q[i] - Q[-1][i]) for i in range(3)) > 1e-6: Q.append(q)
+        done.append(dict(o=o, P=Q, corners=[p[:3] for p in P], state=state))
+    out = []
+    U = lambda q: [round(q[0] * G, 4), round(q[1] * G, 4), round(q[2], 4)]
+    plen = lambda P: [0.0] + list(itertools.accumulate(math.dist((a[0] * G, a[1] * G, a[2] / 0.6), (b[0] * G, b[1] * G, b[2] / 0.6)) for a, b in zip(P, P[1:])))
+    for d in done:
+        d['s'] = plen(d['P']); d['s0'] = 0.0; d['parent'] = None
+    # ends: on another glyph's run (in plan, within its half width) a junction; else a pad
+    for d in done:
+        d['ends'] = ['pad', 'pad']
+        for k, i in enumerate((0, -1)):
+            ex, ey, ez = d['P'][i]
+            for d2 in done:
+                if d2 is d: continue
+                hw = d2['o'].get('w', GLYPH_W) / 2 / G
+                for n, (a, b) in enumerate(zip(d2['P'], d2['P'][1:])):
+                    if abs(a[2] - ez) > 0.31 and abs(b[2] - ez) > 0.31: continue
+                    seg = LineString([a[:2], b[:2]])
+                    if seg.length < 1e-9 or seg.distance(Point(ex, ey)) > hw + 0.02: continue
+                    t = seg.project(Point(ex, ey))
+                    c = seg.interpolate(t)
+                    d['ends'][k] = 'junction'
+                    if k == 0: d['parent'] = (d2, d2['s'][n] + t * G)
+                    d.setdefault('joins', []).append(dict(end=k, into=d2['o']['id'], at=[round(c.x * G, 4), round(c.y * G, 4), round(ez, 4)]))
+                    break
+                if d['ends'][k] == 'junction': break
+    for _ in range(len(done)):     # the pulse runs on from the main into each branch whose start joins it
+        for d in done:
+            if d['parent']: d['s0'] = d['parent'][0]['s0'] + d['parent'][1]
+    for d in done:
+        o, P = d['o'], d['P']
+        nodes = []
+        for k, i in enumerate((0, -1)):
+            if d['ends'][k] == 'pad': nodes.append(U(P[i]) + ['pad'])
+            else:
+                j = next(j for j in d['joins'] if j['end'] == k)
+                nodes.append(j['at'] + ['junction'])
+        C = d['corners']
+        for a, b, c in zip(C, C[1:], C[2:]):        # a bend: a corner between two level runs that turns
+            h1, h2 = (b[0] - a[0], b[1] - a[1]), (c[0] - b[0], c[1] - b[1])
+            l1, l2 = math.hypot(*h1), math.hypot(*h2)
+            if l1 < 1e-6 or l2 < 1e-6: continue
+            if (h1[0] * h2[0] + h1[1] * h2[1]) / (l1 * l2) > math.cos(math.radians(10)): continue
+            z = floor_at(b[0], b[1])[0]
+            nodes.append(U([b[0], b[1], z if z is not None else b[2]]) + ['bend'])
+        out.append(dict(p='glyph.run', x=P[0][0] * G, y=P[0][1] * G, h=min(q[2] for q in P), rot=0, src=o['id'], name=label(o),
+                        pts=[U(q) for q in P], nodes=nodes, ends=d['ends'], joins=d.get('joins', []), w=o.get('w', GLYPH_W),
+                        col=o.get('tint', GLYPH_TINT), state=d['state'], s0=round(d['s0'], 4), len=round(d['s'][-1], 4)))
     return out
 
 
@@ -1000,6 +1145,7 @@ def compile_scene(sc):
                     if len(inst) > n0: taken.append((px, py))
 
     inst += pipes(kind('pipe'), floor_u, T, G, nx, ny, kind('setpiece') + kind('vignette'), err, label)
+    inst += glyphs(kind('glyph'), floor_u, T, G, nx, ny, kind('setpiece'), err, label)
 
     # ---- reachability: cells by terrace, joined where steps are small, plus flights ----
     walk = {c for c in T if T[c].get('edge') != 'wall' and T[c].get('walk', True)}

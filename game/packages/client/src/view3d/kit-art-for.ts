@@ -30,6 +30,7 @@ export function kitArtFor(data: KitData, pieces: Record<string, KitPiece>, has: 
     if (kind === 'banner') { models.add(String(it.parts?.cloth ?? 'banner-cloth')); files.add(`textures/banner-${it.parts?.emblem ?? ''}.png`); }
     if (cls === 'joint') models.add(kind === 'newel' ? 'pier' : kind);
     if (cls === 'cliff') models.add('cliff-run');
+    if (cls === 'glyph') { textures.add('glyph-runes'); textures.add('glyph-medallion'); }   // kit-glyph.ts
     if (cls === 'pipe') for (const t of ['brass', 'pipe-band', 'pipe-collar', 'smooth-stone']) textures.add(t);   // kit-pipe.ts
     if (cls === 'edge' || cls === 'sweep' || cls === 'connector') {
       if (kind === 'parapet' || cls === 'connector') { models.add('balustrade'); models.add('pier'); }

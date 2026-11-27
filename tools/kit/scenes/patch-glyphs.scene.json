@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "name": "patch-glyphs",
+  "G": 2,
+  "notes": "A test patch for glyph paths (glyph.run, kit-glyph.ts): a main line with bends from weathered paving onto meadow, a dim branch from a junction on it over a kerb onto the dais, a climb up the terrace's retaining wall from another junction, a dark line in the meadow and a lit line on the terrace.",
+  "terraces": [
+    {"id": "t-terrace", "glyph": "U", "name": "the terrace", "h": 3, "mat": "weathered", "edge": "parapet"},
+    {"id": "t-yard", "glyph": "W", "name": "the yard", "h": 0, "mat": "weathered", "edge": "retain"},
+    {"id": "t-meadow", "glyph": "M", "name": "the meadow", "h": 0, "mat": "meadow", "edge": "retain"},
+    {"id": "t-dais", "glyph": "K", "name": "the dais", "h": 0.25, "mat": "weathered", "edge": "retain"}
+  ],
+  "corners": [
+    "UUUUUUUUUUUUUUUUUUUUU",
+    "UUUUUUUUUUUUUUUUUUUUU",
+    "UUUUUUUUUUUUUUUUUUUUU",
+    "UUUUUUUUUUUUUUUUUUUUU",
+    "UUUUUUUUUUUUUUUUUUUUU",
+    "WWWWWWWWWWMMMMMMMMMMM",
+    "WWWWWWWWWWMMMMMMMMMMM",
+    "WWWWWWWWWWMMMMMMMMMMM",
+    "WWWWWWWWWWMMMMMMMMMMM",
+    "WWWWWWWWWWMMMMMMMMMMM",
+    "WWWWWWWWWWMMMMMMMMMMM",
+    "WWWWWWWWWWMMMMMMMMMMM",
+    "KKKKKKKKWWMMMMMMMMMMM",
+    "KKKKKKKKWWMMMMMMMMMMM",
+    "KKKKKKKKWWMMMMMMMMMMM",
+    "KKKKKKKKWWMMMMMMMMMMM",
+    "KKKKKKKKWWMMMMMMMMMMM",
+    "KKKKKKKKWWMMMMMMMMMMM"
+  ],
+  "objects": [
+    {"id": "f1", "kind": "flight", "name": "the stair", "head": [[14, 4.5], [17, 4.5]]},
+    {"id": "glyph1", "kind": "glyph", "name": "the main line", "pts": [[2, 7], [9, 7], [9, 10], [16, 10], [16, 15]]},
+    {"id": "glyph2", "kind": "glyph", "name": "the dim branch", "state": "dim", "pts": [[12, 10], [12, 14], [3, 14]]},
+    {"id": "glyph3", "kind": "glyph", "name": "the climb", "pts": [[5, 7], [5, 4.5, 0], [5, 4.5, 2.2]]},
+    {"id": "glyph4", "kind": "glyph", "name": "the dark line", "state": "dark", "pts": [[19, 7], [19, 12], [17.5, 16]]},
+    {"id": "glyph5", "kind": "glyph", "name": "the upper line", "pts": [[2, 2], [11, 2], [11, 3.5]]}
+  ]
+}

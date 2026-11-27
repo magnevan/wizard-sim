@@ -11,6 +11,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RAIL_MOD, railFit } from './kit-fit';
 import { fallMesh } from './kit-fall';
 import { pipeMesh, type PipeMats, type PipeRun } from './kit-pipe';
+import { glyphMaterial, glyphPick, glyphScene, stepGlyphs, type GlyphRun } from './kit-glyph';
 import { waterMesh } from './kit-water';
 import { clearInlays, flowInlays, inlayInto, type InlaySpec } from './kit-inlay';
 import { FOLIAGE_TIME, grow, groundShade, type Recipe } from './foliage';
@@ -160,7 +161,7 @@ export async function loadKitArt(): Promise<void> {
 const texUrls = import.meta.glob<string>('../../../../content/generated/textures/*.png', { eager: true, query: '?url', import: 'default' });
 const texTiles = import.meta.glob<Record<string, number>>('../../../../content/generated/textures/tiles.json', { eager: true, import: 'default' });
 /** Textures that dress walls, steps and props, not floors. */
-const NOT_FLOOR = /^(ashlar|smooth-stone|tread|kerb|plaza-disc|magic-flow|tiles|vine-.*|banner-.*|brass|pipe-.*)$/;
+const NOT_FLOOR = /^(ashlar|smooth-stone|tread|kerb|plaza-disc|magic-flow|tiles|vine-.*|banner-.*|brass|pipe-.*|glyph-.*)$/;
 /**
  * The floor materials a level can have, for the editor: the flat tones, and every texture (in the textures folder or
  * in tiles.json) that isn't for walls, steps or props, so a new texture shows up as a floor on its own.
@@ -310,6 +311,7 @@ export function spinKit(t: number) {
   TP_TIME.value = t;   // and flowing textures (water) drift
   flowInlays(t);       // and the fields in an inlay's channels
   FOLIAGE_TIME.value = t;   // and the wind in the plants
+  stepGlyphs(t);            // and the glyph paths' pulse and brightness
   for (const s of SPINNERS) s.node.quaternion.copy(s.rest).multiply(spinQ.setFromAxisAngle(s.axis, ((t * s.rpm) / 60) * Math.PI * 2));
 }
 
@@ -535,6 +537,7 @@ function piece(it: Inst): THREE.Group | null {
   if (cls === 'fall') return it.pts && it.low != null ? fallMesh(it.pts, yOf(it.h), yOf(it.low), TP_TIME) : null;   // water pouring into lower water (kit-fall.ts)
   if (cls === 'cliff') return it.pts && it.low != null ? cliffFace(it.pts, it.h, it.low) : null;   // a sea cliff laid from the cliff kit
   if (cls === 'pipe') return it.pts ? pipeMesh(it as Inst & PipeRun, yOf, pipeMats()) : null;   // a conduit pipe drawn along its route (kit-pipe.ts)
+  if (cls === 'glyph') return it.pts ? glyphPick(it as Inst & GlyphRun, yOf) : null;   // a glyph path: its hidden copy for picking (all runs draw as one mesh, below)
   if (cls === 'edge' || cls === 'sweep') {
     const g = edgeFrame(it), L = it.len!, low = it.low!;
     const drop = it.h - low;
@@ -1104,6 +1107,9 @@ export function buildKit(data: KitData): THREE.Group {
     const a = it as Inst & { nx?: number; ny?: number; depth?: number }, ex = (a.nx ?? 0) * (a.depth ?? 0), ey = (a.ny ?? 0) * (a.depth ?? 0);
     root.add(waterMesh([[[a.x, a.y], [a.x2!, a.y2!], [a.x2! + ex, a.y2! + ey], [a.x + ex, a.y + ey]]], yOf(a.low!) - 0.02, data.size, TP_TIME, 8, onArchFace));   // a hair under the stream, so it wins where they overlap
   }
+  // the glyph paths, every run in one mesh (kit-glyph.ts), in the Codex-painted runes and medallion
+  const glyphs = glyphScene(data.instances.filter((it) => it.p.startsWith('glyph.') && it.pts) as (Inst & GlyphRun)[], yOf, glyphMaterial(RAW['glyph-runes'], RAW['glyph-medallion']));
+  if (glyphs) root.add(glyphs);
   data.instances.forEach((it, i) => {
     const g = piece(it);
     if (!g) return;

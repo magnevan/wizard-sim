@@ -1,0 +1,17 @@
+{
+  "ack": "agree",
+  "area": "layout",
+  "body": "Walkable in the 3D game.",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "evidence": [
+    {
+      "cap": "Plan H built",
+      "src": "img/h4-overview.jpg"
+    }
+  ],
+  "kind": "build",
+  "notes": [],
+  "status": "done",
+  "title": "Plan H picked and built in 3D"
+}

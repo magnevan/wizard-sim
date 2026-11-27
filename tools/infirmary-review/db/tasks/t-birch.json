@@ -1,0 +1,16 @@
+{
+  "area": "ground",
+  "body": "No bark marks, no branches showing.",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "evidence": [
+    {
+      "cap": "A birch in the north wood",
+      "src": "img/ev-birch.jpg"
+    }
+  ],
+  "kind": "polish",
+  "notes": [],
+  "status": "open",
+  "title": "Birches are plain pale sticks"
+}

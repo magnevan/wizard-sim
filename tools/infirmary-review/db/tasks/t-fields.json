@@ -1,0 +1,16 @@
+{
+  "area": "ground",
+  "body": "The crop rows sit on bare earth strips with straight hard borders.",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "evidence": [
+    {
+      "cap": "The fields west of the forecourt",
+      "src": "img/ev-fields.jpg"
+    }
+  ],
+  "kind": "polish",
+  "notes": [],
+  "status": "open",
+  "title": "Fields are bright with hard edges"
+}

@@ -1,0 +1,17 @@
+{
+  "ack": "agree",
+  "area": "props",
+  "body": "Well, tents, greenhouse, stills, boiler house, smokestack, purifier, camp kit: 330 credits in all (two sheets failed).",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "evidence": [
+    {
+      "cap": "The purifier in the cove",
+      "src": "img/h4-cove.jpg"
+    }
+  ],
+  "kind": "build",
+  "notes": [],
+  "status": "done",
+  "title": "The models"
+}

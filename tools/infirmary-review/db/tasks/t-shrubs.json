@@ -1,0 +1,16 @@
+{
+  "area": "ground",
+  "body": "The bushes read as clusters of round lobes.",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "evidence": [
+    {
+      "cap": "Shrubs on the bed south of the well",
+      "src": "img/ev-shrubs.jpg"
+    }
+  ],
+  "kind": "polish",
+  "notes": [],
+  "status": "open",
+  "title": "Shrubs are lumpy up close"
+}

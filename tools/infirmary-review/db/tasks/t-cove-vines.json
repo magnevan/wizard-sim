@@ -1,0 +1,16 @@
+{
+  "area": "ground",
+  "body": "The cliff behind the purifier's tower is bare where the sides have vines.",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "evidence": [
+    {
+      "cap": "The middle cove cliff",
+      "src": "img/ev-cove-wall.jpg"
+    }
+  ],
+  "kind": "polish",
+  "notes": [],
+  "status": "open",
+  "title": "Few vines on the middle cove cliff"
+}

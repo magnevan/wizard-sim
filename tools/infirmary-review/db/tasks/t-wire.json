@@ -1,0 +1,11 @@
+{
+  "area": "magic",
+  "body": "The fix can relight the glyph lines (setGlyphState) and draw back the vines (setOvergrowth); nothing calls them yet.",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "evidence": [],
+  "kind": "build",
+  "notes": [],
+  "status": "open",
+  "title": "Wire the fix into the game (another session)"
+}

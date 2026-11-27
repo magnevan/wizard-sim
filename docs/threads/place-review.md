@@ -1,6 +1,6 @@
 # The place review page and its loop
 
-Status: v2 built and live on the infirmary, for the user's first look · Last touched: 2026-11-27
+Status: v2 live on the infirmary with the board and Claude's helpers; for the user's first look · Last touched: 2026-11-27
 Record: [the template](../../tools/place-review/README.md) (tabs, data, the loop) · [making a place](../campaign/making-a-place.md) · [the infirmary on the kit](infirmary-kit.md) (paused for this, the first place on v2) · page: [The Infirmary on the Kit](https://claude.ai/artifact/9xpg4f5Ye54kgLyGKrMEvA)
 
 ## Where it stands
@@ -26,8 +26,10 @@ v2 (built 2026-11-27):
 - [ ] **The user's first look at v2** on the infirmary page: the structure, the front page, the task flow (acknowledge a few tasks, draft one, disagree with one).
 - [ ] Fold the user's notes into the template, then resume [the infirmary](infirmary-kit.md) on it.
 - [ ] Use the loop on the infirmary for a round or two; then make the courtyard's review page from it when its polish pass starts (its pins could seed tasks).
+- [ ] Maybe later: draw the board's parts on a small plan of the place (each zone a shape, coloured by its stage), beside the table.
 - [ ] Maybe later: a 3D viewer for slimmed models (`kit/` sizes, a few MB) beside the stills; a pin-to-task bridge from the map editor.
 
 ## Done
 
+- 2026-11-27: the user: "Do you think this is easy for an agent to work with as well?" Not yet: whose move had to be worked out by hand, replies meant rewriting arrays, round write-ups were HTML inside JSON. Then the user asked for the helpers and "more visualization of where we are in the overall journey", after the Opening Segment page's stop-by-stage table. Built: **the board** on Now (the whole place and its parts against the stages, cells linking to their work, open tasks per part, a part filter on Tasks); **events** (every change is a new doc, folded by `whose.js`, shared by page and helper: no versions, nothing overwritten, a history); **`review.mjs`** (queue, show, note, set, seen, reply, new, outbox, sent, piece with `--glb` stills, board, rounds); `check.mjs` checks the board, round files and db copy; round write-ups in `rounds/*.html`; the db copied into `db/` and committed. The infirmary: board with five parts, 11 tasks given their part, the 22 old answers marked read.
 - 2026-11-27: v2 of the template, the loop written into its README and [making a place](../campaign/making-a-place.md), the infirmary page moved over and published.

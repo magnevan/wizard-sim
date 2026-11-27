@@ -1,0 +1,16 @@
+{
+  "area": "layout",
+  "body": "A balustrade runs along the sand at the water's edge, where a beach would just meet the sea.",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "evidence": [
+    {
+      "cap": "The balustrade along the beach",
+      "src": "img/ev-beach-rail.jpg"
+    }
+  ],
+  "kind": "polish",
+  "notes": [],
+  "status": "open",
+  "title": "The beach keeps a sea-wall balustrade along the water"
+}

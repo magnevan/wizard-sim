@@ -1,0 +1,5 @@
+{
+  "at": "2026-11-26T17:16:47.164Z",
+  "choice": "redo",
+  "note": "We might want empty pots that we can fill with procedural flowers. Maybe also generate everything except the stairs. Stairs should use the map editor ones, but maybe with a new texture?"
+}

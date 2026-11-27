@@ -129,6 +129,31 @@ figcaption b { color: var(--fg); font-weight: 600; }
 .step[data-k="failed"] .k { color: var(--you); }
 .step .files { font: 11.5px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
 .step .imgs { display: grid; gap: 6px; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+/* the board: each part of the place against each stage, so where it stands is one glance */
+.board { border-collapse: separate; border-spacing: 3px; font-size: 12.5px; min-width: 860px; width: 100%; table-layout: fixed; }
+.board th, .board td { padding: 6px 7px; vertical-align: top; line-height: 1.3; text-align: left; }
+.board thead th { font: 500 11px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.board thead th.grp { border-bottom: 1px solid var(--line); text-align: center; }
+.board tbody th { font: 600 13px var(--body); background: var(--panel); width: 150px; }
+.board tbody th a { color: var(--fg); text-decoration: none; }
+.board tbody th .sub { display: block; font: 400 11.5px var(--body); color: var(--muted); }
+.board td { background: var(--panel); border-top: 4px solid var(--line); color: var(--muted); overflow-wrap: anywhere; }
+.board td b { display: block; font: 600 10.5px var(--mono); text-transform: uppercase; letter-spacing: .04em; color: var(--fg); margin-bottom: 2px; }
+.board td a { color: inherit; text-decoration: none; display: block; }
+.board td a:hover { text-decoration: underline; }
+.board td.done { border-top-color: var(--accent); }
+.board td.started { border-top-color: var(--doing); }
+.board td.started b { color: var(--doing); }
+.board td.review { border-top-color: var(--you); background: var(--you-soft); }
+.board td.review b { color: var(--you); }
+.board td.next { border-top: 4px dashed var(--doing); }
+.board td.later { opacity: .55; }
+.board td.na { background: transparent; border-top-color: transparent; }
+.board td.open { border-top-color: transparent; background: transparent; text-align: right; font: 500 12px var(--mono); }
+.board td.open a { display: block; text-decoration: none; }
+.board td.open .y { color: var(--you); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted); }
+.legend i { display: inline-block; width: 18px; height: 4px; margin-right: 6px; vertical-align: middle; background: var(--line); }
 /* dialogs */
 dialog { border: 0; padding: 0; background: transparent; max-width: 98vw; max-height: 96vh; color: var(--fg); }
 dialog::backdrop { background: rgb(0 0 0 / .82); }
@@ -162,12 +187,12 @@ dialog::backdrop { background: rgb(0 0 0 / .82); }
 <dialog id="drawer" aria-label="Concept art"></dialog>
 <dialog id="draft" aria-label="Draft a task"></dialog>
 
+<script src="whose.js"></script>
 <script>
-/* A place review page. Static content: place.json beside it (Claude writes it). Live state in the db:
-   `tasks` (every task, whoever flagged it), `answers` (one doc per decision). See tools/place-review/README.md. */
-const STATUS = { triage: 'Draft, to triage', open: 'To do', doing: 'In progress', waiting: 'Waiting', review: 'Check it', done: 'Done', wontfix: "Won't do" };
-const ORDER = ['review', 'triage', 'doing', 'waiting', 'open', 'done', 'wontfix'];
-const LIVE = new Set(['triage', 'open', 'doing', 'waiting', 'review']);
+/* A place review page. Static content: place.json beside it (Claude writes it). Live state in the db: `tasks` (made
+   once), `events` (every change after, appended) and `answers` (one doc per decision); the rules that fold them are
+   in whose.js, shared with Claude's helper. See tools/place-review/README.md. */
+const { STATUS, ORDER, LIVE } = window.W;
 const BY = { claude: 'Claude', user: 'You', critic: 'Critic', codex: 'Codex' };
 const DEFAULT_STAGES = [['read', 'Read'], ['structure', 'Plans'], ['flow', 'Flow'], ['sense', 'Sense'], ['trace', 'Trace'], ['paint', 'Grey-box painted'], ['pieces', 'Pieces'], ['surfaces', 'Surfaces'], ['dressing', 'Dressing'], ['beauty', 'Beauty']];
 const STEP = { picture: 'Picture', pick: 'Picked', meshy: 'Meshy', fit: 'Fitted', split: 'Split', placed: 'In the scene', failed: 'Failed', code: 'Drawn in code', note: 'Note' };
@@ -181,29 +206,17 @@ const day = (iso) => { if (!iso) return ''; const d = new Date(iso); return isNa
 const ls = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
 
 let place, db = null, assets = null, col = {};
-const tasks = {}, answers = {};
+const raw = { tasks: {}, events: [], answers: {} };
+let tasks = {}, answers = {};
+const refold = () => { tasks = W.fold(raw.tasks, raw.events); answers = W.foldAnswers(raw.answers, raw.events); };
 let dbState = 'connecting';   // connecting | live | offline
-const filt = { ball: 'all', status: 'live', area: 'all', by: 'all' };
+const filt = { ball: 'all', status: 'live', area: 'all', by: 'all', zone: 'all' };
 const openTasks = new Set();
 
-/* ---------- whose move ---------- */
-function lastBy(t, who) { const n = (t.notes || []).filter((x) => x.by === who); return n.length ? n[n.length - 1].at : ''; }
-// [whose move, why]: the why is shown on the task's chip
-function why(t) {
-  const st = t.status || 'open';
-  if (st === 'triage') return ['claude', 'to triage'];
-  if (st === 'review') return ['you', 'check it'];
-  if (!LIVE.has(st)) return ['', ''];
-  const u = lastBy(t, 'user'), c = lastBy(t, 'claude');
-  if (u && u > c && !(t.seen && t.seen >= u)) return ['claude', 'your note'];
-  if (t.ack === 'disagree' && !(c && c > (t.ackAt || ''))) return ['claude', 'you disagreed'];
-  if (c && c > u && c > (t.userSeen || '')) return ['you', 'Claude replied'];
-  if (st === 'waiting' && t.waitingOn === 'user') return ['you', 'waiting on you'];
-  if (t.by !== 'user' && !t.ack) return ['you', 'acknowledge'];
-  return ['', ''];
-}
+/* ---------- whose move (rules in whose.js) ---------- */
+const { why, lastBy } = W;
 const ball = (t) => why(t)[0];
-const taskList = () => Object.entries(tasks).map(([id, t]) => ({ id, ...t }));
+const taskList = () => Object.values(tasks);
 const openDecisions = () => (place.decisions || []).filter((d) => !d.closed);
 const youCount = () => openDecisions().filter((d) => !answers[d.id]?.choice && !answers[d.id]?.note).length + taskList().filter((t) => ball(t) === 'you').length;
 
@@ -230,6 +243,7 @@ function chipsFor(t) {
   out.push(`<span class="chip plain">by ${esc(t.byLabel || BY[t.by] || t.by || '?')}</span>`);
   if (t.ack) out.push(`<span class="chip ${t.ack === 'disagree' ? 'you' : 'plain'}">${t.ack === 'agree' ? 'you agree' : t.ack === 'disagree' ? 'you disagree' : 'later'}</span>`);
   if (t.area && areaLabel(t.area)) out.push(`<span class="chip plain">${esc(areaLabel(t.area))}</span>`);
+  if (t.zone && zoneName(t.zone)) out.push(`<span class="chip plain">${esc(zoneName(t.zone))}</span>`);
   const nEv = (t.evidence || []).length, nN = (t.notes || []).length;
   if (nEv) out.push(`<span class="muted">${nEv} pic${nEv > 1 ? 's' : ''}</span>`);
   if (nN) out.push(`<span class="muted">${nN} note${nN > 1 ? 's' : ''}</span>`);
@@ -239,7 +253,7 @@ function taskRow(t) {
   const st = t.status || 'open', b = ball(t);
   const ev = (t.evidence || []).filter((f) => okSrc(f.src));
   const thread = (t.notes || []).map((n) => {
-    const unread = n.by === 'user' && !(t.seen && t.seen >= n.at) && !(lastBy(t, 'claude') > n.at);
+    const unread = W.noteUnread(t, n);
     return `<li class="${n.by === 'claude' ? 'claude' : ''}"><span class="who">${esc(BY[n.by] || n.by)} · ${day(n.at)}${unread ? ' · <span class="unread">not read by Claude yet</span>' : ''}</span>${fmt(n.text)}${(n.imgs || []).filter(okSrc).length ? `<span class="attach">${n.imgs.filter(okSrc).map((s) => `<img src="${esc(s)}" alt="" loading="lazy">`).join('')}</span>` : ''}</li>`;
   }).join('');
   const ackBtns = t.by !== 'user' && LIVE.has(st) ? `<div class="row"><span class="muted">Is this a real problem?</span>
@@ -269,9 +283,37 @@ function taskRow(t) {
     </div></details>`;
 }
 const areaLabel = (id) => (place.areas || []).find((a) => a.id === id)?.label || '';
+const zones = () => (place.board?.rows || []).filter((r) => r.id && r.id !== 'whole');
+const zoneName = (id) => zones().find((r) => r.id === id)?.name || '';
 const pieceName = (id) => (place.pieces || []).find((p) => p.id === id)?.name || id;
 const tasksHtml = (list, empty) => list.length ? `<div class="tasks">${list.map(taskRow).join('')}</div>` : `<p class="muted">${empty}</p>`;
 const byOrder = (a, b) => ORDER.indexOf(a.status || 'open') - ORDER.indexOf(b.status || 'open') || String(b.updated || b.created || '').localeCompare(String(a.updated || a.created || ''));
+
+/* ---------- the board ---------- */
+const CELL = { done: 'Done', started: 'In progress', review: 'Waiting on you', next: 'Next for Claude', later: 'Later', na: '' };
+function renderBoard() {
+  const B = place.board; if (!B || !(B.rows || []).length) return '';
+  const stages = place.stages || DEFAULT_STAGES;
+  const cols = (B.cols || stages.map(([id]) => id)).map((id) => [id, (stages.find(([s]) => s === id) || [id, id])[1]]);
+  const groups = B.groups || [];   // [[label, firstCol, lastCol]] spans over the header
+  const live = taskList().filter((t) => LIVE.has(t.status || 'open'));
+  const okHref = (h) => typeof h === 'string' && /^#[\w-]+$/.test(h) ? h : '';
+  const head = (groups.length ? `<tr><th></th>${(() => { let html = '', i = 0; for (const [l, a, b] of groups) { const s = cols.findIndex(([c]) => c === a), e = cols.findIndex(([c]) => c === b); if (s > i) html += `<th colspan="${s - i}"></th>`; html += `<th class="grp" colspan="${e - s + 1}">${esc(l)}</th>`; i = e + 1; } return html + (i < cols.length ? `<th colspan="${cols.length - i}"></th>` : '') + '<th></th>'; })()}</tr>` : '') +
+    `<tr><th></th>${cols.map(([, l]) => `<th>${esc(l)}</th>`).join('')}<th style="text-align:right">Open</th></tr>`;
+  const rows = B.rows.map((r) => {
+    const mine = live.filter((t) => r.id === 'whole' ? !t.zone : t.zone === r.id);
+    const yours = mine.filter((t) => ball(t) === 'you').length;
+    const name = okHref(r.href) ? `<a href="${r.href}">${esc(r.name)}</a>` : esc(r.name);
+    const cells = cols.map(([c]) => { const [st, text, href] = (r.cells || {})[c] || ['na'];
+      const inner = `<b>${esc(CELL[st] ?? st)}</b>${text ? esc(text) : ''}`;
+      return `<td class="${esc(st)}">${st === 'na' ? '' : okHref(href) ? `<a href="${href}">${inner}</a>` : inner}</td>`; }).join('');
+    const open = mine.length ? `<a href="#tasks" data-zone="${esc(r.id)}">${mine.length} task${mine.length > 1 ? 's' : ''}${yours ? `<br><span class="y">${yours} yours</span>` : ''}</a>` : '';
+    return `<tr><th scope="row">${name}${r.sub ? `<span class="sub">${esc(r.sub)}</span>` : ''}</th>${cells}<td class="open">${open}</td></tr>`;
+  }).join('');
+  const legend = Object.entries(CELL).filter(([k]) => k !== 'na').map(([k, l]) => `<span><i style="background:${{ done: 'var(--accent)', started: 'var(--doing)', review: 'var(--you)', next: 'repeating-linear-gradient(90deg,var(--doing) 0 4px,transparent 4px 7px)', later: 'var(--line)' }[k]}"></i>${l}</span>`).join('');
+  return `<section><h2>Where it stands</h2><div class="scroll"><table class="board"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
+    <div class="legend">${legend}</div>${B.note ? `<p class="muted">${B.note}</p>` : ''}</section>`;
+}
 
 /* ---------- panels ---------- */
 function renderNow() {
@@ -283,7 +325,7 @@ function renderNow() {
   const dec = openDecisions();
   const recent = all.filter((t) => t.status === 'done').slice(0, 5);
   const offline = dbState !== 'live' ? `<p class="status ${dbState === 'offline' ? 'bad' : ''}">${dbState === 'offline' ? 'Tasks and answers did not load (signed out, or the store is unavailable). The decisions below are from the page itself.' : 'Loading tasks and answers…'}</p>` : '';
-  return `${offline}
+  return `${offline}${renderBoard()}
     <section><h2>Decisions for you <span class="n">${dec.length}</span></h2>
       ${dec.length ? dec.map(decisionCard).join('') : '<p class="muted">Nothing waiting on a decision.</p>'}</section>
     <div class="cols">
@@ -299,7 +341,8 @@ function renderNow() {
 function renderTasks() {
   const all = taskList().filter((t) => (filt.ball === 'all' || ball(t) === filt.ball)
     && (filt.status === 'all' || (filt.status === 'live' ? LIVE.has(t.status || 'open') : (t.status || 'open') === filt.status))
-    && (filt.area === 'all' || (t.area || '') === filt.area) && (filt.by === 'all' || t.by === filt.by)).sort(byOrder);
+    && (filt.area === 'all' || (t.area || '') === filt.area) && (filt.by === 'all' || t.by === filt.by)
+    && (filt.zone === 'all' || (t.zone || '') === filt.zone)).sort(byOrder);
   const groups = ORDER.map((s) => [s, all.filter((t) => (t.status || 'open') === s)]).filter(([, l]) => l.length);
   const sel = (k, opts) => `<select data-filter="${k}" aria-label="${k}">${opts.map(([v, l]) => `<option value="${esc(v)}" ${filt[k] === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
   return `<section><div class="row space"><h2>Tasks <span class="n">${all.length} shown of ${taskList().length}</span></h2><button type="button" class="primary" data-draft>Draft a task</button></div>
@@ -308,6 +351,7 @@ function renderTasks() {
       ${sel('status', [['live', 'Not finished'], ['all', 'Every status'], ...Object.entries(STATUS)])}
       ${sel('area', [['all', 'Every area'], ...(place.areas || []).map((a) => [a.id, a.label]), ['', 'No area']])}
       ${sel('by', [['all', 'Flagged by anyone'], ...Object.entries(BY)])}
+      ${zones().length ? sel('zone', [['all', 'Every part of the place'], ...zones().map((r) => [r.id, r.name]), ['', 'The whole place']]) : ''}
     </div>
     ${groups.length ? groups.map(([s, l]) => `<div class="group"><h3>${esc(STATUS[s])} <span class="n">${l.length}</span></h3>${tasksHtml(l, '')}</div>`).join('') : '<p class="muted">No tasks match.</p>'}</section>`;
 }
@@ -338,13 +382,24 @@ function renderPieces() {
   return `<section><h2>Pieces <span class="n">${ps.length} · ${credits} credits</span></h2>${place.credits ? `<p class="muted">${place.credits}</p>` : ''}
     <div class="scroll"><table class="ptable"><thead><tr><th>Piece</th><th>Stands at</th><th>Last step</th><th class="num">Credits</th></tr></thead><tbody>${rows}</tbody></table></div></section>${cards}`;
 }
+// a round's write-up is inline `html` or a `file` beside the page (rounds/*.html), fetched once
+const fileCache = {};
+const okFile = (f) => typeof f === 'string' && /^rounds\/[\w.-]+\.html$/.test(f);
+const sectionHtml = (x) => x.file ? (okFile(x.file) ? fileCache[x.file] ?? `<div data-load="${esc(x.file)}" class="muted">Loading…</div>` : '') : (x.html || '');
+function loadFiles() {
+  for (const el of document.querySelectorAll('[data-load]')) {
+    const f = el.dataset.load; if (fileCache[f] !== undefined || el.dataset.busy) continue; el.dataset.busy = '1';
+    fetch(f).then((r) => r.ok ? r.text() : Promise.reject(r.status)).then((h) => { fileCache[f] = h; }, () => { fileCache[f] = `<p class="status bad">${esc(f)} did not load.</p>`; })
+      .then(() => { for (const x of document.querySelectorAll(`[data-load="${CSS.escape(f)}"]`)) x.outerHTML = fileCache[f]; });
+  }
+}
 function renderArea(a) {
   const open = taskList().filter((t) => t.area === a.id && LIVE.has(t.status || 'open')).sort(byOrder);
   const decs = openDecisions().filter((d) => d.area === a.id);
   const head = open.length || decs.length ? `<section><h2>Open here <span class="n">${decs.length} decision${decs.length === 1 ? '' : 's'} · ${open.length} task${open.length === 1 ? '' : 's'}</span></h2>
     ${decs.length ? `<p class="muted">Decide on Now: ${decs.map((d) => `<a href="#decision-${esc(d.id)}">${esc(d.title)}</a>`).join(', ')}</p>` : ''}${tasksHtml(open, '')}</section>` : '';
   return `${head}<nav class="subtabs" aria-label="${esc(a.label)}">${(a.subs || []).map((s) => `<a href="#${esc(a.id)}-${esc(s.id)}" data-sub="${esc(a.id)}-${esc(s.id)}">${esc(s.label)}</a>`).join('')}</nav>` +
-    (a.subs || []).map((s) => `<div class="sub" data-subpanel="${esc(a.id)}-${esc(s.id)}">${(s.sections || []).map((x) => x.html).join('')}</div>`).join('');
+    (a.subs || []).map((s) => `<div class="sub" data-subpanel="${esc(a.id)}-${esc(s.id)}">${(s.sections || []).map(sectionHtml).join('')}</div>`).join('');
 }
 function renderLog() {
   const closed = (place.decisions || []).filter((d) => d.closed);
@@ -380,7 +435,7 @@ function repaintPanels() {
   document.getElementById('panels').innerHTML = Object.entries(html).map(([id, h]) => `<div class="panel" data-panel="${esc(id)}">${h}</div>`).join('');
   for (const [id, v] of Object.entries(keep)) { const ta = document.getElementById(id); if (ta) ta.value = v; }
   for (const ta of document.querySelectorAll('#panels textarea')) if (!ta.value) { const d = ls.get('draft:' + ta.id); if (d) ta.value = d; }
-  paintAnswers(); route(false); scrollTo(0, scroll);
+  paintAnswers(); route(false); loadFiles(); scrollTo(0, scroll);
 }
 function route(jump = true) {
   const h = decodeURIComponent(location.hash.slice(1));
@@ -417,23 +472,32 @@ const now = () => new Date().toISOString();
 const say = (el, text, bad = false) => { const s = el.querySelector('.status'); if (s) { s.textContent = text; s.classList.toggle('bad', bad); } };
 async function saveAnswer(box, patch) {
   const id = box.dataset.id;
-  answers[id] = { ...(answers[id] || {}), ...patch, at: now() }; paintAnswers();
+  const mine = { choice: raw.answers[id]?.choice ?? null, note: raw.answers[id]?.note ?? '', ...patch, at: now() };
+  raw.answers[id] = mine; refold(); paintAnswers();
   if (!col.answers) { say(box, 'Not saved: sign in to answer.', true); return; }
   say(box, 'Saving…');
-  try { await col.answers.doc(id).set(answers[id]); say(box, 'Saved'); if ('note' in patch) ls.set('draft:n-' + id, null); }
+  try { await col.answers.doc(id).set(mine); say(box, 'Saved'); if ('note' in patch) ls.set('draft:n-' + id, null); }
   catch (e) { say(box, 'Not saved (' + (e?.code || 'error') + '). Your text is kept here; try again.', true); }
 }
-async function writeTask(id, patch, el) {
-  if (!col.tasks) { if (el) say(el, 'Not saved: sign in to change tasks.', true); return false; }
-  const next = { ...(tasks[id] || {}), ...patch, updated: now() };
+// every change to a task is a new event doc: nothing overwrites anyone else's write
+async function addEvent(ev, el) {
+  if (!col.events) { if (el) say(el, 'Not saved: sign in to change tasks.', true); return false; }
+  const at = now(); const e = { at, by: 'user', ...ev }; const id = W.eventId(at, 'user');
   if (el) say(el, 'Saving…');
-  try { await col.tasks.doc(id).set(next); tasks[id] = next; if (el) say(el, 'Saved'); return true; }
-  catch (e) { if (el) say(el, 'Not saved (' + (e?.code || 'error') + '). Try again.', true); return false; }
+  try { await col.events.doc(id).set(e); raw.events.push(e); refold(); if (el) say(el, 'Saved'); return true; }
+  catch (err) { if (el) say(el, 'Not saved (' + (err?.code || 'error') + '). Try again.', true); return false; }
+}
+const writeTask = (id, set, el) => addEvent({ task: id, set }, el);
+async function newTask(id, doc, el) {
+  if (!col.tasks) { say(el, 'Not saved: sign in to draft tasks.', true); return false; }
+  say(el, 'Saving…');
+  try { await col.tasks.doc(id).set(doc); raw.tasks[id] = doc; refold(); return true; }
+  catch (err) { say(el, 'Not saved (' + (err?.code || 'error') + '). Try again.', true); return false; }
 }
 function markSeen(id) {
   const t = tasks[id]; if (!t) return;
   const c = lastBy(t, 'claude');
-  if (c && c > (t.userSeen || '') && col.tasks) { t.userSeen = now(); col.tasks.doc(id).update({ userSeen: t.userSeen }).catch(() => {}); }
+  if (c && c > (t.userSeen || '')) addEvent({ task: id, set: { userSeen: now() } });
 }
 const pending = {};   // task id or 'draft' -> [src of attached pictures]
 async function attach(key, file, holder, el) {
@@ -451,10 +515,13 @@ document.addEventListener('click', async (e) => {
   const choice = e.target.closest('.answer .choices button');
   if (choice) { saveAnswer(choice.closest('.answer'), { choice: choice.dataset.v }); return; }
   if (e.target.closest('[data-draft]')) { openDraft(); return; }
+  const z = e.target.closest('[data-zone]');
+  if (z) { e.preventDefault(); Object.assign(filt, { zone: z.dataset.zone === 'whole' ? '' : z.dataset.zone, status: 'live', ball: 'all', area: 'all', by: 'all' });
+    if (location.hash !== '#tasks') location.hash = 'tasks'; repaintPanels(); route(true); return; }
   const card = e.target.closest('.task'); if (!card) return;
   const id = card.dataset.task, t = tasks[id] || {};
   const ack = e.target.closest('[data-ack]');
-  if (ack) { const v = ack.dataset.ack; const ok = await writeTask(id, { ack: v, ackAt: now() }, card);
+  if (ack) { const v = ack.dataset.ack; const ok = await writeTask(id, { ack: v }, card);
     if (ok) { if (v === 'disagree') { render(); const ta = document.getElementById('tn-' + id); ta?.focus(); } else render(); } return; }
   const set = e.target.closest('[data-set]');
   if (set) { if (await writeTask(id, { status: set.dataset.set }, card)) render(); return; }
@@ -462,8 +529,7 @@ document.addEventListener('click', async (e) => {
   if (e.target.closest('[data-note]')) {
     const ta = card.querySelector('textarea'); const text = ta.value.trim(); const imgs = pending[id] || [];
     if (!text && !imgs.length) { say(card, 'Write a note first.', true); return; }
-    const notes = [...(t.notes || []), { by: 'user', at: now(), text, ...(imgs.length ? { imgs } : {}) }];
-    if (await writeTask(id, { notes }, card)) { ta.value = ''; ls.set('draft:' + ta.id, null); delete pending[id]; render(); }
+    if (await addEvent({ task: id, note: text, ...(imgs.length ? { imgs } : {}) }, card)) { ta.value = ''; ls.set('draft:' + ta.id, null); delete pending[id]; render(); }
   }
 });
 document.addEventListener('toggle', (e) => { const d = e.target; if (!d.matches?.('.task')) return;
@@ -524,6 +590,7 @@ function openDraft() {
     <label>Details <textarea id="d-body" placeholder="What you see, where, and what you'd like. Paste a screenshot to attach it."></textarea></label>
     <div class="attach" data-attach></div>
     <div class="row"><label>Area <select id="d-area"><option value="">None</option>${areas}</select></label>
+      ${zones().length ? `<label>Part <select id="d-zone"><option value="">The whole place</option>${zones().map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('')}</select></label>` : ''}
       <label>Kind <select id="d-kind"><option value="fix">fix</option><option value="polish">polish</option><option value="build">build</option><option value="idea">idea</option><option value="question">question</option></select></label>
       ${assets ? `<label>Picture <input type="file" accept="image/*" id="d-file"></label>` : ''}</div>
     <div class="row space"><span class="status"></span><button type="submit" class="primary">Send to Claude's triage</button></div></form>`;
@@ -535,9 +602,9 @@ function openDraft() {
     const title = form.querySelector('#d-title').value.trim(); if (!title) { say(form, 'Give it a title.', true); return; }
     const id = 'u-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6);
     const imgs = pending.draft || [];
-    const t = { title, body: form.querySelector('#d-body').value.trim(), area: form.querySelector('#d-area').value, kind: form.querySelector('#d-kind').value,
+    const t = { title, body: form.querySelector('#d-body').value.trim(), area: form.querySelector('#d-area').value, zone: form.querySelector('#d-zone')?.value || '', kind: form.querySelector('#d-kind').value,
       by: 'user', status: 'triage', created: now(), evidence: imgs.map((src) => ({ src, cap: 'Attached by you' })), notes: [] };
-    if (await writeTask(id, t, form)) { ls.set('draft:d-title', null); ls.set('draft:d-body', null); delete pending.draft; draft.close(); openTasks.add(id); render(); }
+    if (await newTask(id, t, form)) { ls.set('draft:d-title', null); ls.set('draft:d-body', null); delete pending.draft; draft.close(); openTasks.add(id); render(); }
   });
   draft.showModal(); draft.querySelector('#d-title').focus();
 }
@@ -553,11 +620,13 @@ addEventListener('hashchange', () => route(true));
   db = window.claude ? await window.claude.use('db') : null;
   if (!db) { clearTimeout(timer); dbState = 'offline'; repaintPanels(); return; }
   assets = await window.claude.use('assets').catch(() => null);
-  col.answers = db.collection('answers'); col.tasks = db.collection('tasks');
-  let first = 2;
-  const settle = () => { if (first > 0 && --first === 0) { clearTimeout(timer); dbState = 'live'; render(); route(true); } else if (first <= 0) softRender(); };
-  col.answers.onSnapshot((snap) => { for (const d of snap.docs) answers[d.id] = d.data(); settle(); }, () => { dbState = 'offline'; repaintPanels(); });
-  col.tasks.onSnapshot((snap) => { for (const k of Object.keys(tasks)) delete tasks[k]; for (const d of snap.docs) tasks[d.id] = d.data(); settle(); }, () => { dbState = 'offline'; repaintPanels(); });
+  col.answers = db.collection('answers'); col.tasks = db.collection('tasks'); col.events = db.collection('events');
+  let first = 3;
+  const settle = () => { refold(); if (first > 0 && --first === 0) { clearTimeout(timer); dbState = 'live'; render(); route(true); } else if (first <= 0) softRender(); };
+  const fail = () => { dbState = 'offline'; repaintPanels(); };
+  col.answers.onSnapshot((snap) => { raw.answers = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()])); settle(); }, fail);
+  col.tasks.onSnapshot((snap) => { raw.tasks = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()])); settle(); }, fail);
+  col.events.onSnapshot((snap) => { raw.events = snap.docs.map((d) => d.data()); settle(); }, fail);
 })();
 // a live update redraws, unless you are typing (then it waits until you leave the box)
 let waiting = false;

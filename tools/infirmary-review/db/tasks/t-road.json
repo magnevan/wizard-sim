@@ -1,0 +1,16 @@
+{
+  "area": "ground",
+  "body": "Most of the road is near lawn, so the weathering takes most of its stones.",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "evidence": [
+    {
+      "cap": "The road out to the battery",
+      "src": "img/ev-road.jpg"
+    }
+  ],
+  "kind": "polish",
+  "notes": [],
+  "status": "open",
+  "title": "The road out's paving is very broken up"
+}

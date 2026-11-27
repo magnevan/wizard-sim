@@ -1,0 +1,24 @@
+{
+  "area": "props",
+  "body": "Meshy fused sheet b into one object (30 credits lost): its props touched. Redrawn with wide gaps; waiting on your OK (Decisions pending), then a website render with retries.",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "decision": "pc6-sheet2",
+  "evidence": [
+    {
+      "cap": "Sheet b: props too close to split",
+      "src": "img/dev-sheet-b.jpg"
+    },
+    {
+      "cap": "The redraw",
+      "src": "img/dev-sheet2-b.jpg"
+    }
+  ],
+  "kind": "build",
+  "notes": [],
+  "piece": "triage-sheet",
+  "status": "waiting",
+  "title": "Triage dressing sheet: redraw so it splits",
+  "waitingFor": "your OK on decision pc6-sheet2",
+  "waitingOn": "user"
+}

@@ -1,0 +1,17 @@
+{
+  "area": "props",
+  "body": "After your pick: a station per tent where its glyph line ends, an emitter per cot; about 30 credits a model.",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "evidence": [
+    {
+      "cap": "Where the glyph lines end by the tents",
+      "src": "img/h5-forecourt.jpg"
+    }
+  ],
+  "kind": "build",
+  "notes": [],
+  "piece": "devices",
+  "status": "open",
+  "title": "Model and place the healing devices"
+}

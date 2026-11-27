@@ -1,0 +1,20 @@
+{
+  "area": "props",
+  "body": "Pictures of the station, the bed emitter, the pylon as a two-bed station and a dressed tent are under Decisions pending. Then model (about 30 credits each) and place.",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "decision": "pc6-station",
+  "evidence": [
+    {
+      "cap": "A whole tent dressed",
+      "src": "img/dev2-tent-dressed.jpg"
+    }
+  ],
+  "kind": "build",
+  "notes": [],
+  "piece": "devices",
+  "status": "waiting",
+  "title": "Healing devices, round 2: waiting on your picks",
+  "waitingFor": "your picks in decisions pc6-station and pc6-emitter",
+  "waitingOn": "user"
+}

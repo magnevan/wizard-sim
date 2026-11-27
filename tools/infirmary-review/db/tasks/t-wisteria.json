@@ -1,0 +1,16 @@
+{
+  "area": "ground",
+  "body": "It should hang in long drooping clusters.",
+  "by": "claude",
+  "created": "2026-11-27T12:00:00Z",
+  "evidence": [
+    {
+      "cap": "The wisteria by the greenhouse",
+      "src": "img/ev-wisteria.jpg"
+    }
+  ],
+  "kind": "polish",
+  "notes": [],
+  "status": "open",
+  "title": "The wisteria tree reads as a round lilac shrub"
+}

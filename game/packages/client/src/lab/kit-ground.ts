@@ -154,13 +154,13 @@ export function buildGround(floors: GFloor[], instances: GInst[], piece: (p: str
       let d = Infinity;
       for (let s = 0; s + 1 < P.length; s++) d = Math.min(d, segDist(x, y, P[s], P[s + 1]));
       dWear[q] = Math.min(dWear[q], d - w / 2);
-      R[q] = Math.max(R[q], 1 - smooth(-w * 0.3, w * 0.25, d - w / 2));
+      R[q] = Math.max(R[q], 1 - smooth(-w * 0.15, w * 0.4, d - w / 2 + w * 0.15));
     }
   }
   // long grass: away from hard ground and paths
   for (let q = 0; q < N; q++) {
     if (!lawn[q]) continue;
-    G[q] = Math.max(G[q], smooth(7, 12, dHard[q]) * smooth(2.5, 6, dWear[q]));
+    G[q] = Math.max(G[q], smooth(2, 4.5, dHard[q]) * smooth(1.5, 4, dWear[q]));
   }
   // rings of long grass and contact shade round what stands on the lawn (not on paths)
   for (const s of standing) {
@@ -201,10 +201,10 @@ float lwN(vec2 x) { vec2 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f)
 // blue-green over about 20 u, with lusher darker patches and a soft mottle, so a large lawn never reads as one colour.
 vec3 lawnVary(vec3 c, vec2 p) {
   float big = lwN(p * 0.045) * 0.6 + lwN(p * 0.11 + 7.3) * 0.4, mid = lwN(p * 0.17 + 3.1) * 0.7 + lwN(p * 0.5 + 9.0) * 0.3;
-  c = mix(vec3(dot(c, vec3(0.3, 0.59, 0.11))), c, 0.78);
-  c *= mix(vec3(0.8, 0.95, 1.0), vec3(1.18, 1.05, 0.7), smoothstep(0.28, 0.78, big));
-  c *= mix(vec3(1.0), vec3(0.66, 0.82, 0.7), smoothstep(0.48, 0.8, mid));
-  return c * (0.84 + 0.3 * lwN(p * 0.8 + 1.7));
+  c = mix(vec3(dot(c, vec3(0.3, 0.59, 0.11))), c, 0.9);
+  c *= mix(vec3(0.86, 0.94, 0.7), vec3(1.28, 1.08, 0.66), smoothstep(0.28, 0.78, big));
+  c *= mix(vec3(1.0), vec3(0.8, 0.9, 0.68), smoothstep(0.48, 0.8, mid));
+  return c * (0.95 + 0.3 * lwN(p * 0.8 + 1.7));
 }
 // hex tiling (Mikkelsen 2022, simplified): three samples at random offsets on a triangle lattice, blended by sharpened
 // weights, so a tile's repeat never shows as a grid. Gradients from the unbroken uv, so the mips don't seam.
@@ -279,29 +279,37 @@ vec3 groundLawn(sampler2D t, float tile, vec2 p) {
   // the concept's grass: olive and warm yellow-green, not lime
   c *= vec3(1.06, 1.0, 0.78);
   vec2 W = vec2(0.93, 0.37), q = vec2(dot(p, W), dot(p, vec2(-W.y, W.x)));
+  // sweeps: long warm shoulders of grass beside cool olive hollows, about 8 u long and 1.6 u across, running with the
+  // wind and gently warped, as a painter lays the lawn in strokes (the concept's broad gold drifts between beds)
+  vec2 qw = q + vec2(0.0, 2.2 * (lwN(p * 0.07 + 31.0) - 0.5) + 1.2 * (lwN(p * 0.19 + 5.0) - 0.5));
+  float sweep = lwN(vec2(qw.x / 8.0, qw.y / 1.6)) * 0.7 + lwN(vec2(qw.x / 3.5, qw.y / 0.9) + 13.0) * 0.3;
+  c *= mix(vec3(0.74, 0.84, 0.68), vec3(1.16, 1.08, 0.8), smoothstep(0.25, 0.75, sweep));
   // a soft mottle at clump scale (the cells read as scales if pushed harder)
   vec2 tA = grTufts(p / 0.62);
   c *= mix(0.9, 1.06, tA.x) * mix(0.95, 1.05, tA.y);
   // worn to earth along paths: ragged where the grass breaks into it
-  float wn = s.r + (lwN(p * 1.3) - 0.5) * 0.5 + (lwN(p * 4.1 + 7.0) - 0.5) * 0.3 + (tA.x - 0.5) * 0.3;
-  float bare = smoothstep(0.5, 0.66, wn), fringe = smoothstep(0.12, 0.5, wn) * (1.0 - bare);
+  float wn = s.r + (lwN(p * 1.3) - 0.5) * 0.8 + (lwN(p * 4.1 + 7.0) - 0.5) * 0.45 + (tA.x - 0.5) * 0.3;
+  float bare = smoothstep(0.58, 0.95, wn), fringe = smoothstep(0.12, 0.5, wn) * (1.0 - bare);
   // painted tufts: short lawn everywhere, big combed clumps in long grass, sparse ones at a path's fringe; none on bare earth
   if (grTuftOn > 0.5) {
-    vec2 b1 = grBomb(p, 0.5, 0.0, 2.0, 0.85, 0.92 * (1.0 - lg * 0.6) * (1.0 - bare), 1.0);
-    vec2 b2 = grBomb(p, 0.7, 2.0, 1.0, 1.3, lg * 0.95 * (1.0 - bare), 7.0);
+    vec2 b1 = grBomb(p, 0.85, 0.0, 2.0, 1.45, 0.92 * (1.0 - lg * 0.85) * (1.0 - bare), 1.0);
+    vec2 b2 = grBomb(p, 1.2, 2.0, 1.0, 2.2, lg * (1.0 - bare), 7.0);
     vec2 b3 = grBomb(p, 0.5, 3.0, 1.0, 0.7, fringe * 0.9, 13.0);
     vec2 b = b1;
     b = vec2(mix(b.x, b2.x, b2.y), b.y + b2.y * (1.0 - b.y));
     b = vec2(mix(b.x, b3.x, b3.y), b.y + b3.y * (1.0 - b.y));
     // between tufts the ground is the darker underside of the lawn; a tuft takes the lawn's colour at its own value
-    c *= mix(0.6, mix(0.5, 1.34, b.x * b.x), b.y);
+    c *= mix(0.7, mix(0.55, 1.6, b.x), b.y);
   }
   // long grass: paler and warmer toward straw, and a sheen rolling across it in the gusts
-  c = mix(c, c * vec3(1.18, 1.1, 0.74), lg * 0.5);
-  float comb = lwN(vec2(q.x * 0.3, q.y * 2.4));
-  c += vec3(0.12, 0.11, 0.05) * lg * grGust(p, grTime) * smoothstep(0.35, 0.8, comb);
+  // (straw only out in the open; at the foot of things long grass is lush and deep)
+  float lush = smoothstep(0.05, 0.4, s.b);
+  c = mix(c, c * vec3(1.18, 1.1, 0.74), lg * 0.5 * (1.0 - lush));
+  c = mix(c, c * vec3(0.72, 0.86, 0.62), lg * lush * 0.8);
+  float comb = sweep;
+  c += vec3(0.18, 0.15, 0.05) * lg * (0.45 + 0.55 * grGust(p, grTime)) * smoothstep(0.35, 0.8, comb);
   // the earth: the weathered paving's own, so paths and paving share one ground
-  vec3 earth = grEarthOn > 0.5 ? texture2D(grEarth, p / grEarthS).rgb * vec3(0.78, 0.66, 0.56) : vec3(0.36, 0.2, 0.09);
+  vec3 earth = grEarthOn > 0.5 ? mix(vec3(dot(texture2D(grEarth, p / grEarthS).rgb, vec3(0.3, 0.59, 0.11))), texture2D(grEarth, p / grEarthS).rgb, 0.6) * vec3(1.0, 0.88, 0.6) : vec3(0.32, 0.27, 0.18);
   earth *= 0.8 + 0.35 * lwN(p * 2.7 + 2.0);
   c *= 1.0 - 0.2 * fringe;
   c = mix(c, earth, bare);
@@ -321,9 +329,9 @@ float clN(vec2 x) { vec2 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f)
   return mix(mix(clH(i), clH(i + vec2(1.0, 0.0)), f.x), mix(clH(i + vec2(0.0, 1.0)), clH(i + vec2(1.0, 1.0)), f.x), f.y); }
 // 0 in sun to 1 under a cloud, at a world point (u)
 float cloudShade(vec3 wp) {
-  vec2 p = wp.xz / 13.0 - vec2(0.93, 0.37) * clT * 0.08;
+  vec2 p = wp.xz / 19.0 - vec2(0.93, 0.37) * clT * 0.08;
   float n = clN(p) * 0.55 + clN(p * 2.07 + 3.7) * 0.3 + clN(p * 4.3 + 9.1) * 0.15;
-  return smoothstep(0.44, 0.6, n) * clOn;
+  return smoothstep(0.38, 0.54, n) * clOn;
 }
 `;
 const cloudy = new WeakSet<THREE.Material>();
@@ -344,8 +352,8 @@ export function cloudify(root: THREE.Object3D) {
           .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
             { // a cloud takes most of the sun and some of the sky, and leaves what remains cooler
               vec3 clW = (inverse(viewMatrix) * vec4(-vViewPosition, 1.0)).xyz; float clS = cloudShade(clW);
-              reflectedLight.directDiffuse *= mix(vec3(1.0), vec3(0.3, 0.34, 0.42), clS); reflectedLight.directSpecular *= 1.0 - 0.8 * clS;
-              reflectedLight.indirectDiffuse *= mix(vec3(1.0), vec3(0.78, 0.84, 0.98), clS); }`);
+              reflectedLight.directDiffuse *= mix(vec3(1.0), vec3(0.34, 0.41, 0.36), clS); reflectedLight.directSpecular *= 1.0 - 0.8 * clS;
+              reflectedLight.indirectDiffuse *= mix(vec3(1.0), vec3(0.8, 0.86, 0.76), clS); }`);
       };
       m.customProgramCacheKey = () => `${key()}|cl`;
       m.needsUpdate = true;

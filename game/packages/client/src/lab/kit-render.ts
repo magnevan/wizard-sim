@@ -19,7 +19,7 @@ import { cageOvergrowth, clearOvergrowth, overgrowthSlot, pathOvergrowth, stepOv
 import { smokeMesh, type SmokeSpec } from './kit-smoke';
 import { kerbRows, KERB_ROUND, KERB_W, type KerbSeg } from './kit-road';
 import { LAWN_VARY, STONE_MATS, STONE_PAINT, STONE_U, WEATHERED, stoneDecl, stoneFrag } from './kit-stones';
-import { buildGround, cloudify, GROUND_U, setGroundArt } from './kit-ground';
+import { buildGround, cloudify, GROUND_U, marginGrass, setGroundArt } from './kit-ground';
 
 export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string; ox?: number; oy?: number;
   /** a fall's lip (fall.curtain): its line in u, the lower water on the right */
@@ -215,7 +215,7 @@ async function loadTextures() {
   // (the meadow where there is one: the infirmary's lawns since 2026-11-27)
   const lawn = RAW.meadow ? 'meadow' : 'lawn';
   STONE_U.stLawn.value = RAW[lawn] ?? RAW.weathered ?? null; STONE_U.stLawnS.value = TILE[lawn] ?? 4; STONE_U.stLawnV.value = VARY.has(lawn) ? 1 : 0;
-  setGroundArt(RAW['foliage-tufts'], RAW.weathered, TILE.weathered ?? 3);   // the ground's painted tufts and its earth (kit-ground.ts)
+  setGroundArt(RAW['foliage-tufts'], RAW.weathered, TILE.weathered ?? 3, RAW.meadow, TILE.meadow ?? 5);   // the ground's painted tufts and its earth (kit-ground.ts)
 }
 /**
  * A material that samples tex by world position, blended over the three axes by the surface's facing. stone: the
@@ -1148,6 +1148,7 @@ export function buildKit(data: KitData): THREE.Group {
       root.add(s);
     }
   }
+  const margin = marginGrass(); if (margin) root.add(margin);   // raised grass at the lawn's edges (kit-ground.ts)
   cloudify(root);   // cloud shadows drifting over everything lit
   return root;
 }

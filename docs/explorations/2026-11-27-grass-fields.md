@@ -70,9 +70,42 @@ What the set says, across all nine:
 - **Colour should stay the concept's olive and warm yellow-green** (p1, p9); the saturated greens of p2 and p3 drift away from it.
 - **Individual blades add nothing** from this camera (p3).
 
+## The user's answers (round 1)
+
+- Lead: **p9, the combined look**. On p8, the nine grounds: "I do think we need to add more ground variations later, it's helpful if techniques are reusable."
+- Moving light: **both** cloud shadows and wind sheen. Build first: **the infirmary**. Scope: **go** (ground and light first, then tufts).
+- Then: "To be able to work more independently from me, you can lean on a codex reviewer to give you feedback until you think it's in a good state. If you think you're plateauing you can also try utilizing an advanced codex model as an advisor."
+
+## Round 2: built in the game
+
+![The road frame after round 2](../reference/grass/r2-road.jpg)
+
+Before: [this morning](../reference/grass/r2-before-road.jpg). Also [close](../reference/grass/r2-close.jpg), [the lower field](../reference/grass/r2-low.jpg), [the whole infirmary](../reference/grass/r2-wide.jpg). On the review page with sliders.
+
+All of it lives in `game/packages/client/src/lab/kit-ground.ts`, which is reusable for any painted lawn:
+
+- **Hex tiling** of the lawn tile, after Mikkelsen 2022: three samples at random offsets on a triangle lattice, so a 5 u tile never shows a grid.
+- **A ground map** built from the compiled scene (`buildGround`), one texel per half u. R: worn to earth. G: long grass, which grows away from paving and paths, in rings round what stands on the lawn, and where a `grass-long` patch was placed. B: contact shade at the foot of props. A: distance from hard ground.
+- **Painted tufts**: a Codex sheet of 16 grey tufts (`foliage-tufts.png`; prompt `tools/concept-gen/prompts/2026-11-27-grass/tufts.txt`), stamped over the ground by texture bombing and coloured by the lawn under them. Short tufts cover the lawn, big combed ones the long grass, and sparse ones a path's fringe.
+- **Sweeps**: long warm shoulders of grass beside cool olive hollows, about 8 × 1.6 u, warped and running with the wind. This was the advisor's suggestion and the biggest single gain: it turned the lawn from carpet into painted strokes.
+- **Long grass** is straw out in the open and lush, deep green at the foot of things. Its sheen rolls with the foliage's gusts.
+- **Worn footpaths** are a new scene object, `{kind: wear, pts, w}`, compiled to `ground.wear` and painted to bare earth with ragged edges. The infirmary has three, from the boiler house's doors.
+- **Margin grass** (`marginGrass`) is raised fans on camera-facing cards, one quad per fan, at the grass side of paving and walls, a path's shoulder and the foot of props. Runs are broken by noise, and each fan is coloured by the ground at its root and lit with the ground's up normal. Open lawn gets none, so it never reads as spots (the problem with the `patch` cards).
+- **Cloud shadows** (`cloudify`) cover every lit material, ground, plants and roofs together. They take most of the sun and leave a cool tint.
+
+How it was judged: five rounds with a Codex critic (`gpt-6.1-terra`) on a sheet of the target, the render, a close-up and the lower field, plus one advisor round (`gpt-6.2-astra`, extra-high reasoning) when the critic's score stalled at 5 to 6. The answers are in [critiques/](../reference/grass/critiques/). Scores went 5, 5, 6 (plateau, advisor), then 6.5, with "presentable to the art lead as a first in-game version". Where I overruled the critic:
+- Its lifted tuft contrast flattened the tufts, and its paler clouds vanished, so both were tempered.
+- Its long-grass thresholds would have made the whole lawn long; the target keeps short grass round paths and buildings.
+- Its warmer earth brought back an orange stripe.
+
+What it costs: the lawn's fragment shader does about 30 texture reads (hex tiling 3, three bomb layers of up to 9 each, the map, noise), and there are a few thousand margin quads. It isn't measured yet on the user's laptop; the bomb layers are where to save if needed.
+
 ## Next
 
-Waiting for the user's marks and answers on the review page. Round 2 as recommended, in the infirmary: (1) the ground: hex tiling, a clump-scale light-over-dark mask, the concept's colours, a paintable splat for worn earth, shade and long grass; (2) light: cloud shadows over the whole level and sheen bands on long grass, moving with the foliage's existing wind; (3) tuft cards lit as the ground, in rings round anything on a lawn and through long grass.
+- Round 3 (waiting on the user's marks): the critic's last notes, applied and rendered. They are in [r5-answer.md](../reference/grass/critiques/r5-answer.md): deeper olive hollows, fewer and calmer tuft stamps, a sparser and shorter margin fringe.
+- **Ground types**, after the advisor (in [advisor-r4-answer.md](../reference/grass/critiques/advisor-r4-answer.md)). Replace the `mat === 'meadow'` test with a lookup. Each type names a painted tile and scale, a worn substrate, a value ramp, its tuft-sheet rows, its sweep size, wind strength and margin density. Dry grass, heath, moss and reeds would come next, from p8's vocabulary. Levels would paint types and wear in the editor.
+- Spells on grass: one small top-down map of trample, scorch, frost and wet that the ground and margin cards read.
+- Measure the cost on the user's machine.
 
 ## Sources
 

@@ -1,0 +1,10 @@
+Do not generate images. Do not edit any files except the one named below. You are a senior technical art director advising on stylised grass for a co-op top-down wizard game in three.js (WebGL2), steep 46 degree camera, basic laptop GPU, up to 4 players.
+
+The attached sheet: TARGET is the approved concept; NOW is the in-game render after a day's work; BEFORE is the start. Read C:\Users\mvikj\Code\magicka-toy\.claude\worktrees\grass-look\game\packages\client\src\lab\kit-ground.ts (the ground system: hex-tiled painted tile, a ground map of worn/long/contact/edge per half unit, painted grey tufts texture-bombed over the ground, wind sheen, cloud shadows) and skim C:\Users\mvikj\Code\magicka-toy\.claude\worktrees\grass-look\game\packages\client\src\lab\foliage.ts (camera-facing painted cards lit as one rounded form, used for bushes; its 'patch' recipe of grass cards was tried on open lawn and read as spots).
+
+The ground is flat. The question is what to do next so lawns are beautiful across a whole game (many outdoor levels, more ground types later: dry grass, heath, moss, reeds), not just this frame:
+1. Is the remaining gap to TARGET mainly a flat-ground problem (value, colour, shapes) or does it need raised grass (silhouettes at edges: path verges, round props, the foot of walls)? Be specific about where in the picture.
+2. If raised grass: the best approach under these constraints (instanced cards using the ground map, as foliage.ts does; shells only near edges; something else), how it should be lit so it does not read as spots, how many instances, and where to place them from the ground map.
+3. What a reusable "ground types" system should look like (data, art per type, how levels paint them), given the painted Codex tiles and tuft sheets we can make for free.
+4. The single highest-value next step.
+Write your advice to r4-answer.md in the current directory, under 600 words, concrete enough to implement.

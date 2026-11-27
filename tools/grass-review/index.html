@@ -80,6 +80,22 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 7
 </header>
 
 <section>
+  <div class="eyebrow">Round 2 · built in the game · 2026-11-27</div>
+  <h2>The combined look, in the infirmary</h2>
+  <p>Your picks, built: the combined look (p9), cloud shadows and wind, in the infirmary first, as ground and light first, then tufts. These are renders from the game's own camera. Drag across each picture to compare it with this morning. A Codex critic reviewed five rounds and an advanced model advised once; the critic's last score is 6.5 out of 10, "presentable as a first in-game version".</p>
+  <div id="r2" style="display:grid;gap:40px"></div>
+  <ul class="plain">
+    <li><b>Painted ground.</b> The lawn tile repeats in random hex patches, so no grid shows. Broad warm sweeps run beside cool olive hollows along the wind, and painted tufts from a Codex sheet are stamped over the ground.</li>
+    <li><b>Long grass where it belongs.</b> It grows away from paving and paths, in lush rings at the foot of bushes and posts, and as straw out in the open. The wind combs it with a moving sheen.</li>
+    <li><b>Worn footpaths</b> are a new map object, painted to bare earth: here, the boiler house's doors to the road and to the tents.</li>
+    <li><b>Raised grass at the margins.</b> Fans of painted grass stand along paving, path shoulders and props, coloured and lit as the ground. Open lawn has none.</li>
+    <li><b>Cloud shadows</b> drift over everything: ground, plants and roofs together.</li>
+  </ul>
+  <p class="muted">Next (round 3, waiting on your marks): the critic's last notes, which are deeper olive hollows, fewer and calmer tuft stamps, and a sparser margin fringe. After that come more ground types (dry grass, heath, moss, reeds) on the same system.</p>
+  <div class="q" id="r2-verdict-box"></div>
+</section>
+
+<section>
   <h2>Where we are</h2>
   <div class="pair">
     <figure><img src="img/now-road.jpg" alt="The infirmary lawn in the game today: a flat, evenly mottled green"><figcaption>The game today: one painted tile, drifting in colour over the ground.</figcaption></figure>
@@ -152,7 +168,14 @@ const LOOKS = [
     ask: 'Lawn, clover lawn, wind meadow, dry grass, shade and moss, reeds, heath, trodden path, grass meeting cobbles.',
     read: ['A vocabulary of grounds for whole regions.', 'Drawn closer than our camera; flowers would be smaller in the game.'] },
 ];
+const R2 = [
+  { id: 'r2-road', title: 'The road by the boiler house', before: 'img/r2-before-road.jpg', after: 'img/r2-road.jpg' },
+  { id: 'r2-close', title: 'Close: worn paths, margin grass, the road\'s verge', before: 'img/now-road.jpg', after: 'img/r2-close.jpg', single: true },
+  { id: 'r2-low', title: 'The lower field: long grass, combed', after: 'img/r2-low.jpg', single: true },
+  { id: 'r2-wide', title: 'The whole infirmary', after: 'img/r2-wide.jpg', single: true },
+];
 const QS = [
+  { id: 'r2-verdict', q: 'Round 2: where does the grass stand?', opts: [['go','Good: round 3 as planned'],['tune','Close: tune it (note)'],['wrong','Wrong direction (note)']] },
   { id: 'q-direction', q: 'Which look should lead?', opts: [['p1','The concept (p1)'],['p5','Lived in (p5)'],['combo','Combined (p9)'],['p2','Tall meadow (p2)'],['other','Other, in the note']] },
   { id: 'q-light', q: 'Moving light: cloud shadows and wind sheen over the fields?', opts: [['both','Both'],['clouds','Cloud shadows only'],['sheen','Wind sheen only'],['neither','Neither']] },
   { id: 'q-first', q: 'Where should round 2 be built first?', opts: [['infirmary','The infirmary\'s lawns (recommended)'],['lab','A test field in the lab'],['both','Both']] },
@@ -234,7 +257,35 @@ async function saveAns(id, patch) {
   try { await db.collection('answers').doc(id).set(answers[id]); flash(id, 'Saved'); }
   catch (e) { flash(id, 'Not saved: ' + (e?.message || 'the store refused the write') + '. Try again.'); }
 }
-renderLooks(); renderQs();
+function renderR2() {
+  const box = document.getElementById('r2');
+  box.innerHTML = R2.map(l => `
+    <article class="look" id="${l.id}">
+      <div class="look-head"><h3>${esc(l.title)}</h3></div>
+      ${!l.single ? `<div class="cmp" style="--cut:50%">
+        <img src="${l.before}" alt="This morning">
+        <img class="after" src="${l.after}" alt="${esc(l.title)}">
+        <div class="bar"></div><span class="lbl l">this morning</span><span class="lbl r">round 2</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Compare ${esc(l.title)} with this morning" id="cmp-${l.id}">
+      </div>` : `<figure class="single" style="margin:0"><img src="${l.after}" alt="${esc(l.title)}"></figure>`}
+      <div class="marks" role="group" aria-label="Mark ${esc(l.title)}">
+        <button type="button" data-m="lead" aria-pressed="false">Good</button>
+        <button type="button" data-m="part" aria-pressed="false">Close</button>
+        <button type="button" data-m="no" aria-pressed="false">No</button>
+      </div>
+      <textarea id="note-${l.id}" placeholder="What reads well, what doesn't"></textarea>
+      <div class="saved" id="saved-${l.id}"></div>
+    </article>`).join('');
+  box.querySelectorAll('.cmp input').forEach(r => r.addEventListener('input', () => r.parentElement.style.setProperty('--cut', r.value + '%')));
+  box.querySelectorAll('.look').forEach(a => {
+    const id = a.id;
+    a.querySelectorAll('.marks button').forEach(b => b.addEventListener('click', () => saveMark(id, { mark: marks[id]?.mark === b.dataset.m ? '' : b.dataset.m })));
+    a.querySelector('textarea').addEventListener('change', e => saveMark(id, { note: e.target.value }));
+  });
+}
+renderR2(); renderLooks(); renderQs();
+// the round 2 verdict sits with round 2, not at the end
+{ const v = document.getElementById('r2-verdict'), slot = document.getElementById('r2-verdict-box'); if (v && slot) slot.replaceWith(v); }
 (async () => {
   const st = document.getElementById('status');
   const timer = setTimeout(() => { st.textContent = 'The feedback store did not answer. Marks stay on this page only.'; }, 10000);

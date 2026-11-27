@@ -20,6 +20,8 @@ type GFloor = { h: number; mat: string; polys: number[][][][] };
 type GInst = { p: string; x: number; y: number; rot: number; scale?: number; pts?: number[][]; w?: number };
 type GPiece = { class?: string; shape?: string; footprint?: [number, number]; height?: number; grow?: { kind?: string } };
 
+/** The last ground map's fields, for the margin grass (marginGrass). */
+let FIELDS: { nx: number; ny: number; x0: number; y0: number; top: Float32Array; lawn: Uint8Array; R: Float32Array; G: Float32Array; B: Float32Array; dHard: Float32Array; dWear: Float32Array } | null = null;
 /** The ground map's cell (u). */
 const CELL = 0.5;
 /** Shared by every ground material: the map, where it lies, and the wind's time. */
@@ -30,9 +32,12 @@ export const GROUND_U = {
    * the bare earth worn paths show (the weathered paving's own tile, and its size in u); kit-render sets them. */
   grTuft: { value: null as THREE.Texture | null }, grTuftOn: { value: 0 },
   grEarth: { value: null as THREE.Texture | null }, grEarthS: { value: 3 }, grEarthOn: { value: 0 },
+  /** the lawn's own tile and its size (u), so a margin tuft takes the colour of the ground at its root */
+  grLawn: { value: null as THREE.Texture | null }, grLawnS: { value: 5 },
 };
 /** Hand the ground its painted tufts and its earth tile (either may be missing: the ground then does without). */
-export function setGroundArt(tuft: THREE.Texture | undefined, earth: THREE.Texture | undefined, earthTile: number) {
+export function setGroundArt(tuft: THREE.Texture | undefined, earth: THREE.Texture | undefined, earthTile: number, lawn?: THREE.Texture, lawnTile = 5) {
+  GROUND_U.grLawn.value = lawn ?? null; GROUND_U.grLawnS.value = lawnTile;
   GROUND_U.grTuft.value = tuft ?? null; GROUND_U.grTuftOn.value = tuft ? 1 : 0;
   GROUND_U.grEarth.value = earth ?? null; GROUND_U.grEarthS.value = earthTile; GROUND_U.grEarthOn.value = earth ? 1 : 0;
 }
@@ -182,6 +187,7 @@ export function buildGround(floors: GFloor[], instances: GInst[], piece: (p: str
   t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true;
   GROUND_U.grMap.value?.dispose();
   GROUND_U.grMap.value = t; GROUND_U.grO.value.set(x0, y0); GROUND_U.grS.value.set(nx * CELL, ny * CELL); GROUND_U.grOn.value = 1;
+  FIELDS = { nx, ny, x0, y0, top, lawn, R, G, B, dHard, dWear };
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -318,6 +324,104 @@ vec3 groundLawn(sampler2D t, float tile, vec2 p) {
   return c;
 }
 `;
+
+// ---------------------------------------------------------------------------------------------------------------
+// margin grass: raised painted fans where height reads (the advisor, 2026-11-27): the grass side of paving and walls, the
+// shoulders of worn paths, the foot of what stands on the lawn. One camera-facing card per fan, its foot on the ground,
+// coloured by the ground at its root and lit with the ground's up normal, so a fan reads as the lawn standing up at an
+// edge, never as a spot. Open lawn gets none: there the painted ground is enough.
+// ---------------------------------------------------------------------------------------------------------------
+const hash = (x: number, y: number) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+const vnoise = (x: number, y: number) => {
+  const i = Math.floor(x), j = Math.floor(y), f = x - i, g = y - j, u = f * f * (3 - 2 * f), v = g * g * (3 - 2 * g);
+  return (hash(i, j) * (1 - u) + hash(i + 1, j) * u) * (1 - v) + (hash(i, j + 1) * (1 - u) + hash(i + 1, j + 1) * u) * v;
+};
+const UPM = 1 / 0.6;   // u per metre (kit-render's M)
+let marginMat: THREE.MeshLambertMaterial | null = null;
+function marginMaterial(): THREE.MeshLambertMaterial {
+  if (marginMat) return marginMat;
+  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, alphaToCoverage: true, side: THREE.DoubleSide });
+  m.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, GROUND_U);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
+      attribute vec3 aRoot; attribute vec3 aFan; attribute vec2 aCorner; uniform float grTime;
+      varying vec2 vMgUv; varying vec2 vMgRoot; varying float vMgCol;
+      float mgGust(vec2 p, float t) {
+        vec2 W = vec2(0.93, 0.37); float al = dot(p, W), ac = dot(p, vec2(-W.y, W.x));
+        float e = 0.42 + 0.3 * sin(al * 0.21 - t * 0.83 + 1.4 * sin(ac * 0.13 + t * 0.11)) + 0.26 * sin(al * 0.078 - t * 0.31 + ac * 0.05 + 1.7)
+                + 0.14 * sin(al * 0.47 - t * 1.57 + ac * 0.29);
+        e = clamp(e, 0.0, 1.0); return e * e; }`)
+      .replace('#include <beginnormal_vertex>', 'vec3 objectNormal = vec3(0.0, 1.0, 0.0);')
+      .replace('#include <begin_vertex>', `
+        // aFan: width u, height u, sprite (row * 4 + column; negative: mirrored)
+        vec3 mgR = normalize(vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]));
+        mgR = normalize(vec3(mgR.x, 0.0, mgR.z));
+        float mgH = aCorner.y * aFan.y, mgB = aCorner.y * aCorner.y * (0.12 + 0.3 * mgGust(aRoot.xz, grTime)) * aFan.y;
+        vec3 transformed = aRoot + mgR * (aCorner.x * aFan.x + mgB) + vec3(0.0, mgH, 0.0);
+        float sp = abs(aFan.z); vMgCol = sp;
+        vMgUv = vec2(aFan.z < 0.0 ? 0.5 - aCorner.x : 0.5 + aCorner.x, aCorner.y);
+        vMgRoot = aRoot.xz;`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+      ${GROUND_GLSL}
+      uniform sampler2D grLawn; uniform float grLawnS;
+      varying vec2 vMgUv; varying vec2 vMgRoot; varying float vMgCol;`)
+      .replace('#include <map_fragment>', `{
+        float sp = floor(vMgCol + 0.5), col = mod(sp, 4.0), row = floor(sp / 4.0);
+        // the sprite's own cell, its foot (painted about a tenth up the cell) at the card's foot
+        vec2 suv = vec2(vMgUv.x, 0.1 + vMgUv.y * 0.85);
+        vec4 tx = texture2D(grTuft, (vec2(col, 3.0 - row) + clamp(suv, 0.01, 0.99)) / 4.0);
+        diffuseColor.a = clamp((tx.a - 0.45) / max(fwidth(tx.a), 0.0001) + 0.5, 0.0, 1.0);
+        if (diffuseColor.a < 0.02) discard;
+        vec3 g = groundLawn(grLawn, grLawnS, vMgRoot);
+        // the ground's colour at its root, lifted toward the tips as the painted blades catch the light
+        diffuseColor.rgb = g * mix(0.82, 1.5, tx.r) * mix(0.95, 1.15, vMgUv.y);
+      }`);
+  };
+  m.customProgramCacheKey = () => 'margin-grass-1';
+  return (marginMat = m);
+}
+/** Raised grass fans along the margins of the last ground map (buildGround first); null where there are none. */
+export function marginGrass(): THREE.Mesh | null {
+  const F = FIELDS;
+  if (!F || !GROUND_U.grTuftOn.value) return null;
+  const roots: number[] = [], fans: number[] = [];
+  const step = 0.38;   // u: candidate spacing
+  for (let y = F.y0; y < F.y0 + F.ny * CELL; y += step) for (let x = F.x0; x < F.x0 + F.nx * CELL; x += step) {
+    const jx = x + (hash(x, y) - 0.5) * step, jy = y + (hash(y + 3.1, x) - 0.5) * step;
+    const i = Math.floor((jx - F.x0) / CELL), j = Math.floor((jy - F.y0) / CELL);
+    if (i < 0 || j < 0 || i >= F.nx || j >= F.ny) continue;
+    const q = j * F.nx + i;
+    if (!F.lawn[q] || F.R[q] > 0.35) continue;
+    const verge = F.dHard[q] > 0.15 && F.dHard[q] < 1.1;              // the grass side of paving and walls
+    const shoulder = F.dWear[q] > -0.1 && F.dWear[q] < 0.7;           // the outer edge of a worn path
+    const foot = F.B[q] > 0.12 && F.G[q] > 0.3;                       // round what stands on the lawn
+    if (!verge && !shoulder && !foot) continue;
+    // broken into irregular runs with gaps
+    if (vnoise(jx * 0.55, jy * 0.55) < (foot ? 0.3 : 0.45)) continue;
+    if (hash(jx * 1.7, jy * 2.3) < 0.25) continue;
+    const tall = Math.max(F.G[q], foot ? 0.6 : 0);
+    const w = 0.65 + 0.4 * hash(jx, jy + 9.0) + 0.3 * tall, h = (0.5 + 0.35 * hash(jx + 4.0, jy)) * (1 + 0.6 * tall);
+    // sprite: short fans and clumps on verges, combed long clumps at the foot of things, sparse ones on a path's shoulder
+    const row = shoulder && !verge ? 3 : foot && tall > 0.5 && hash(jx, jy + 2.0) > 0.4 ? 2 : Math.floor(hash(jx + 7.0, jy) * 2);
+    const sp = row * 4 + Math.floor(hash(jx + 1.3, jy + 5.1) * 4);
+    roots.push(jx, F.top[q] * UPM, jy);
+    fans.push(w, h, hash(jx + 2.2, jy) > 0.5 ? sp : -sp - 0.0001);
+  }
+  const n = roots.length / 3;
+  if (!n) return null;
+  const quad = new THREE.InstancedBufferGeometry();
+  quad.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 3));
+  quad.setAttribute('aCorner', new THREE.Float32BufferAttribute([-0.5, 0, 0.5, 0, 0.5, 1, -0.5, 1], 2));
+  quad.setIndex([0, 1, 2, 0, 2, 3]);
+  quad.setAttribute('aRoot', new THREE.InstancedBufferAttribute(new Float32Array(roots), 3));
+  quad.setAttribute('aFan', new THREE.InstancedBufferAttribute(new Float32Array(fans), 3));
+  quad.instanceCount = n;
+  quad.boundingSphere = new THREE.Sphere(new THREE.Vector3(F.x0 + (F.nx * CELL) / 2, 0, F.y0 + (F.ny * CELL) / 2), Math.hypot(F.nx, F.ny) * CELL);
+  const mesh = new THREE.Mesh(quad, marginMaterial());
+  mesh.receiveShadow = true; mesh.frustumCulled = false; mesh.raycast = () => undefined;
+  mesh.name = `margin-grass (${n})`;
+  return mesh;
+}
 
 // ---------------------------------------------------------------------------------------------------------------
 // clouds: soft shadows drifting over the whole level, on every lit material

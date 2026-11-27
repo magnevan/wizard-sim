@@ -985,8 +985,11 @@ def compile_scene(sc):
                 v['at'], [v['id']]); continue
         zones = fl_paths if v['kind'] == 'setpiece' else fl_zones      # a set piece may flank a flight (gateway piers); never stand in its path
         if any(z.intersects(box) for z in zones): err('vignette-flight', f"{v['piece']} at {v['at']}: in a flight or its landing", v['at'], [v['id']])
+        # a dress piece placed by hand names its parts (a banner's emblem); one that doesn't gets one of each, seeded by its
+        # id (the infirmary's road lamps stood as bare stand-in poles: their parts were never picked)
+        parts = v.get('parts') or ({k: __import__('random').Random(v['id'] + k).choice(o) for k, o in pc['parts'].items()} if pc.get('parts') else None)
         inst.append(dict(p=v['piece'], x=v['at'][0] * G, y=v['at'][1] * G, h=T[on[0]]['h'], rot=math.atan2(dy, dx), src=v['id'],
-                         **({'parts': v['parts']} if v.get('parts') else {})))     # a dress piece placed by hand names its parts (a banner's emblem)
+                         **({'parts': parts} if parts else {})))
 
     # ---- scatter: a level filled with pieces at a spacing (the woods' trees), jittered and seeded, so a scene always
     # gives the same woods: {kind: scatter, terrace, pieces: [...], spacing (u, default 7), margin (cells, default 1), seed,

@@ -1,0 +1,9 @@
+{
+ "at": "2026-11-27T19:07:23.390Z",
+ "by": "claude",
+ "task": "t-road",
+ "set": {
+  "status": "done",
+  "outcome": "fixed by the grass merge: the road reads whole (img/road-now.jpg); the road lamps' parts now picked (compile.py)"
+ }
+}

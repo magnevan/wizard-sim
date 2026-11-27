@@ -1609,6 +1609,11 @@
    "at": "2026-11-27",
    "title": "Round 13: the beach meets the sea; vines in the purifier bay",
    "html": "<p>The sea raised to the beach's level (no wall along the water); a vine pass of its own for the purifier bay (a dress object can now take an <code>area</code>). Vines down rock faces need fitting to the rock: asked in rv-3.</p>"
+  },
+  {
+   "at": "2026-11-27",
+   "title": "Round 14: the road whole again; the road lamps modelled",
+   "html": "<p>The road out reads as one band of paving since the grass merge (its weathering no longer eats the stones). The four road lamps stood as bare stand-in poles: hand-placed pieces never had their parts picked, so <code>compile.py</code> now picks one of each, seeded by the piece's id.</p><figure><img src=\"img/road-now.jpg\" alt=\"The road\"><figcaption>The road out, the lamps along its far side</figcaption></figure><figure><img src=\"img/road-lamp.jpg\" alt=\"A lamp\"><figcaption>A lamp up close</figcaption></figure>"
   }
  ],
  "board": {

@@ -94,6 +94,56 @@ FIXES = {
         ('object', dict(kind='vignette', id='road-lamp-2', name='a lamp post', piece='dress.lamp', at=[66.0, 35.4], front='S')),
         ('object', dict(kind='vignette', id='road-lamp-3', name='a lamp post', piece='dress.lamp', at=[74.0, 35.4], front='S')),
         ('object', dict(kind='vignette', id='road-lamp-4', name='a lamp post', piece='dress.lamp', at=[82.0, 35.4], front='S')),
+        # ---- greenery (2026-11-27, the user: "agreed lawn is very rough. we should add way more foliage, and tune the grass
+        # look"): the lawns are the soft meadow (kit-stones.ts LAWN_VARY), woods round the edges, drifts and shrubs round the
+        # forecourt and between its tents (its middle round the well left open), fields running off to the west, planting
+        # on the cliff top and in the cove's corners, vines over the parapets and down the cliffs (style infirmary-garden)
+        *[('terrace', t, dict(mat='meadow')) for t in ('grass at 3.5 m', 't-woods', 't-woods-e', 't-woods-f', 't-woods-g', 't-woods-i', 't-woods-n')],
+        ('new-terrace', dict(name='the wood', h=3.5, mat='meadow', edge='open', walk=False)),
+        ('paint', 'the wood', 0, 0, 33, 6), ('paint', 'the wood', 37, 0, 88, 6),          # the woods behind the camp, north of the road in
+        ('paint', 'the wood', 82, 7, 88, 36), ('paint', 'the wood', 82, 40, 88, 46),       # and down the east edge
+        ('paint', 'the wood', 56, 7, 81, 10), ('paint', 'the wood', 75, 11, 81, 24),       # a grove in the north-east corner
+        ('object', dict(kind='scatter', id='wood-trees', name='the woods: trees', terrace='t-wood', seed=27, spacing=6.0, margin=0.6, jitter=0.5,
+                        pieces=['setpiece.tree-oak', 'setpiece.tree-blossom', 'setpiece.tree-birch', 'setpiece.tree-birch', 'setpiece.tree-birch', 'setpiece.tree-cherry', 'setpiece.tree-wisteria'])),
+        ('object', dict(kind='scatter', id='wood-under', name='the woods: undergrowth', terrace='t-wood', seed=11, spacing=3.6, margin=0.3, jitter=0.5,
+                        pieces=['setpiece.bush-gold', 'setpiece.bush-yellow', 'setpiece.bush-lilac', 'setpiece.lavender', 'setpiece.lavender', 'setpiece.meadow-flowers', 'setpiece.grass-long'])),
+        # (the open lawns keep no scattered tufts: tried, they read as spots; the meadow's own long blades and drifts are enough)
+        ('object', dict(kind='scatter', id='cove-tufts', name='the cliff top and the cove corners', terrace='t-woods-n', seed=8, spacing=3.2, margin=0.2, jitter=0.5,
+                        pieces=['setpiece.lavender', 'setpiece.meadow-flowers', 'setpiece.grass-long', 'setpiece.bush-yellow'])),
+        ('object', dict(kind='dress', id='garden-vines', name='vines over the walls and cliffs', style='infirmary-garden', seed=3)),
+        # the farmland west of the camp, running on out of sight
+        *[('object', dict(kind='setpiece', id=f'field-{i}', name='a field', piece=f'setpiece.field-{crop}', at=at, front='S'))
+          for i, (crop, at) in enumerate([('wheat', [4.2, 11.5]), ('greens', [4.2, 17.4]), ('beans', [4.2, 23.3]), ('wheat', [4.2, 29.0]),
+                                          ('wheat', [12.2, 16.5]), ('greens', [12.2, 25.0])], 1)],
+        # shrubs and drifts round the forecourt's edges and between the tents (never in its middle)
+        *[('object', dict(kind='setpiece', id=f'edge-{i}', name='planting', piece=f'setpiece.{p}', at=at, front='S'))
+          for i, (p, at) in enumerate([
+              ('bush-yellow', [19.0, 8.0]), ('lavender', [22.6, 7.6]), ('bush-pink', [27.0, 7.8]), ('meadow-flowers', [32.0, 7.8]),
+              ('bush-lilac', [38.4, 7.8]), ('lavender', [43.0, 7.6]), ('bush-gold', [48.0, 7.9]), ('bush-yellow', [52.6, 8.2]),
+              ('bush-pink', [17.9, 13.9]), ('lavender', [16.2, 22.6]), ('bush-yellow', [18.0, 29.6]),
+              ('bush-lilac', [55.8, 9.0]), ('bush-yellow', [56.2, 14.0]), ('lavender', [56.0, 19.6]), ('bush-pink', [55.9, 24.2]), ('bush-gold', [56.4, 29.0]),
+              ('tree-cherry', [60.0, 14.5]), ('tree-birch', [72.4, 13.0]), ('tree-wisteria', [71.0, 22.6]), ('tree-wisteria', [16.4, 36.2]),
+          ], 1)],
+        # drifts on the open lawns, in clusters with lawn between (single shrubs spread evenly read as spots): a few
+        # shrubs with lavender and flowers round them, offsets in corners
+        *[('object', dict(kind='setpiece', id=f'drift-{i}-{k}', name='a drift', piece=f'setpiece.{p}', at=[cx + dx, cy + dy], front='S'))
+          for i, ((cx, cy), ps) in enumerate([
+              ((64.6, 14.2), ('bush-yellow', 'lavender', 'meadow-flowers', 'bush-lilac', 'lavender')),
+              ((65.0, 21.0), ('bush-pink', 'lavender', 'lavender', 'meadow-flowers', 'bush-gold', 'meadow-flowers')),
+              ((59.6, 25.6), ('lavender', 'meadow-flowers', 'bush-gold', 'lavender')),
+              ((77.4, 28.6), ('bush-lilac', 'meadow-flowers', 'lavender', 'bush-yellow', 'lavender')),
+              ((77.6, 33.6), ('meadow-flowers', 'lavender', 'bush-pink')),
+              ((59.8, 33.8), ('bush-gold', 'lavender', 'meadow-flowers')),
+              ((3.0, 43.4), ('bush-lilac', 'lavender', 'meadow-flowers', 'bush-yellow', 'lavender')),
+              ((10.0, 43.6), ('lavender', 'meadow-flowers', 'bush-pink', 'lavender')),
+              ((16.4, 42.6), ('bush-yellow', 'meadow-flowers', 'lavender', 'bush-gold')),
+              ((53.6, 42.6), ('lavender', 'bush-yellow', 'meadow-flowers', 'lavender', 'bush-lilac')),
+              ((61.0, 43.6), ('meadow-flowers', 'lavender', 'bush-pink', 'meadow-flowers')),
+              ((68.0, 42.4), ('bush-gold', 'lavender', 'lavender', 'meadow-flowers', 'bush-yellow')),
+              ((75.0, 43.6), ('lavender', 'bush-lilac', 'meadow-flowers', 'lavender')),
+              ((80.0, 42.2), ('meadow-flowers', 'bush-yellow', 'lavender')),
+          ], 1)
+          for k, (p, (dx, dy)) in enumerate(zip(ps, [(0, 0), (1.3, 0.35), (-1.25, 0.5), (0.45, -1.1), (-0.5, 1.25), (1.1, -0.9)]))],
         # markers
         ('object', dict(kind='marker', id='start-0', at=[35, 5], name='seat 0 starts on the road in from the main gate')),
         ('object', dict(kind='marker', id='start-1', at=[34.2, 4.2], name="seat 1's start")),

@@ -37,6 +37,7 @@ LAID = ('road', 'cobble', 'weathered')
 # left out with a chance growing with w, so the paving breaks up into the lawn; in patches of trodden earth (noise at
 # `patch` u over `dirt`), and a few (`loose`) anywhere.
 WEAR = {'weathered': dict(edge=1.5, patch=3.5, dirt=0.76, loose=0.03)}
+LAWNS = ('lawn', 'meadow')   # the floors weathered paving frays into (the meadow: the infirmary's, 2026-11-27)
 NEAR_LAWN = 0.35   # u: an edge of the paving within this of a lawn floor (at about its height) is where it meets the lawn
 
 
@@ -52,7 +53,7 @@ def vnoise(x, y, scale, seed):
 
 def lawn_edge(scene_data, h, poly):
     """Where a piece of paving meets lawn at about its height: its outline's stretches beside a lawn floor (or None)."""
-    lawn = [Polygon(p[0], p[1:]).buffer(0) for f in scene_data['floors'] if f['mat'] == 'lawn' and abs(f['h'] - h) <= ON for p in f['polys']]
+    lawn = [Polygon(p[0], p[1:]).buffer(0) for f in scene_data['floors'] if f['mat'] in LAWNS and abs(f['h'] - h) <= ON for p in f['polys']]
     if not lawn: return None
     e = poly.boundary.intersection(unary_union(lawn).buffer(NEAR_LAWN))
     return None if e.is_empty else e

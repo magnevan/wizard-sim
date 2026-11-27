@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-meadow.png in the current directory. Reply with just the file name.
+
+The attached image is the infirmary garden this ground is for: stylised, hand-painted, warm afternoon light, soft muted greens.
+
+Paint a square, seamlessly tileable ground texture of a soft garden lawn in exactly that painted style, seen from straight above and evenly lit. Gentle sage and olive greens with warm straw-yellow and cool blue-green patches mixed through it, so the colour drifts softly from place to place. Short grass in small soft tufts, patches of round clover leaves, a few clumps of longer blades, a few tiny white and pale yellow flowers. Calm, quiet and painterly, with the same density of detail everywhere, filling the whole square edge to edge.

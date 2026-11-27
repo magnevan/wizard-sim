@@ -16,7 +16,7 @@ import compile as kit  # noqa: E402
 import room as rm  # noqa: E402
 
 MAT = {'water': (60, 96, 140), 'plinth': (110, 100, 90), 'cobble': (176, 160, 136), 'deck': (150, 112, 72), 'woods': (64, 96, 60),
-       'plaza': (200, 184, 150), 'rock': (120, 112, 104), 'road': (168, 140, 120), 'lawn': (110, 150, 84), 'dirt': (150, 120, 90)}
+       'plaza': (200, 184, 150), 'rock': (120, 112, 104), 'road': (168, 140, 120), 'lawn': (110, 150, 84), 'meadow': (118, 146, 90), 'dirt': (150, 120, 90)}
 
 
 def main():

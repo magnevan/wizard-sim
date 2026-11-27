@@ -822,7 +822,8 @@ def compile_scene(sc):
                          **({'parts': v['parts']} if v.get('parts') else {})))     # a dress piece placed by hand names its parts (a banner's emblem)
 
     # ---- scatter: a level filled with pieces at a spacing (the woods' trees), jittered and seeded, so a scene always
-    # gives the same woods: {kind: scatter, terrace, pieces: [...], spacing (u, default 7), margin (cells, default 1), seed}
+    # gives the same woods: {kind: scatter, terrace, pieces: [...], spacing (u, default 7), margin (cells, default 1), seed,
+    # jitter (of a step, default 0.4; 0.5 hides the grid), chance (each spot kept, default 1: below it, drifts with gaps)}
     import random
 
     def vary(piece, rng):
@@ -840,14 +841,14 @@ def compile_scene(sc):
         if ground is None or not pieces:
             err('scatter', f"{label(s_)}: no floor for {s_.get('terrace')!r} or no known pieces", None, [s_['id']], 'warning'); continue
         rng = random.Random(s_.get('seed', s_['id']))
-        step = s_.get('spacing', 7.0) / G; inner = ground.buffer(-s_.get('margin', 1.0))
+        step = s_.get('spacing', 7.0) / G; inner = ground.buffer(-s_.get('margin', 1.0)); jit = s_.get('jitter', 0.4); keep = s_.get('chance', 1.0)
         x0, y0, x1, y1 = ground.bounds; n = 0
         yy = y0
         while yy <= y1 and n < 600:
             xx = x0
             while xx <= x1 and n < 600:
-                px, py = xx + rng.uniform(-0.4, 0.4) * step, yy + rng.uniform(-0.4, 0.4) * step
-                if inner.contains(Point(px, py)):
+                px, py = xx + rng.uniform(-jit, jit) * step, yy + rng.uniform(-jit, jit) * step
+                if inner.contains(Point(px, py)) and (keep >= 1 or rng.random() < keep):
                     pc_ = rng.choice(pieces)
                     inst.append(dict(p=pc_, x=px * G, y=py * G, h=T[tg]['h'], rot=rng.uniform(-math.pi, math.pi), src=s_['id'], **vary(pc_, rng)))
                     n += 1

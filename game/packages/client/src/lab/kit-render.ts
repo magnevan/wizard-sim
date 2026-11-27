@@ -13,9 +13,9 @@ import { fallMesh } from './kit-fall';
 import { pipeMesh, type PipeMats, type PipeRun } from './kit-pipe';
 import { waterMesh } from './kit-water';
 import { clearInlays, flowInlays, inlayInto, type InlaySpec } from './kit-inlay';
-import { FOLIAGE_TIME, grow, type Recipe } from './foliage';
+import { FOLIAGE_TIME, grow, groundShade, type Recipe } from './foliage';
 import { kerbRows, KERB_ROUND, KERB_W, type KerbSeg } from './kit-road';
-import { STONE_MATS, STONE_PAINT, STONE_U, stoneDecl, stoneFrag } from './kit-stones';
+import { LAWN_VARY, STONE_MATS, STONE_PAINT, STONE_U, stoneDecl, stoneFrag } from './kit-stones';
 
 export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string; ox?: number; oy?: number;
   /** a fall's lip (fall.curtain): its line in u, the lower water on the right */
@@ -118,8 +118,10 @@ export const isDecal = (p: string) => KIT_PIECES[p]?.class === 'decal';
 
 /** The kit's pieces as tools/kit/kit.json describes them (the map editor fetches it): set pieces need their size. */
 export type KitPiece = { class?: string; shape?: string; footprint?: [number, number]; height?: number; note?: string; stack?: string[]; parts?: Record<string, string[]>;
-  /** a plant grown in code (lab/foliage.ts), with `box` [w, d, h] m for a stone trough or pot under it */
-  grow?: Recipe & { box?: [number, number, number] } };
+  /** a plant grown in code (lab/foliage.ts), with `box` [w, d, h] m for a stone trough or pot under it, or `soil` [w, d] m of bare earth (a field) */
+  grow?: Recipe & { box?: [number, number, number]; soil?: [number, number] };
+  /** a made tree's shade: a soft dark patch this many m across on the ground under it (darker grass under trees) */
+  shade?: number };
 const KIT_PIECES: Record<string, KitPiece> = {};
 export function setKitPieces(p: Record<string, KitPiece>) { Object.assign(KIT_PIECES, p); }
 export const kitPiece = (p: string): KitPiece | undefined => KIT_PIECES[p];
@@ -184,6 +186,8 @@ const TP_TIME = { value: 0 };   // shared by every flowing texture; spinKit adva
 const MACRO: Record<string, number> = { road: 2.2 };
 /** A tone multiplied into a floor's texture (the road's painting came out pinker than the court's warm brown). */
 const TONE: Record<string, number> = { road: 0xf4d9b0 };
+/** Floors that drift in colour over the ground (kit-stones.ts LAWN_VARY): the meadow. */
+const VARY = new Set(['meadow']);
 const JOINT = mat(0x6a584a);   // a kerb piece under its blocks (a click target only)
 const TEX: Record<string, THREE.MeshStandardMaterial> = {}, RAW: Record<string, THREE.Texture> = {};
 async function loadTextures() {
@@ -192,19 +196,21 @@ async function loadTextures() {
   await Promise.all(texs.map(([p, url]) => loader.loadAsync(url).then((t) => {
     const name = p.split('/').pop()!.replace('.png', '');
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-    TEX[name] = triplanar(t, TILE[name] ?? 4, FLOW[name], true, MACRO[name] ?? 0, STONE_MATS.indexOf(name)); RAW[name] = t;
+    TEX[name] = triplanar(t, TILE[name] ?? 4, FLOW[name], true, MACRO[name] ?? 0, STONE_MATS.indexOf(name), VARY.has(name)); RAW[name] = t;
     if (TONE[name]) TEX[name].color.setHex(TONE[name]);
   }).catch(() => undefined)));
   // one smooth stone serves treads, kerbs and copings, unless each has its own
   if (TEX['smooth-stone']) { TEX.tread ??= TEX['smooth-stone']; TEX.kerb ??= TEX['smooth-stone']; }
   // weathered paving frays out into the lawn's own texture (kit-stones.ts WEATHERED)
-  STONE_U.stLawn.value = RAW.lawn ?? RAW.weathered ?? null; STONE_U.stLawnS.value = TILE.lawn ?? 4;
+  // (the meadow where there is one: the infirmary's lawns since 2026-11-27)
+  const lawn = RAW.meadow ? 'meadow' : 'lawn';
+  STONE_U.stLawn.value = RAW[lawn] ?? RAW.weathered ?? null; STONE_U.stLawnS.value = TILE[lawn] ?? 4; STONE_U.stLawnV.value = VARY.has(lawn) ? 1 : 0;
 }
 /**
  * A material that samples tex by world position, blended over the three axes by the surface's facing. stone: the
  * floor's place in STONE_MATS when it is laid stone by stone once a scene's stones are loaded (kit-stones.ts), else -1.
  */
-function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0, 0], decal = true, macro = 0, stone = -1): THREE.MeshStandardMaterial {
+function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0, 0], decal = true, macro = 0, stone = -1, vary = false): THREE.MeshStandardMaterial {
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: flow[0] || flow[1] ? 0.35 : 0.92 });
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tpMap = { value: tex }; sh.uniforms.tpScale = { value: 1 / tile };
@@ -212,18 +218,19 @@ function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0
     if (stone >= 0) { const P = STONE_PAINT[STONE_MATS[stone]]; Object.assign(sh.uniforms, STONE_U, { stPal: P.pal, stJoint: P.joint, stK: P.k, stSheet: P.sheet, stMean: P.mean }); }
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTpPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvTpNrm = normalize(mat3(modelMatrix) * objectNormal);');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;\nuniform sampler2D tpMap;\nuniform float tpScale, tpTime;\nuniform vec2 tpFlow;' + (stone >= 0 ? stoneDecl(stone) : ''))
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;\nuniform sampler2D tpMap;\nuniform float tpScale, tpTime;\nuniform vec2 tpFlow;' + (stone >= 0 ? stoneDecl(stone) : '') + (vary ? LAWN_VARY : ''))
       .replace('#include <map_fragment>', `vec3 tpW = pow(abs(normalize(vTpNrm)), vec3(4.0)); tpW /= (tpW.x + tpW.y + tpW.z);
         vec4 tpC = texture2D(tpMap, vTpPos.zy * tpScale) * tpW.x + texture2D(tpMap, vTpPos.xz * tpScale + tpFlow * tpTime) * tpW.y + texture2D(tpMap, vTpPos.xy * tpScale) * tpW.z;
         ${macro ? `vec3 tpFar = texture2D(tpMap, mat2(0.8, -0.6, 0.6, 0.8) * vTpPos.xz * tpScale * 0.137, 5.0).rgb, tpMean = texture2D(tpMap, vec2(0.5), 20.0).rgb;
         tpC.rgb *= clamp(1.0 + (dot(tpFar, vec3(0.333)) / max(dot(tpMean, vec3(0.333)), 0.02) - 1.0) * ${macro.toFixed(2)}, 0.8, 1.2);` : ''}
+        ${vary ? 'tpC.rgb = lawnVary(tpC.rgb, vTpPos.xz);' : ''}
         diffuseColor *= tpC;
         ${stone >= 0 ? stoneFrag(stone) : ''}
 `);
     // a laid stone's bevel, lit by the scene's own light
     if (stone >= 0) sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nif (stLaid > 0.5) normal = normalize((viewMatrix * vec4(stNrm, 0.0)).xyz);');
   };
-  m.customProgramCacheKey = () => `tp${tile}m${macro}s${stone}`;
+  m.customProgramCacheKey = () => `tp${tile}m${macro}s${stone}v${vary ? 1 : 0}`;
   return decal ? decalable(m) : m;
 }
 /** An inlay's rim stone: the smooth stone, kept clear of the decal, so the rim reads as its own kerb round the picture. */
@@ -644,7 +651,7 @@ function piece(it: Inst): THREE.Group | null {
     g.position.set(it.x, yOf(it.h + (it.up ?? 0)), it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // local +z is the front
     const k = KIT_PIECES[it.p] ?? { shape: 'box', footprint: [2, 2], height: 4 };
     if (k.grow) return growInto(g, k.grow, seedOf(it), y);
-    if (art(g, kind, 0, y)) return g;
+    if (art(g, kind, 0, y)) { if (k.shade) { const sh = groundShade((k.shade / 2) * M); sh.position.y += y; g.add(sh); } return g; }
     const [w, d] = k.footprint ?? [2, 2], H = yOf(k.height ?? 4), P = yOf(0.35);
     const solid = (sx: number, sz: number, y0: number, y1: number, m: THREE.Material) => {
       if (k.shape === 'round') {
@@ -905,8 +912,9 @@ const PLANT_PARTS: Record<string, Recipe> = {
   'plant-blossom': { kind: 'bush', r: 0.42, pal: ['green', 'gold'], bloom: { pal: 'pink', amount: 0.8 } },
 };
 /** Grow a recipe into g at height y0 (u): a stone trough of its `box` first, if it has one, then the plant on its soil. */
-function growInto(g: THREE.Group, recipe: Recipe & { box?: [number, number, number] }, seed: number, y0: number): THREE.Group {
+function growInto(g: THREE.Group, recipe: Recipe & { box?: [number, number, number]; soil?: [number, number] }, seed: number, y0: number): THREE.Group {
   let y = y0;
+  if (recipe.soil) { const [sw, sd] = recipe.soil.map(yOf); box(g, TEX.dirt ?? MAT.wood, -sw / 2, sw / 2, y0 - yOf(0.05), y0 + yOf(0.03), -sd / 2, sd / 2); }
   if (recipe.box) {
     const [bw, bd, bh] = recipe.box.map(yOf), stone = TEX['smooth-stone'] ?? PROP.stone, lip = yOf(0.04);
     box(g, stone, -bw / 2, bw / 2, y0, y0 + bh, -bd / 2, bd / 2);

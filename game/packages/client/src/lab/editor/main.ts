@@ -7,6 +7,7 @@
  * Dev only: the build never includes this page.
  */
 import * as THREE from 'three';
+import { foliageReady } from '../foliage';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { loadStones } from '../kit-stones';
 import { buildKit, disposeKit, floorMats, groundPlane, kitPiece, loadKitArt, setKitPieces, setupStage, spinKit, yOf, type Inst, type KitData, type KitPiece } from '../kit-render';
@@ -1496,6 +1497,9 @@ hot.on('map:view-request', async (d: { id: number; name: string; opts: Record<st
   for (const m of markers.children) m.visible = m.userData.pin ? o.pins !== '0' : o.findings !== '0';
   const hb = hoverBox.visible; hoverBox.visible = false;
   sun.position.copy(controls.target).add(new THREE.Vector3(-30, 40, 22)); sun.target.position.copy(controls.target);
+  // (the plants' painted blossom and spike sheets load once their material is first drawn: wait for them, or a picture taken
+  // soon after a load shows bushes with no flowers)
+  renderer.render(world, cam); await foliageReady();
   renderer.render(world, cam);
   const png = renderer.domElement.toDataURL('image/png');
   cam.position.copy(saved.pos); controls.target.copy(saved.target); controls.update();

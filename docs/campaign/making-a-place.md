@@ -91,6 +91,7 @@ Faults caught by the user, by Claude or by a critic can each become a rule: a pr
 | Lamps and other tall dressing go on a road's far (up-screen) side, never between the camera and the walkers | dressing (step 6) | the user, on the infirmary's road out | 2026-11-26 |
 | A feature bigger than the place (farmland, a forest, a town) runs past the map's edge: its far boundary is never in view | stage 1 (plans) | the user, on the infirmary's farmland | 2026-11-26 |
 | Leave real open ground where people gather: plans keep the middle clear and put props round the edges | stage 1 (plans) | the user, on plan H ("a decent amount more negative space") | 2026-11-26 |
+| Small dressing props (crates, stretchers, poles, blankets) are drawn about 1.8x life size so they read at the game camera (`style_scale` in `kit.json`); buildings and tents stay real size | dressing (step 6) | the user, agreeing on the infirmary's camp props | 2026-11-27 |
 
 ## The sense rules
 

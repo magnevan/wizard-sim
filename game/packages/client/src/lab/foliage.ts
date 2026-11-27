@@ -39,6 +39,11 @@ export const PALETTES = {
   yellow:   ['#946a14', '#b8881a', '#d6a622', '#eac02e', '#f6d444', '#fbe264', '#fdec8c', '#fff6ba'],
   rose:     ['#7c1c3c', '#a42c4c', '#c8405e', '#e05c76', '#ee7c90', '#f69eac', '#fbc0c8', '#fee2e4'],
   bark:     ['#2a1c18', '#3c2a20', '#503828', '#664832', '#7c5a3e', '#94704e', '#ac8862', '#c4a27c'],
+  // (2026-11-27, the infirmary's greenery) lavender deeper than lilac, so it reads purple in full sun; ripe wheat; and
+  // a sage green matched to the meadow lawn, so long grass on it is texture, not spots
+  lavender: ['#24164e', '#34206a', '#462c88', '#5a3ca2', '#7052ba', '#8868cc', '#a084da', '#baa2e6'],
+  straw:    ['#5a4218', '#74581e', '#8e6e26', '#a88630', '#bea03e', '#d0b44e', '#e0c868', '#eedc8e'],
+  sage:     ['#1c3020', '#2a4428', '#3a5830', '#4c6c38', '#608040', '#76944c', '#8ea85c', '#a8bc72'],
 } as const;
 export type Pal = keyof typeof PALETTES;
 const PAL_NAMES = Object.keys(PALETTES) as Pal[];
@@ -263,6 +268,7 @@ function cardMaterial(): THREE.MeshLambertMaterial {
   return (cardMat = m);
 }
 const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4030, roughness: 1 });
+const birchMat = new THREE.MeshStandardMaterial({ color: 0xe8e2d4, roughness: 0.9 });
 const proxyMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
 let contactTex: THREE.CanvasTexture | null = null;
 function contactMaterial(): THREE.Material {
@@ -287,7 +293,7 @@ export type CardOpt = { roll?: number; sway?: number; glow?: number; lift?: numb
 export class Foliage {
   private pos: number[] = []; private nrm: number[] = []; private corner: number[] = []; private uv: number[] = [];
   private a: number[] = []; private b: number[] = []; private c: number[] = []; private idx: number[] = [];
-  private stems: { x: number; y: number; z: number; h: number; r: number }[] = [];
+  private stems: { x: number; y: number; z: number; h: number; r: number; pale: boolean }[] = [];
   private lobes: { c: V3; r: V3 }[] = []; private contacts: { x: number; z: number; y: number; rx: number; rz: number }[] = [];
   cards = 0;
   constructor(readonly r: Rnd) {}
@@ -306,8 +312,8 @@ export class Foliage {
   }
   /** A lobe that casts the plant's shadow (and shades the cards on its far side). */
   lobe(c: V3, r: V3) { this.lobes.push({ c, r }); }
-  /** A bare woody stem (a tree's trunk), r at the foot. */
-  stem(x: number, y: number, z: number, h: number, r: number) { this.stems.push({ x, y, z, h, r }); }
+  /** A bare woody stem (a tree's trunk), r at the foot; pale for a birch. */
+  stem(x: number, y: number, z: number, h: number, r: number, pale = false) { this.stems.push({ x, y, z, h, r, pale }); }
   /** A soft dark patch on the ground under the plant. */
   contact(x: number, z: number, rx: number, rz = rx, y = 0.012) { this.contacts.push({ x, z, y, rx, rz }); }
 
@@ -331,7 +337,7 @@ export class Foliage {
       const m = new THREE.Mesh(geo, proxyMat); m.castShadow = true; m.userData.foliageProxy = true; g.add(m);
     }
     for (const t of this.stems) {
-      const c = new THREE.Mesh(new THREE.CylinderGeometry(t.r * 0.6, t.r, t.h, 7), barkMat); c.position.set(t.x, t.y + t.h / 2, t.z); c.castShadow = c.receiveShadow = true; g.add(c);
+      const c = new THREE.Mesh(new THREE.CylinderGeometry(t.r * 0.6, t.r, t.h, 7), t.pale ? birchMat : barkMat); c.position.set(t.x, t.y + t.h / 2, t.z); c.castShadow = c.receiveShadow = true; g.add(c);
     }
     for (const c of this.contacts) {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(c.rx * 2, c.rz * 2), (contactMat ??= contactMaterial()));
@@ -348,7 +354,9 @@ type Lobe = { c: V3; r: V3 };
 export type Bloom = { pal: Pal | Pal[]; sprites?: Sprite[]; amount?: number; size?: number; drifts?: number };
 type Fill = { pal: Pal | Pal[]; sprites: Sprite[]; size: number; density?: number; floor?: number; bloom?: Bloom; sway?: number; aoLo?: number; upright?: boolean; lift?: number;
   /** lobes that hide cards inside them but get none of their own here (a bed fills its colour runs one at a time) */
-  hide?: Lobe[] };
+  hide?: Lobe[];
+  /** how many dark core cards per surface card (default 1/3): fewer for low airy growth such as long grass */
+  core?: number };
 
 /**
  * Cover a clump of lobes with cards: points spread evenly over each ellipsoid, dropped where they fall inside a
@@ -369,7 +377,7 @@ function fill(F: Foliage, lobes: Lobe[], o: Fill) {
     const area = 4 * Math.PI * Math.pow((Math.pow(l.r[0] * l.r[1], 1.6) + Math.pow(l.r[0] * l.r[2], 1.6) + Math.pow(l.r[1] * l.r[2], 1.6)) / 3, 1 / 1.6);
     const n = Math.max(6, Math.round((o.density ?? 1) * area / (o.size * o.size * 1.15))), off = r() * 6.283, pal = pick(r, pals);
     // a dark core: what shows through the gaps between leaves is deep shade, never the stone behind
-    for (let i = 0; i < n / 3; i++) { const a = r() * 6.283, e = (r() - 0.25) * 1.6, k = 0.62; const p: V3 = [l.c[0] + Math.cos(a) * Math.cos(e) * l.r[0] * k, l.c[1] + Math.sin(e) * l.r[1] * k, l.c[2] + Math.sin(a) * Math.cos(e) * l.r[2] * k]; if (p[1] > floor) F.card(p, [0, 1, 0], o.size * 1.5, 'roundA', pal, 0.2, { roll: r() * 6.283, sway: 0.2, lift: 0 }); }
+    for (let i = 0; i < n * (o.core ?? 1 / 3); i++) { const a = r() * 6.283, e = (r() - 0.25) * 1.6, k = 0.62; const p: V3 = [l.c[0] + Math.cos(a) * Math.cos(e) * l.r[0] * k, l.c[1] + Math.sin(e) * l.r[1] * k, l.c[2] + Math.sin(a) * Math.cos(e) * l.r[2] * k]; if (p[1] > floor) F.card(p, [0, 1, 0], o.size * 1.5, 'roundA', pal, 0.2, { roll: r() * 6.283, sway: 0.2, lift: 0 }); }
     for (let i = 0; i < n; i++) {
       const yy = 1 - ((i + 0.5) / n) * 2, rad = Math.sqrt(1 - yy * yy), th = i * 2.39996 + off;
       const d: V3 = [Math.cos(th) * rad + (r() - 0.5) * 0.25, yy + (r() - 0.5) * 0.25, Math.sin(th) * rad + (r() - 0.5) * 0.25];
@@ -519,23 +527,85 @@ export function cascade(F: Foliage, o: CascadeOpt) {
   }
 }
 
-export type TreeOpt = { h?: number; r?: number; pal?: Pal | Pal[]; bloom?: Bloom; at?: [number, number]; y?: number };
+export type TreeOpt = { h?: number; r?: number; pal?: Pal | Pal[]; bloom?: Bloom; at?: [number, number]; y?: number;
+  /** a birch: a tall pale stem, the crown high, narrow and loose (as the concept's woods) */
+  birch?: boolean };
 /** A small round-headed tree (a flowering cherry, a clipped standard): a bare stem and a crown of several masses. */
 export function tree(F: Foliage, o: TreeOpt = {}) {
-  const r = F.r, H = o.h ?? 3.2, R = o.r ?? 1.2, [x, z] = o.at ?? [0, 0], y = o.y ?? 0, cy = y + H - R * 0.85;
-  const lobes: Lobe[] = [{ c: [x, cy, z], r: [R * 0.8, R * 0.72, R * 0.8] }];
-  for (let i = 0; i < 6; i++) { const a = (i / 6) * 6.283 + r(), d = R * (0.5 + r() * 0.25), rr = R * (0.42 + r() * 0.2); lobes.push({ c: [x + Math.cos(a) * d, cy + (r() - 0.45) * R * 0.6, z + Math.sin(a) * d], r: [rr, rr * 0.85, rr] }); }
-  fill(F, lobes, { pal: o.pal ?? 'green', sprites: [...LEAF_BROAD, ...LEAF_ROUND], size: 0.2, bloom: o.bloom, floor: y + 0.4, aoLo: 0.2 });
+  const r = F.r, H = o.h ?? 3.2, R = o.r ?? 1.2, [x, z] = o.at ?? [0, 0], y = o.y ?? 0, b = !!o.birch;
+  const cy = y + H - R * (b ? 1.15 : 0.85);
+  const lobes: Lobe[] = [{ c: [x, cy, z], r: b ? [R * 0.7, R * 1.15, R * 0.7] : [R * 0.8, R * 0.72, R * 0.8] }];
+  for (let i = 0; i < (b ? 9 : 6); i++) {
+    const a = (i / (b ? 9 : 6)) * 6.283 + r(), d = R * (0.5 + r() * 0.25), rr = R * (b ? 0.34 + r() * 0.2 : 0.42 + r() * 0.2);
+    lobes.push({ c: [x + Math.cos(a) * d, cy + (r() - 0.45) * R * (b ? 1.5 : 0.6), z + Math.sin(a) * d], r: [rr, rr * (b ? 1.1 : 0.85), rr] });
+  }
+  fill(F, lobes, { pal: o.pal ?? 'green', sprites: b ? [...LEAF_ROUND, ...LEAF_DROOP] : [...LEAF_BROAD, ...LEAF_ROUND], size: b ? 0.17 : 0.2, bloom: o.bloom, floor: y + 0.4, aoLo: 0.2, density: b ? 0.8 : 1 });
   F.contact(x, z, R * 1.1, R * 1.1, y + 0.012);
-  F.stem(x, y, z, cy - y, 0.09 + R * 0.05);
+  F.stem(x, y, z, cy - y + (b ? R * 0.6 : 0), b ? 0.07 + R * 0.03 : 0.09 + R * 0.05, b);
+}
+
+export type PatchOpt = { r?: number; h?: number; pal?: Pal[]; n?: number; spikes?: Pal[]; blooms?: Pal[]; bloom?: number;
+  /** 0 to 1: how much of the dark core shows through (default 0.35; long grass less, so it lightens the lawn, not spots it) */
+  core?: number };
+/**
+ * Ground cover where a lawn grows long (2026-11-27, the infirmary's lawns): a loose drift of grass tufts and low leaf
+ * over a disc r across (m), a few tufts taller than the rest, with flowers through it if `blooms` (small faces) or
+ * `spikes` (lavender, lupins) are given. Low (h, about 0.3 m), so nobody is stopped by it.
+ */
+export function patch(F: Foliage, o: PatchOpt = {}) {
+  const r = F.r, R = o.r ?? 1.2, H = o.h ?? 0.3, pals = o.pal ?? ['green', 'gold'], n = o.n ?? Math.round(5 + R * R * 4);
+  const lobes: Lobe[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = r() * 6.283, d = Math.sqrt(r()) * R * 0.8, rr = 0.18 + r() * 0.2, hh = H * (0.45 + r() * 0.9) * (1 - 0.35 * d / R);   // packed, so a drift is one mass
+    lobes.push({ c: [Math.cos(a) * d, hh * 0.45, Math.sin(a) * d * 0.8], r: [rr, hh * 0.6, rr] });
+  }
+  fill(F, lobes, { pal: pals, sprites: [...LEAF_TUFT, ...LEAF_TUFT, ...LEAF_ROUND], size: 0.12, floor: 0.0, aoLo: o.core !== undefined ? 0.5 - o.core : 0.05, upright: true, sway: 1.4, core: o.core ?? 1 / 3,
+    bloom: o.blooms ? { pal: o.blooms, amount: o.bloom ?? 0.9, size: 0.075, drifts: Math.max(2, Math.round(n / 3)) } : undefined });
+  if (o.spikes) for (let i = 0; i < Math.round(n * 1.7); i++) {
+    const a = r() * 6.283, d = Math.sqrt(r()) * R * 0.85, hs = 0.2 + r() * 0.09, kind = r() < 0.5 ? SPIKE_SLIM : SPIKE_FULL;
+    F.card([Math.cos(a) * d, H * 0.7 + hs * (0.8 + r() * 0.5), Math.sin(a) * d * 0.8], [(r() - 0.5) * 0.8, 0.7, 0.6], hs, pick(r, kind), pick(r, o.spikes), 0.8,
+      { roll: (r() - 0.5) * 0.4, sway: 1.8, glow: 0.85, lift: 0.7, flip: r() < 0.5 });
+  }
+  F.contact(0, 0, R * 0.9, R * 0.75, 0.012);
+}
+
+export type FieldOpt = { w: number; d: number; crop?: 'wheat' | 'greens' | 'beans'; row?: number };
+/**
+ * A worked field (the infirmary's farmland, 2026-11-27), w along x and d along z (m): straight rows of one crop with
+ * bare earth between. Wheat stands knee high in gold; greens are low round heads; beans a taller leafy row with white
+ * flowers. Each row is a chain of overlapping masses, so it reads as a row, not a hedge.
+ */
+export function field(F: Foliage, o: FieldOpt) {
+  const r = F.r, crop = o.crop ?? 'wheat', gap = o.row ?? (crop === 'greens' ? 0.8 : 1.0), greens = crop === 'greens';
+  const H = crop === 'wheat' ? 0.7 : crop === 'beans' ? 0.85 : 0.3, pal: Pal[] = crop === 'wheat' ? ['straw', 'straw', 'gold'] : crop === 'beans' ? ['green', 'deep'] : ['green', 'sage'];
+  for (let z = -o.d / 2 + gap / 2; z <= o.d / 2 - gap / 3; z += gap) {
+    const lobes: Lobe[] = [], step = greens ? 0.5 : 1.1;
+    for (let x = -o.w / 2 + step / 2; x < o.w / 2; x += step * (0.85 + r() * 0.3)) {
+      const rr = greens ? 0.17 + r() * 0.05 : 0.2 + r() * 0.05, hh = H * (0.85 + r() * 0.3);
+      lobes.push({ c: [x, hh * (greens ? 0.45 : 0.5), z + (r() - 0.5) * 0.05], r: [greens ? rr : step * 0.7, hh * 0.55, rr] });
+    }
+    fill(F, lobes, { pal, sprites: crop === 'greens' ? [...LEAF_BROAD, ...LEAF_ROUND] : [...LEAF_TUFT, ...LEAF_TUFT], size: crop === 'greens' ? 0.11 : 0.13,
+      floor: 0.0, aoLo: 0.1, upright: crop !== 'greens', sway: crop === 'wheat' ? 1.6 : 0.8, density: crop === 'wheat' ? 0.8 : 1,
+      bloom: crop === 'beans' ? { pal: 'white', amount: 0.5, size: 0.07 } : undefined });
+    F.contact(0, z, o.w * 0.52, gap * 0.4, 0.012);
+  }
 }
 
 /** A plant as data (kit.json's "grow"): which recipe, and its options. */
-export type Recipe = ({ kind: 'bush' } & BushOpt) | ({ kind: 'bed' } & BedOpt) | ({ kind: 'cone' } & ConeOpt) | ({ kind: 'cascade' } & CascadeOpt) | ({ kind: 'tree' } & TreeOpt);
+export type Recipe = ({ kind: 'bush' } & BushOpt) | ({ kind: 'bed' } & BedOpt) | ({ kind: 'cone' } & ConeOpt) | ({ kind: 'cascade' } & CascadeOpt) | ({ kind: 'tree' } & TreeOpt)
+  | ({ kind: 'patch' } & PatchOpt) | ({ kind: 'field' } & FieldOpt);
 /** Grow a recipe with a seed: a group in metres, its foot at the origin (a cascade: the wall's top, +z out of its face). */
 export function grow(recipe: Recipe, seed: number): THREE.Group {
   const F = new Foliage(rng(seed));
   if (recipe.kind === 'bush') bush(F, recipe); else if (recipe.kind === 'bed') bed(F, recipe); else if (recipe.kind === 'cone') cone(F, recipe);
   else if (recipe.kind === 'cascade') cascade(F, recipe); else if (recipe.kind === 'tree') tree(F, recipe);
+  else if (recipe.kind === 'patch') patch(F, recipe); else if (recipe.kind === 'field') field(F, recipe);
   return F.build();
+}
+
+/** A soft dark patch on the ground, rx by rz (m), centred on the origin: the shade under a made (modelled) tree. */
+export function groundShade(rx: number, rz = rx): THREE.Mesh {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(rx * 2, rz * 2), (contactMat ??= contactMaterial()));
+  m.rotation.x = -Math.PI / 2; m.position.y = 0.012; m.renderOrder = 2;
+  return m;
 }

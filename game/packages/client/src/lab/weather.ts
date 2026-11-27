@@ -11,7 +11,7 @@
  */
 
 /** The defaults: the look as tuned. */
-export const WEATHER_DEFAULTS = { wind: 1, windSpeed: 1, sheen: 1, clouds: 1, cover: 0.5, dark: 1, size: 1, cloudSpeed: 1 };
+export const WEATHER_DEFAULTS = { wind: 1, windSpeed: 1, sheen: 1, clouds: 1, cover: 0.5, dark: 1, size: 1, cloudSpeed: 1, shadowBlur: 16 };
 export type WeatherKey = keyof typeof WEATHER_DEFAULTS;
 /** The uniforms (each {value}), shared by every material that reads the weather. */
 export const WEATHER = Object.fromEntries(Object.entries(WEATHER_DEFAULTS).map(([k, v]) => [k, { value: v }])) as Record<WeatherKey, { value: number }>;
@@ -38,6 +38,7 @@ const SLIDERS: { k: WeatherKey; label: string; max: number; step: number; help: 
   { k: 'dark', label: 'Cloud darkness', max: 3, step: 0.05, help: 'How much sun a cloud takes' },
   { k: 'size', label: 'Cloud size', max: 4, step: 0.05, help: 'How big each cloud is (1: about 11 m across)' },
   { k: 'cloudSpeed', label: 'Cloud speed', max: 30, step: 0.5, help: 'How fast clouds drift downwind' },
+  { k: 'shadowBlur', label: 'Grass shadow blur', max: 60, step: 1, help: 'How soft and ragged shadows are on the lawn (shadow-map texels, about 2 cm each; paving stays crisp)' },
 ];
 /** Exaggerated settings, to see each effect is there. */
 const SHOW: Partial<Record<WeatherKey, number>> = { wind: 4, windSpeed: 2, sheen: 6, clouds: 1, cover: 0.5, dark: 2.2, size: 1, cloudSpeed: 15 };

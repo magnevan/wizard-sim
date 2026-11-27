@@ -314,6 +314,10 @@ vec2 grBomb(vec2 p, float cell, float row0, float rows, float size, float dens, 
     float sc = size * (0.75 + 0.5 * lwH(c + seed + 4.4));
     vec2 d = (p - (c + 0.15 + 0.7 * h) * cell) / sc;
     float fl = h.x > 0.5 ? 1.0 : -1.0;
+    // the wind: the tuft leans downwind (+x on screen) with the gust at its foot, more toward its tips, and flutters a little
+    vec2 foot = (c + 0.15 + 0.7 * h) * cell;
+    float tip = max(0.1 - d.y * 0.72 - 0.1, 0.0);
+    d.x -= grWind * (0.22 * grGust(foot, grTime) + 0.03 * sin(grTime * 3.1 + h.y * 40.0)) * tip * tip;
     vec2 uv = vec2(0.5 + d.x * fl, 0.1 - d.y * 0.72);   // its foot at the cell's point, the blades rising over the ground behind it
     if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) continue;
     float row = row0 + floor(lwH(c + seed + 2.7) * rows), col = floor(lwH(c + seed + 6.3) * 4.0);
@@ -421,6 +425,46 @@ vec3 groundLawn(sampler2D t, float tile, vec2 p) {
 `;
 
 // ---------------------------------------------------------------------------------------------------------------
+// soft shadows on the lawn: a meadow breaks a shadow's edge up in its blades, so the sun's shadow on an upward lawn is
+// looked up over a wider disc (grShadowBlur texels) and that disc is nudged by a blade-scale noise in the world, so the
+// edge comes out soft and ragged. Paving and everything else keep the sun's own crisp shadow.
+// ---------------------------------------------------------------------------------------------------------------
+const SOFT_SHADOW_GLSL = `
+#if defined( SHADOWMAP_TYPE_PCF ) && NUM_DIR_LIGHT_SHADOWS > 0
+uniform float grShadowBlur;
+float grShadow(sampler2DShadow sm, vec2 size, float inten, float bias, float rad, vec4 sc) {
+  sc.xyz /= sc.w;
+  #ifdef USE_REVERSED_DEPTH_BUFFER
+  sc.z -= bias;
+  #else
+  sc.z += bias;
+  #endif
+  if (sc.x < 0.0 || sc.x > 1.0 || sc.y < 0.0 || sc.y > 1.0 || sc.z > 1.0) return 1.0;
+  float up = smoothstep(0.6, 0.85, normalize(vTpNrm).y);
+  vec2 tx = vec2(1.0) / size, r = max(rad, mix(rad, grShadowBlur, up)) * tx;
+  // the ragged edge: blade-scale wobble, about half the blur
+  vec2 q = vTpPos.xz;
+  sc.xy += (vec2(lwN(q * 3.3), lwN(q * 3.3 + 17.0)) - 0.5) * grShadowBlur * 0.9 * up * tx;
+  float phi = interleavedGradientNoise(gl_FragCoord.xy) * PI2, s = 0.0;
+  for (int i = 0; i < 16; i++) s += texture(sm, vec3(sc.xy + vogelDiskSample(i, 16, phi) * r, sc.z));
+  return mix(1.0, s / 16.0, inten);
+}
+#define GR_SHADOW grShadow
+#else
+#define GR_SHADOW getShadow
+#endif
+`;
+/** Give a lawn material (one with vTpPos, vTpNrm and GROUND_GLSL) the soft, ragged sun shadow. */
+export function softLawnShadow(sh: { fragmentShader: string; uniforms: Record<string, unknown> }) {
+  sh.uniforms.grShadowBlur = WEATHER.shadowBlur;
+  const dir = 'getShadow( directionalShadowMap[ i ]';
+  if (!THREE.ShaderChunk.lights_fragment_begin.includes(dir)) return;   // (three changed: keep the stock shadow)
+  sh.fragmentShader = sh.fragmentShader
+    .replace('#include <shadowmap_pars_fragment>', `#include <shadowmap_pars_fragment>\n${SOFT_SHADOW_GLSL}`)
+    .replace('#include <lights_fragment_begin>', THREE.ShaderChunk.lights_fragment_begin.replace(dir, 'GR_SHADOW( directionalShadowMap[ i ]'));
+}
+
+// ---------------------------------------------------------------------------------------------------------------
 // margin grass: raised painted fans where height reads (the advisor, 2026-11-27): the grass side of paving and walls, the
 // shoulders of worn paths, the foot of what stands on the lawn. One camera-facing card per fan, its foot on the ground,
 // coloured by the ground at its root and lit with the ground's up normal, so a fan reads as the lawn standing up at an
@@ -481,24 +525,37 @@ export function marginGrass(): THREE.Mesh | null {
   const F = FIELDS;
   if (!F || !GROUND_U.grTuftOn.value) return null;
   const roots: number[] = [], fans: number[] = [];
-  const step = 0.48;   // u: candidate spacing
+  const step = 0.4;   // u: candidate spacing
+  // a lawn cell beside q at about q's height (so grass can step over onto flat paving, not up a terrace's face)
+  const lawnBeside = (i: number, j: number, q: number) => {
+    for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const a = i + di, b = j + dj;
+      if (a < 0 || b < 0 || a >= F.nx || b >= F.ny) continue;
+      const k = b * F.nx + a;
+      if (F.lawn[k] && Math.abs(F.top[k] - F.top[q]) < 0.1) return true;
+    }
+    return false;
+  };
   for (let y = F.y0; y < F.y0 + F.ny * CELL; y += step) for (let x = F.x0; x < F.x0 + F.nx * CELL; x += step) {
     const jx = x + (hash(x, y) - 0.5) * step, jy = y + (hash(y + 3.1, x) - 0.5) * step;
     const i = Math.floor((jx - F.x0) / CELL), j = Math.floor((jy - F.y0) / CELL);
     if (i < 0 || j < 0 || i >= F.nx || j >= F.ny) continue;
     const q = j * F.nx + i;
-    if (!F.lawn[q] || F.R[q] > 0.35) continue;
-    const verge = F.dHard[q] > 0.15 && F.dHard[q] < 1.1;              // the grass side of paving and walls
+    // over the edge: the first strip of flat hard ground beside the lawn, so blades cross the line from both sides
+    const over = !F.lawn[q] && lawnBeside(i, j, q);
+    if ((!F.lawn[q] && !over) || F.R[q] > 0.35) continue;
+    const verge = over || (F.dHard[q] > 0.15 && F.dHard[q] < 1.1);   // the grass side of paving and walls
     const shoulder = F.dWear[q] > -0.1 && F.dWear[q] < 0.7;           // the outer edge of a worn path
-    const foot = F.B[q] > 0.12 && F.G[q] > 0.3;                       // round what stands on the lawn
+    const foot = F.B[q] > 0.05 && F.G[q] > 0.3;                       // round what stands on the lawn (a patch's ring just outside it)
     if (!verge && !shoulder && !foot) continue;
-    // broken into irregular runs with gaps
-    if (vnoise(jx * 0.55, jy * 0.55) < (foot ? 0.38 : 0.52)) continue;
-    if (hash(jx * 1.7, jy * 2.3) < 0.25) continue;
+    // broken into irregular runs with gaps (thinner over the edge)
+    if (vnoise(jx * 0.55, jy * 0.55) < (over ? 0.55 : foot ? 0.32 : 0.4)) continue;
+    if (hash(jx * 1.7, jy * 2.3) < 0.15) continue;
     const tall = Math.max(F.G[q], foot ? 0.6 : 0);
-    const w = 0.65 + 0.4 * hash(jx, jy + 9.0) + 0.3 * tall, h = 0.7 * (0.5 + 0.35 * hash(jx + 4.0, jy)) * (1 + 0.6 * tall);
+    const w = 0.65 + 0.4 * hash(jx, jy + 9.0) + 0.3 * tall;
+    const h = 0.7 * (0.5 + 0.35 * hash(jx + 4.0, jy)) * (1 + 0.6 * tall) * (verge && !over ? 1.25 : over ? 0.8 : 1);
     // sprite: short fans and clumps on verges, combed long clumps at the foot of things, sparse ones on a path's shoulder
-    const row = shoulder && !verge ? 3 : foot && tall > 0.5 && hash(jx, jy + 2.0) > 0.4 ? 2 : Math.floor(hash(jx + 7.0, jy) * 2);
+    const row = over ? 3 : shoulder && !verge ? 3 : foot && tall > 0.5 && hash(jx, jy + 2.0) > 0.4 ? 2 : Math.floor(hash(jx + 7.0, jy) * 2);
     const sp = row * 4 + Math.floor(hash(jx + 1.3, jy + 5.1) * 4);
     roots.push(jx, F.top[q] * UPM, jy);
     fans.push(w, h, hash(jx + 2.2, jy) > 0.5 ? sp : -sp - 0.0001);

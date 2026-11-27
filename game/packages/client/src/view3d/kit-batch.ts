@@ -136,6 +136,8 @@ function sheared(m: THREE.Matrix4): boolean {
 function eligible(m: THREE.Mesh): boolean {
   const mat = m.material;
   if (Array.isArray(mat) || (m as THREE.InstancedMesh).isInstancedMesh || (m as THREE.SkinnedMesh).isSkinnedMesh) return false;
+  // instanced geometry on a plain mesh (kit-ground.ts's margin grass): merging would keep one copy of its stand-in quad
+  if ((m.geometry as THREE.InstancedBufferGeometry).isInstancedBufferGeometry) return false;
   if (mat.transparent || m.customDepthMaterial || m.customDistanceMaterial || m.renderOrder !== 0) return false;
   if (own(m, 'onBeforeRender') || own(m, 'onAfterRender')) return false;
   const g = m.geometry;

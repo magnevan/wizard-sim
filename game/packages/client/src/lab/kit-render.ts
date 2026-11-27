@@ -19,7 +19,7 @@ import { cageOvergrowth, clearOvergrowth, coreGlow, overgrowthSlot, pathOvergrow
 import { smokeMesh, type SmokeSpec } from './kit-smoke';
 import { kerbRows, KERB_ROUND, KERB_W, type KerbSeg } from './kit-road';
 import { LAWN_VARY, STONE_MATS, STONE_PAINT, STONE_U, WEATHERED, stoneDecl, stoneFrag } from './kit-stones';
-import { buildGround, cloudify, GROUND_U, marginGrass, setGroundArt } from './kit-ground';
+import { buildGround, cloudify, GROUND_U, marginGrass, setGroundArt, softLawnShadow } from './kit-ground';
 import { advanceWeather, WIND_TIME } from './weather';
 
 export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string; ox?: number; oy?: number;
@@ -240,10 +240,11 @@ function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0
         diffuseColor *= tpC;
         ${stone >= 0 ? stoneFrag(stone) : ''}
 `);
+    if (vary) softLawnShadow(sh);   // the lawn breaks shadows' edges up (kit-ground.ts)
     // a laid stone's bevel, lit by the scene's own light
     if (stone >= 0) sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nif (stLaid > 0.5) normal = normalize((viewMatrix * vec4(stNrm, 0.0)).xyz);');
   };
-  m.customProgramCacheKey = () => `tp${tile}m${macro}s${stone}v${vary ? 1 : 0}`;
+  m.customProgramCacheKey = () => `tp${tile}m${macro}s${stone}v${vary ? 2 : 0}`;
   return decal ? decalable(m) : m;
 }
 /** An inlay's rim stone: the smooth stone, kept clear of the decal, so the rim reads as its own kerb round the picture. */

@@ -24,18 +24,6 @@
   ]
  },
  {
-  "kind": "curved-flight",
-  "what": "stairs 0 to 3.5 m in a shape the kit has no flight for (a sector or ring)",
-  "at": [
-   19.938771314806303,
-   24.702398241704618
-  ],
-  "at_c": [
-   45.0,
-   35.5
-  ]
- },
- {
   "kind": "building",
   "what": "the battery's boiler house: a plain wall box for now (needs its facade pieces)",
   "at": [

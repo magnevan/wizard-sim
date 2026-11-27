@@ -109,3 +109,11 @@ Plans E (the broad terrace), F (the crescent), G (the prow) and H (the critic's 
 - the farm much larger, its boundary out of sight (the fields run off the west edge);
 - lanterns on the road's far side, "so it doesn't obscure the characters walking";
 - more urgency: tents put up in a hurry, triage happening (tents at odd angles round the forecourt's edges, stretchers between them).
+
+### Notes on plan H in 3D (2026-11-27)
+
+"Looks mostly good." The user's notes, all taken:
+- **No broken wall:** "we can probably drop the broken path, that was an attempt to fix a weird layout before". The shore is one built stair down and back (plan H rev 3).
+- **Things happened fast:** "building materials for tents strewn on the lawn". Crates, barrels and rope placed now; tent poles, canvas, stakes, a stretcher and blankets wait for their own piece (a Codex sheet on the review page).
+- **Tents face the camera:** "angled so that we can see the people in it from the camera": every tent's open side faces the camera, a few degrees off each way.
+- **The purifier must not look like the well.** Three new Codex takes, none with a cage, crystal or dome.

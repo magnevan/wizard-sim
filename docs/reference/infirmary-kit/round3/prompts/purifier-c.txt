@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as purifier-c.png in the current directory. Reply with just the file name.
+
+The attached image shows the stylised 3D look of the academy's finished set pieces: smooth hand-painted textures, warm sandstone, deep blue with gold trim and the gold eight-pointed star emblem, polished brass, soft warm light.
+
+Draw a single game asset in that stylised 3D look, on a plain solid light grey background, seen from slightly above in a three-quarter view from its front corner so its front and one side show.
+
+It is a sea-water purifier in the form of a round sandstone settling tank and a tall brass pump: a wide low cylindrical tank of sandstone blocks, waist-high, with a flat stone lid of deep blue tiles and a gold eight-pointed star inlaid at its centre; beside it a square sandstone pump tower about twice the tank's height, its face carrying a carved stone Life rune panel in green and gold where a brass conduit enters, a big brass beam-pump lever arm and flywheel on its side. A stone intake channel with a brass grate runs from the tank's foot, and a brass pipe rises from the tower's top and bends away up a slope on brackets. Sturdy, mechanical, like a small Victorian waterworks. The whole piece is a little wider than it is tall. Standalone and perfectly centered on the plain grey background, the structure crisp, dry and still.

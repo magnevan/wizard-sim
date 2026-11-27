@@ -1,0 +1,9 @@
+Generate one image with your image generation tool, then save it as boiler-house-b.png in the current directory. Reply with just the file name.
+
+The first attached image shows the stylised 3D look of the academy's finished set pieces: smooth hand-painted textures, warm sandstone, deep blue with gold trim and the gold eight-pointed star emblem, polished brass, soft warm light.
+
+Draw a single game asset in that stylised 3D look, on a plain solid light grey background, seen from slightly above in a three-quarter view from its front corner so its front and one side show.
+
+The second attached image is the battery's smokestack, which stands beside this building. Match its materials: warm sandstone base, dark red-brown brick, a deep blue band with gold eight-pointed stars, brass fittings.
+
+It is the battery's boiler house: a rectangular brick engine house about one and a half times as long as it is wide, with a gently pitched deep blue roof and a raised clerestory lantern running along its ridge, its small windows framed in brass. Sandstone base course, sandstone arches over tall round-headed windows, dark red-brown brick walls, a deep blue band with gold eight-pointed stars round the top of the walls. On its gable end, a big pair of arched timber cart doors with brass hinges, closed, under a carved sandstone star medallion. Along its long side, a sandstone-walled fuel yard with two bunkers of black coal and a stack of split logs, a wheelbarrow beside them. On the opposite corner a short square brick flue stub with a brass flange, where it connects to a chimney that stands beside the building. Standalone and perfectly centered on the plain grey background, the structure crisp, dry and still.

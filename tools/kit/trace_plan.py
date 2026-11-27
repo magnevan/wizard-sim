@@ -35,13 +35,12 @@ FIXES = {
     'infirmary': [   # plan H rev 2 (the user's pick, 2026-11-26): its cove, its two shore climbs and the made pieces
         ('terrace', 't-sea', dict(name='the deep')), ('terrace', 't-stream', dict(name='the sea')),
         ('terrace', 'sand at 0 m', dict(name='the beach', mat='sand')),
-        ('terrace', 'stairs at 0 m', dict(name='the jetty', h=0.3, mat='deck', edge='parapet')),
+        ('new-terrace', dict(name='the jetty', h=0.3, mat='deck', edge='parapet')),
         ('paint', 'grass at 3.5 m', 0, 0, 88, 0),          # the lattice's first row fell outside the plan's fill
         # the cove: a beach round its back under the clifftop, the sea inside it and out through its mouth
         ('disc', 'the beach', 35.0, 40.0, 11.0), ('disc', 'the sea', 35.0, 40.0, 7.0), ('paint', 'the sea', 23, 41, 47, 50),
-        # the built stair down at the west shoulder; the broken wall's climb at the east (a flight until the rubble piece exists)
+        # the built stair down at the west shoulder (rev 3, the user 2026-11-27: the broken wall dropped; down and back)
         ('paint', 'the beach', 20, 34, 25, 36), ('flight', 'the west stair', [[19.5, 34.0], [19.5, 36.0]]),
-        ('paint', 'the beach', 45, 34, 50, 36), ('flight', 'the broken wall (a flight for now)', [[50.5, 34.0], [50.5, 36.0]]),
         ('paint', 'the beach', 42, 33, 44, 38), ('paint', 'plaza at 3.5 m', 45, 37, 48, 39), ('paint', 'plaza at 3.5 m', 21, 31, 27, 33), ('paint', 'plaza at 3.5 m', 45, 31, 49, 33),   # the plan's angled stairs' leftovers
         # the jetty out into the cove, the purifier's platform at its end
         ('paint', 'the jetty', 34, 33, 36, 38), ('disc', 'the jetty', 35.0, 39.5, 2.2),
@@ -52,12 +51,29 @@ FIXES = {
         ('object', dict(kind='setpiece', id='well', name='the well', piece='setpiece.infirmary-well', at=[35.0, 18.0], front='S')),
         ('object', dict(kind='setpiece', id='battery-stack', name="the battery's smokestack", piece='setpiece.battery-stack', at=[73.6, 29.5], front='S')),
         # the triage camp: six full-size tents round the forecourt's edges, the middle left open (the user: "negative space")
-        ('object', dict(kind='setpiece', id='tent-nw', name='a tent', piece='setpiece.infirmary-tent', at=[19.5, 13.5], front='E')),
-        ('object', dict(kind='setpiece', id='tent-sw', name='a tent', piece='setpiece.infirmary-tent', at=[19.5, 23.0], front='E')),
-        ('object', dict(kind='setpiece', id='tent-ne', name='a tent', piece='setpiece.infirmary-tent', at=[50.5, 13.5], front='W')),
-        ('object', dict(kind='setpiece', id='tent-se', name='a tent', piece='setpiece.infirmary-tent', at=[50.5, 23.0], front='W')),
-        ('object', dict(kind='setpiece', id='tent-n1', name='a tent', piece='setpiece.infirmary-tent', at=[26.0, 10.8], front='S')),
-        ('object', dict(kind='setpiece', id='tent-n2', name='a tent', piece='setpiece.infirmary-tent', at=[44.0, 10.8], front='S')),
+        # (the user, 2026-11-27: tents "angled so that we can see the people in it from the camera"): every tent's open side
+        # faces the camera, turned a little this way or that as if pitched in a hurry
+        ('object', dict(kind='setpiece', id='tent-n1', name='a tent', piece='setpiece.infirmary-tent', at=[25.0, 10.6], front='S', turn=6)),
+        ('object', dict(kind='setpiece', id='tent-n2', name='a tent', piece='setpiece.infirmary-tent', at=[45.0, 10.6], front='S', turn=-8)),
+        ('object', dict(kind='setpiece', id='tent-w1', name='a tent', piece='setpiece.infirmary-tent', at=[20.6, 17.4], front='S', turn=-12)),
+        ('object', dict(kind='setpiece', id='tent-w2', name='a tent', piece='setpiece.infirmary-tent', at=[21.0, 25.4], front='S', turn=9)),
+        ('object', dict(kind='setpiece', id='tent-e1', name='a tent', piece='setpiece.infirmary-tent', at=[49.4, 17.4], front='S', turn=11)),
+        ('object', dict(kind='setpiece', id='tent-e2', name='a tent', piece='setpiece.infirmary-tent', at=[49.0, 25.4], front='S', turn=-7)),
+        # the camp's leftovers on the lawn and paving round the tents: crates, barrels, rope (the user: "building materials for
+        # tents strewn on the lawn to give some sense that things happened fast"; tent poles and canvas wait for their own piece)
+        ('object', dict(kind='vignette', id='camp-crates-1', name='crates', piece='dress.crates', at=[15.2, 12.0], front='S', turn=14)),
+        ('object', dict(kind='vignette', id='camp-rope-1', name='a coil of rope', piece='dress.rope-coil', at=[30.2, 8.2], front='S')),
+        ('object', dict(kind='vignette', id='camp-barrel-1', name='a barrel', piece='dress.barrel', at=[15.4, 21.0], front='S')),
+        ('object', dict(kind='vignette', id='camp-crates-2', name='crates', piece='dress.crates', at=[52.8, 12.2], front='S', turn=-20)),
+        ('object', dict(kind='vignette', id='camp-rope-2', name='a coil of rope', piece='dress.rope-coil', at=[40.0, 8.4], front='S')),
+        ('object', dict(kind='vignette', id='camp-barrel-2', name='a barrel', piece='dress.barrel', at=[52.9, 21.4], front='S')),
+        ('object', dict(kind='vignette', id='camp-crates-3', name='crates', piece='dress.crates', at=[15.6, 28.6], front='S', turn=-9)),
+        ('object', dict(kind='vignette', id='camp-crates-4', name='crates', piece='dress.crates', at=[52.6, 28.0], front='S', turn=22)),
+        # lanterns on the road's far (north) side, so they never stand between the camera and the walkers (the user)
+        ('object', dict(kind='vignette', id='road-lamp-1', name='a lamp post', piece='dress.lamp', at=[58.0, 35.4], front='S')),
+        ('object', dict(kind='vignette', id='road-lamp-2', name='a lamp post', piece='dress.lamp', at=[66.0, 35.4], front='S')),
+        ('object', dict(kind='vignette', id='road-lamp-3', name='a lamp post', piece='dress.lamp', at=[74.0, 35.4], front='S')),
+        ('object', dict(kind='vignette', id='road-lamp-4', name='a lamp post', piece='dress.lamp', at=[82.0, 35.4], front='S')),
         # markers
         ('object', dict(kind='marker', id='start-0', at=[35, 5], name='seat 0 starts on the road in from the main gate')),
         ('object', dict(kind='marker', id='start-1', at=[34.2, 4.2], name="seat 1's start")),
@@ -342,7 +358,12 @@ def to_scene(P, scene_name):
     byname = {o['name']: o for o in objs}
     glyph_of = lambda nm: next(t['glyph'] for t in terraces if nm in (t['name'], t['id']))   # by name, or by id where names repeat
     for fx in FIXES.get(scene_name, []):
-        if fx[0] == 'terrace':      # ('terrace', name, changes): rename or re-level one of the trace's terraces
+        if fx[0] == 'new-terrace':  # ('new-terrace', fields): a terrace the plan has no cells of yet (painted by later fixes)
+            t = dict(fx[1]); t['glyph'] = next(g for g in GLYPHS if g not in {u['glyph'] for u in terraces})
+            t['id'] = 't-' + '-'.join(''.join(c if c.isalnum() else ' ' for c in t['name'].lower().replace('the ', '')).split())
+            terraces.append(t); Th[t['glyph']] = t['h']
+            H.clear(); H.update({g: k for k, g in enumerate(sorted((u['glyph'] for u in terraces), key=lambda g: (Th[g], g)))})
+        elif fx[0] == 'terrace':    # ('terrace', name, changes): rename or re-level one of the trace's terraces
             t = next(t for t in terraces if fx[1] in (t['name'], t['id'])); t.update(fx[2])
             if 'name' in fx[2]: t['id'] = 't-' + '-'.join(''.join(c if c.isalnum() else ' ' for c in fx[2]['name'].lower().replace('the ', '')).split())
         elif fx[0] == 'object':     # ('object', obj): a marker or any other object, as written

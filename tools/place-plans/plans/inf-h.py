@@ -3,7 +3,7 @@
 screens wide and one deep, where the arrival, the well (in its north third) and the busiest tents share one roomy
 level; the cove is pushed south to make room. The arms keep the overflow tents and lead out to the great greenhouse
 (west, by the farmland) and the road to the battery (from the east arm's tip). The purifier stands out in the cove on a
-jetty, so it shows from above; one built stair at the west shoulder, the broken wall's rubble at the east."""
+jetty, so it shows from above; one built stair at the west shoulder, down and back (rev 3: the broken wall dropped)."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
@@ -30,7 +30,6 @@ P.building(rect(-66, 14, -40, 42), 3.5, 10.0, 'the great greenhouse', doors=[(-3
 P.fill(rect(-70, -46, -38, 14), 3.5, 'grass'); P.note((-55, -16), 'the farmland, running on west out of sight')
 P.building(rect(-38, -40, -37, 14), 3.5, 1.2, roof='wall')
 P.stairs(orect(polar(C0, 22, 205), 12, 6, math.radians(205)), 3.5, 0.0, 'U')   # the built stair at the west shoulder
-P.stairs(orect(polar(C0, 22, 335), 12, 6, math.radians(335)), 0.0, 3.5, 'U'); P.note(polar(C0, 28, 335), 'the broken wall')
 P.fill(rect(-1.5, 19, 1.5, 30), 0.3, 'wood')                        # the jetty out into the cove
 P.fill(circle((0, 32), 4), 0.3, 'paving'); P.note((0, 32), 'the purifier, out on its jetty')
 P.fill(rect(34, 26, 106, 32), 3.5, 'road')                          # the road out, from the east arm's tip
@@ -40,7 +39,7 @@ P.building(circle((75, 12), 2.5), 3.5, 14.0, "the battery's smoke")
 P.landmark(W0, 'the well', 6, 3)
 P.gate((0, -40), 'from the main gate'); P.gate((80, 29), 'to the battery')
 P.journey([(0, -40), (0, -22), (0, -16)], 'In from the main gate: the forecourt, the camp, the well', 'Tents and the wounded all round the well, the cove beyond')
-P.journey([(0, -16), (-18, -4), polar(C0, 29, 200), (-39, 28), polar(C0, 18, 205), (0, 19), (0, 28), (0, 19), polar(C0, 18, 335), polar(C0, 29, 340), (8, 0)], 'The fix: out the west arm, down to the purifier, up the broken wall', 'Each line relights; the purifier on its jetty last')
+P.journey([(0, -16), (-18, -4), polar(C0, 29, 200), (-39, 28), polar(C0, 18, 205), (0, 19), (0, 28), (0, 19), polar(C0, 18, 205), polar(C0, 29, 200), (8, 0)], 'The fix: out the west arm, down to the purifier and back', 'Each line relights; the purifier on its jetty last')
 P.journey([(8, 0), (26, -6), (26, -18), (10, -20), (-10, -20), (-26, -18), (-26, -6), (-14, 4), (14, 4)], 'Round the camp, the devices lit', 'Heal the wounded tent by tent')
 P.journey([(10, 4), polar(C0, 29, 355), (40, 29), (80, 29)], 'Out to the battery', 'Lanterns along the road from the east arm')
 import numpy as np

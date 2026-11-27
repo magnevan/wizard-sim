@@ -11,7 +11,9 @@ game/content/generated/layouts/<scene>-stones.json:
 Each stone's outline is q drawn out by r with round corners (its cut drawn in by half a joint plus r, so the shader
 gets exact rounded corners as distance to q minus r); c, t, a, b are its middle, row direction and half-sizes, for its
 grain. Every floor of a laid material (tess_proof.LAY: road, cobble) is laid per height and per connected piece, so a
-step between two terraces is an edge the rows follow, and paving beside a road stops at the kerb's back.
+step between two terraces is an edge the rows follow, and paving beside a road stops at the kerb's back. A building
+(a set piece kit.json marks "paving": "edge") is an edge too: its floor is laid up to the base of its model
+(model_base.py), drawn in by INSET so the stones run a little under its walls, never under the whole building.
 The pattern's code is tess_proof.py's (rows from the edges, relaxed along a direction field, borders straightened).
 """
 import hashlib, json, os, sys, time
@@ -25,10 +27,27 @@ args = sys.argv[1:]
 scene = args[0] if args and not args[0].startswith('--') else 'court'
 sys.argv = [sys.argv[0], os.devnull]              # (tess_proof reads its options from the command line at import)
 import tess_proof as T                             # noqa: E402
+import model_base                                  # noqa: E402
 
 ROOT = os.path.join(HERE, '..', '..')
 OUT_DIR = os.path.join(ROOT, 'game', 'content', 'generated', 'layouts')
 LAID = ('road', 'cobble')
+KIT = os.path.join(HERE, 'kit.json')
+INSET = 0.12    # u: a building's outline drawn in by this, so the stones run on a little under its walls (no seam of tile)
+ON = 0.4        # m: a building stands on the laid floors within this of its own height
+
+
+def buildings(scene_data):
+    """[(h, outline)]: every building the paving is laid up to, its model's base where it stands, drawn in by INSET."""
+    kit = json.load(open(KIT, encoding='utf-8'))['pieces']
+    out = []
+    for it in scene_data.get('instances', []):
+        k = kit.get(str(it.get('p')))
+        if not k or k.get('paving') != 'edge': continue
+        g = model_base.placed(it, k)
+        if g is not None: g = g.buffer(-INSET, join_style=2)
+        if g is not None and not g.is_empty: out.append((it['h'] + it.get('up', 0), g))
+    return out
 
 
 def pieces(scene_data):
@@ -40,11 +59,14 @@ def pieces(scene_data):
     roads = [g for (m, _), gs in by.items() if m == 'road' for g in gs]
     # (as the proof: close the compiler's slivers where a curve meets the grid, so no row follows them)
     road = unary_union(roads).buffer(0.2, join_style=2).buffer(-0.2, join_style=2) if roads else None
+    standing = buildings(scene_data)
     out = []
     for (m, h), gs in sorted(by.items()):
         g = unary_union(gs)
         if m == 'road' and road is not None: g = g.buffer(0.2, join_style=2).buffer(-0.2, join_style=2)
         elif road is not None: g = g.difference(road.buffer(T.KERB_W, join_style=2))
+        under = [b for bh, b in standing if abs(bh - h) <= ON]
+        if under: g = g.difference(unary_union(under))
         for part in getattr(g, 'geoms', [g]):
             if part.geom_type == 'Polygon' and part.area > 1.0: out.append((m, h, part))
     return out
@@ -72,7 +94,7 @@ def stones(m, h, poly, seed):
 
 
 CODE = hashlib.md5(b''.join(open(os.path.join(HERE, f), 'rb').read().replace(b'\r\n', b'\n')   # (line endings differ between checkouts)
-                            for f in ('tess_proof.py', 'tess_layout.py'))).hexdigest()
+                            for f in ('tess_proof.py', 'tess_layout.py', 'model_base.py'))).hexdigest()
 
 
 def lay_scene(name, data, force=False, log=print):

@@ -59,6 +59,15 @@ ${HASH}
 ${NOISE}
 ${CELL_GLSL}
 uniform sampler2D uChar; uniform float uClock, uGy, uH;
+// the ignition at a ground point, blurred over a cell round it (read raw, each 0.5 u cell flashed as a square)
+float ignAt(vec2 xz) {
+  float k = 0.0;
+  for (int i = 0; i < 5; i++) {
+    vec2 o = i == 0 ? vec2(0.0) : vec2(i == 1 ? 0.6 : i == 2 ? -0.6 : 0.0, i == 3 ? 0.6 : i == 4 ? -0.6 : 0.0);
+    k += texture(uChar, (xz + o - uSurfDims.xy) / (uSurfDims.z * uSurfSize)).b;
+  }
+  return k / 5.0;
+}
 uniform vec3 uBoxC, uBoxH;
 `;
 
@@ -104,14 +113,15 @@ float lickBase(vec3 p, float y) {
   float id = cell.x * 157.0 + cell.y * 311.0;
   float period = 1.1 + 1.3 * rnd(id, 70.0), t = fract(uClock / period + rnd(id, 71.0)) / 0.45;
   if (t > 1.0 || rnd(id + floor(uClock / period + rnd(id, 71.0)) * 17.0, 72.0) > 0.7) return -1.0;
-  vec2 base = (cell + 0.5 + (vec2(rnd(id, 73.0), rnd(id, 74.0)) - 0.5) * 0.3) * ${LICK_CELL.toFixed(2)};
+  // kept well inside its cell (it is only ever drawn there: past the cell's edge it would be cut off straight)
+  vec2 base = (cell + 0.5 + (vec2(rnd(id, 73.0), rnd(id, 74.0)) - 0.5) * 0.1) * ${LICK_CELL.toFixed(2)};
   float bb = burnAt(base);
   if (bb < 0.35) return -1.0;
   // outward: down the slope of the burn; leaning further the nearer the edge
   vec2 g = vec2(burnAt(base + vec2(0.45, 0.0)) - burnAt(base - vec2(0.45, 0.0)), burnAt(base + vec2(0.0, 0.45)) - burnAt(base - vec2(0.0, 0.45)));
   float edge = clamp(length(g) * 1.4, 0.0, 1.0);
   vec2 out2 = length(g) > 1e-3 ? -normalize(g) : vec2(cos(id), sin(id));
-  float H = (1.4 + 1.0 * rnd(id, 75.0)) * bb, lean = 0.12 + 0.55 * edge;
+  float H = (1.4 + 1.0 * rnd(id, 75.0)) * bb, lean = 0.1 + 0.3 * edge;
   // up fast, then the foot lifts off and it thins away
   float top = H * min(1.0, t / 0.3), foot = H * smoothstep(0.35, 1.0, t) * 0.9;
   if (y < foot - 0.2 || y > top + 0.2) return -1.0;
@@ -122,6 +132,8 @@ float lickBase(vec3 p, float y) {
   // narrowing to a point at its tip
   float rad = 0.22 * (1.0 - 0.8 * k) * (1.0 - 0.4 * t);
   float s = 1.0 - length(p.xz - c) / rad;
+  // falling off steeply outside its radius, so the noise can't swell it past its cell
+  if (s < 0.0) s *= 4.0;
   s -= smoothstep(top - 0.3, top + 0.1, y) + (1.0 - smoothstep(foot - 0.2, foot + 0.2, y)) * step(0.01, foot);
   // light enough that the noise tears it
   return s * 0.95 - 0.9 * smoothstep(0.7, 1.0, t);
@@ -133,21 +145,25 @@ vec2 gas(vec3 p) {
   if (burn < 0.02 && lick < -0.5) return vec2(0.0, 1.0);
   vec2 guv = (p.xz - uSurfDims.xy) / (uSurfDims.z * uSurfSize);
   float heatRunes = texture(uSurf, guv).b;
+  // ignition (the user, take 2: "more like a flash of ignition across the whole thing"): as a cell lights, its gas
+  // flares up tall and hot all at once, then settles into the patch's slow burn
+  // (broken by noise, so a cell lighting later as the fire spreads doesn't flare in the grid's square)
+  float ig = ignAt(p.xz), ign = sin(3.14159 * clamp(1.0 - ig, 0.0, 1.0)) * step(0.004, ig) * smoothstep(0.25, 0.75, fbm3(vec3(p.xz * 2.2, 11.0)));
   // clusters where the flames gather, drifting slowly; between them only low licks
   float cl = smoothstep(0.45, 0.75, vnoise3(vec3(p.xz * 0.95, uClock * 0.15 + uSeed * 0.01)));
-  float tall = max(uH * burn * mix(0.3, 1.0, cl) * (0.85 + 0.3 * heatRunes), 0.05);
+  float tall = max(uH * burn * mix(0.3, 1.0, cl) * (0.85 + 0.3 * heatRunes) * (1.0 + 1.3 * ign), 0.05);
   if (y > tall + 0.35 && lick < -0.5) return vec2(0.0, 1.0);
   // tongues: noise climbing through the gas, bent by a slower noise
   vec3 q = vec3(p.xz * 2.1, y * 1.25 - uClock * 2.3);
   q.xy += (vec2(vnoise3(q * 0.45 + 3.1), vnoise3(q * 0.45 + 7.7)) - 0.5) * 1.0;
   float n = fbm3(q);
   // thick in the clusters, thin between them, so the charred bed and its glowing cracks show through
-  float body = burn > 0.02 ? (1.0 - y / tall) * burn * mix(0.3, 1.25, cl) - 0.82 + 0.3 * cl : -1.0;
+  float body = burn > 0.02 ? (1.0 - y / tall) * burn * mix(0.3, 1.25, cl) - 0.82 + 0.3 * cl + 0.45 * ign : -1.0;
   float d = max(body, lick) + (n - 0.5) * 1.7;
   if (d <= 0.0) return vec2(0.0, 1.0);
   float heat = 1.0 - clamp(d * 1.5, 0.0, 1.0) + (lick > body ? 0.12 + 0.45 * clamp(y / 1.6, 0.0, 1.0) : 0.38 * clamp(y / tall, 0.0, 1.0));
   // a lick stays orange to red (its dense core would otherwise read as a pale pill)
-  if (lick > body) heat = max(heat, 0.3);
+  if (lick > body) heat = max(heat, 0.4);
   return vec2(d, heat);
 }
 void main() {
@@ -216,6 +232,14 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
 const BED = /* glsl */ `
 ${CELL_GLSL}
 uniform sampler2D uChar, uCracks; uniform float uClock;
+float ignAt(vec2 xz) {
+  float k = 0.0;
+  for (int i = 0; i < 5; i++) {
+    vec2 o = i == 0 ? vec2(0.0) : vec2(i == 1 ? 0.6 : i == 2 ? -0.6 : 0.0, i == 3 ? 0.6 : i == 4 ? -0.6 : 0.0);
+    k += texture(uChar, (xz + o - uSurfDims.xy) / (uSurfDims.z * uSurfSize)).b;
+  }
+  return k / 5.0;
+}
 vec4 decal(vec3 wp) {
   vec2 guv = (wp.xz - uSurfDims.xy) / (uSurfDims.z * uSurfSize);
   vec2 ch = texture(uChar, guv).rg;
@@ -234,13 +258,23 @@ vec4 decal(vec3 wp) {
   // a dull red underglow beneath the flame clusters (the gas's own cluster noise, same seed), heat moving through the
   // cracks in slow waves, and patches of embers glowing up and dimming
   float cl = smoothstep(0.45, 0.75, vnoise3(vec3(wp.xz * 0.95, uClock * 0.15 + uSeed * 0.01)));
-  float wave = 0.5 + 0.5 * sin(dot(wp.xz, vec2(0.83, 0.56)) * 1.4 - uClock * 1.7 + n * 5.0);
+  // heat running through the cracks: two crossing trains of waves, sharpened so the bright bands are narrow and travel
+  float w1 = 0.5 + 0.5 * sin(dot(wp.xz, vec2(0.83, 0.56)) * 1.6 - uClock * 2.6 + n * 5.0);
+  float w2 = 0.5 + 0.5 * sin(dot(wp.xz, vec2(-0.47, 0.88)) * 1.1 - uClock * 1.9 + n * 3.0);
+  float wave = pow(max(w1, w2), 4.0);
   // molten pockets: rare pools of glow that swell and fade, with a speckle of embers round them
-  float pocket = smoothstep(0.68, 0.86, vnoise3(vec3(wp.xz * 1.6, uClock * 0.35 + 4.0)));
-  float embers = pocket * (0.6 + 0.4 * vnoise3(vec3(wp.xz * 9.0, uClock * 1.3)));
-  float glow = (crack * (0.9 + 1.2 * wave) + 0.04) * flick * bed;
+  // (layered and bent noise: one octave of value noise cut sharply shows its square lattice)
+  vec2 pw = wp.xz * 1.5 + (vec2(vnoise3(vec3(wp.xz * 0.7, 2.0)), vnoise3(vec3(wp.xz * 0.7, 6.0))) - 0.5) * 1.6;
+  float pocket = smoothstep(0.56, 0.74, fbm3(vec3(pw, uClock * 0.7 + 4.0)));
+  float embers = pocket * (0.55 + 0.45 * vnoise3(vec3(wp.xz * 9.0, uClock * 2.0)));
+  // embers twinkling all over the char: fine points flaring up and going dark
+  float twinkle = smoothstep(0.78, 0.95, vnoise3(vec3(wp.xz * 14.0, uClock * 3.0))) * smoothstep(0.4, 0.7, vnoise3(vec3(wp.xz * 2.2, uClock * 0.4 + 9.0)));
+  float glow = (crack * (0.35 + 2.6 * wave) + 0.04) * flick * bed;
   vec3 charC = cr * 0.06 + vec3(0.008, 0.006, 0.005);
-  vec3 glowC = vec3(1.0, 0.38, 0.07) * glow * 1.6 + vec3(0.55, 0.09, 0.02) * cl * bed * 0.9 + vec3(1.8, 0.5, 0.06) * embers * bed * 1.8;
+  vec3 glowC = vec3(1.0, 0.38, 0.07) * glow * 1.6 + vec3(0.55, 0.09, 0.02) * cl * bed * 0.9 + vec3(1.5, 0.3, 0.03) * embers * bed * 1.6 + vec3(2.4, 0.8, 0.1) * twinkle * bed * 1.5;
+  // the ignition's flash over everything that just lit
+  float ign = ignAt(wp.xz) * smoothstep(0.25, 0.75, fbm3(vec3(wp.xz * 2.2, 11.0)));
+  glowC += vec3(2.0, 0.65, 0.08) * ign * ign * (0.7 + 0.3 * n);
   // smoky toward the rim: the char's dark thins out into a soot haze rather than ending
   float a = rim * mix(0.55, 0.96, smoothstep(0.35, 0.9, m));
   return vec4(charC * a + glowC, a);
@@ -263,6 +297,8 @@ export class FireFloor {
   private out = new Map<number, number>();
   /** The char texture is all zero (nothing to upload until a cell lights). */
   private blank = false;
+  /** Seconds the most recently lit cell has burned (Infinity when none). */
+  private youngest = Infinity;
   /** The sim time of the last frame (-Infinity before the first). */
   private lastT = -Infinity;
 
@@ -308,6 +344,11 @@ export class FireFloor {
       const key = Math.floor(x / 3) * 4096 + Math.floor(z / 3), b = bins.get(key) ?? [0, 0, 0, 0, 0];
       b[0] += x; b[1] += z; b[2] += L[i * 4 + 3]; b[3] += L[i * 4 + 1]; b[4]++; bins.set(key, b);
     }
+    // the ignition's flash of light, while the newest cells are still flaring
+    if (this.youngest < GROW && box) {
+      const cx = (box.x0 + box.x1) / 2, cz = (box.z0 + box.z1) / 2;
+      lights.add(cx, g.heightAt(cx, cz) + 1.2, cz, 0xffc070, 9 * (1 - this.youngest / GROW), Math.max(box.x1 - box.x0, box.z1 - box.z0) / 2 + 3);
+    }
     for (const b of [...bins.values()].sort((p, q) => q[4] - p[4]).slice(0, 4)) {
       const k = b[4], flick = 0.85 + 0.15 * Math.sin(t * 13 + b[0]) * Math.sin(t * 5.1 + b[1]);
       lights.add(b[0] / k, b[2] / k + 1.0, b[1] / k, 0xff8030, Math.min(5, 0.08 * k) * (b[3] / k) * flick, 6);
@@ -332,6 +373,7 @@ export class FireFloor {
     const watching = t >= this.lastT && t - this.lastT <= 0.25;
     this.lastT = t;
     const px = this.char.image.data as Uint8Array, now = new Set<number>();
+    this.youngest = Infinity;
     for (let i = 0; i < g.count; i++) {
       const c = L[i * 4];
       now.add(c);
@@ -339,18 +381,21 @@ export class FireFloor {
       if (t0 === undefined || t0 > t) { t0 = watching ? t : -1e9; this.lit.set(c, t0); }
       this.out.delete(c);
       A[i * 4] = t - t0;
+      this.youngest = Math.min(this.youngest, t - t0);
     }
     for (const [c, t0] of this.lit) if (!now.has(c)) { this.lit.delete(c); if (t0 <= t) this.out.set(c, t); }
     if (!this.lit.size && !this.out.size && this.blank) return null;
     this.blank = !this.lit.size && !this.out.size;
     px.fill(0);
     let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
-    const mark = (c: number, grow: number, char: number) => {
-      px[c * 4] = Math.round(Math.min(1, grow) * 255); px[c * 4 + 1] = Math.round(char * 255);
+    // b: the ignition, 1 as a cell lights, gone after GROW (its own channel: read from r, the filtered grid's edges
+    // looked freshly lit and flashed)
+    const mark = (c: number, grow: number, char: number, ign = 0) => {
+      px[c * 4] = Math.round(Math.min(1, grow) * 255); px[c * 4 + 1] = Math.round(char * 255); px[c * 4 + 2] = Math.round(Math.max(0, Math.min(1, ign)) * 255);
       const x = g.dims.x + ((c % gw) + 0.5) * g.dims.z, z = g.dims.y + (Math.floor(c / gw) + 0.5) * g.dims.z;
       x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z);
     };
-    for (const [c, t0] of this.lit) mark(c, (t - t0) / GROW, Math.min(1, 0.35 + (t - t0) / GROW));
+    for (const [c, t0] of this.lit) mark(c, (t - t0) / GROW, Math.min(1, 0.35 + (t - t0) / GROW), 1 - (t - t0) / GROW);
     for (const [c, t1] of this.out) {
       const k = (t - t1) / CHAR_LIFE;
       if (k >= 1 || k < 0) { this.out.delete(c); continue; }

@@ -26,7 +26,7 @@
  * Stateless in the kit's sense: every frame is a function of the clock, the event and the kept path.
  */
 import * as THREE from 'three';
-import { EL, MAX_SEATS, specOf, type SpellSpec, type World } from '@wizard-sim/sim';
+import { EL, MAX_SEATS, type SpellSpec, type World } from '@wizard-sim/sim';
 import { GroundDecal } from './decal';
 import { FIRE_TEX, SHEET_GLSL } from './fire-sheets';
 import type { SpellLights } from './lights';
@@ -41,7 +41,7 @@ const TAU = Math.PI * 2;
 export const isFireNova = (s: SpellSpec | null | undefined): boolean =>
   !!s && s.shape === 'nova' && (s.look || s.form) === EL.fire && !s.heal && !s.scald && !s.freeze;
 
-/** Is this spell the Fire patch (a Place)? Its landing splash is drawn here (the ring's opening burst, no wave). */
+/** Is this spell the Fire patch (a Place)? fire-floor.ts draws it, ignition included; the stand-ins skip its burst. */
 export const isFirePatch = (s: SpellSpec | null | undefined): boolean =>
   !!s && s.shape === 'patch' && (s.look || s.form) === EL.fire && !s.heal && !s.scald && !s.freeze;
 
@@ -567,12 +567,6 @@ export class FireWaves {
       if (this.bursts.some((b) => b.rec.tick === tick && b.rec.who === e.who)) continue;
       const face = Math.atan2((e.y2 ?? e.y) - e.y, (e.x2 ?? e.x) - e.x);
       this.bursts.push({ rec: { tick, who: e.who, x: e.x, y: e.y, r: e.amount ?? 2.5, seed: (tick * 37 + e.who * 11) % 9973, path: [] }, face, half: (e.half ?? 0.17) * TAU, ring: false });
-    }
-    // a Fire patch landing: its splash (the burst event a Place gives, at the patch's middle, its radius)
-    for (const e of w.events) {
-      if (e.kind !== 'burst' || e.who < 0 || e.who >= MAX_SEATS || !w.seats.active[e.who] || !isFirePatch(specOf(w, e.who))) continue;
-      if (this.bursts.some((b) => b.rec.tick === tick && b.rec.who === e.who && b.splash)) continue;
-      this.bursts.push({ rec: { tick, who: e.who, x: e.x, y: e.y, r: e.amount ?? 2, seed: (tick * 41 + e.who * 13) % 9973, path: [] }, face: 0, half: Math.PI, ring: false, splash: true });
     }
     this.bursts = this.bursts.filter((b) => (tick - b.rec.tick) / 60 < lifeOf() + 0.1);
   }

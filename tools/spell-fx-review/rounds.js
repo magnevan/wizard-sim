@@ -477,4 +477,24 @@ window.ROUNDS = [
     ],
     general: 'Anything else about the patch',
   },
+  {
+    id: 'fire-10',
+    group: 'Fire',
+    topic: 'Patch',
+    tab: '3 · ignition',
+    el: 'fire',
+    date: '2026-11-27',
+    title: 'Fire patch, take 3: ignition, and a floor that moves',
+    lead: 'Your notes on take 2: the landing looked too much like the nova (“maybe more like a flash of ignition across the whole thing”); “the floor effect feels too static still, I don’t see a change”; the spits are good (“pockets of gas escaping from magma”).',
+    items: [
+      {
+        id: 'patch',
+        title: 'Fire patch',
+        text: 'Ignition: the burst from the middle is gone; instead every cell flares up tall and hot the moment it lights, the whole floor flashes bright with it and a light pops, then it settles into the slow burn (and a cell lighting later as the fire spreads flares the same way, broken up so it never shows the grid). The floor: take 2’s changes were too faint to see. Now bright bands of heat travel through the cracks in two crossing trains of waves, molten pockets swell and fade (warped, layered noise: a first try cut one octave of value noise sharply and showed pale squares), and fine embers twinkle all over the char. The spits as they were, kept inside their cells. Two runes, five runes, and at play distance.',
+        vid: ['p3-patch-14.mp4', 'p3-patch5-14.mp4', 'p3-patch-30.mp4'],
+        ask: 'Better?',
+      },
+    ],
+    general: 'Anything else about the patch',
+  },
 ];

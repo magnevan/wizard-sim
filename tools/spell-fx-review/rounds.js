@@ -571,4 +571,24 @@ window.ROUNDS = [
     ],
     general: 'Anything else about the patch',
   },
+  {
+    id: 'fire-14',
+    group: 'Fire',
+    topic: 'Burning',
+    tab: '1 · gas',
+    el: 'fire',
+    date: '2026-11-27',
+    title: 'Burning on bodies, take 1: the same burning gas',
+    lead: 'The patch is closed (you, on take 6: “Looks good”). Next in the order: a body on fire. It was still the pixel game’s port, teardrop sprites re-rolled 14 times a second, which read as sprites beside the gas wave and patch.',
+    items: [
+      {
+        id: 'burning',
+        title: 'Burning bodies',
+        text: 'Now each burning body has the patch’s burning gas clinging to it: a ray-marched sheath of flame round the body (one draw for every burning body), its tongues climbing fast and each way round the body flickering to its own height, so the outline is a crown of licks reaching past the head; orange at the base, red at the tips (thin gas fades out rather than going brown, which made a muddy veil). The model hides the flames behind it, so they wrap the side you see. The embers and the orange light on the body stay. The caster’s own Burn uses it too. Clips: a crowd kept burning (a new lab option, ?burn=1), the flamethrower setting goblins alight, and the patch at the game’s distance.',
+        vid: ['b1-burn-10.mp4', 'b1-spray-9.mp4', 'b1-patch-26.mp4'],
+        ask: 'Does it read as a body on fire?',
+      },
+    ],
+    general: 'Anything else about burning',
+  },
 ];

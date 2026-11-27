@@ -3,8 +3,9 @@
  * in art/kit.ts burningFx, chilled, iceGlints, shockSparks, drips). The study (docs/explorations/2026-11-25-spell-
  * effects-study.md) found half of each pixel spell's effect is on the bodies it reaches; the models showed only a tint.
  *
- * - Burning: flame licks hugging the body's camera side, their height re-rolled 14 times a second, and embers peeling
- *   off and rising; an orange light on the body.
+ * - Burning: the burning gas of the Fire wave and patch clinging to the body (fx/body-burn.ts; the pixel port's licks,
+ *   teardrop sprites re-rolled 14 times a second, read as sprites beside it), and embers peeling off and rising; an
+ *   orange light on the body.
  * - Chilled: white glints twinkling on the body (more as the chill builds) and cold breath sinking off the head.
  * - Frozen: slower, bigger glints on the ice; a pale light.
  * - Stunned: short sparks re-rolled 20 times a second, skipping every third frame.
@@ -17,6 +18,7 @@
 import * as THREE from 'three';
 import { type World } from '@wizard-sim/sim';
 import { ParticleBatch } from './particles';
+import { BodyBurn } from './body-burn';
 import { type SpellLights } from './lights';
 import { bodyHeight } from '../hud-marks';
 
@@ -32,40 +34,6 @@ vec3 toCam(vec3 at) { vec2 d = cameraPosition.xz - at.xz; float l = length(d); r
 // a point on the body's surface: angle a round from the camera side, at height hy
 vec3 onBody(int i, float a, float hy, float out_) { vec4 P = uP[i]; vec3 c = toCam(P.xyz), s = vec3(-c.z, 0.0, c.x); return P.xyz + vec3(0.0, hy, 0.0) + (c * cos(a) + s * sin(a)) * uS2[i].y * out_; }
 `;
-
-/** Licks: upright flame tongues standing on the body's camera side (kit.ts tongue, three a goblin, four a brute). */
-const LICKS = (per: number) => /* glsl */ `
-${COMMON}
-Particle emitParticle(float slot, float back) {
-  float b = floor(slot / ${per}.0), j = slot - b * ${per}.0;
-  if (b >= uN) return P0();
-  int i = int(b); vec4 P = uP[i]; float k = uS[i].x, seed = uS2[i].z;
-  if (k < 0.05) return P0();
-  float id = j + seed * 7.0;
-  float a = (j / ${per - 1}.0 - 0.5) * 2.2 + (rnd(id, 1.0) - 0.5) * 0.5;
-  // the height re-rolled on whole frames, 14 a second, out of step from tongue to tongue (the pixel flicker)
-  float f = floor(uClock * 14.0 + rnd(id, 3.0) * 5.0), fl = 0.6 + 0.6 * rnd(f * 13.0 + id, 4.0);
-  Particle p = P0(); p.alive = true;
-  // on the shoulders and upper body, just outside the silhouette: the camera looks down on them
-  p.pos = onBody(i, a, P.w * (0.3 + 0.5 * rnd(id, 2.0)), 1.3);
-  p.size = P.w * (0.11 + 0.05 * rnd(id, 5.0)) * (0.55 + 0.45 * k) * fl;
-  p.aspect = 0.42; p.rot = sin(uClock * 7.0 + j * 1.9) * 0.3;
-  p.col = vec4(k, rnd(f + id * 17.0, 6.0), 0.0, 1.0);
-  return p;
-}`;
-
-const LOOK_LICK = /* glsl */ `
-uniform float uClock;
-vec4 look(vec2 uv, vec4 col, vec4 data) {
-  float y = uv.y;
-  // a teardrop: round at the root, narrowing to a tip, its edge eaten by noise rising through it
-  float w = pow(max(1.0 - y, 0.0), 0.65) * smoothstep(-0.05, 0.22, y);
-  float n = vnoise3(vec3(uv.x * 2.2, y * 3.0 - uClock * 7.0, col.y * 11.0));
-  float edge = w * (0.7 + 0.45 * n);
-  if (abs(uv.x) > edge) return vec4(0.0);
-  float heat = clamp(y * 0.85 + abs(uv.x) / max(edge, 1e-3) * 0.3, 0.0, 1.0);
-  return vec4(fireRamp(0.12 + heat * 0.78), 1.0) * 0.95;
-}`;
 
 /** Embers: a stream per burning body, peeling off its sides and rising. */
 const EMBERS = (per: number) => /* glsl */ `
@@ -212,6 +180,7 @@ export class BodyStatuses {
   private readonly S2 = Array.from({ length: MAX }, () => new THREE.Vector4());
   private readonly U = { uP: { value: this.P }, uS: { value: this.S }, uS2: { value: this.S2 }, uClock: { value: 0 }, uN: { value: 0 } };
   private readonly batches: { b: ParticleBatch; per: number }[] = [];
+  private readonly burn: BodyBurn;
   /** Bodies drawn last frame (the lab's numbers). */
   shown = 0;
 
@@ -222,7 +191,8 @@ export class BodyStatuses {
       this.batches.push({ b, per }); this.group.add(b.mesh);
     };
     add(4, MIST(4), LOOK_MIST, { order: 1 });
-    add(6, LICKS(6), LOOK_LICK, { upright: true, order: 2, soft: 0.12 });
+    this.burn = new BodyBurn(MAX, this.U);
+    this.group.add(this.burn.mesh);
     add(8, EMBERS(8), LOOK_EMBER, { order: 3 });
     add(3, DRIPS(3), LOOK_DRIP, { order: 3 });
     add(6, GLINTS(6), LOOK_GLINT, { order: 4, soft: 0.05 });
@@ -251,7 +221,8 @@ export class BodyStatuses {
     this.U.uN.value = n; this.U.uClock.value = t;
     this.group.visible = n > 0;
     for (const { b: batch, per } of this.batches) batch.count = n * per;
+    this.burn.count = n;
   }
 
-  dispose(): void { for (const { b } of this.batches) b.dispose(); }
+  dispose(): void { for (const { b } of this.batches) b.dispose(); this.burn.dispose(); }
 }

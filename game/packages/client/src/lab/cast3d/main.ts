@@ -20,6 +20,8 @@
  *   &standins=all            Fire's spray and floor, the Arcane beam and the Frost ring as stand-ins too (else fire.ts, arcane.ts, cold.ts)
  *   &impact=b                the Arcane beam's impact variant: a (restrained, the default) or b (the fuller burst)
  *   &undying=1               the goblins take hits but never die (a held beam stays on its target)
+ *   &burn=1                  every goblin kept burning (and alive), whatever is cast: to judge Burning on bodies
+ *   &look=x,y                the camera centred on that point (sim u; default between the caster and the goblins)
  *   &sweep=1                 the aim swings either way of its target after the cast (a beam following a turning caster)
  *   &move=1                  the caster walks east from 0.2 s before the spell goes off (a nova follows its caster)
  *   &clip=1                  for film: the world is run to t (default -0.1) and drawn; window.__seek(t) then steps it on
@@ -60,7 +62,7 @@ const VIEW_H = Number(q.get('view') ?? 16);
 const SCENE = q.get('scene') ?? 'crowd';
 const ALL_FIRE = q.get('standins') === 'all';
 const IMPACT = q.get('impact') === 'b' ? 'b' : 'a';
-const SWEEP = q.get('sweep') === '1', UNDYING = q.get('undying') === '1';
+const SWEEP = q.get('sweep') === '1', UNDYING = q.get('undying') === '1', BURN = q.get('burn') === '1';
 /** ?sweep=1: the aim swings this far either way (rad), this fast (rad/s of the sine), from the cast on. */
 const SWEEP_AMP = 0.55, SWEEP_RATE = 2.4;
 const MOVE = q.get('move') === '1';
@@ -180,7 +182,8 @@ let sweepFrom = 0;
 /** One sim step of the lab's run (?undying: the goblins healed whole after it; ?move: seat 0 walks from `walkFrom`). */
 function stepLab(w: World, k: number, d: Demo, walkFrom = Infinity): void {
   step(w, inputs(w, k, d, walkFrom));
-  if (UNDYING) for (let i = MAX_SEATS; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy) w.bodies.hp[i] = w.bodies.maxHp[i];
+  if (UNDYING || BURN) for (let i = MAX_SEATS; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy) w.bodies.hp[i] = w.bodies.maxHp[i];
+  if (BURN) for (let i = MAX_SEATS; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy) { w.bodies.burn[i] = Math.max(w.bodies.burn[i], 60); w.bodies.burnPool[i] = Math.max(w.bodies.burnPool[i], 40); }
 }
 /** Every seat's input at tick k: seat 0's demo, swung by ?sweep after the cast, walking east by ?move from `walkFrom`. */
 const inputs = (w: World, k: number, d: Demo, walkFrom = Infinity) => Array.from({ length: MAX_SEATS }, (_, p) => {
@@ -258,7 +261,8 @@ function drawHits(run: Run): void {
 
 // ---- the camera: the game camera ---------------------------------------------------------------------------------------
 const cam = new THREE.PerspectiveCamera(FOV, W / H, 0.5, 500);
-const look = new THREE.Vector3(-0.5, 0.8, 0.3);
+const LOOK = (q.get('look') ?? '').split(',').map(Number);
+const look = LOOK.length === 2 && LOOK.every(Number.isFinite) ? new THREE.Vector3(LOOK[0], 0.8, LOOK[1]) : new THREE.Vector3(-0.5, 0.8, 0.3);
 function place(aspect: number): void {
   cam.aspect = aspect; cam.updateProjectionMatrix();
   const dist = (VIEW_H * Math.sin(PITCH)) / (2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2)));

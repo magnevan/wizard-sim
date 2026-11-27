@@ -69,6 +69,12 @@ dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; max-he
 dialog::backdrop { background: rgb(0 0 0 / .8); }
 dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6px; }
 @media (prefers-reduced-motion: no-preference) { .choices button { transition: background .15s, border-color .15s; } }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--line); }
+.tabs a { font: 500 14px var(--body); padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg); text-decoration: none; }
+.tabs a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.tabs a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tab { display: grid; gap: 56px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
 </style>
 
 <div class="wrap">
@@ -76,22 +82,56 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
 <header style="display:grid;gap:14px">
   <div class="eyebrow">The opening · stop 1 · Life</div>
   <h1>The Infirmary on the Kit</h1>
-  <p class="lede">The infirmary's layout, the plan you picked on 22 November, rebuilt in 3D from the kit's pieces so it can be walked in the 3D game. Every piece is now its real model: the well, the tents, the greenhouse, the stills, the smokestack and the bath's dressing. The pipes are drawn in code; the vines, flowers and smoke are still to come. This page shows where it stands, so you can review it without loading the game.</p>
+  <p class="lede">Plan H, your pick, built in 3D from the kit's pieces and walkable in the game. The first tab is what's left and what's waiting on you; the build log has each round newest first; the older plan D work is kept on its own tab.</p>
 </header>
 
+<nav class="tabs" aria-label="Sections"><a href="#todo" data-tab="todo">To do</a><a href="#build" data-tab="build">Build log</a><a href="#plans" data-tab="plans">Plans</a><a href="#old" data-tab="old">Plan D (old)</a></nav>
+
+<div class="tab" data-panel="todo">
 <section>
-  <h2>Round 8: the well's vines and the stack's smoke</h2>
-  <p>Both grown in code, not baked into the models (your rule). Thorny vines with leaves and white and yellow flowers wind round the well's cage and the crystal and lie across the first stretch of each glyph path. The game can draw them back while it runs: each vine withers from its tip, its leaves browning and dropping, down to stumps at the foot, so the fix can show the recovery (and a path's own vines can be cut as it relights). The smoke is a soft stylised plume rising from the stack's flue and drifting on the wind. 724 tests pass.</p>
-  <div class="trio"><figure><img src="img/vines-near-1.jpg" alt="Choked: the start of the fix"><figcaption>Choked: the start of the fix</figcaption></figure><figure><img src="img/vines-near-half.jpg" alt="Half cut back"><figcaption>Half cut back</figcaption></figure><figure><img src="img/vines-near-0.jpg" alt="Cut back: the well relit"><figcaption>Cut back: the well relit</figcaption></figure><figure><img src="img/smoke-1.jpg" alt="The smoke from the flue"><figcaption>The smoke from the flue</figcaption></figure><figure><img src="img/vines-overview.jpg" alt="The whole place"><figcaption>The whole place</figcaption></figure></div>
-  <p>Your note on the purifier: the pipe on the jetty looked unconnected and like it would block. It's gone: the tower's own downpipe meets the beach and the link to the drum runs under the jetty, implied. The jetty is clear to walk.</p>
-  <div class="trio"><figure><img src="img/h6-cove.jpg" alt="The cove with the purifier and a clear jetty"><figcaption>The cove now: the jetty clear</figcaption></figure></div>
-  <ul class="gaps"><li><b>Rough:</b> fully choked, the crystal is nearly hidden (it shows clearly at half); the stems are plain up close; the smoke's puffs can swap order as they loop (hard to see).</li></ul>
+  <h2>What's left</h2>
+  <div class="ladder">
+    <div class="phase">
+      <div class="eyebrow">Waiting on you</div>
+      <ol>
+        <li class="now"><span class="mark"></span><span><b>Pick the healing devices</b> (lamp, pylon, frame, triage sheet), just below</span></li>
+        <li class="now"><span class="mark"></span><span><b>Merge to main</b> when you're happy: the branch is <code>worktree-infirmary-kit</code></span></li>
+      </ol>
+    </div>
+    <div class="phase">
+      <div class="eyebrow">Next to build</div>
+      <ol>
+        <li><span class="mark"></span><span>Model the picked devices (about 30 credits each) and place them by the tents, where the glyph lines end</span></li>
+        <li><span class="mark"></span><span>Split the triage sheet and dress the camp with it (basins, stools, tables, cloaks)</span></li>
+        <li><span class="mark"></span><span>Beauty check of the whole place at the game camera, with a Codex second opinion</span></li>
+      </ol>
+    </div>
+    <div class="phase">
+      <div class="eyebrow">Polish, known rough</div>
+      <ol>
+        <li><span class="mark"></span><span>The beach keeps a sea-wall balustrade along the water</span></li>
+        <li><span class="mark"></span><span>Foliage: birch bark, the wisteria tree should hang, more vines on the middle cove wall, softer field edges</span></li>
+        <li><span class="mark"></span><span>Fully choked, the vines hide the well's crystal: thin them or let it glow through?</span></li>
+        <li><span class="mark"></span><span>The road out's weathered paving is very broken up</span></li>
+      </ol>
+    </div>
+    <div class="phase">
+      <div class="eyebrow">Done</div>
+      <ol>
+        <li class="done"><span class="mark"></span><span>Plan H picked and built in 3D, walkable in the game</span></li>
+        <li class="done"><span class="mark"></span><span>Well, tents, greenhouse, stills, boiler house, smokestack, purifier, camp kit modelled (300 credits)</span></li>
+        <li class="done"><span class="mark"></span><span>Weathered stone floor, meadow grass, foliage, fields</span></li>
+        <li class="done"><span class="mark"></span><span>Glyph paths from the well to what it feeds; vines that draw back; smoke</span></li>
+      </ol>
+    </div>
+  </div>
+  <p class="rec">For the session that wires it into the game: the fix can relight the glyph lines (<code>setGlyphState</code>) and draw back the vines (<code>setOvergrowth</code>); nothing calls them yet.</p>
 </section>
 
 <section>
   <h2>Round 7: the glyph paths, and healing devices to pick</h2>
-  <p>The glyph paths are a new kit feature: carved rune lines flush with the floor (you walk over them), glowing Life green with a slow pulse running out from the well, pads at their ends, medallions at bends and joins; each line can be set lit, dim or dark, so the fix can relight them one by one later. In the infirmary they run from the well to the greenhouse and the fields, to each pair of tents, to the cliff top above the purifier's tower, and along the road out to the battery. They replace the pipes (the purifier keeps its own pipe on the jetty). 0 errors.</p>
-  <div class="trio"><figure><img src="img/h5-forecourt.jpg" alt="The glyph paths round the well"><figcaption>The glyph paths round the well</figcaption></figure><figure><img src="img/h5-overview.jpg" alt="The whole place"><figcaption>The whole place</figcaption></figure><figure><img src="img/h5-road.jpg" alt="The line along the road out"><figcaption>The line along the road out</figcaption></figure></div>
+  <p>The glyph paths are a new kit feature: carved rune lines flush with the floor (you walk over them), glowing Life green with a slow pulse running out from the well, pads at their ends, medallions at bends and joins; each line can be set lit, dim or dark, so the fix can relight them one by one later. In the infirmary they run from the well to the greenhouse and the fields, to each pair of tents, and to the cliff top above the purifier's tower (only to things that use the well's power; the line along the road out was dropped). They replace the pipes (the purifier keeps its own pipe on the jetty). 0 errors.</p>
+  <div class="trio"><figure><img src="img/h5-forecourt.jpg" alt="The glyph paths round the well"><figcaption>The glyph paths round the well</figcaption></figure><figure><img src="img/h5-overview.jpg" alt="The whole place"><figcaption>The whole place</figcaption></figure></div>
   <p>Healing devices for the camp, where each glyph path ends by the tents: Codex pictures for your pick before any Meshy model (about 30 credits each). Several takes include a cot only for scale; the model would be the device alone.</p>
   <div class="pieces">
     <div class="answer" data-id="pc5-lamp">
@@ -127,6 +167,29 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
     </div>
 
   </div>
+</section>
+
+<section>
+  <h2>Anything else</h2>
+  <p>Answers save as you go. A blank box means I'll ask again, not assume. Earlier answers, kept: the code-drawn rule is right; move the stills; layout and pieces in parallel, with the reviewer's approval enough for the layout.</p>
+
+  <div class="answer" data-id="general">
+    <h3>Anything else</h3>
+    <textarea id="n-general" aria-label="General note" placeholder="Anything about the scene, the page or the process…"></textarea>
+    <div class="status"></div>
+  </div>
+</section>
+
+</div>
+
+<div class="tab" data-panel="build">
+<section>
+  <h2>Round 8: the well's vines and the stack's smoke</h2>
+  <p>Both grown in code, not baked into the models (your rule). Thorny vines with leaves and white and yellow flowers wind round the well's cage and the crystal and lie across the first stretch of each glyph path. The game can draw them back while it runs: each vine withers from its tip, its leaves browning and dropping, down to stumps at the foot, so the fix can show the recovery (and a path's own vines can be cut as it relights). The smoke is a soft stylised plume rising from the stack's flue and drifting on the wind. 724 tests pass.</p>
+  <div class="trio"><figure><img src="img/vines-near-1.jpg" alt="Choked: the start of the fix"><figcaption>Choked: the start of the fix</figcaption></figure><figure><img src="img/vines-near-half.jpg" alt="Half cut back"><figcaption>Half cut back</figcaption></figure><figure><img src="img/vines-near-0.jpg" alt="Cut back: the well relit"><figcaption>Cut back: the well relit</figcaption></figure><figure><img src="img/smoke-1.jpg" alt="The smoke from the flue"><figcaption>The smoke from the flue</figcaption></figure><figure><img src="img/vines-overview.jpg" alt="The whole place"><figcaption>The whole place</figcaption></figure></div>
+  <p>Your note on the purifier: the pipe on the jetty looked unconnected and like it would block. It's gone: the tower's own downpipe meets the beach and the link to the drum runs under the jetty, implied. The jetty is clear to walk.</p>
+  <div class="trio"><figure><img src="img/h6-cove.jpg" alt="The cove with the purifier and a clear jetty"><figcaption>The cove now: the jetty clear</figcaption></figure></div>
+  <ul class="gaps"><li><b>Rough:</b> fully choked, the crystal is nearly hidden (it shows clearly at half); the stems are plain up close; the smoke's puffs can swap order as they loop (hard to see).</li></ul>
 </section>
 
 <section>
@@ -196,6 +259,9 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
   </ul>
 </section>
 
+</div>
+
+<div class="tab" data-panel="plans">
 <section>
   <h2>Round 2: four new plans</h2>
   <p>Your notes on the painted plan D sent the infirmary back to the plans stage, as the process asks. The new brief, from your notes: the well (which taps the magical field, not water) mainly feeds a grand greenhouse and the farmland beyond the wall; this morning's triage camp is thrown up round it, crowded and urgent, with healing devices; glowing glyph paths in the ground instead of pipes; one level where people gather; a Life-magic sea-water purifier on the shore; one built stair down, a broken wall's rubble back up; lanterns on the road out. Three plans that really differ, then the structure critic's recommended mix. The paintings were made by an isolated agent; I haven't looked at them. Plan D, shown to the critic blind, scored 4/10.</p>
@@ -248,6 +314,9 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
   <p class="rec">Everything below this section is plan D, the layout these replace, kept for reference.</p>
 </section>
 
+</div>
+
+<div class="tab" data-panel="old">
 <section>
   <h2>Where it stands</h2>
   <p>Yes, the concept art and flow are done. The infirmary went through reading the concept, plans, flow and sense on 22 November as a flat grey-box. Today's work started the second half: building it in 3D.</p>
@@ -427,16 +496,8 @@ dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6
   </div>
 </section>
 
-<section>
-  <h2>Anything else</h2>
-  <p>Answers save as you go. A blank box means I'll ask again, not assume. Earlier answers, kept: the code-drawn rule is right; move the stills; layout and pieces in parallel, with the reviewer's approval enough for the layout.</p>
+</div>
 
-  <div class="answer" data-id="general">
-    <h3>Anything else</h3>
-    <textarea id="n-general" aria-label="General note" placeholder="Anything about the scene, the page or the process…"></textarea>
-    <div class="status"></div>
-  </div>
-</section>
 
 </div>
 
@@ -484,5 +545,17 @@ for (const box of boxes) for (const b of box.querySelectorAll('.choices button')
     for (const d of snap.docs) state[d.id] = d.data();
     for (const box of boxes) paint(box);
   }, () => { clearTimeout(t); for (const box of boxes) setStatus(box, 'Saved answers did not load.'); });
+})();
+</script>
+<script>
+(() => {
+  const keys = [...document.querySelectorAll('[data-panel]')].map((el) => el.dataset.panel);
+  const show = () => {
+    const k = keys.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'todo';
+    for (const el of document.querySelectorAll('[data-panel]')) el.hidden = el.dataset.panel !== k;
+    for (const a of document.querySelectorAll('[data-tab]')) a.setAttribute('aria-current', a.dataset.tab === k ? 'page' : 'false');
+  };
+  addEventListener('hashchange', show);
+  show();
 })();
 </script>

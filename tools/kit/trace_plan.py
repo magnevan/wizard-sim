@@ -105,7 +105,6 @@ FIXES = {
         ('object', dict(kind='glyph', id='glyph-tents-nw', name='the line to the north-west tent', pts=[[33.4, 16.4], [30.0, 13.4], [27.0, 13.4]])),
         ('object', dict(kind='glyph', id='glyph-tents-ne', name='the line to the north-east tent', pts=[[36.6, 16.4], [40.0, 13.4], [43.0, 13.4]])),
         ('object', dict(kind='glyph', id='glyph-tents-e', name='the line between the east tents', pts=[[37.4, 19.2], [44.0, 21.2], [49.0, 21.2]])),
-        ('object', dict(kind='glyph', id='glyph-road', name='the line along the road to the battery', pts=[[49.0, 21.2], [54.6, 21.2], [54.6, 30.0], [56.0, 37.5], [87.0, 37.5]])),
         # lanterns on the road's far (north) side, so they never stand between the camera and the walkers (the user)
         ('object', dict(kind='vignette', id='road-lamp-1', name='a lamp post', piece='dress.lamp', at=[58.0, 35.4], front='S')),
         ('object', dict(kind='vignette', id='road-lamp-2', name='a lamp post', piece='dress.lamp', at=[66.0, 35.4], front='S')),

@@ -82,7 +82,6 @@
     {"kind": "setpiece", "id": "battery-stack", "name": "the battery's smokestack", "piece": "setpiece.battery-stack", "at": [73.6, 29.5], "front": "S"},
     {"kind": "setpiece", "id": "purifier-tower", "name": "the purifier's pump tower", "piece": "setpiece.purifier-tower", "at": [35.0, 30.4], "front": "S"},
     {"kind": "setpiece", "id": "purifier-drum", "name": "the purifier's settling drum", "piece": "setpiece.purifier-drum", "at": [35.0, 39.6], "front": "S"},
-    {"kind": "pipe", "id": "purifier-pipe", "name": "the pipe along the jetty from the drum to the tower", "r": 0.3, "pts": [[35.0, 37.8], [35.0, 32.9]]},
     {"kind": "setpiece", "id": "boiler-house", "name": "the battery's boiler house", "piece": "setpiece.boiler-house", "at": [66.5, 30.0], "front": "S"},
     {"kind": "setpiece", "id": "tent-n1", "name": "a tent", "piece": "setpiece.infirmary-tent", "at": [25.0, 10.6], "front": "S", "turn": 6},
     {"kind": "setpiece", "id": "tent-n2", "name": "a tent", "piece": "setpiece.infirmary-tent", "at": [45.0, 10.6], "front": "S", "turn": -8},

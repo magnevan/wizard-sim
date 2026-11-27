@@ -59,8 +59,8 @@ FIXES = {
         ('paint', 'the beach', 33, 27, 37, 30),
         ('object', dict(kind='setpiece', id='purifier-tower', name="the purifier's pump tower", piece='setpiece.purifier-tower', at=[35.0, 30.4], front='S')),
         ('object', dict(kind='setpiece', id='purifier-drum', name="the purifier's settling drum", piece='setpiece.purifier-drum', at=[35.0, 39.6], front='S')),
-        ('object', dict(kind='pipe', id='purifier-pipe', name='the pipe along the jetty from the drum to the tower', r=0.3,
-                        pts=[[35.0, 37.8], [35.0, 32.9]])),
+        # no pipe in view between them (the user, 2026-11-27): the tower's own downpipe goes into the beach, the link runs
+        # under the jetty, implied; nothing on the jetty to block anyone
         ('paint', 'grass at 3.5 m', 62, 27, 71, 33),       # the plan's wall box for the boiler house, replaced by its model
         ('object', dict(kind='setpiece', id='boiler-house', name="the battery's boiler house", piece='setpiece.boiler-house', at=[66.5, 30.0], front='S')),
         # the triage camp: six full-size tents round the forecourt's edges, the middle left open (the user: "negative space")

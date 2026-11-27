@@ -247,7 +247,7 @@ export const stoneFrag = (matId: number) => {
     // the ground between and round the stones: the tile's trodden earth, going over to the lawn where the paving frays out
     float wf = texture2D(stWear, (p - stGridO) / (${CELL.toFixed(2)} * stGridN)).r;
     float gN = stNoise(p * 1.1) * 0.45 + stNoise(p * 3.7 + 11.0) * 0.35 + stNoise(p * 9.0 + 5.0) * 0.2;
-    vec3 lawnC = stLawnV > 0.5 ? groundLawn(stLawn, stLawnS, p) : texture2D(stLawn, p / stLawnS).rgb;
+    vec3 lawnC = stLawnV > 0.5 ? groundLawn(stLawn, stLawnS, p) : texture2D(stLawn, vec2(p.x, -p.y) / stLawnS).rgb;   // (painted blades up the image: its top away from the camera)
     vec3 earth = mix(vec3(dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11))), diffuseColor.rgb, 0.75) * vec3(0.9, 0.86, 0.82);   // (the painting is more orange than the stones)
     vec3 ground = mix(earth, lawnC, smoothstep(0.35, 0.65, wf + (gN - 0.5) * 0.8));
     diffuseColor.rgb = ground;

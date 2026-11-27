@@ -347,9 +347,10 @@ vec4 grFlowers(vec2 p, float cell, float size, float dens, vec3 col, float seed)
   }
   return acc;
 }
-// all of it: the lawn's colour at p (u) from its tile t (tile u across)
+// all of it: the lawn's colour at p (u) from its tile t (tile u across). The tile is painted in perspective, its
+// blades rising up the image, so its v runs against world z: the picture's top lies away from the camera (-z).
 vec3 groundLawn(sampler2D t, float tile, vec2 p) {
-  vec3 c = lawnVary(grHex(t, p / tile), p);
+  vec3 c = lawnVary(grHex(t, vec2(p.x, -p.y) / tile), p);
   vec4 s = grOn > 0.5 ? texture2D(grMap, (p - grO) / grS) : vec4(0.0, 0.0, 0.0, 1.0);
   float n1 = lwN(p * 0.45 + 4.0);
   float lg = smoothstep(0.15, 0.85, s.g + (n1 - 0.5) * 0.6 * s.g);

@@ -147,7 +147,8 @@
      "v": "changes",
      "label": "Changes (in the note)"
     }
-   ]
+   ],
+   "closed": "good (the user, in the terminal): the jetty stays a low landing stage, the fringe is enough; vines down rock faces filed as #32"
   },
   {
    "id": "rv-2",
@@ -1777,9 +1778,9 @@
       "#task-t-beach-rail"
      ],
      "dressing": [
-      "review",
+      "done",
       "beach to the sea, bay vines",
-      "#decision-rv-3"
+      "#ground"
      ],
      "beauty": [
       "later"

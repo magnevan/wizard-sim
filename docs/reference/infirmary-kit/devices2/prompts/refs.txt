@@ -1,0 +1,9 @@
+dev2-station-a devices/dev-lamp-b.png tent-a.png well-novines-b.png ../court-kit/court-buildings.png
+dev2-station-b devices/dev-lamp-b.png tent-a.png well-novines-b.png ../court-kit/court-buildings.png
+dev2-station-c devices/dev-lamp-b.png tent-a.png well-novines-b.png ../court-kit/court-buildings.png
+dev2-emitter-a devices/dev-lamp-b.png tent-a.png ../court-kit/court-buildings.png
+dev2-emitter-b devices/dev-lamp-b.png tent-a.png ../court-kit/court-buildings.png
+dev2-emitter-c devices/dev-lamp-b.png tent-a.png ../court-kit/court-buildings.png
+dev2-pylon-a devices/dev-pylon-a.png devices/dev-lamp-b.png tent-a.png
+dev2-pylon-b devices/dev-pylon-a.png devices/dev-lamp-b.png tent-a.png
+dev2-tent-dressed tent-a.png devices/dev-lamp-b.png well-novines-b.png ../court-kit/court-buildings.png

@@ -1,0 +1,8 @@
+Generate one image with your image generation tool, then save it as sheet2-a.png in the current directory. Reply with just the file name.
+
+The attached image is a sheet of eight triage-camp props in a stylised 3D look: smooth hand-painted textures, warm sandstone, deep blue with gold trim and the gold eight-pointed star emblem, polished brass, warm wood. Redraw these same eight props with exactly the same designs, colours and style, laid out as a clean asset sheet: a neat grid of four columns and two rows, every prop centred in its own cell, all at the same scale, every one in the same three-quarter view seen from slightly above. The whole image is a plain flat light grey background.
+
+Top row, left to right: the pair of stacked wooden buckets with brass hoops and blue star shields; the sandstone washstand with its brass tap and blue star panel, on its own low wooden stand with the towel on its rail; the canvas camp stool; the folding camp table with its cream star cloth, rolled bandages and glass bottles on it.
+Bottom row, left to right: the brass tray of surgical instruments with the brass mortar and pestle standing on the tray; the open blue-and-brass chest of stoppered bottles; the brass lantern hanging from its tall wooden post with a cross foot, unlit; the wooden rack on a cross foot with the dented brass breastplate and the two worn deep-blue cloaks.
+
+Each prop stands alone and whole in the middle of its cell, with wide, even bands of plain grey background between neighbouring props, each gap at least half a prop's width. The bottoms of all props in a row sit on one shared invisible line. The grey background is flat and empty around every prop. Every object crisp, dry and still and plainly lit with no glow.

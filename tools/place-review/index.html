@@ -1,0 +1,217 @@
+<title>Place Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a place review read from place.json (tools/place-review/README.md). The Now tab is decisions pending and the
+   task board, each with its pictures; then one tab per area of the place, sub-tabs per round. */
+:root {
+  --bg: #f3f5ef; --panel: #ffffff; --fg: #1d2420; --muted: #5d6a62; --line: #d6ddd3;
+  --accent: #2f7d55; --accent-soft: #e1efe6; --warn: #a86a12; --warn-soft: #f7ecd9; --done: #2f7d55; --todo: #9aa69e; --doing: #3b6fb0; --doing-soft: #e2ebf7;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141a17; --panel: #1c2420; --fg: #e4ebe6; --muted: #9aa89f; --line: #2e3a34;
+  --accent: #6cc495; --accent-soft: #1f3a2c; --warn: #e0a548; --warn-soft: #3a2e1a; --done: #6cc495; --todo: #5b6861; --doing: #7eaee8; --doing-soft: #1d2a3b; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141a17; --panel: #1c2420; --fg: #e4ebe6; --muted: #9aa89f; --line: #2e3a34;
+  --accent: #6cc495; --accent-soft: #1f3a2c; --warn: #e0a548; --warn-soft: #3a2e1a; --done: #6cc495; --todo: #5b6861; --doing: #7eaee8; --doing-soft: #1d2a3b; color-scheme: dark }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 750; }
+h2 { font-size: 26px; font-weight: 750; }
+h3 { font-size: 17px; font-weight: 600; }
+p { margin: 0; max-width: 72ch; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 17px; color: var(--muted); }
+section { display: grid; gap: 18px; }
+code { font: 13px var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+.rec { font-size: 13.5px; color: var(--muted); }
+/* tabs */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--line); }
+.tabs a { font: 500 14px var(--body); padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg); text-decoration: none; }
+.tabs a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.tabs a .count { font: 500 12px var(--mono); margin-left: 6px; opacity: .8; }
+.subtabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.subtabs a { font: 500 13px var(--mono); padding: 5px 12px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); text-decoration: none; }
+.subtabs a[aria-current="page"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.tabs a:focus-visible, .subtabs a:focus-visible, button:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.panel { display: grid; gap: 48px; }
+/* figures */
+.trio { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; align-content: start; }
+figure img { width: 100%; border-radius: 8px; border: 1px solid var(--line); cursor: zoom-in; display: block; }
+figcaption { font-size: 13.5px; color: var(--muted); }
+figcaption b { color: var(--fg); font-weight: 600; }
+.gaps { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.gaps li { background: var(--warn-soft); border-left: 3px solid var(--warn); padding: 10px 14px; border-radius: 0 6px 6px 0; }
+/* decisions */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 12px; min-width: 0; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choices button { font: 500 14px var(--body); padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.choices button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+textarea { width: 100%; box-sizing: border-box; min-height: 60px; font: 14px/1.5 var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); resize: vertical; }
+.status { font: 12px var(--mono); color: var(--muted); min-height: 1em; }
+.decided { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.decided li { font-size: 14px; color: var(--muted); }
+.decided b { color: var(--fg); font-weight: 600; }
+/* tasks */
+.board { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; }
+.col { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.col > h3 { display: flex; align-items: center; gap: 8px; }
+.col > h3 .n { font: 500 12px var(--mono); color: var(--muted); }
+.task { border-left: 4px solid var(--todo); }
+.task[data-st="doing"] { border-left-color: var(--doing); }
+.task[data-st="done"] { border-left-color: var(--done); }
+.task[data-st="wontfix"] { border-left-color: var(--line); opacity: .75; }
+.task .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.chip { font: 500 11.5px var(--mono); letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.chip.kind-polish { background: var(--warn-soft); color: var(--warn); }
+.chip.kind-build { background: var(--doing-soft); color: var(--doing); }
+select { font: 13px var(--body); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+.ev { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.ev figcaption { font-size: 12px; }
+details > summary { cursor: pointer; font: 500 14px var(--body); color: var(--muted); }
+dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 94vh; }
+dialog::backdrop { background: rgb(0 0 0 / .8); }
+dialog img { max-width: 96vw; max-height: 94vh; display: block; border-radius: 6px; }
+@media (prefers-reduced-motion: no-preference) { .choices button { transition: background .15s, border-color .15s; } }
+</style>
+
+<div class="wrap" id="app">
+  <header style="display:grid;gap:14px">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1 id="title">Loading…</h1>
+    <p class="lede" id="lede"></p>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="Areas"></nav>
+  <div id="panels"></div>
+</div>
+<dialog id="zoom" aria-label="Enlarged picture"></dialog>
+
+<script>
+/* A place review page. Content: place.json beside it (see tools/place-review/README.md). Answers to decisions live in
+   the db collection `answers` ({choice, note}); task status in `tasks` ({status, note}); place.json gives defaults. */
+const STATUSES = [['open', 'To do'], ['doing', 'In progress'], ['done', 'Done'], ['wontfix', "Won't do"]];
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fig = (f, cls = '') => `<figure class="${cls}"><img src="${esc(f.src)}" alt="${esc(f.cap || '')}" loading="lazy"><figcaption>${f.capHtml || esc(f.cap || '')}</figcaption></figure>`;
+const answers = {}, tasks = {};
+let place, col = { answers: null, tasks: null };
+
+function decisionCard(d) {
+  const figs = (d.figures || []).length ? `<div class="trio">${d.figures.map((f) => fig(f)).join('')}</div>` : '';
+  const btns = (d.choices || []).map((c) => `<button type="button" data-v="${esc(c.v)}">${esc(c.label)}</button>`).join('');
+  return `<div class="card answer" data-id="${esc(d.id)}">
+    <h3>${esc(d.title)}</h3>${d.html || ''}${figs}
+    ${d.rec ? `<p class="rec">${d.rec}</p>` : ''}
+    <div class="choices">${btns}</div>
+    <textarea id="n-${esc(d.id)}" aria-label="Note on ${esc(d.title)}" placeholder="Note…"></textarea><div class="status"></div></div>`;
+}
+function taskCard(t) {
+  const ev = (t.evidence || []).length ? `<div class="ev">${t.evidence.map((f) => fig(f)).join('')}</div>` : '';
+  const opts = STATUSES.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+  return `<div class="card task" data-task="${esc(t.id)}" data-st="${esc(t.status || 'open')}">
+    <div class="meta"><span class="chip kind-${esc(t.kind || 'build')}">${esc(t.kind || 'build')}</span>
+      <select aria-label="Status of ${esc(t.title)}">${opts}</select></div>
+    <h3>${esc(t.title)}</h3>${t.html ? `<div class="rec">${t.html}</div>` : ''}${ev}<div class="status"></div></div>`;
+}
+function renderNow() {
+  const open = place.decisions.filter((d) => !d.closed);
+  const closed = place.decisions.filter((d) => d.closed);
+  const cols = STATUSES.map(([v, l]) => {
+    const list = place.tasks.filter((t) => (tasks[t.id]?.status || t.status || 'open') === v);
+    return `<div class="col" data-col="${v}"><h3>${l} <span class="n">${list.length}</span></h3>${list.map(taskCard).join('')}</div>`;
+  }).join('');
+  return `<section><h2>Decisions pending</h2>${open.length ? open.map(decisionCard).join('') : '<p class="rec">Nothing waiting on you.</p>'}
+      ${closed.length ? `<details><summary>Decided (${closed.length})</summary><ul class="decided">${closed.map((d) => `<li><b>${esc(d.title)}</b>: ${esc(d.closed)}</li>`).join('')}</ul></details>` : ''}</section>
+    <section><h2>Tasks</h2><p class="rec">Each flagged issue with its evidence. Change a task's status in its menu; it saves for everyone.</p><div class="board">${cols}</div>
+      ${place.note ? `<p class="rec">${place.note}</p>` : ''}</section>
+    ${decisionCard({ id: 'general', title: 'Anything else', html: '', choices: [] })}`;
+}
+function render() {
+  document.title = place.title;
+  document.getElementById('title').textContent = place.title;
+  document.getElementById('eyebrow').textContent = place.eyebrow || '';
+  document.getElementById('lede').innerHTML = place.lede || '';
+  const nOpen = place.decisions.filter((d) => !d.closed).length;
+  document.getElementById('tabs').innerHTML = `<a href="#now" data-tab="now">Now<span class="count">${nOpen}</span></a>` +
+    place.areas.map((a) => `<a href="#${esc(a.id)}" data-tab="${esc(a.id)}">${esc(a.label)}</a>`).join('');
+  document.getElementById('panels').innerHTML = `<div class="panel" data-panel="now">${renderNow()}</div>` + place.areas.map((a) =>
+    `<div class="panel" data-panel="${esc(a.id)}"><nav class="subtabs" aria-label="${esc(a.label)}">${a.subs.map((s) => `<a href="#${esc(a.id)}-${esc(s.id)}" data-sub="${esc(a.id)}-${esc(s.id)}">${esc(s.label)}</a>`).join('')}</nav>` +
+    a.subs.map((s) => `<div class="panel" data-subpanel="${esc(a.id)}-${esc(s.id)}">${s.sections.map((x) => x.html).join('')}</div>`).join('') + '</div>').join('');
+  wire(); paintAll(); route();
+}
+function route() {
+  const h = location.hash.slice(1);
+  const ids = ['now', ...place.areas.map((a) => a.id)];
+  const area = ids.find((a) => h === a || h.startsWith(a + '-')) || 'now';
+  for (const el of document.querySelectorAll('[data-panel]')) el.hidden = el.dataset.panel !== area;
+  for (const a of document.querySelectorAll('[data-tab]')) a.setAttribute('aria-current', a.dataset.tab === area ? 'page' : 'false');
+  const subs = [...document.querySelectorAll(`[data-panel="${area}"] [data-subpanel]`)].map((el) => el.dataset.subpanel);
+  const sub = subs.includes(h) ? h : subs[0];
+  for (const el of document.querySelectorAll(`[data-panel="${area}"] [data-subpanel]`)) el.hidden = el.dataset.subpanel !== sub;
+  for (const a of document.querySelectorAll(`[data-panel="${area}"] [data-sub]`)) a.setAttribute('aria-current', a.dataset.sub === sub ? 'page' : 'false');
+}
+function paintAll() {
+  for (const box of document.querySelectorAll('.answer')) {
+    const s = answers[box.dataset.id] || {};
+    for (const b of box.querySelectorAll('.choices button')) b.setAttribute('aria-pressed', String(b.dataset.v === s.choice));
+    const ta = box.querySelector('textarea');
+    if (ta && document.activeElement !== ta) ta.value = s.note || '';
+  }
+  for (const card of document.querySelectorAll('.task')) {
+    const t = place.tasks.find((x) => x.id === card.dataset.task);
+    const st = tasks[t.id]?.status || t.status || 'open';
+    card.dataset.st = st; card.querySelector('select').value = st;
+  }
+}
+const say = (el, text) => { const s = el.querySelector(':scope > .status'); if (s) s.textContent = text; };
+function wire() {
+  for (const box of document.querySelectorAll('.answer')) {
+    for (const b of box.querySelectorAll('.choices button')) b.addEventListener('click', () => saveAnswer(box, { choice: b.dataset.v }));
+    const ta = box.querySelector('textarea'); let timer = 0;
+    ta.addEventListener('input', () => { clearTimeout(timer); say(box, 'Typing…'); timer = setTimeout(() => saveAnswer(box, { note: ta.value }), 900); });
+  }
+  for (const card of document.querySelectorAll('.task')) {
+    card.querySelector('select').addEventListener('change', (e) => saveTask(card, { status: e.target.value }));
+  }
+}
+async function saveAnswer(box, patch) {
+  const id = box.dataset.id;
+  answers[id] = { ...(answers[id] || {}), ...patch, at: new Date().toISOString() }; paintAll();
+  if (!col.answers) { say(box, 'Sign in to save answers.'); return; }
+  say(box, 'Saving…');
+  try { await col.answers.doc(id).set(answers[id]); say(box, 'Saved'); } catch (e) { say(box, 'Not saved: ' + (e && e.code ? e.code : 'error') + '. Try again.'); }
+}
+async function saveTask(card, patch) {
+  const id = card.dataset.task;
+  tasks[id] = { ...(tasks[id] || {}), ...patch, at: new Date().toISOString() };
+  if (!col.tasks) { say(card, 'Sign in to save status.'); return; }
+  say(card, 'Saving…');
+  try { await col.tasks.doc(id).set(tasks[id]); } catch (e) { say(card, 'Not saved: ' + (e && e.code ? e.code : 'error') + '.'); }
+}
+const zoom = document.getElementById('zoom');
+document.addEventListener('click', (e) => {
+  const img = e.target.closest('figure img'); if (!img) return;
+  const big = document.createElement('img'); big.src = img.src; big.alt = img.alt; zoom.replaceChildren(big); zoom.showModal();
+});
+zoom.addEventListener('click', () => zoom.close());
+addEventListener('hashchange', route);
+
+(async () => {
+  try { place = await (await fetch('place.json')).json(); }
+  catch { document.getElementById('title').textContent = 'place.json did not load'; return; }
+  render();
+  const db = window.claude ? await window.claude.use('db') : null;
+  if (!db) return;
+  col.answers = db.collection('answers'); col.tasks = db.collection('tasks');
+  col.answers.onSnapshot((snap) => { for (const d of snap.docs) answers[d.id] = d.data(); paintAll(); }, () => {});
+  // a task's status moves its card between columns: redraw, unless a note is being typed (then only repaint)
+  col.tasks.onSnapshot((snap) => { for (const d of snap.docs) tasks[d.id] = d.data(); if (document.activeElement?.tagName === 'TEXTAREA') paintAll(); else render(); }, () => {});
+})();
+</script>

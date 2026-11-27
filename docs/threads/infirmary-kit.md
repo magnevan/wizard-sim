@@ -1,6 +1,6 @@
 # The infirmary on the kit
 
-Status: active; plan H (the user's pick, rev 2) traced into the kit scene, 0 errors, walkable; its grey-box being painted for the user; next: glyph paths, the broken wall's rubble, the purifier, the boiler house, lanterns, triage dressing · Last touched: 2026-11-26
+Status: paused 2026-11-27 at a good point (the user: "set this aside, work on some other things and come back"); plan H built in 3D and walkable, all models but the healing devices in; open items are the task board on the review page and the Next list below · Last touched: 2026-11-27
 Record: [the read](../campaign/01-opening/infirmary-read.md) (stages 0 to 3: plan D rev 9, flow 8/10, sense 9/10) · plan: `tools/place-plans/plans/inf-d.py` · scene: `tools/kit/scenes/infirmary.scene.json` · [building it on the kit](../campaign/making-a-place.md#building-it-on-the-kit) (the steps) · [the opening thread](opening.md) · [the courtyard on the kit](kit-courtyard.md) (the first place built this way)
 
 ## Where it stands
@@ -11,15 +11,16 @@ Branch `worktree-infirmary-kit`.
 
 ## Next
 
-- [ ] **The user reviews it** on [The Infirmary on the Kit](https://claude.ai/artifact/9xpg4f5Ye54kgLyGKrMEvA) (renders, so no game needed; source `tools/infirmary-review/`, answers in its db `answers`), or walks it (`npm run dev` in `game/`, then `index.html#infirmary`). Known from the first look (`cli.mjs view`):
-  - The east flight from the overlook is a short 2-cell flight beside the stills, not plan rev 7's long run along the drop (no room on the kit without moving the dais or the stills). The two overlook flights are near twins again, which the flow critic marked down.
-  - The conduit walkways (raised to 3.8 m, a kerb you step onto) mostly didn't survive the flights' landings; they're dressing anyway (pipes with vines).
-  - The woods are drawn as plain lawn: the kit has no woods floor yet.
-  - The tents are four `setpiece.post` stand-ins; the well and the smokestack are round piers.
-- [ ] **The user's picks (2026-11-26):** greenhouse a, stills a, tent a approved for Meshy (about 90 credits; being made). Redrawn for a second look: the well and the conduit pipes **without vines** (the user: "define the basic structure and make the vines procedural... it can be consistent when it regenerates, and we could animate the recovery"), the smokestack without smoke (smoke is an effect), the bath dressing as empty pots for procedural flowers, urns and a towel stand, no stairs (stairs are the map editor's, maybe with a new texture). The tent is to be broken into its parts (cots, table, lantern) after modelling, "since they're individually useful". The greenhouse's windows are the thing to watch in its model.
-- [ ] **Procedural vines and flowers for this place** (from those picks): vines grown on the well's cage and along the conduit pipes, choking them at the start and drawing back as the well relights (an animated recovery), and flowers grown in the bath's empty pots. Uses the courtyard's foliage system ([foliage thread](foliage.md), `game/packages/client/src/lab/foliage.ts`).
-- [ ] **The gaps as a piece list:** the well (caged, a green crystal, vines), the greenhouse, the stills, the tents with cots, the conduits as raised brass pipes on walkways, the bath, the battery's smokestack. Codex pictures first; the user OKs each picture and its cost before Meshy.
-- [ ] Dressing notes carried from the read: tents lighter than buildings, the walkways on posts, a different floor on the top tier and the well's tier so the 1.5 m step reads, different beds in the two gardens, the bath's rim on the sand or behind a sea wall, a kerb at the north gate.
+**Resume here.** The live to-do list is the review page's task board ([The Infirmary on the Kit](https://claude.ai/artifact/9xpg4f5Ye54kgLyGKrMEvA), Now tab; data in `tools/infirmary-review/place.json`, status in its db `tasks`). Read its db `answers` and `tasks` first. The branch is `worktree-infirmary-kit` (not merged; `q-merge` asks when).
+
+- [ ] **Healing devices, round 2.** The user's design (answers `pc5-*`): one **station per tent** (lamp b's look, `docs/reference/infirmary-kit/devices/dev-lamp-b.png`) on the end of the tent's glyph line, and a small **emitter behind each pillow** wired to it; the pylon (a) as a two-bed alternative; the frame rejected (it hides the patient). Codex pictures were being drawn when the work paused: `docs/reference/infirmary-kit/devices2/` (station a/b/c, emitter a/b/c, pylon a/b, one whole tent dressed). Check they landed; add them to `place.json` as a decision with figures; the user picks; then model (about 30 credits each; for multi-part sheets use the website, see making-a-place step 4) and place: a station per tent where its glyph line ends, an emitter per cot.
+- [ ] **Triage dressing.** Sheet b fused in Meshy (30 credits; `kit-src/infirmary/sheet-devices.glb`). Codex was redrawing it with wide gaps when the work paused: `docs/reference/infirmary-kit/devices/sheet2/`. Add it as a decision; on the user's OK, render it on the meshy.ai website (free retries), split, fit at 1.8x (`style_scale`), dress the camp.
+- [ ] **Open decisions** (on the page): `q-crystal` (fully choked, the vines hide the crystal; my pick: let it glow through) and `q-merge` (my pick: merge after the devices).
+- [ ] **Polish tasks with evidence** (on the board): the beach's sea-wall balustrade along the water; birch bark; the wisteria tree should hang; vines on the middle cove cliff; the fields' brightness and hard edges; lumpy shrubs; the road out's broken paving.
+- [ ] **Beauty check** at the end, with a Codex second opinion.
+- [ ] **For the integration session:** the fix relights glyph lines (`setGlyphState(id, ...)` in `kit-glyph.ts`) and draws back vines (`setOvergrowth(id, ...)` in `overgrowth.ts`; ids `well` and each glyph path); nothing calls them yet.
+
+How the scene is made: `python tools/kit/trace_plan.py inf-h infirmary` re-traces plan H (`tools/place-plans/plans/inf-h.py`) with `FIXES['infirmary']` in `trace_plan.py` (every hand edit lives there: the cove, flights, set pieces, props, glyph paths, markers), then `compile.py infirmary`, `room.py infirmary`, and `npm run content:build` in `game/`. Renders: `npm run dev -w @wizard-sim/client -- --port 5197` in `game/`, then `/__map/view?name=infirmary&cam=game&x=..&y=..&r=..` (`&grow=0..1` for the vines, `&t=` for smoke). Meshy spent this session: 330 credits (1,134 left; they expire 2026-12-16).
 
 ## Done
 

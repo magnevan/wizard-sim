@@ -1,0 +1,453 @@
+{
+ "title": "The Infirmary on the Kit",
+ "eyebrow": "The opening · stop 1 · Life",
+ "lede": "Plan H, your pick, built in 3D from the kit's pieces and walkable in the game. <b>Now</b> holds the decisions waiting on you and the task board, each with its pictures; the other tabs hold the work by area, a sub-tab per round.",
+ "note": "Branch <code>worktree-infirmary-kit</code>. Credits: 330 Meshy this session.",
+ "decisions": [
+  {
+   "id": "q-crystal",
+   "title": "Fully choked, the vines hide the well's crystal. Is that right?",
+   "html": "<p>At the start of the fix the cage is wound tight and the green crystal barely shows; it shows clearly at half cut back.</p>",
+   "figures": [
+    {
+     "src": "img/vines-near-1.jpg",
+     "cap": "Choked: the crystal hidden"
+    },
+    {
+     "src": "img/vines-near-half.jpg",
+     "cap": "Half cut back: it shows"
+    }
+   ],
+   "rec": "My pick: <b>let it glow through</b>: a faint green light between the leaves, so you can see what you are freeing.",
+   "choices": [
+    {
+     "v": "hidden",
+     "label": "Keep it hidden"
+    },
+    {
+     "v": "glow",
+     "label": "Let it glow through"
+    },
+    {
+     "v": "thin",
+     "label": "Thin the vines"
+    }
+   ]
+  },
+  {
+   "id": "q-merge",
+   "title": "Merge the infirmary into main now, or when the devices are in?",
+   "html": "<p>Everything so far is on the branch <code>worktree-infirmary-kit</code>; main deploys the game on every push.</p>",
+   "figures": [
+    {
+     "src": "img/h5-overview.jpg",
+     "cap": "The place as it stands"
+    }
+   ],
+   "rec": "My pick: <b>after the devices</b>, so the place goes in complete.",
+   "choices": [
+    {
+     "v": "now",
+     "label": "Merge now"
+    },
+    {
+     "v": "after-devices",
+     "label": "After the devices"
+    },
+    {
+     "v": "later",
+     "label": "Later"
+    }
+   ]
+  },
+  {
+   "id": "pc5-frame",
+   "title": "Healing devices, round 1",
+   "closed": "one station per tent (lamp b's look) and an emitter behind each pillow; the frame would hide the patient",
+   "choices": []
+  },
+  {
+   "id": "pc4-purifier",
+   "title": "The purifier",
+   "closed": "idea 2: the drum at the jetty's head, the pump tower in a cliff bay (built)",
+   "choices": []
+  },
+  {
+   "id": "q-plan-r2",
+   "title": "Which plan",
+   "closed": "plan H, with more open ground (built)",
+   "choices": []
+  }
+ ],
+ "tasks": [
+  {
+   "id": "t-devices2",
+   "kind": "build",
+   "status": "doing",
+   "title": "Healing devices, round 2 pictures",
+   "html": "Your design: one station per tent fed by the glyph line, a small emitter behind each pillow. Codex is drawing the station, the emitter, the pylon as a two-bed station, and one whole tent dressed, for your pick.",
+   "evidence": [
+    {
+     "src": "img/dev-lamp-b.jpg",
+     "cap": "Lamp b: the station look you liked"
+    },
+    {
+     "src": "img/dev-pylon-a.jpg",
+     "cap": "Pylon a: the two-bed alternative"
+    },
+    {
+     "src": "img/dev-frame-b.jpg",
+     "cap": "Frame b: hides the patient"
+    }
+   ]
+  },
+  {
+   "id": "t-triage",
+   "kind": "build",
+   "status": "doing",
+   "title": "Triage dressing sheet: redraw so it splits",
+   "html": "Meshy fused sheet b into one object (30 credits lost): its props touched. Codex is redrawing it with wide even gaps; then your OK for a second try.",
+   "evidence": [
+    {
+     "src": "img/dev-sheet-b.jpg",
+     "cap": "Sheet b: props too close to split"
+    }
+   ]
+  },
+  {
+   "id": "t-place-devices",
+   "kind": "build",
+   "status": "open",
+   "title": "Model and place the healing devices",
+   "html": "After your pick: a station per tent where its glyph line ends, an emitter per cot; about 30 credits a model.",
+   "evidence": [
+    {
+     "src": "img/h5-forecourt.jpg",
+     "cap": "Where the glyph lines end by the tents"
+    }
+   ]
+  },
+  {
+   "id": "t-beauty",
+   "kind": "build",
+   "status": "open",
+   "title": "Beauty check",
+   "html": "The whole place at the game camera, with a Codex second opinion, before calling it done.",
+   "evidence": [
+    {
+     "src": "img/h5-overview.jpg",
+     "cap": "The place now"
+    }
+   ]
+  },
+  {
+   "id": "t-beach-rail",
+   "kind": "polish",
+   "status": "open",
+   "title": "The beach keeps a sea-wall balustrade along the water",
+   "html": "A balustrade runs along the sand at the water's edge, where a beach would just meet the sea.",
+   "evidence": [
+    {
+     "src": "img/ev-beach-rail.jpg",
+     "cap": "The balustrade along the beach"
+    }
+   ]
+  },
+  {
+   "id": "t-birch",
+   "kind": "polish",
+   "status": "open",
+   "title": "Birches are plain pale sticks",
+   "html": "No bark marks, no branches showing.",
+   "evidence": [
+    {
+     "src": "img/ev-birch.jpg",
+     "cap": "A birch in the north wood"
+    }
+   ]
+  },
+  {
+   "id": "t-wisteria",
+   "kind": "polish",
+   "status": "open",
+   "title": "The wisteria tree reads as a round lilac shrub",
+   "html": "It should hang in long drooping clusters.",
+   "evidence": [
+    {
+     "src": "img/ev-wisteria.jpg",
+     "cap": "The wisteria by the greenhouse"
+    }
+   ]
+  },
+  {
+   "id": "t-cove-vines",
+   "kind": "polish",
+   "status": "open",
+   "title": "Few vines on the middle cove cliff",
+   "html": "The cliff behind the purifier's tower is bare where the sides have vines.",
+   "evidence": [
+    {
+     "src": "img/ev-cove-wall.jpg",
+     "cap": "The middle cove cliff"
+    }
+   ]
+  },
+  {
+   "id": "t-fields",
+   "kind": "polish",
+   "status": "open",
+   "title": "Fields are bright with hard edges",
+   "html": "The crop rows sit on bare earth strips with straight hard borders.",
+   "evidence": [
+    {
+     "src": "img/ev-fields.jpg",
+     "cap": "The fields west of the forecourt"
+    }
+   ]
+  },
+  {
+   "id": "t-shrubs",
+   "kind": "polish",
+   "status": "open",
+   "title": "Shrubs are lumpy up close",
+   "html": "The bushes read as clusters of round lobes.",
+   "evidence": [
+    {
+     "src": "img/ev-shrubs.jpg",
+     "cap": "Shrubs on the bed south of the well"
+    }
+   ]
+  },
+  {
+   "id": "t-road",
+   "kind": "polish",
+   "status": "open",
+   "title": "The road out's paving is very broken up",
+   "html": "Most of the road is near lawn, so the weathering takes most of its stones.",
+   "evidence": [
+    {
+     "src": "img/ev-road.jpg",
+     "cap": "The road out to the battery"
+    }
+   ]
+  },
+  {
+   "id": "t-wire",
+   "kind": "build",
+   "status": "open",
+   "title": "Wire the fix into the game (another session)",
+   "html": "The fix can relight the glyph lines (<code>setGlyphState</code>) and draw back the vines (<code>setOvergrowth</code>); nothing calls them yet.",
+   "evidence": []
+  },
+  {
+   "id": "t-planh",
+   "kind": "build",
+   "status": "done",
+   "title": "Plan H picked and built in 3D",
+   "html": "Walkable in the 3D game.",
+   "evidence": [
+    {
+     "src": "img/h4-overview.jpg",
+     "cap": "Plan H built"
+    }
+   ]
+  },
+  {
+   "id": "t-models",
+   "kind": "build",
+   "status": "done",
+   "title": "The models",
+   "html": "Well, tents, greenhouse, stills, boiler house, smokestack, purifier, camp kit: 330 credits in all (two sheets failed).",
+   "evidence": [
+    {
+     "src": "img/h4-cove.jpg",
+     "cap": "The purifier in the cove"
+    }
+   ]
+  },
+  {
+   "id": "t-ground",
+   "kind": "build",
+   "status": "done",
+   "title": "Weathered floor, meadow, foliage, fields",
+   "html": "",
+   "evidence": [
+    {
+     "src": "img/green-after-overview.jpg",
+     "cap": "Foliage and grass"
+    }
+   ]
+  },
+  {
+   "id": "t-magic",
+   "kind": "build",
+   "status": "done",
+   "title": "Glyph paths, vines that draw back, smoke",
+   "html": "",
+   "evidence": [
+    {
+     "src": "img/vines-near-1.jpg",
+     "cap": "The vines on the well"
+    }
+   ]
+  }
+ ],
+ "areas": [
+  {
+   "id": "layout",
+   "label": "Layout",
+   "subs": [
+    {
+     "id": "planh",
+     "label": "Plan H in 3D",
+     "sections": [
+      {
+       "title": "Plan H in 3D",
+       "html": "<section>\n  <h2>Plan H in 3D</h2>\n  <p>Your pick, revision 2 (more open ground, tents at the forecourt's edges, the boiler house under the stack, farmland off the west edge), traced into the kit: 0 errors, walkable in the 3D game. The made pieces carry over: the well, six full-size tents, the greenhouse (refitted larger, about 7.4 m tall) and the smokestack. Below, this grey-box painted by the isolated agent (step 3); I haven't looked at them.</p>\n  <div class=\"trio\"><figure><img src=\"img/paint-h-overview.jpg\" alt=\"Plan H's grey-box painted: The whole place\"><figcaption>The whole place, painted</figcaption></figure><figure><img src=\"img/paint-h-overview-2.jpg\" alt=\"Plan H's grey-box painted: The whole place, take 2\"><figcaption>The whole place, take 2, painted</figcaption></figure><figure><img src=\"img/paint-h-arrival.jpg\" alt=\"Plan H's grey-box painted: Arriving\"><figcaption>Arriving, painted</figcaption></figure><figure><img src=\"img/paint-h-forecourt.jpg\" alt=\"Plan H's grey-box painted: The forecourt\"><figcaption>The forecourt, painted</figcaption></figure><figure><img src=\"img/paint-h-cove.jpg\" alt=\"Plan H's grey-box painted: The cove\"><figcaption>The cove, painted</figcaption></figure><figure><img src=\"img/paint-h-road.jpg\" alt=\"Plan H's grey-box painted: The road out\"><figcaption>The road out, painted</figcaption></figure></div>\n  <div class=\"trio\"><figure><img src=\"img/h1-overview.jpg\" alt=\"Plan H in 3D: The whole place at the game camera\"><figcaption>The whole place at the game camera</figcaption></figure><figure><img src=\"img/h1-top.jpg\" alt=\"Plan H in 3D: From above\"><figcaption>From above</figcaption></figure><figure><img src=\"img/h1-arrival.jpg\" alt=\"Plan H in 3D: Arriving: the tents and the well\"><figcaption>Arriving: the tents and the well</figcaption></figure><figure><img src=\"img/h1-forecourt.jpg\" alt=\"Plan H in 3D: The open forecourt round the well\"><figcaption>The open forecourt round the well</figcaption></figure><figure><img src=\"img/h1-greenhouse.jpg\" alt=\"Plan H in 3D: West: the greenhouse by the farmland\"><figcaption>West: the greenhouse by the farmland</figcaption></figure><figure><img src=\"img/h1-cove.jpg\" alt=\"Plan H in 3D: The cove: the stair, the beach, the jetty, the climb back\"><figcaption>The cove: the stair, the beach, the jetty, the climb back</figcaption></figure><figure><img src=\"img/h1-broken-wall.jpg\" alt=\"Plan H in 3D: East shoulder: the broken wall (a flight for now)\"><figcaption>East shoulder: the broken wall (a flight for now)</figcaption></figure><figure><img src=\"img/h1-road.jpg\" alt=\"Plan H in 3D: The road out to the battery\"><figcaption>The road out to the battery</figcaption></figure></div>\n  <ul class=\"gaps\">\n    <li><b>Still to build:</b> the glyph paths in the ground (from the well to everything, and along the road out); the broken wall's rubble (a regular flight stands in); the purifier on the jetty; the battery's boiler house (a grey box); lanterns on the road's far side; healing devices and triage dressing for the urgency; the vines.</li>\n    <li><b>To fix:</b> the beach has the sea-wall balustrade along the water; the forecourt is plain paving with a stray wedge of grass on its south side; the old pipes are gone (glyph paths replace them).</li>\n  </ul>\n</section>\n"
+      },
+      {
+       "title": "Your notes on plan H in 3D (round 3)",
+       "html": "<section>\n  <h2>Your notes on plan H in 3D (round 3)</h2>\n  <p>Done in the scene (free): the broken wall is gone, so the shore is one stair down and back; every tent turned so its open side faces the camera, each a few degrees off as if pitched in a hurry; crates, barrels and rope left on the paving round the tents; lamp posts on the road's far side. Still 0 errors.</p>\n  <div class=\"trio\"><figure><img src=\"img/h2-overview.jpg\" alt=\"The whole place\"><figcaption>The whole place</figcaption></figure><figure><img src=\"img/h2-arrival.jpg\" alt=\"Arriving: the tents face you now\"><figcaption>Arriving: the tents face you now</figcaption></figure><figure><img src=\"img/h2-road.jpg\" alt=\"The road out: lamps on its far side\"><figcaption>The road out: lamps on its far side</figcaption></figure><figure><img src=\"img/h2-cove.jpg\" alt=\"The cove: one stair down and back\"><figcaption>The cove: one stair down and back</figcaption></figure></div>\n  </section>\n"
+      }
+     ]
+    },
+    {
+     "id": "plans",
+     "label": "The four plans",
+     "sections": [
+      {
+       "title": "Round 2: four new plans",
+       "html": "<section>\n  <h2>Round 2: four new plans</h2>\n  <p>Your notes on the painted plan D sent the infirmary back to the plans stage, as the process asks. The new brief, from your notes: the well (which taps the magical field, not water) mainly feeds a grand greenhouse and the farmland beyond the wall; this morning's triage camp is thrown up round it, crowded and urgent, with healing devices; glowing glyph paths in the ground instead of pipes; one level where people gather; a Life-magic sea-water purifier on the shore; one built stair down, a broken wall's rubble back up; lanterns on the road out. Three plans that really differ, then the structure critic's recommended mix. The paintings were made by an isolated agent; I haven't looked at them. Plan D, shown to the critic blind, scored 4/10.</p>\n  <div class=\"plan\">\n    <h3>E: the broad terrace <span class=\"score\">critic 5/10</span></h3>\n    <p>One wide level for the arrival, the well, the camp and the greenhouse; all the height in the drop to a long shore. Roomy, but a box, and the greenhouse sits in the corner the camera sees least.</p>\n    <div class=\"trio\">\n      <figure><img src=\"img/inf-e-journey.jpg\" alt=\"Plan E from above with its journey\"><figcaption>From above, with the journey.</figcaption></figure>\n      <figure><img src=\"img/inf-e-game.jpg\" alt=\"Plan E in the game's camera, blocked out\"><figcaption>In the game's camera, blocked out.</figcaption></figure>\n      <figure><img src=\"img/plan-e-1.jpg\" alt=\"Plan E painted, take 1\"><figcaption>Painted, take 1.</figcaption></figure>\n      <figure><img src=\"img/plan-e-2.jpg\" alt=\"Plan E painted, take 2\"><figcaption>Painted, take 2.</figcaption></figure>\n    </div>\n  </div>\n  <div class=\"plan\">\n    <h3>F: the crescent <span class=\"score\">critic 7/10</span></h3>\n    <p>The clifftop curves round a sheltered cove: the well at the apex, the camp along both arms, the greenhouse at the west tip, the road out from the east tip. Says what the place is, but the well sits on the narrowest strip, cramped again.</p>\n    <div class=\"trio\">\n      <figure><img src=\"img/inf-f-journey.jpg\" alt=\"Plan F from above with its journey\"><figcaption>From above, with the journey.</figcaption></figure>\n      <figure><img src=\"img/inf-f-game.jpg\" alt=\"Plan F in the game's camera, blocked out\"><figcaption>In the game's camera, blocked out.</figcaption></figure>\n      <figure><img src=\"img/plan-f-1.jpg\" alt=\"Plan F painted, take 1\"><figcaption>Painted, take 1.</figcaption></figure>\n      <figure><img src=\"img/plan-f-2.jpg\" alt=\"Plan F painted, take 2\"><figcaption>Painted, take 2.</figcaption></figure>\n    </div>\n  </div>\n  <div class=\"plan\">\n    <h3>G: the prow <span class=\"score\">critic 6/10</span></h3>\n    <p>The well out on a prow over the sea, the camp on one flat level behind it. Fewest levels; but you cross the whole camp before the well, and the camp is a rectangle again.</p>\n    <div class=\"trio\">\n      <figure><img src=\"img/inf-g-journey.jpg\" alt=\"Plan G from above with its journey\"><figcaption>From above, with the journey.</figcaption></figure>\n      <figure><img src=\"img/inf-g-game.jpg\" alt=\"Plan G in the game's camera, blocked out\"><figcaption>In the game's camera, blocked out.</figcaption></figure>\n      <figure><img src=\"img/plan-g-1.jpg\" alt=\"Plan G painted, take 1\"><figcaption>Painted, take 1.</figcaption></figure>\n      <figure><img src=\"img/plan-g-2.jpg\" alt=\"Plan G painted, take 2\"><figcaption>Painted, take 2.</figcaption></figure>\n    </div>\n  </div>\n  <div class=\"plan\">\n    <h3>H: the crescent with a forecourt <span class=\"score\">the critic's mix</span></h3>\n    <p>F with G's flat camp folded into its head: a broad forecourt about two screens wide where the arrival, the well and the busiest tents share one level; the cove pushed south; the purifier out on a jetty so it shows; the road out from the east arm. Drafted after the critic; not scored yet.</p>\n    <div class=\"trio\">\n      <figure><img src=\"img/inf-h-journey.jpg\" alt=\"Plan H from above with its journey\"><figcaption>From above, with the journey.</figcaption></figure>\n      <figure><img src=\"img/inf-h-game.jpg\" alt=\"Plan H in the game's camera, blocked out\"><figcaption>In the game's camera, blocked out.</figcaption></figure>\n      <figure><img src=\"img/plan-h-1.jpg\" alt=\"Plan H painted, take 1\"><figcaption>Painted, take 1.</figcaption></figure>\n      <figure><img src=\"img/plan-h-2.jpg\" alt=\"Plan H painted, take 2\"><figcaption>Painted, take 2.</figcaption></figure>\n    </div>\n  </div>\n  <div class=\"answer\" data-id=\"q-plan-r2\">\n    <h3>Which plan should the infirmary be built from?</h3>\n    <p class=\"rec\">My pick: <b>H</b>, the critic's mix: the crescent's outline and view across the cove, with the room you asked for where people gather.</p>\n    <div class=\"choices\"><button type=\"button\" data-v=\"e\">E</button><button type=\"button\" data-v=\"f\">F</button><button type=\"button\" data-v=\"g\">G</button><button type=\"button\" data-v=\"h\">H</button><button type=\"button\" data-v=\"mix\">A mix</button></div>\n    <textarea id=\"n-q-plan-r2\" aria-label=\"Note on the plan\" placeholder=\"What to take from which…\"></textarea><div class=\"status\"></div>\n  </div>\n  <p class=\"rec\">Everything below this section is plan D, the layout these replace, kept for reference.</p>\n</section>\n"
+      }
+     ]
+    },
+    {
+     "id": "pland",
+     "label": "Plan D (old)",
+     "sections": [
+      {
+       "title": "Where it stands",
+       "html": "<section>\n  <h2>Where it stands</h2>\n  <p>Yes, the concept art and flow are done. The infirmary went through reading the concept, plans, flow and sense on 22 November as a flat grey-box. Today's work started the second half: building it in 3D.</p>\n  <div class=\"ladder\">\n    <div class=\"phase\">\n      <div class=\"eyebrow\">Done · 22 Nov, as a grey-box</div>\n      <h3>Deciding what the place is</h3>\n      <ol>\n        <li class=\"done\"><span class=\"mark\"></span><span>Concept art read as a plan <span class=\"when\">(the caged well, the cots, the conduits)</span></span></li>\n        <li class=\"done\"><span class=\"mark\"></span><span>Three plans plus a control; you picked <b>plan D</b> <span class=\"when\">(\"the flow is very good, where you see the people to heal first\")</span></span></li>\n        <li class=\"done\"><span class=\"mark\"></span><span>Flow in the game: <b>8/10</b>, passed <span class=\"when\">(four rounds, revisions 4 to 7)</span></span></li>\n        <li class=\"done\"><span class=\"mark\"></span><span>Sense in the game: <b>9/10</b>, passed <span class=\"when\">(revision 9)</span></span></li>\n      </ol>\n    </div>\n    <div class=\"phase\">\n      <div class=\"eyebrow\">Started · 26 Nov</div>\n      <h3>Building it on the kit</h3>\n      <ol>\n        <li class=\"done\"><span class=\"mark\"></span><span>Trace plan D into a kit scene, 0 errors <span class=\"when\">(today)</span></span></li>\n        <li class=\"done\"><span class=\"mark\"></span><span>Walkable in the 3D game <span class=\"when\">(today, on its branch)</span></span></li>\n        <li class=\"done\"><span class=\"mark\"></span><span>Layout round 2: the stills moved, the east flight, the bath; a fresh critic <b>approved</b> it at 7.5/10, and its fixes are in</span></li>\n        <li class=\"done\"><span class=\"mark\"></span><span>Greenhouse, stills and tents modelled and placed <span class=\"when\">(90 credits)</span></span></li>\n        <li class=\"done\"><span class=\"mark\"></span><span>Well, smokestack and bath dressing modelled and placed <span class=\"when\">(120 credits; 210 in all)</span></span></li>\n        <li class=\"done\"><span class=\"mark\"></span><span>The pipes, drawn in code along their routes <span class=\"when\">(free)</span></span></li>\n        <li class=\"done\"><span class=\"mark\"></span><span>The shore widened to six rows, with a sand beach <span class=\"when\">(your note: \"way too constrained\")</span></span></li>\n        <li class=\"now\"><span class=\"mark\"></span><span><b>The painted layout</b> against the concept (below), and the pipes; then the vines, flowers and smoke</span></li>\n        <li><span class=\"mark\"></span><span>Surfaces: tiling textures from Codex</span></li>\n        <li><span class=\"mark\"></span><span>Paint-over of the grey-box, as the dressing target</span></li>\n        <li><span class=\"mark\"></span><span>Dressing: lamps, beds, cots, pipes, vines</span></li>\n        <li><span class=\"mark\"></span><span>Beauty, judged in the whole scene at the game's camera</span></li>\n      </ol>\n    </div>\n  </div>\n</section>\n"
+      },
+      {
+       "title": "From concept to scene",
+       "html": "<section>\n  <h2>From concept to scene</h2>\n  <p>The concept is a walled box. Plan D kept its ideas (the caged well, the conduits, the cots under tents) and put them on a slope down to the sea, with the road arriving from the north on the well's axis.</p>\n  <div class=\"trio\">\n    <figure><img src=\"img/concept-v2.jpg\" alt=\"Concept art: a walled infirmary garden with a caged green crystal well at its centre, tents with cots, a greenhouse, copper stills and a stone bath\"><figcaption><b>The concept.</b> The well choked in vines, tents of cots, the greenhouse, stills and the bath.</figcaption></figure>\n    <figure><img src=\"img/plan-journey.jpg\" alt=\"Plan D from above with four numbered passes: in from the main gate, the fix loop, up to the cots, out to the battery\"><figcaption><b>Plan D, revision 9.</b> The four passes: in from the gate, the fix loop down to the shore and back, up to the cots, out east to the battery.</figcaption></figure>\n    <figure><img src=\"img/top.jpg\" alt=\"The kit scene from straight above: the arrival road, the top terrace, the well's tier with two buildings, the flights to the shore and the sea\"><figcaption><b>The kit scene today, from above.</b> Woods are drawn as plain lawn for now.</figcaption></figure>\n  </div>\n</section>\n"
+      },
+      {
+       "title": "The layout, painted",
+       "html": "<section>\n  <h2>The layout, painted</h2>\n  <p>The step we skipped: a Codex painting of the grey-box in the concept's style, keeping the layout, so you can compare it with the original concept before more pieces are made. An isolated agent painted these from the renders (with the wider shore); I haven't looked at them, as the process asks, so they're unjudged. Click to enlarge.</p>\n  <div class=\"trio\">\n    <figure><img src=\"img/concept-v2.jpg\" alt=\"The original concept art of the infirmary\"><figcaption><b>The original concept.</b></figcaption></figure>\n    <figure><img src=\"img/paint-overview.jpg\" alt=\"The current layout painted as concept art, take 1\"><figcaption><b>The layout, painted</b> (take 1).</figcaption></figure>\n    <figure><img src=\"img/paint-overview-2.jpg\" alt=\"The current layout painted as concept art, take 2\"><figcaption><b>The layout, painted</b> (take 2).</figcaption></figure>\n  </div>\n  <div class=\"trio\">\n    <figure><img src=\"img/grey-overview.jpg\" alt=\"The grey-box the paintings were made from, the whole place at the game camera\"><figcaption>The grey-box they were painted from.</figcaption></figure>\n    <figure><img src=\"img/paint-arrival.jpg\" alt=\"The arrival view painted\"><figcaption>Arrival, painted.</figcaption></figure>\n    <figure><img src=\"img/paint-overlook.jpg\" alt=\"The overlook view painted\"><figcaption>The overlook, painted.</figcaption></figure>\n    <figure><img src=\"img/paint-shore.jpg\" alt=\"The shore view painted\"><figcaption>The shore, painted.</figcaption></figure>\n    <figure><img src=\"img/paint-road.jpg\" alt=\"The road out view painted\"><figcaption>The road out, painted.</figcaption></figure>\n  </div>\n  <div class=\"answer\" data-id=\"q-layout-vs-concept\">\n    <h3>Does the layout hold up next to the concept?</h3>\n    <p>The concept is a walled garden on one level round the well; plan D put it on a slope down to the sea, with the tents above and the shore below. If the painting loses what you liked in the concept, say what, and the layout changes before more pieces go in.</p>\n    <div class=\"choices\"><button type=\"button\" data-v=\"keep\">Keep this layout</button><button type=\"button\" data-v=\"adjust\">Adjust it</button><button type=\"button\" data-v=\"rethink\">Rethink it</button></div>\n    <textarea id=\"n-q-layout-vs-concept\" aria-label=\"Note on the layout against the concept\" placeholder=\"What to keep from the concept, what to change…\"></textarea><div class=\"status\"></div>\n  </div>\n</section>\n"
+      },
+      {
+       "title": "The walk, at the game's camera",
+       "html": "<section>\n  <h2>The walk, at the game's camera</h2>\n  <p>In the order you'd play it. The small wizard is there for scale.</p>\n  <div class=\"walk\">\n    <div class=\"stop\"><span class=\"num\">1 · In from the main gate</span>\n      <figure><img src=\"img/arrival.jpg\" alt=\"The road from the north onto the top terrace between two open tents of cots, the well below\"><figcaption>New: the road arrives between the two tents of cots, the wounded the first thing you see, with the well below on its axis. The tents are full size (cots about 1.9 m), so two fit here rather than four (the read's arc of four small tents).</figcaption></figure></div>\n    <div class=\"stop\"><span class=\"num\">2 · The overlook and the well</span>\n      <figure><img src=\"img/overlook.jpg\" alt=\"The top terrace's edge looking down 1.5 m onto the well on its round dais, with a flight down on each side\"><figcaption>The terrace looks down 1.5 m onto the well's dais. New: the caged well on its dais, the crystal inside, structure only; its vines will be grown in the game. A flight goes down on each side.</figcaption></figure></div>\n    <div class=\"stop\"><span class=\"num\">3 · West: the greenhouse</span>\n      <figure><img src=\"img/west.jpg\" alt=\"The west flight down beside the brass and glass greenhouse, and two garden beds\"><figcaption>New: the greenhouse model beside the west flight, with two garden beds. It stands 3.4 m tall: the model keeps its picture's proportions, so it reads a little small; it can be scaled up.</figcaption></figure></div>\n    <div class=\"stop\"><span class=\"num\">4 · East: the stills</span>\n      <figure><img src=\"img/east.jpg\" alt=\"The east flight along the wall, the open stills shed with copper pots, the cobbled road leaving east\"><figcaption>New: the east side runs along the drop: a ledge off the top terrace, then one flight down the wall face, open on its downhill side. The stills moved east to make room (your pick), and the cobbled road now starts beside the dais, so the way out shows from the well. The stills are the real model: an open shed with the copper stills facing the road.</figcaption></figure></div>\n    <div class=\"stop\"><span class=\"num\">5 · Down to the shore, the bath</span>\n      <figure><img src=\"img/shore.jpg\" alt=\"A straight flight down the cliff to the shore walk, the small bath, and a second flight climbing along the cliff\"><figcaption>New: the fix loop goes down the straight flight to the shore walk, now six rows deep (it was three), with a sand beach running on under the cliffs. The bath is a balustraded pool in a bay cut into the bluff, with a built wall behind it and a low sea wall along the walk. New: its dressing from one split Meshy sheet: urns, a towel stand, empty planters for flowers grown in the game.</figcaption></figure></div>\n    <div class=\"stop\"><span class=\"num\">6 · Back up along the cliff</span>\n      <figure><img src=\"img/cliff.jpg\" alt=\"The flight climbing east along the cliff face back to the well's tier\"><figcaption>The way back up runs along the cliff face, west to east, so the loop's two flights look different.</figcaption></figure></div>\n    <div class=\"stop\"><span class=\"num\">7 · Out to the battery</span>\n      <figure><img src=\"img/road.jpg\" alt=\"The paved road east along the well's tier, a round pier where the battery's smokestack stands\"><figcaption>The road leaves east along the well's tier. New: the battery's smokestack, the cue for where you're going; its smoke will be an effect from the flue.</figcaption></figure></div>\n  </div>\n</section>\n"
+      },
+      {
+       "title": "What's off in this draft",
+       "html": "<section>\n  <h2>What's off in this draft</h2>\n  <ul class=\"gaps\">\n    <li>The tent split gave three loose cots; the fourth cot, the table and the lantern are fused to the tent.</li>\n    <li><b>Living parts still to come:</b> the vines on the well and pipes (drawing back as the well relights), flowers in the planters, the smokestack's smoke.</li>\n    <li><b>The conduit walkways</b> (raised paths from the well to what it feeds) are gone from the layout; they come back in dressing as the brass pipes below.</li>\n    <li><b>The two big paved tiers</b> look alike: they need different floors (the read asked for it) and the pipes to break them up. That's for the surfaces and dressing steps.</li>\n    <li><b>Woods</b> are drawn as plain lawn: the kit has no woods floor yet. East of the stills, the top tier's wall ends in an earth bank where the woods start.</li>\n  </ul>\n</section>\n"
+      },
+      {
+       "title": "The layout review",
+       "html": "<section>\n  <h2>The layout review</h2>\n  <p>You said a reviewer's approval would do for the layout. A fresh critic, given only the read, the principles, the plan and these renders, walked each pass as a first-time player.</p>\n  <ul class=\"gaps\">\n    <li><b>Verdict: approve, 7.5/10</b> (the flat grey-box had 8). \"Everything else carried over or got better, especially the shore bay.\"</li>\n    <li><b>Its one structural change:</b> the first two-flight east descent \"reads as a pen\" and is \"overbuilt\" for a 1.5 m drop; make it one run along the wall face. Done: the render above is the fixed version.</li>\n    <li><b>Smaller fixes, done:</b> the cobbles start at the well, the bath bay has a built back wall. <b>Left for dressing:</b> the tents need real footprints before the top tier's emptiness can be judged.</li>\n  </ul>\n</section>\n"
+      },
+      {
+       "title": "The new pieces",
+       "html": "<section>\n  <h2>The new pieces</h2>\n  <p>Fourteen Codex pictures, two takes per piece, in the courtyard pieces' style (sandstone, blue and gold, brass). Each one becomes a Meshy model only after you pick it. Click any picture to enlarge it.</p>\n  <p class=\"rec\"><b>Round 1 picked:</b> greenhouse a, stills a and tent a are being modelled now (about 90 credits). <b>Round 2, for your OK:</b> the well, pipes, smokestack and bath dressing, redone as structure only per your notes; about 30 credits each, <b>about 120</b> for all four. The two sheets are split into parts after modelling.</p>\n  <div class=\"pieces\">\n    <div class=\"answer\" data-id=\"pc2-well\">\n      <h3>The well, redone without vines (round 2)</h3>\n      <div class=\"pair\"><figure><img src=\"img/pc-well-novines-a.jpg\" alt=\"Take a: an open pavilion of four columns under a solid blue star dome, the crystal in a brass crown\"><figcaption>a</figcaption></figure><figure><img src=\"img/pc-well-novines-b.jpg\" alt=\"Take b: the octagonal brass lattice cage on a three-step plinth, the green crystal on a socket, three pipe stubs\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">Your note: structure only, the vines grown in the game so they can draw back as the well relights. My pick: <b>b</b>: the same cage as before, clean, and you can see where the pipes join. a lost the lattice cage.</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc2-well\" aria-label=\"Note on the well\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n    <div class=\"answer\" data-id=\"pc-greenhouse\">\n      <h3>The greenhouse</h3>\n      <div class=\"pair\"><figure><img src=\"img/pc-greenhouse-a.jpg\" alt=\"Take a: barrel-vaulted brass and glass greenhouse, broken panes, wisteria\"><figcaption>a</figcaption></figure><figure><img src=\"img/pc-greenhouse-b.jpg\" alt=\"Take b: pitched-roof greenhouse with Gothic cresting and a porch door\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">My pick: <b>a</b>, closest to the concept and best from our camera. It's about twice as long as it is wide; the fit step squashes it to its 7 × 6 m footprint.</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc-greenhouse\" aria-label=\"Note on the greenhouse\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n    <div class=\"answer\" data-id=\"pc-stills\">\n      <h3>The stills</h3>\n      <div class=\"pair\"><figure><img src=\"img/pc-stills-a.jpg\" alt=\"Take a: open-sided shed with a blue slate roof, pot stills over brick furnaces, drying herbs\"><figcaption>a</figcaption></figure><figure><img src=\"img/pc-stills-b.jpg\" alt=\"Take b: closed sandstone building with an arched opening and a copper chimney\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">My pick: <b>a</b>, the open shed from the concept, with more depth. Its banners carry a leaf, not the academy star; a quick Codex edit can swap that before modelling.</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc-stills\" aria-label=\"Note on the stills\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n    <div class=\"answer\" data-id=\"pc-tent\">\n      <h3>A tent with cots (four of them, in an arc)</h3>\n      <div class=\"pair\"><figure><img src=\"img/pc-tent-a.jpg\" alt=\"Take a: open-sided cream canvas tent on brass poles, four striped cots, a lantern and an instrument table\"><figcaption>a</figcaption></figure><figure><img src=\"img/pc-tent-b.jpg\" alt=\"Take b: tent with a canvas back wall, three cots and star hangings\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">My pick: <b>a</b>: four cots and open sides. b's closed back would hide the cots from some camera angles.</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc-tent\" aria-label=\"Note on the tent\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n    <div class=\"answer\" data-id=\"pc2-conduit\">\n      <h3>The conduit pipes, redone without vines (round 2)</h3>\n      <div class=\"pair\"><figure><img src=\"img/pc-conduit-clean-a.jpg\" alt=\"Take a: front-on grid of a brass straight, elbow, T-junction and stone saddle\"><figcaption>a</figcaption></figure><figure><img src=\"img/pc-conduit-clean-b.jpg\" alt=\"Take b: the same four parts at three-quarter view, open pipe mouths, the support as two stone posts\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">My pick: <b>b</b>, over the picture agent's a: the three-quarter view gives Meshy depth to work from, and the open pipe mouths join better. Both split cleanly. Both put a fleur-de-lis on the blue band, not the academy star; it's a few pixels at the game camera, but say if you want it swapped first (a free Codex edit).</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc2-conduit\" aria-label=\"Note on the conduit pipes\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n    <div class=\"answer\" data-id=\"pc2-smokestack\">\n      <h3>The battery's smokestack, redone without smoke (round 2)</h3>\n      <div class=\"pair\"><figure><img src=\"img/pc-smokestack-nosmoke-a.jpg\" alt=\"Take a: front-on square stack, sandstone with an arched recess, a blue band of stars, brick, an open flue\"><figcaption>a</figcaption></figure><figure><img src=\"img/pc-smokestack-nosmoke-b.jpg\" alt=\"Take b: the same stack at three-quarter view, two faces showing, looking into the open flue\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">My pick: <b>b</b>: the same design, and the three-quarter view gives Meshy both faces of a square stack. The smoke will be an effect rising from the flue.</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc2-smokestack\" aria-label=\"Note on the smokestack\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n    <div class=\"answer\" data-id=\"pc2-bath\">\n      <h3>Bath dressing, redone: empty pots, urns, towel stand, no stairs (round 2)</h3>\n      <div class=\"pair\"><figure><img src=\"img/pc-bath-dressing-a.jpg\" alt=\"Take a: front-on: three empty soil-filled planters, two star-banded urns, a towel stand and a separate brass jug\"><figcaption>a</figcaption></figure><figure><img src=\"img/pc-bath-dressing-b.jpg\" alt=\"Take b: the same set at three-quarter view, the jug standing on the towel stand\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">Both have three empty planters (round, square, a long trough) for flowers grown in the game, two urns and a towel stand. My pick: <b>b</b>: more depth, and one fewer part to split.</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc2-bath\" aria-label=\"Note on the bath dressing\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n  </div>\n</section>\n"
+      },
+      {
+       "title": "The pipes",
+       "html": "<section>\n  <h2>The pipes</h2>\n  <p>Meshy fused the pipe sheet into one object (left), so the pipes are now drawn in code along their routes, like the kerbs and road stones (your pick): brass tube, riveted collars, blue bands with the academy star, sandstone saddles, T-joints, climbs down walls and open mouths, with painted textures from Codex. They don't block walking.</p>\n  <div class=\"trio\"><figure><img src=\"img/pipes-meshy-failed.jpg\" alt=\"Meshy's model of the pipe sheet from four sides: one pipe on a saddle fused to a framed back panel\"><figcaption><b>Meshy's try</b>: one fused object, nothing to split.</figcaption></figure><figure><img src=\"img/pipes-test.jpg\" alt=\"Close-up of the procedural pipes on a test patch: corners, a riveted T, star bands, stone saddles\"><figcaption><b>The procedural pipes</b> close up, on a test patch.</figcaption></figure></div>\n  <p>In the infirmary they run from the well's three stubs: west to the greenhouse, east to the stills, north up the overlook wall to a T feeding both tents, and south across the well's tier and down the bath bay's wall to an open mouth over the pool (the overlook and shore views above). The south pipe crosses the middle of the well's tier; it could run along an edge instead if it cuts the space up.</p>\n  <div class=\"answer\" data-id=\"q-pipes-look\">\n    <h3>Do the pipes work?</h3>\n    <div class=\"choices\"><button type=\"button\" data-v=\"keep\">Keep</button><button type=\"button\" data-v=\"tune\">Tune</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n    <textarea id=\"n-q-pipes-look\" aria-label=\"Note on the pipes\" placeholder=\"Size, routes, look…\"></textarea><div class=\"status\"></div>\n  </div>\n</section>\n"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "pieces",
+   "label": "Buildings & props",
+   "subs": [
+    {
+     "id": "round3",
+     "label": "Round 3 pictures",
+     "sections": [
+      {
+       "title": "The purifier, camp kit and boiler house pictures (round 3)",
+       "html": "<section>\n  <h2>The purifier, camp kit and boiler house pictures (round 3)</h2>\n  <p>New pictures from Codex for your OK before any Meshy model (structure only). About 30 credits each if all three go ahead, 90 in all; the camp kit is one sheet split into six props.</p>\n  <div class=\"pieces\">\n    <div class=\"answer\" data-id=\"pc4-purifier\">\n      <h3>The purifier, painted into the cove (your note: leaning to C, more concepts, hard to picture in the scene)</h3>\n      <p>Six ideas, each painted into this cove at the game camera, with the structure on its own beside it for modelling. None is a cage, crystal or dome.</p>\n      <div class=\"trio\"><figure><img src=\"img/purif-1.jpg\" alt=\"Purifier idea 1 in the cove\"><figcaption><b>1.</b> C as it was: the tank and pump tower on the jetty's round end</figcaption></figure><figure><img src=\"img/purif-iso-1.jpg\" alt=\"Purifier idea 1 on its own, for modelling\"><figcaption>1, on its own</figcaption></figure><figure><img src=\"img/purif-2.jpg\" alt=\"Purifier idea 2 in the cove\"><figcaption><b>2.</b> C reworked: the tank is the jetty's head, standing in the sea; the pump tower against the cliff, its top at the forecourt where the glyph path ends</figcaption></figure><figure><img src=\"img/purif-iso-2.jpg\" alt=\"Purifier idea 2 on its own, for modelling\"><figcaption>2, on its own</figcaption></figure><figure><img src=\"img/purif-3.jpg\" alt=\"Purifier idea 3 in the cove\"><figcaption><b>3.</b> The pump house on a pier at the jetty's end</figcaption></figure><figure><img src=\"img/purif-iso-3.jpg\" alt=\"Purifier idea 3 on its own, for modelling\"><figcaption>3, on its own</figcaption></figure><figure><img src=\"img/purif-4.jpg\" alt=\"Purifier idea 4 in the cove\"><figcaption><b>4.</b> Rune filter basins stepping down the beach into the sea (they fill the east half of the beach)</figcaption></figure><figure><img src=\"img/purif-iso-4.jpg\" alt=\"Purifier idea 4 on its own, for modelling\"><figcaption>4, on its own</figcaption></figure><figure><img src=\"img/purif-5.jpg\" alt=\"Purifier idea 5 in the cove\"><figcaption><b>5.</b> New: a tidal sluice pool, a walled ring in the sea (about twice the platform's size)</figcaption></figure><figure><img src=\"img/purif-iso-5.jpg\" alt=\"Purifier idea 5 on its own, for modelling\"><figcaption>5, on its own</figcaption></figure><figure><img src=\"img/purif-6.jpg\" alt=\"Purifier idea 6 in the cove\"><figcaption><b>6.</b> New: a Life-rune screw lifting the water up the cliff on arches to a head house on the forecourt (a moving part to animate)</figcaption></figure><figure><img src=\"img/purif-iso-6.jpg\" alt=\"Purifier idea 6 on its own, for modelling\"><figcaption>6, on its own</figcaption></figure></div>\n      <p class=\"rec\">My pick: <b>2</b>: your C, made part of the cove: the drum anchors the jetty from the beach, and from the forecourt you see the tower's top where the glyph path arrives. <b>6</b> is the most readable \"lifting the sea up to the greenhouse\", but the screw needs animating.</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"1\">1</button><button type=\"button\" data-v=\"2\">2</button><button type=\"button\" data-v=\"3\">3</button><button type=\"button\" data-v=\"4\">4</button><button type=\"button\" data-v=\"5\">5</button><button type=\"button\" data-v=\"6\">6</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc4-purifier\" aria-label=\"Note on the purifier\" placeholder=\"Which, and what to change…\"></textarea><div class=\"status\"></div>\n    </div>\n    <div class=\"answer\" data-id=\"pc3-camp\">\n      <h3>Tent-building materials to strew round the camp (one sheet, split)</h3>\n      <div class=\"pair\"><figure><img src=\"img/pc3-camp-kit-a.jpg\" alt=\"a\"><figcaption>a</figcaption></figure><figure><img src=\"img/pc3-camp-kit-b.jpg\" alt=\"b\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">My pick: <b>b</b>: strapped poles, rolled canvas with the star trim, stakes and a mallet, a stretcher laid flat, blankets, an open crate of bandages: looks in use. Its blankets are cream, not blue.</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc3-camp\" aria-label=\"Note on Tent-building materials to strew round the camp (one sheet, split)\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n\n    <div class=\"answer\" data-id=\"pc3-boiler\">\n      <h3>The battery's boiler house, beside the smokestack</h3>\n      <div class=\"pair\"><figure><img src=\"img/pc3-boiler-house-a.jpg\" alt=\"a\"><figcaption>a</figcaption></figure><figure><img src=\"img/pc3-boiler-house-b.jpg\" alt=\"b\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">My pick: <b>a</b>: brick on a sandstone plinth, the stack's band of stars under the eaves, open doors onto a boiler, coal bays. (b bakes glowing windows into the picture.)</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc3-boiler\" aria-label=\"Note on The battery's boiler house, beside the smokestack\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n\n  </div>\n</section>\n"
+      }
+     ]
+    },
+    {
+     "id": "purifier",
+     "label": "Purifier",
+     "sections": [
+      {
+       "title": "Round 6: the purifier, built",
+       "html": "<section>\n  <h2>Round 6: the purifier, built</h2>\n  <p>Your pick, idea 2, modelled in one Meshy call (30 credits; 300 this session, 1,164 left) and split into its two parts: the settling drum stands in the sea as the jetty's head; the pump tower stands on the beach in a bay cut into the cliff, its top above the forecourt where the glyph path will arrive; a brass pipe runs along the jetty between them. Also merged main again (PR #31) and re-laid the court's stones, as issue #30 advised. 0 errors.</p>\n  <div class=\"trio\"><figure><img src=\"img/purif-2.jpg\" alt=\"The painting you picked\"><figcaption>The painting you picked</figcaption></figure><figure><img src=\"img/h4-cove.jpg\" alt=\"Built: the cove with the purifier\"><figcaption>Built: the cove with the purifier</figcaption></figure><figure><img src=\"img/h4-overview.jpg\" alt=\"The whole place\"><figcaption>The whole place</figcaption></figure></div>\n</section>\n"
+      }
+     ]
+    },
+    {
+     "id": "devices",
+     "label": "Healing devices",
+     "sections": [
+      {
+       "title": "Healing devices, round 1: your answers",
+       "html": "<section>\n  <h2>Healing devices, round 1: your answers</h2>\n  <p>Healing devices for the camp, where each glyph path ends by the tents: Codex pictures for your pick before any Meshy model (about 30 credits each). Several takes include a cot only for scale; the model would be the device alone.</p>\n  <div class=\"pieces\">\n    <div class=\"answer\" data-id=\"pc5-lamp\">\n      <h3>A healing lamp over a cot</h3>\n      <div class=\"pair\"><figure><img src=\"img/dev-lamp-a.jpg\" alt=\"a\"><figcaption>a</figcaption></figure><figure><img src=\"img/dev-lamp-b.jpg\" alt=\"b\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">My pick: <b>a</b>: a brass tripod holding a Life-rune bowl over the patient, a rune plate at its foot where the path ends. (b reads as a crystal brazier.)</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc5-lamp\" aria-label=\"Note on A healing lamp over a cot\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n\n    <div class=\"answer\" data-id=\"pc5-pylon\">\n      <h3>A mender's pylon serving two cots</h3>\n      <div class=\"pair\"><figure><img src=\"img/dev-pylon-a.jpg\" alt=\"a\"><figcaption>a</figcaption></figure><figure><img src=\"img/dev-pylon-b.jpg\" alt=\"b\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">My pick: <b>a</b>: a post between two cots with brass arms out over them and a rune plate at its foot. (b reads as a desk lamp.)</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc5-pylon\" aria-label=\"Note on A mender's pylon serving two cots\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n\n    <div class=\"answer\" data-id=\"pc5-frame\">\n      <h3>A rune frame over a stretcher</h3>\n      <div class=\"pair\"><figure><img src=\"img/dev-frame-a.jpg\" alt=\"a\"><figcaption>a</figcaption></figure><figure><img src=\"img/dev-frame-b.jpg\" alt=\"b\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">My pick: <b>b</b>: a brass camp-bed frame under a hinged lid of rune tiles, a hose to a rune stake: portable and clearly powered.</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc5-frame\" aria-label=\"Note on A rune frame over a stretcher\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n\n    <div class=\"answer\" data-id=\"pc5-sheet\">\n      <h3>Triage dressing (one sheet, split)</h3>\n      <div class=\"pair\"><figure><img src=\"img/dev-sheet-a.jpg\" alt=\"a\"><figcaption>a</figcaption></figure><figure><img src=\"img/dev-sheet-b.jpg\" alt=\"b\"><figcaption>b</figcaption></figure></div>\n      <p class=\"rec\">My pick: <b>b</b>: buckets, a washstand, a camp stool, an instrument table, an open chest of bottles, a lantern post, a rack of worn cloaks: more triage story.</p>\n      <div class=\"choices\"><button type=\"button\" data-v=\"a\">a</button><button type=\"button\" data-v=\"b\">b</button><button type=\"button\" data-v=\"redo\">Redo</button></div>\n      <textarea id=\"n-pc5-sheet\" aria-label=\"Note on Triage dressing (one sheet, split)\" placeholder=\"Changes…\"></textarea><div class=\"status\"></div>\n    </div>\n\n  </div>\n  <ul class=\"gaps\"><li><b>Your answers:</b> the lamp per bed is too busy; lamp b's look suits <b>one station per tent</b>; the pylon could serve two beds instead; the frame would hide the patient, so instead a small <b>emitter behind each pillow</b>, wired to the tent's station, which is wired to the well. Round 2 pictures of that system go on the front tab. The triage sheet (b) is being modelled.</li></ul>\n</section>\n"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ground",
+   "label": "Ground & greenery",
+   "subs": [
+    {
+     "id": "floor",
+     "label": "Floor & camp",
+     "sections": [
+      {
+       "title": "Round 4: the weathered floor, the boiler house, the camp kit",
+       "html": "<section>\n  <h2>Round 4: the weathered floor, the boiler house, the camp kit</h2>\n  <p>A new floor, <code>weathered</code>, laid stone by stone with the courtyard's method (main's paving update merged in first): worn flagstones and cobbles in wide joints, chipped edges, stains, moss over the rims, grass and earth in the joints, missing stones and packed-earth patches, the paving breaking up into the lawn at its edges. The courtyard keeps its look and can use it later. The boiler house (a) and the camp kit (b) are modelled (60 credits; 270 this session, 1,194 left) and placed: stretchers and medical crates where the triage is, poles, canvas and stakes dropped between the tents. 0 errors; all 724 tests pass.</p>\n  <div class=\"trio\"><figure><img src=\"img/floor-before-35-20.jpg\" alt=\"Before: the forecourt\"><figcaption>Before: the forecourt</figcaption></figure><figure><img src=\"img/h3-forecourt.jpg\" alt=\"After: the forecourt, with the camp kit\"><figcaption>After: the forecourt, with the camp kit</figcaption></figure><figure><img src=\"img/floor-after-close-30-24.jpg\" alt=\"The weathered floor close up\"><figcaption>The weathered floor close up</figcaption></figure><figure><img src=\"img/h3-overview.jpg\" alt=\"The whole place\"><figcaption>The whole place</figcaption></figure><figure><img src=\"img/h3-arrival.jpg\" alt=\"Arriving\"><figcaption>Arriving</figcaption></figure><figure><img src=\"img/h3-road.jpg\" alt=\"The road out: the boiler house beside its stack\"><figcaption>The road out: the boiler house beside its stack</figcaption></figure></div>\n  <ul class=\"gaps\">\n    <li><b>Floor, still rough:</b> where rows of stones from different edges meet, the big stones form crazy-paving patches (beside the well); the narrow road is very broken; the lawn texture is a bright lime next to the concept's softer grass.</li>\n    <li><b>The camp props read small</b> at the game camera: they're real-world size. The courtyard's paint-overs drew such things about twice life size; I can scale them up if you agree.</li>\n  </ul>\n</section>\n"
+      }
+     ]
+    },
+    {
+     "id": "green",
+     "label": "Foliage & grass",
+     "sections": [
+      {
+       "title": "Round 5: foliage, a softer meadow, bigger props",
+       "html": "<section>\n  <h2>Round 5: foliage, a softer meadow, bigger props</h2>\n  <p>Your notes: you like the stone pattern (kept); the lawn was rough; way more foliage; props bigger. The camp props are 1.8x life size now (a rule on the veto list). A new softer, varied grass, <code>meadow</code> (Codex tiles, less saturated, drifting warm and cool, darker under trees), the weathered paving fraying into it. Foliage grown in code: birches, cherries, wisteria, yellow bushes in a wood along the north and east edges; shrubs, lavender and meadow flowers round the forecourt's edges and between the tents, the middle round the well left open; planting on the cliff top and in the cove's corners, vines over the parapets and cove walls; six crop fields to the west running off the map. The courtyard's lawn unchanged. 0 errors, 724 tests pass.</p>\n  <div class=\"trio\"><figure><img src=\"img/green-before-overview.jpg\" alt=\"Before: the whole place\"><figcaption>Before: the whole place</figcaption></figure><figure><img src=\"img/green-after-overview.jpg\" alt=\"After: the whole place\"><figcaption>After: the whole place</figcaption></figure><figure><img src=\"img/green-before-forecourt.jpg\" alt=\"Before: the forecourt\"><figcaption>Before: the forecourt</figcaption></figure><figure><img src=\"img/green-after-forecourt.jpg\" alt=\"After: the forecourt\"><figcaption>After: the forecourt</figcaption></figure><figure><img src=\"img/green-before-greenhouse.jpg\" alt=\"Before: the greenhouse and fields\"><figcaption>Before: the greenhouse and fields</figcaption></figure><figure><img src=\"img/green-after-greenhouse.jpg\" alt=\"After: the greenhouse and fields\"><figcaption>After: the greenhouse and fields</figcaption></figure><figure><img src=\"img/green-before-cove.jpg\" alt=\"Before: the cove\"><figcaption>Before: the cove</figcaption></figure><figure><img src=\"img/green-after-cove.jpg\" alt=\"After: the cove\"><figcaption>After: the cove</figcaption></figure><figure><img src=\"img/green-before-road.jpg\" alt=\"Before: the road out\"><figcaption>Before: the road out</figcaption></figure><figure><img src=\"img/green-after-road.jpg\" alt=\"After: the road out\"><figcaption>After: the road out</figcaption></figure></div>\n  <ul class=\"gaps\"><li><b>Still rough:</b> birches are plain pale trunks, the wisteria tree reads as a round lilac shrub rather than hanging blossom; few vines on the middle cove cliff; the fields a bit bright with hard edges; shrubs up close are lumpy.</li></ul>\n</section>\n"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "magic",
+   "label": "Well & magic",
+   "subs": [
+    {
+     "id": "glyphs",
+     "label": "Glyph paths",
+     "sections": [
+      {
+       "title": "The glyph paths (round 7)",
+       "html": "<section>\n  <h2>The glyph paths (round 7)</h2>\n  <p>The glyph paths are a new kit feature: carved rune lines flush with the floor (you walk over them), glowing Life green with a slow pulse running out from the well, pads at their ends, medallions at bends and joins; each line can be set lit, dim or dark, so the fix can relight them one by one later. In the infirmary they run from the well to the greenhouse and the fields, to each pair of tents, and to the cliff top above the purifier's tower (only to things that use the well's power; the line along the road out was dropped). They replace the pipes (the purifier keeps its own pipe on the jetty). 0 errors.</p>\n  <div class=\"trio\"><figure><img src=\"img/h5-forecourt.jpg\" alt=\"The glyph paths round the well\"><figcaption>The glyph paths round the well</figcaption></figure><figure><img src=\"img/h5-overview.jpg\" alt=\"The whole place\"><figcaption>The whole place</figcaption></figure></div>\n  </section>\n"
+      }
+     ]
+    },
+    {
+     "id": "vines",
+     "label": "Vines & smoke",
+     "sections": [
+      {
+       "title": "Round 8: the well's vines and the stack's smoke",
+       "html": "<section>\n  <h2>Round 8: the well's vines and the stack's smoke</h2>\n  <p>Both grown in code, not baked into the models (your rule). Thorny vines with leaves and white and yellow flowers wind round the well's cage and the crystal and lie across the first stretch of each glyph path. The game can draw them back while it runs: each vine withers from its tip, its leaves browning and dropping, down to stumps at the foot, so the fix can show the recovery (and a path's own vines can be cut as it relights). The smoke is a soft stylised plume rising from the stack's flue and drifting on the wind. 724 tests pass.</p>\n  <div class=\"trio\"><figure><img src=\"img/vines-near-1.jpg\" alt=\"Choked: the start of the fix\"><figcaption>Choked: the start of the fix</figcaption></figure><figure><img src=\"img/vines-near-half.jpg\" alt=\"Half cut back\"><figcaption>Half cut back</figcaption></figure><figure><img src=\"img/vines-near-0.jpg\" alt=\"Cut back: the well relit\"><figcaption>Cut back: the well relit</figcaption></figure><figure><img src=\"img/smoke-1.jpg\" alt=\"The smoke from the flue\"><figcaption>The smoke from the flue</figcaption></figure><figure><img src=\"img/vines-overview.jpg\" alt=\"The whole place\"><figcaption>The whole place</figcaption></figure></div>\n  <p>Your note on the purifier: the pipe on the jetty looked unconnected and like it would block. It's gone: the tower's own downpipe meets the beach and the link to the drum runs under the jetty, implied. The jetty is clear to walk.</p>\n  <div class=\"trio\"><figure><img src=\"img/h6-cove.jpg\" alt=\"The cove with the purifier and a clear jetty\"><figcaption>The cove now: the jetty clear</figcaption></figure></div>\n  <ul class=\"gaps\"><li><b>Rough:</b> fully choked, the crystal is nearly hidden (it shows clearly at half); the stems are plain up close; the smoke's puffs can swap order as they loop (hard to see).</li></ul>\n</section>\n"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

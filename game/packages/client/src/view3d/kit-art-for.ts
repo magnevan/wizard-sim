@@ -19,6 +19,9 @@ export function kitArtFor(data: KitData, pieces: Record<string, KitPiece>, has: 
   for (const t of ['ashlar', 'smooth-stone', 'tread', 'kerb', 'rock', 'deck', 'dirt']) textures.add(t);
   for (const f of data.floors) textures.add(f.mat);
   if (data.floors.some((f) => f.mat === 'weathered')) textures.add('lawn');   // weathered paving frays out into the lawn's texture (kit-stones.ts)
+  // a meadow is natural ground (kit-ground.ts): its painted tufts (and the margin grass made of them), its wild flowers
+  // and the earth its worn paths show; without them it falls back to flat paint
+  if (data.floors.some((f) => f.mat === 'meadow')) for (const t of ['foliage-tufts', 'foliage-blossoms', 'weathered']) textures.add(t);
   for (const it of data.instances) {
     const [cls, kind] = it.p.split('.');
     const k = pieces[it.p] as (KitPiece & { texture?: string; sheet?: string; channels?: { texture?: string } }) | undefined;

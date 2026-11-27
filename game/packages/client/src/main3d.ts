@@ -84,6 +84,8 @@ const SHOTS: Record<string, { room?: string; wiz: [number, number][]; gob: [numb
   practice: { room: 'practice', wiz: [[23, 23.5], [31, 23.5]], gob: [], face: 0.75 },
   // Fire spray from the yard at the middle dummy, 70 ticks in
   'practice-fire': { room: 'practice', wiz: [[27, 25.5], [33, 28]], gob: [], face: 0.75, spell: 'fire+fire+fire/force', at: [27, 19], ticks: 70 },
+  // the infirmary's lawn by the beds (the grass: kit-ground.ts), one wizard standing on it
+  infirmary: { room: 'infirmary', wiz: [[150, 70]], gob: [], face: 0.75 },
   // a three-rune Frost ring among goblins on the plaza, just after it went off (with ?clip=1, a film: scripts/cold3d-clips.mjs)
   cold: { wiz: [[95, 95], [106, 99]], gob: [[90.5, 91], [95, 90], [99.5, 91.5], [92, 98.5], [99, 98]], face: 0.75, spell: 'cold+cold+cold/area', at: [95, 95], ticks: 36 },
 };

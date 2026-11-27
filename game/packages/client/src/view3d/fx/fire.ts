@@ -403,7 +403,7 @@ export class FireSpray {
     this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - Math.max(0, t - r.end - 0.8) / 0.3);
     if (this.gas) {
       const A = this.trail.at(t);
-      this.gas.place(A.x, A.z, A.reach, groundY);
+      this.gas.place(A.x, A.z, Math.max(A.reach, this.U.uRange.value as number), groundY);
       this.gas.u.uTravel.value = RATE.puffLife; this.gas.u.uOn.value = this.body.uOn.value;
     }
     this.U.uN.value = n; this.U.uHot.value = hotOf(n); this.U.uCore.value = 0.34 + 0.02 * n; this.U.uNoz.value.w = groundY;

@@ -51,42 +51,60 @@ vec3 gasRamp(float h) {
   return mix(c3, c4, (h - 0.7) / 0.3);
 }
 // a slice s of the way out left the hands this long ago (the puffs' drag curve: fast out, slowing toward the end)
-float agoOf(float s) { return uTravel * (1.0 - pow(max(1.0 - clamp(s, 0.0, 1.0), 0.0), 0.714)); }
+// (past the end, in the bulb, it keeps ageing so it can burn out there)
+float ageOf(float s) { return s <= 1.0 ? 1.0 - pow(max(1.0 - max(s, 0.0), 0.0), 0.714) : 1.0 + (s - 1.0) * 0.8; }
+float agoOf(float s) { return uTravel * min(ageOf(s), 1.0); }
 vec2 gas(vec3 p) {
-  // where along the stream p is, first by the aim now, then by the aim its slice left the hands with
+  // where along the stream p is: first by the aim now, then (twice) by the aim its slice left the hands with, so a fast
+  // turn bends the stream instead of smearing it into a sheet (take 1: "looks very 2d if you rotate rapidly")
+  // (measured against the spray's full range, not the sim's reach: the reach grows as the channel starts, and gas
+  // measured against the short reach it left with read as burnt out past it, a straight cut that ran out with it)
   vec4 A = aimAt(0.0);
-  float R = max(A.w - uNoz.x, 0.3);
+  float reachNow = A.w, R = max(uRange - uNoz.x, 0.3);
   float s = (dot(p.xz - A.xy, vec2(cos(A.z), sin(A.z))) - uNoz.x) / R;
-  A = aimAt(agoOf(s));
-  R = max(A.w - uNoz.x, 0.3);
+  for (int k = 0; k < 2; k++) {
+    A = aimAt(agoOf(s));
+    s = (dot(p.xz - A.xy, vec2(cos(A.z), sin(A.z))) - uNoz.x) / R;
+  }
   vec2 dir = vec2(cos(A.z), sin(A.z)), nn = vec2(-dir.y, dir.x), o = p.xz - A.xy;
   float along = dot(o, dir), across = dot(o, nn);
-  s = (along - uNoz.x) / R;
-  // the stretch that exists now: the head runs out over uTravel; after the channel stops, the tail follows it out
-  float head = uEnd > 1e8 ? 1.0 - pow(max(1.0 - clamp(uTime / uTravel, 0.0, 1.0), 0.0), 1.4) : 1.0;
-  float tail = uEnd > 1e8 ? -1.0 : 1.0 - pow(max(1.0 - clamp((uTime - uEnd) / uTravel, 0.0, 1.0), 0.0), 1.4);
-  // (broken by noise: a plane across the stream cut its head and tail off straight)
-  float big = fbm3(vec3(p.xz * 0.9 - dir * uTime * 3.0, uTime * 0.6)), sl = s + (big - 0.5) * 0.4;
-  float lim = smoothstep(tail - 0.06, tail + 0.14, sl) * (1.0 - smoothstep(head * 1.08 - 0.16, head * 1.08 + 0.04, sl));
-  if (lim <= 0.0 || s < -0.1) return vec2(0.0, 1.0);
-  // the raindrop's width there (rounded at its end), never thinner than the jet at the hands; flatter than wide
+  if (s < -0.08) return vec2(0.0, 1.0);
+  // the gas there left the hands at emit (s, on the puffs' own drag curve: fast out, slowing) and is age (0..1 over
+  // its travel, more in the bulb). Everything follows the gas, not the place: its pattern is born at the hands and
+  // carried out (take 1: flames "just appear from the aether"; it "just drifts along"), only gas emitted while the
+  // channel ran exists (so when it stops, the last of it travels out and burns out: take 1, "looks like its being
+  // erased rather than fading"), and it thins and reddens as it ages.
+  // (s broken by a noise fixed in space first: every line of equal age, the front and the burn-out, was straight)
+  float ragS = (fbm3(vec3(p.xz * 1.4, uTime * 1.2)) - 0.5) * 0.3 * smoothstep(0.1, 0.5, s);
+  float age = ageOf(s + ragS), emit = uTime - uTravel * age;
+  if (age > 1.8) return vec2(0.0, 1.0);
+  // the raindrop's width there (rounded at its end), never thinner than the jet at the hands; nearly round across
   float w = max(dropW(max(along, 0.0)), 0.0) * 1.12 + 0.12 * (1.0 - smoothstep(0.0, 0.25, s));
-  float cy = uNoz.w + axisH(s) + max(s, 0.0) * max(s, 0.0) * 0.55, hv = 0.2 + w * 0.65;
+  float cy = uNoz.w + axisH(s) + age * age * 0.5, hv = 0.18 + w * 0.8;
   float e = length(vec2(across / (w + 0.08), (p.y - cy) / hv));
   if (e > 1.6) return vec2(0.0, 1.0);
-  // noise racing outward (fast at the hands, dragging toward the end), bent by a slower noise
-  vec3 q = vec3(along * 2.3 - uTime * 9.0, across * 2.4, p.y * 2.4 - uTime * 1.6);
-  q.yz += (vec2(vnoise3(q * 0.4 + 3.1), vnoise3(q * 0.4 + 7.7)) - 0.5) * 1.6;
-  float n = fbm3(q);
-  // a tight, smooth jet at the hands; torn into tongues and billows as it opens (the wave's own balance: a thin body,
-  // the noise doing the shaping)
-  float tear = mix(0.5, 2.0, smoothstep(0.0, 0.4, s));
-  float body = (1.0 - e) * mix(1.1, 0.85, smoothstep(0.0, 0.4, s)) * lim - 0.22;
+  // the gas's own pattern: by when it left the hands (along), and across and up as a share of the stream there, so its
+  // billows swell as it spreads; boiling fast (the churn: a raging fire, not a drift)
+  float an = across / (w + 0.15), yn = (p.y - cy) / hv;
+  float big = fbm3(vec3(emit * 4.0, an * 1.2, yn * 0.8 + 3.0));
+  vec3 q = vec3(emit * 16.0, an * 3.2, yn * 2.6);
+  q += (vec3(vnoise3(q * 0.5 + vec3(0.0, 0.0, uTime * 4.0)), vnoise3(q * 0.5 + vec3(5.2, 1.3, uTime * 4.0)), vnoise3(q * 0.5 + vec3(2.7, 8.1, uTime * 4.0))) - 0.5) * 1.8;
+  float n = fbm3(q + vec3(0.0, 0.0, uTime * 2.5));
+  // the first and last gas of the channel, torn by its own pattern rather than cut straight
+  // (and by a noise fixed in space: near the end the gas's emit hardly changes along it, so a cut there was a line)
+  float ragged = emit + (n - 0.5) * 0.22 + ragS * 0.9;
+  float live = smoothstep(-0.03, 0.05, ragged) * (1.0 - smoothstep(uEnd - 0.05, uEnd + 0.03, ragged));
+  // and where the sim's channel stops now (a wall or a body cuts it short), a rounded, torn end
+  live *= 1.0 - smoothstep(reachNow - 0.4, reachNow + 0.6, along + (n - 0.5) * 1.4 + abs(across) * 0.3);
+  float burn = 1.0 - smoothstep(0.55, 1.25, age + (big - 0.5) * 0.35);
+  if (live * burn <= 0.0) return vec2(0.0, 1.0);
+  // a tight jet at the hands, torn into tongues and billows as it opens
+  float tear = mix(0.5, 2.0, smoothstep(0.0, 0.35, age));
+  float body = (1.0 - e) * mix(1.1, 0.85, smoothstep(0.0, 0.4, s)) * live * burn - 0.15 - 0.25 * (1.0 - burn);
   float d = body + (n - 0.5) * tear;
   if (d <= 0.0) return vec2(0.0, 1.0);
-  // the dense hearts hot, the thin edges red; hotter near the hands, cooling out along it; more runes run hotter
-  // (and billowing: broad hot and red regions drifting out with it, as in the wave)
-  float heat = 0.14 + (big - 0.5) * 0.5 + 0.35 * clamp(s, 0.0, 1.0) + 0.15 * clamp(e, 0.0, 1.0) + 0.5 * (1.0 - clamp(d * 1.8, 0.0, 1.0)) - uHot * 0.8;
+  // the dense hearts hot, the thin edges red; hot as it leaves the hands, reddening as it ages; more runes run hotter
+  float heat = 0.1 + (big - 0.5) * 0.45 + 0.45 * clamp(age, 0.0, 1.2) + 0.12 * clamp(e, 0.0, 1.0) + 0.45 * (1.0 - clamp(d * 1.8, 0.0, 1.0)) - uHot * 0.8;
   return vec2(d, heat);
 }
 void main() {

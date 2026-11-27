@@ -638,4 +638,24 @@ window.ROUNDS = [
     ],
     general: 'Anything else about the flamethrower',
   },
+  {
+    id: 'fire-17',
+    group: 'Fire',
+    topic: 'Flamethrower',
+    tab: '2 · gas thread',
+    el: 'fire',
+    date: '2026-11-27',
+    title: 'The flamethrower as gas, take 2 (the flipbook stays the game’s)',
+    lead: 'You on take 1: the flipbook with the fixes for now, and a gas thread to see if it ends up better. Your four points, and what changed.',
+    items: [
+      {
+        id: 'gas',
+        title: 'Gas, take 2 (?spray=gas)',
+        text: 'The gas now follows its own matter instead of the place. 1. “It just drifts along”: each bit of gas carries its pattern out from the hands on the flame puffs’ own curve (fast out of the jet, dragging near the end), and boils fast as it goes. 2. “Looks like its being erased”: it burns out by age, thinning and reddening; when you stop, the last of it travels out and burns out like the rest. 3. “Very 2d if you rotate rapidly”: a rounder cross-section, and each point finds the aim its gas left with in two steps rather than one, so a fast turn bends it instead of flattening it. 4. “Flames that just appear from the aether”: every pattern is born at the hands and carried out. Its front was cut straight as it ran out (the sim’s reach grows as the channel starts); now torn. Two runes, a sweep, five runes; compare the flipbook in round 1.',
+        vid: ['t2-gas-9.mp4', 't2-sweep-9.mp4', 't2-gas5-9.mp4'],
+        ask: 'Closer? What is still missing?',
+      },
+    ],
+    general: 'Anything else about the gas',
+  },
 ];

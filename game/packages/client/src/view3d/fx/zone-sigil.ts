@@ -33,9 +33,10 @@ vec4 decal(vec3 wp) {
     // the fill: light from the rim inward as it charges
     float fill = smoothstep(1.0 - k * 1.05, 1.0 - k * 1.05 + 0.12, r) * (1.0 - smoothstep(0.98, 1.02, r));
     float lines = (ring1 + ticks * 0.8 + ring2 + glyph * 0.8) * smoothstep(0.0, 0.15, k);
-    float glow = lines * (0.6 + 0.8 * k) + fill * 0.35 * k;
-    o.rgb += vec3(1.9, 0.5, 1.9) * glow;
-    o.a += min(1.0, lines * 0.35 + fill * 0.12 * k);
+    // covering magenta, as the shockwave's circle (arcane-nova.ts): light added over the pale stone washed to pink
+    float cov = min(0.95, min(lines, 1.0) * 0.85 + fill * 0.25 * k);
+    o.rgb += vec3(0.95, 0.06, 0.85) * (1.0 + 0.5 * k) * cov;
+    o.a += cov;
   }
   return vec4(o.rgb, min(o.a, 0.9));
 }`;

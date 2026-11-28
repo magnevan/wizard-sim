@@ -11,6 +11,7 @@
  * the scene point (heightAt below).
  */
 import * as THREE from 'three';
+import { opt } from '../dev-options';
 import { EL, MAX_SEATS, type World } from '@wizard-sim/sim';
 import { ArcaneBeams } from './fx/arcane';
 import { ColdNovas } from './fx/cold';
@@ -24,6 +25,7 @@ import { Standins } from './fx/standins';
 import { BodyStatuses } from './fx/statuses';
 import { ZoneFogs } from './fx/zone-fog';
 import { ZoneSigils } from './fx/zone-sigil';
+import { ArcaneNovas } from './fx/arcane-nova';
 import { WindupTells } from './fx/windup';
 import { applyFxOff, fxOff } from './fx-off';
 import { sceneX, sceneZ } from './scene-map';
@@ -63,6 +65,8 @@ export class Spells3D {
   readonly fireWaves = new FireWaves();
   /** The Arcane ring and burst: Fire's wave in Arcane's colours (fx/fire-wave.ts, element EL.arcane). */
   readonly arcWaves = new FireWaves(EL.arcane);
+  /** The Arcane shockwave as a magic circle and a shell (fx/arcane-nova.ts), the default; ?arcnova=wave: the plasma wave. */
+  readonly arcNovas = new ArcaneNovas();
   /** Each seat's cast windup: motes drawn in to the hand (fx/windup.ts). */
   readonly windups = new WindupTells();
   private spraysBy: FireSpray[] = [];
@@ -95,6 +99,9 @@ export class Spells3D {
     this.arcWaves.heightAt = (x, y) => this.simHeight(x, y);
     this.stage.scene.add(this.arcWaves.group);
     this.arcWaves.group.name = 'arcwave';
+    this.arcNovas.heightAt = (x, y) => this.simHeight(x, y);
+    this.stage.scene.add(this.arcNovas.group);
+    this.arcNovas.group.name = 'arcnova';
     this.stage.scene.add(this.windups.group);
     this.earth = new EarthFx((x, z) => this.simHeight(x, z));
     this.lightRoot.add(this.earth.meshes);
@@ -148,6 +155,7 @@ export class Spells3D {
     this.cold.afterStep(w);
     this.fireWaves.afterStep(w);
     this.arcWaves.afterStep(w);
+    this.arcNovas.afterStep(w);
     this.earth.afterStep(w);
     if (!this.spraysBy.length) return;
     const t = w.clock[0] / 60, all = sprays(w);
@@ -158,10 +166,10 @@ export class Spells3D {
   }
 
   /** After a replayed step (rollback): its events, once each. */
-  replayStep(w: World): void { this.standins.afterStep(w); this.cold.afterStep(w); this.fireWaves.afterStep(w); this.arcWaves.afterStep(w); this.earth.afterStep(w); }
+  replayStep(w: World): void { this.standins.afterStep(w); this.cold.afterStep(w); this.fireWaves.afterStep(w); this.arcWaves.afterStep(w); this.arcNovas.afterStep(w); this.earth.afterStep(w); }
 
   /** A rewind put the world back to its tick: what came after is dropped (the replay brings it back). */
-  rewind(w: World): void { this.standins.rewind(w.clock[0]); this.cold.rewind(w.clock[0]); this.fireWaves.rewind(w.clock[0]); this.arcWaves.rewind(w.clock[0]); this.earth.rewind(w); }
+  rewind(w: World): void { this.standins.rewind(w.clock[0]); this.cold.rewind(w.clock[0]); this.fireWaves.rewind(w.clock[0]); this.arcWaves.rewind(w.clock[0]); this.arcNovas.rewind(w.clock[0]); this.earth.rewind(w); }
 
   /** Each frame, before render: effect time `t` (s). */
   frame(w: World, t: number, o: SpellFrame = {}): void {
@@ -193,8 +201,11 @@ export class Spells3D {
     if (this.sigils.group.visible) this.sigils.update(w, t, (x, z) => this.simHeight(x, z), this.lights);
     this.fireWaves.group.visible = fireB;
     if (fireB) this.fireWaves.update(t, this.lights);
-    this.arcWaves.group.visible = !this.standins.drawArcane;
+    const arcWave = opt('arcnova') === 'wave';
+    this.arcWaves.group.visible = !this.standins.drawArcane && arcWave;
     if (this.arcWaves.group.visible) this.arcWaves.update(t, this.lights);
+    this.arcNovas.group.visible = !this.standins.drawArcane && !arcWave;
+    if (this.arcNovas.group.visible) this.arcNovas.update(t, this.lights);
     this.earth.meshes.visible = this.earth.group.visible = !this.standins.drawEarth;
     if (!this.standins.drawEarth) { this.earth.update(w, t, o.alpha ?? 0, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]]); this.shakeAt = t + (o.alpha ?? 0) / 60; }
     // Burn's flare: the caster's flames surge up for a moment as the spell goes off, then settle into Burning; Chill's
@@ -231,7 +242,7 @@ export class Spells3D {
   }
 
   /** Forget every remembered event and the floor's burn ages (a lab drawing another world with the same effects). */
-  reset(): void { this.standins.rewind(-1); this.cold.reset(); this.fogs.reset(); this.fireWaves.reset(); this.arcWaves.reset(); this.earth.reset(); this.floor?.reset(); }
+  reset(): void { this.standins.rewind(-1); this.cold.reset(); this.fogs.reset(); this.fireWaves.reset(); this.arcWaves.reset(); this.arcNovas.reset(); this.earth.reset(); this.floor?.reset(); }
 
   /**
    * After each step, when the host doesn't draw every step (a lab stepping a world on to a frozen moment): the fire

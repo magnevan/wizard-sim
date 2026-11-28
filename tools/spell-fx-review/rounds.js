@@ -727,4 +727,18 @@ window.ROUNDS = [
     ],
     general: 'Anything else',
   },
+  {
+    id: 'arcane-3',
+    group: 'Arcane',
+    topic: 'All casts',
+    tab: '2 · circle and shell',
+    el: 'arcane',
+    date: '2026-11-28',
+    title: 'The Arcane shockwave: a magic circle, a shell over it',
+    lead: 'You on the six ideas: “something like 1 or 5 on the floor. maybe 3 on top”. Built for the nova, the burst, the delayed blast going off and Attune. The plasma wave stays one setting away to compare: Tune › URL options › Arcane shockwave, or ?arcnova=wave (it switches at once).',
+    items: [
+      { id: 'shockwave', title: 'Nova, burst, blast, Attune', text: 'On the floor (1 and 5): a magic circle in saturated magenta: a bright outer ring, an inner ring of small glyphs turning, a third ring, spokes turning the other way; it steps out in four quick jumps, leaving fading rings where it stood, and flashes white-pink as it reaches its edge, then fades. On top (3): a translucent magenta shell wall rising from the circle’s edge, bands of light running up it, a bright rim. The burst is the same cut to the fan; the delayed blast’s fuse sigil now matches it in colour. Clips: the nova close and at the game’s distance, the burst, the blast, Attune.', vid: ['r2-ring-12.mp4', 'r2-ring-26.mp4', 'r2-burst-12.mp4', 'r2-place-12.mp4', 'r2-self-9.mp4'], ask: 'Closer to what you meant?' },
+    ],
+    general: 'Anything else about Arcane',
+  },
 ];

@@ -60,10 +60,31 @@ td:first-child { font-weight: 700; }
 <div class="wrap">
   <header style="display:grid;gap:10px">
     <h1>Spell Ramifications</h1>
-    <p class="lede">What the element identities and the casting styles (Concentration and Bindings) change in every spell. Most spells only change how they're paid for; the cards below are the ones whose effect changes. Each has my recommendation; pick an answer and add a note where you want something different.</p>
+    <p class="lede">What the element identities and the casting styles (Concentration and Bindings) change in every spell. Round 2 takes up your follow-ups from round 1: each card has my proposal, and the list of every shape that carries Arcane has a mark per row. Round 1, with your answers, is folded away at the bottom.</p>
     <p class="save" id="saveState">Connecting to saved answers…</p>
   </header>
 
+  <section>
+    <h2>Settled in round 1</h2>
+    <ul class="agreed">
+      <li><b>Yes:</b> Expose becomes disruption, shields weak against Arcane, imbues count as magic, Lightning's stated path, boosts touch only field pools, a weapon and a guard are two Bindings.</li>
+      <li><b>Changed:</b> the living hedge only regrows and burns (no healing behind it). The Prism helps against magic and adds no weakness to blows.</li>
+      <li><b>Not taken:</b> a caster power stat (regen and slots are the power), the disrupting Arcane aura, Attune as opening yourself. Arcane on yourself is a plain dispel, and opening yourself moves to the Arcane aura.</li>
+      <li><b>Placeholders:</b> the economy's numbers. Devices cost a Binding <i>and</i> the runes cast into them.</li>
+    </ul>
+  </section>
+
+  <section id="round2"></section>
+
+  <section>
+    <h2>Every shape that carries Arcane</h2>
+    <p class="lede">Your note on Expose: list where disruption would happen. Each row is a spell that carries Arcane and what disruption does there. Disruption is by the spell's Arcane runes, against what a caster is still paying for (Concentration, Bindings, imbues); it never touches stone, flesh or wet and burning. Friendly fire includes your partners' wards and devices. Mark each row.</p>
+    <div id="shapeRows" style="display:grid;gap:10px"></div>
+  </section>
+
+  <details id="round1">
+  <summary style="cursor:pointer;font-family:var(--f-display);font-weight:800;font-size:1.2rem">Round 1, with your answers</summary>
+  <div style="display:grid;gap:28px;margin-top:18px">
   <section>
     <h2>The rules applied</h2>
     <ul class="rules">
@@ -95,6 +116,8 @@ td:first-child { font-weight: 700; }
       <li>A shield takes an Earth-carried spell's impact in full; its coat resists only its own elements (already the rule).</li>
     </ul>
   </section>
+  </div>
+  </details>
 
   <section id="general"></section>
 </div>
@@ -106,6 +129,72 @@ td:first-child { font-weight: 700; }
   const EL = { water: ['Q', '#3fa1ff'], life: ['W', '#5fe07a'], shield: ['E', '#ffe08a'], cold: ['R', '#aeefff'], lightning: ['A', '#c7a8ff'], arcane: ['S', '#ff4f9b'], sigil: ['D', '#e07bff'], fire: ['F', '#ff7b39'], earth: ['G', '#c99a68'] };
   const NAME = { water: 'Water', life: 'Life', shield: 'Shield', cold: 'Cold', lightning: 'Lightning', arcane: 'Arcane', sigil: 'Sigil', fire: 'Fire', earth: 'Earth' };
   const CHOICES = [['yes', 'Yes'], ['tweak', 'Yes, with changes'], ['no', 'No']];
+  const MARKS = [['fits', 'Fits'], ['unsure', 'Unsure'], ['no', 'Not this']];
+
+  // Round 2: the follow-ups from round 1's answers (2026-11-28).
+  const ROUND2 = [
+    { id: 'r2-nova', title: 'Charging the Arcane ring', keys: ['arcane'], cast: 'ring (and its burst)', from: 'c-nova: no wasted runes on a tap; more runes, a longer possible charge; early release refunds; not linear',
+      today: 'An instant blast ring; round 1 proposed a hold to charge, with a tap giving a small ring.',
+      next: 'You queue n runes. Holding fills a charge, full after 0.4 × √n seconds: 1 rune 0.40 s, 2 runes 0.57 s, 3 runes 0.69 s, 4 runes 0.80 s, 5 runes 0.89 s. Releasing at a share c of the charge spends c × n runes and refunds the rest, and the ring hits like a ring of c × n runes. A tap spends at least a fifth of the queue. So five runes take about twice as long as one to fill, not five times, and you only pay for what you used.',
+      view: 'Recommended: it’s your rule with a square root for the hold time. Pools already hold fractions of a rune, so the refund is exact.', question: 'Should the Rock’s charge (Earth on Force) follow the same rule, so all charged casts read alike?' },
+    { id: 'r2-wards', title: 'Wards: general or specific, and no reflection', keys: ['shield'], cast: 'self, on an ally',
+      today: 'Shield alone on yourself is a mirror that turns back the next few shots. Shield with elements is resistance to those elements only (40, 57 or 67 % by runes), draining Concentration by what it holds off. It’s one or the other.',
+      next: 'Shield alone is a general ward: it softens all magic a little (about 30 %), and every point it holds off drains Concentration in full. Shield with elements is a specific ward: only those elements, more strongly (40, 57, 67 %), and about a third as costly per point. Blows and arrows pass through every ward; stone armour (Shield + Earth on yourself) is the ward against them. No ward reflects anything.',
+      view: 'Recommended: it answers your two notes (resistance costs something but beats the general one on price; reflection isn’t needed).' },
+    { id: 'r2-turnback', title: 'Barriers block; the parry turns shots back', keys: ['shield'], cast: 'place, ring',
+      today: 'Enemy shots that hit a pure barrier turn back.',
+      next: 'A barrier stops shots and drains Concentration by their damage; nothing comes back. Turning a shot back is a timing skill: the parry of the Mirror buckler and the Prism.',
+      view: 'Recommended: it keeps “timing beats the wall” true, and barriers lose an absolute effect.' },
+    { id: 'r2-coated', title: 'Coated fields pay for their bite', keys: ['shield', 'fire'], cast: 'place, ring',
+      today: 'A coated field bites enemies pressing on or battering it (half its payload each half second) and resists its elements, for the same drain as a plain field. So you’d always load it up.',
+      next: 'Each bite drains Concentration by about half the damage it deals, so a field costs in proportion to how much it fights. Its resistance still saves on hits of its own element. A plain field doesn’t bite and pays nothing extra.',
+      view: 'Recommended: your “drain faster, based on damage done”.' },
+    { id: 'r2-prep', title: 'Preloaded Bindings are how a prepared wizard scales', keys: ['sigil'], cast: 'devices',
+      today: 'Round 1 note: you’d want to put as many runes as you can into a device before a fight, then regenerate. A little strong.',
+      next: 'Keep it as intended (pillar 7: preparation pays off). The most you can bank is your Bindings × 5 runes (the queue’s size), and glyph charges and the turrets’ draw already limit how fast it’s spent. The Bindings count is the dial, and it grows with the campaign.',
+      view: 'Fine as it is; I’d only watch it in Survive, where pools refill between waves.' },
+    { id: 'r2-aura', title: 'The Arcane aura is opening yourself', keys: ['sigil', 'arcane'], cast: 'self, on an ally',
+      today: 'A glass cannon: your hits deal more damage, but anything knocks you down easily.',
+      next: 'While it lasts, your field regen runs at about 1.5 times (more with Arcane runes); you take 25 % more damage, and magic held on you (wards, imbues) is disrupted half again as easily. A Binding, on you or the ally under the cursor.',
+      view: 'Your idea, with numbers to try.', question: 'More damage from everything, or from magic only? I’d say everything: opening yourself lets everything in, and it’s simpler to read.' },
+    { id: 'r2-dispel', title: 'Arcane on yourself is a dispel', keys: ['arcane'], cast: 'self',
+      today: 'Attune: twice the regen, a sting, more damage taken.',
+      next: 'It strips the magic held on you by amount (each Arcane rune removes so much of it), buffs and hostile effects alike. No sting and no regen.',
+      view: 'Your call from round 1.', question: 'May it land on the ally under the cursor, as wards and auras do? It frees a partner of a hostile effect at the price of their buffs. I’d say yes; it matters once enemy casters put magic on you.' },
+    { id: 'r2-weapons', title: 'The pure Shield and pure Sigil weapon casts', keys: ['shield', 'sigil'], cast: 'weapon cast, alone',
+      today: 'Shield alone conjures the Mirror buckler (a light guard whose parry reflects); Sigil alone the sculpting wand (your spells spare allies).',
+      next: 'Basic gear: Shield alone is the Mirror buckler as the plain guard (block and parry, nothing else); Sigil alone a plain blade (physical, no element). Spell shaping (sparing allies) becomes a technique you unlock in the campaign, which fits the styles growing through training.',
+      view: 'Recommended: they teach the guard and the weapon cast, and spell shaping gets a home of its own.',
+      choices: [['basic', 'Basic gear, shaping unlocked'], ['unique', 'A unique effect each'], ['invalid', 'Neither casts anything'], ['other', 'Something else']] },
+    { id: 'r2-world', title: 'World spells after the styles', keys: ['arcane', 'cold'], cast: 'Shift+Space',
+      today: 'Time warp was pure Sigil and Nullify pure Shield; Arcane’s and Fire’s world layers were open.',
+      next: 'Pure Arcane in the world is Nullify: the weather ends, lingering fields fade, magic everywhere is disrupted a little, and no new weather starts for a while. Cold’s world layer becomes the slow: everything moves and casts slower (time warp folded into Cold’s stillness), instead of chill on everyone. Pure Shield and pure Sigil cast no weather. Shield with elements as a world ward stays proposed.',
+      view: 'Recommended: it settles Arcane’s open layer with its own identity.', question: 'Does Cold’s slow reach missiles too, or only bodies and casting?' },
+  ];
+
+  // Every shape that carries Arcane, and what disruption does there (c-expose follow-up). [id, spell, keys, what happens, a question to check]
+  const SHAPES = [
+    ['x-beam', 'Arcane beam', ['arcane'], 'Force. A steady drain on whatever field or ward it plays on; the strongest shield-breaker.', 'Is a pure beam the answer to a shield wall?'],
+    ['x-elbeam', 'Elemental beams (Arcane + Fire, Ice, Cold, Water, Lightning)', ['arcane', 'fire'], 'Force. They disrupt by their Arcane runes only: one Arcane rune in a fire beam disrupts a little, mostly it burns.', ''],
+    ['x-ring', 'Arcane ring (charged)', ['arcane'], 'Ring. Strips enemy wards and imbues around you, by charge. Your partners’ wards in reach too.', 'Fine that it strips a partner standing beside you?'],
+    ['x-blast', 'Arcane blast', ['arcane'], 'Place, delayed. Disrupts what’s at the spot when it goes off: a counter to enemy glyphs, turrets and fields.', ''],
+    ['x-burst', 'Arcane burst (Weapon cast)', ['arcane'], 'A cone toward the cursor that disrupts what it passes, charged like the ring.', ''],
+    ['x-self', 'Arcane on yourself', ['arcane'], 'The dispel (round 2 card).', ''],
+    ['x-rock', 'Earth + Arcane: the charged stone', ['earth', 'arcane'], 'Force. The stone isn’t disrupted and isn’t disruptive; its burst on landing is, by its Arcane runes.', ''],
+    ['x-quake', 'Earth + Arcane: quake, geyser, tremor line', ['earth', 'arcane'], 'Ring, Place, Weapon cast. Disrupt in their area by their Arcane runes; the knockdown is unchanged.', ''],
+    ['x-wall', 'Shield + Earth + Arcane: the charged wall', ['shield', 'earth', 'arcane'], 'Stores magic that hits it; its burst disrupts around it.', ''],
+    ['x-field', 'Shield + Arcane: coated field', ['shield', 'arcane'], 'Resists disruption on itself. Its bite disrupts the wards of enemies pressing on it (paid by the bite rule).', ''],
+    ['x-ward', 'Shield + Arcane: ward', ['shield', 'arcane'], 'A specific ward against Arcane: resists Arcane damage and disruption on that body.', ''],
+    ['x-blink', 'Shield + Arcane: Arcane blink', ['shield', 'arcane'], 'Leaves an Arcane ring where you stood, at 0.8 power: it strips whoever chased you there.', ''],
+    ['x-prism', 'Shield + Arcane: the Prism', ['shield', 'arcane'], 'Stops magic well; its Lance carries Arcane and disrupts what it hits.', ''],
+    ['x-turret', 'Sigil + Arcane: turret (beam emplacement)', ['sigil', 'arcane'], 'A device that disrupts by itself: a shield-breaker you leave behind.', 'Too strong against an enemy caster’s shield?'],
+    ['x-orbitals', 'Sigil + Arcane: orbitals', ['sigil', 'arcane'], 'Each orb that strikes disrupts a little.', ''],
+    ['x-glyph', 'Sigil + Arcane: glyph and line glyph', ['sigil', 'arcane'], 'A dispel trap: whoever trips it loses held magic.', ''],
+    ['x-wand', 'Sigil + Arcane: the Arcane wand', ['sigil', 'arcane'], 'Bolts disrupt lightly; the charged bolt more. Siphon unchanged.', ''],
+    ['x-coats', 'Arcane as an extra on weapons and guards', ['sigil', 'earth', 'arcane'], 'A stone maul or Bulwark coated in Arcane: each blow or block bites with a little disruption.', ''],
+    ['x-aura', 'Sigil + Arcane on yourself: opening yourself', ['sigil', 'arcane'], 'Doesn’t disrupt others; it makes you easier to disrupt (round 2 card).', ''],
+    ['x-world', 'Pure Arcane in the world: Nullify', ['arcane'], 'Ends the weather and disrupts magic everywhere a little (round 2 card).', ''],
+  ];
 
   const GROUPS = [
     { name: 'Arcane', color: '#ff4f9b', items: [
@@ -212,12 +301,12 @@ td:first-child { font-weight: 700; }
     const k = 'answers/' + id;
     chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set(doc)).then(() => setSave('All saved')).catch(() => setSave('Couldn’t save that. Check your connection and try again.', true));
   }
-  function answerBlock(id, label, withChoices = true) {
+  function answerBlock(id, label, withChoices = true, choices = CHOICES) {
     const wrap = el('div', 'answer');
     let box = null;
     if (withChoices) {
       box = el('div', 'choices'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', label);
-      for (const [v, l] of CHOICES) {
+      for (const [v, l] of choices) {
         const b = el('button', null, l); b.type = 'button'; b.dataset.v = v; b.disabled = true;
         b.addEventListener('click', () => write(id, { choice: answers[id]?.choice === v ? null : v }));
         box.append(b);
@@ -244,30 +333,41 @@ td:first-child { font-weight: 700; }
   }
 
   // ---------- build ----------
+  const keyRow = (keys) => { const k = el('div', 'keys'); for (const e of keys) { const s = el('span', 'key', EL[e][0] + ' ' + NAME[e]); s.style.background = EL[e][1]; k.append(s); } return k; };
+  function card(it) {
+    const c = el('article', 'card');
+    const head = el('div', 'head');
+    if (it.keys.length) head.append(keyRow(it.keys));
+    head.append(el('span', 'cast', it.cast));
+    c.append(head, el('h3', null, it.title));
+    if (it.from) c.append(el('p', 'slug', 'From your note on ' + it.from));
+    const pair = el('div', 'pair');
+    const t = el('div'); t.append(el('span', 'lab', 'Today'), el('p', null, it.today));
+    const n = el('div'); n.append(el('span', 'lab', 'Proposed'), el('p', null, it.next));
+    pair.append(t, n); c.append(pair);
+    const v = el('div', 'view'); v.append(el('span', 'lab', 'My view'), el('p', null, it.view));
+    if (it.question) v.append(el('p', 'q', it.question));
+    c.append(v, answerBlock(it.id, it.title, true, it.choices || CHOICES));
+    return c;
+  }
+  const r2 = $('round2');
+  r2.append(el('h2', null, 'Round 2: your follow-ups'));
+  for (const it of ROUND2) r2.append(card(it));
+  const sh = $('shapeRows');
+  for (const [id, name, keys, what, ask] of SHAPES) {
+    const c = el('article', 'card'); c.style.gap = '8px'; c.style.padding = '14px';
+    const head = el('div', 'head'); head.append(keyRow(keys), el('h3', null, name));
+    c.append(head, el('p', null, what));
+    if (ask) c.append(el('p', 'q', ask));
+    c.append(answerBlock(id, name, true, MARKS));
+    sh.append(c);
+  }
   const host = $('changes');
   host.append(el('h2', null, 'Changes to judge'));
   for (const G of GROUPS) {
     const h = el('h2'); const d = el('span', 'dot'); d.style.background = G.color; h.append(d, document.createTextNode(G.name));
     host.append(h);
-    for (const it of G.items) {
-      const c = el('article', 'card');
-      const head = el('div', 'head');
-      if (it.keys.length) {
-        const k = el('div', 'keys');
-        for (const e of it.keys) { const s = el('span', 'key', EL[e][0] + ' ' + NAME[e]); s.style.background = EL[e][1]; k.append(s); }
-        head.append(k);
-      }
-      head.append(el('span', 'cast', it.cast));
-      c.append(head, el('h3', null, it.title));
-      const pair = el('div', 'pair');
-      const t = el('div'); t.append(el('span', 'lab', 'Today'), el('p', null, it.today));
-      const n = el('div'); n.append(el('span', 'lab', 'Proposed'), el('p', null, it.next));
-      pair.append(t, n); c.append(pair);
-      const v = el('div', 'view'); v.append(el('span', 'lab', 'My view'), el('p', null, it.view));
-      if (it.question) v.append(el('p', 'q', it.question));
-      c.append(v, answerBlock(it.id, it.title));
-      host.append(c);
-    }
+    for (const it of G.items) host.append(card(it));
   }
   const rows = $('costRows');
   for (const [s, a, b] of COSTS) { const tr = el('tr'); tr.append(el('td', null, s), el('td', null, a), el('td', null, b)); rows.append(tr); }

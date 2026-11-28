@@ -14,6 +14,8 @@ You queue runes and hold Shift+Space. A big circle spreads on the floor while yo
 
 Decided so far (2026-11-27, [the spell pass](../explorations/2026-11-27-spell-pass.md)): Shift+Space held; paid by binding its runes, more runes for a longer or stronger weather; one weather at a time, and any new one replaces it (the old caster's runes come back); pure Sigil is time warp; pure Shield is Nullify.
 
+*(2026-11-28: with Shield and Sigil becoming casting styles, the user moves Nullify to pure Arcane and feels time warp belongs to Cold; proposed on [Spell Ramifications](../explorations/2026-11-28-spell-ramifications.md#round-2-on-the-page) as `r2-world`.)*
+
 ## How the runes make weather
 
 **Each element has one world layer, and a mix lays its layers together, except where two elements fuse.** The fusions follow the ones the game already makes, so the weather reads like the rest of the spell language. Opposites already cancel in the queue, so a contradictory mix can't be cast.

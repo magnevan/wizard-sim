@@ -15,7 +15,8 @@ Nothing changes under your fingers: E and D are still pressed into the queue, an
 - A force field or a ward drains Concentration while it stands, harder as it's hit; at the floor, the oldest gives way (today's Model A, moved to its own pool).
 - Blink spends a lump of Concentration at once.
 - A weapon, a guard, a turret, a glyph, an aura, Haste, a rock wall or an ice wall each holds one Binding. When it ends (spent, broken, dismissed), its Binding comes back after a short cooldown.
-- Element runes in the cast are still spent from their pools as now.
+- Element runes in the cast are still spent from their pools as now: a device costs a Binding **and** the runes cast into it.
+- Preloading devices before a fight, then regenerating, is how a prepared wizard scales (pillar 7); the most you can bank is Bindings × 5 runes (the user, 2026-11-28: "maybe its just a way your character scales"). Proposed on [Spell Ramifications](../explorations/2026-11-28-spell-ramifications.md#round-2-on-the-page): a coated field's bite drains Concentration by its damage, and wards come general (Shield alone, full cost) or specific (with elements, cheaper).
 
 A partner sees the same spells as today. With time to prepare, though, your Bindings are the visible limit on how much you set up, and a partner with free Bindings can carry the rest.
 
@@ -52,6 +53,7 @@ This line is also what Arcane acts on: it disrupts what a caster is still paying
 - Rock walls and guards are Bindings. Dismissing one frees its Binding only after the cooldown, and the Earth is spent anyway.
 
 ## Open questions
+- Not taken for now: a caster power stat. Power is regen and slots (the user).
 - How many Bindings, and how long the cooldown? Do more element runes in a made thing ever cost more than one Binding?
 - Concentration's size and regen, and how hard a hit drains it.
 - World spells bind runes today: do they bind Bindings instead, or both?

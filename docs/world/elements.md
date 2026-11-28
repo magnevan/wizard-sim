@@ -69,7 +69,7 @@ Marks: *(built)* is in the game; *(agreed)* the user agreed on 2026-11-28, not b
   - **Shape:** colours another element's shape (Earth + Fire is a fireball); alone a flamethrower, a wave of flame, a burning patch that denies ground. *(built)*
   - **With other magic:** it consumes: it burns away Wet, Chill, ice and growth. That makes it hard to combine, and players can get in each other's way, so they build their kits with care. *(built for Wet, Chill and ice; growth once Life grows things)*
   - **More runes:** more damage and longer burning.
-  - **Weakness:** its damage over time is hard to get full value from. **Stone doesn't burn, it only heats:** Fire does less to Earth and rock. *(agreed to try; the practical effects still to see)*
+  - **Weakness:** its damage over time is hard to get full value from. *(Fire doing less to stone was proposed and dropped: stone already resists Lightning, and these interactions shouldn't be overdone, the user.)*
 - **Opposite:** Cold.
 
 ### Cold: what stills and preserves
@@ -105,7 +105,7 @@ Marks: *(built)* is in the game; *(agreed)* the user agreed on 2026-11-28, not b
 - **In play: it binds magic to the physical world.** Earth turns a spell into matter. *(the user's idea, explored 2026-11-28)*
   - **On a body:** mass, impact and knockback; physical damage. *(built)*
   - **Shape:** it leads the rock (which carries the others: Earth + Fire is a fireball), the long shockwave and walls. *(built)*
-  - **With other magic:** what it makes is matter, so **Arcane can't disrupt it**: there's no magic left in it to strip *(proposed: a rock wall is a Binding, but the Binding holds matter)*. Earth carrying an element delivers it as matter, so a magical shield refuses the element but takes the rock's mass. *(proposed)* It grounds Lightning. With Life it may grow living structures (vines, thorn hedges, roots that hold a body), which heal themselves and burn. *(the user, to explore)*
+  - **With other magic:** what it makes is matter, so **Arcane can't disrupt it**: there's no magic left in it to strip (a rock wall is a Binding, but the Binding holds matter). *(agreed)* What an **Arcane rune in a rock wall** does is open: Claude recommends a *charged wall* (magic hitting it is stored as charge, and the stone bursts with it when it breaks or is dismissed, like the Earth + Arcane missile and the Prism); the user's alternative is magical resistance. Earth carrying an element delivers it as matter, so a magical shield refuses the element but takes the rock's impact at a normal rate. *(proposed; the user to judge)* It grounds Lightning. With Life it may grow living structures (vines, thorn hedges, roots that hold a body), which heal themselves and burn. *(the user, to explore)*
   - **More runes:** a bigger rock, more HP, a longer wall. *(built)*
   - **Weakness: its nature, not an element.** Stone resists nothing in particular, it's just a lot of it: it takes full damage from everything, and sheer force or a shatter breaks it. A wall can't move and blocks your allies too, and it's paid in Earth and a Binding. *(proposed)*
   - **Walls are Bindings** (the user): the Earth is spent, dismissing a wall frees its Binding only after the cooldown, and no Concentration is drawn. This replaces the odd model where a rock wall took a Shield rune but cost nothing to hold. *(agreed)*
@@ -144,7 +144,8 @@ Every effect has a **magic** part and a **matter** part *(proposed 2026-11-28, t
 | **Earth** (a rock wall) | *Quantity:* mass and HP, no resistance | Arcane (nothing to disrupt); Lightning (grounded) | Sheer force, a shatter; full damage from everything | Earth runes and a Binding |
 
 - **Shield weak against Arcane** is the reverse of Magicka, where shields beat beams. The user accepts it here: it's a different game. **A field coated with Arcane resists the disruption**, by the existing rule that each rune in a coated field resists its element, at the cost of the slot another coat would take.
-- **Proposed: timing beats the beam.** An active parry beats it (the Prism guard already returns beams), while a standing barrier gets eroded. The caster's skill wins, not the wall.
+- **Timing beats the beam** *(agreed as reasonable)*: an active parry beats it (the Prism guard already returns beams), while a standing barrier gets eroded. The caster's skill wins, not the wall.
+- **The Prism may become the anti-magic guard** (the user): it keeps the Capacitor and the Lance (concentrate and release), resists all magic, and is weaker against physical blows than now (today: Arcane +1, Physical −0.25). Claude adds, optionally: its block drains the enemy ward or field it stops. *(to explore)*
 
 ## The casting styles: Shield and Sigil
 

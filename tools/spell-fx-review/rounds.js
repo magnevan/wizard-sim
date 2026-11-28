@@ -713,4 +713,18 @@ window.ROUNDS = [
     ],
     general: 'Anything else about Arcane, or its identity as a whole',
   },
+  {
+    id: 'arcane-2',
+    group: 'Arcane',
+    topic: 'Concepts',
+    tab: '1 · shockwave',
+    el: 'arcane',
+    date: '2026-11-28',
+    title: 'A discrete Arcane shockwave: six ideas',
+    lead: 'You on the nova: “its not bad, but i want to try out a less organic and more discrete magical shockwave”. Codex drew six ideas at the game’s camera, each halfway out, from a frame of the current nova and the beam’s approved concept (prompt in tools/concept-gen/prompts/2026-11-28-arcane-shockwave/).',
+    items: [
+      { id: 'pick', title: 'Which shockwave?', text: 'Top row, left to right: 1. rings of glyphs stepping out in jumps, afterimages behind; 2. hexagonal tiles of light flipping up from the floor as it passes; 3. a hard-edged translucent shell wall with a bright rim. Bottom row: 4. a ring of dashes spinning as it grows, a fainter one turning back; 5. a magic circle drawn on the floor, expanding and flashing at its edge; 6. thin crystalline shards flung out, tumbling, leaving streaks. They combine well (say 5 on the floor with 4 or 6 above it). Name the numbers in the note; the same shape would carry the burst (cut to the fan), the blast and Attune.', img: ['arcane-shockwave-1.jpg'], ask: 'Which numbers, alone or together?' },
+    ],
+    general: 'Anything else',
+  },
 ];

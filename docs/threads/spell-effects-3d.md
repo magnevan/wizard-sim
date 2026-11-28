@@ -98,6 +98,7 @@ The user, 2026-11-28, closing Fire: "I think instead of doing haze, can we just 
 
 ### Phase 1.3: Arcane (started 2026-11-28)
 
+- [ ] **A discrete Arcane shockwave** (round `arcane-2`): the user on the nova (`arcane-1-ring`): "its not bad, but i want to try out a less organic and more discrete magical shockwave", and "maybe do some concept art". Codex drew six ideas ([sheet](../reference/spell-concepts/arcane/arcane-shockwave-1.jpg)): glyph rings stepping out, hex tiles flipping up, a hard shell wall, spinning dash rings, a magic circle on the floor, flung shards. Waiting for the pick.
 - [ ] **Arcane, first pass (round `arcane-1`):** the nova and burst are Fire's wave in Arcane's colours (`fire-wave.ts`: a `PAL` uniform `uArc` and `pal(fire, arcane)` at every colour, no smoke; `FireWaves(EL.arcane)` as `spells3d.ts` `arcWaves`, `isArcaneNova` / `isArcaneBurst`); the delayed blast (Place) is a fuse sigil (`fx/zone-sigil.ts`) then a whole ring of the wave where it was placed (burst events away from the caster: `isZoneBlast`); Attune (Self) is a small quick ring of the wave round the caster. The beam (the anchor) unchanged. Soft spots: the wave's scorch stays brownish; the sigil is pale.
 
 ### Phase 1.1: Fire

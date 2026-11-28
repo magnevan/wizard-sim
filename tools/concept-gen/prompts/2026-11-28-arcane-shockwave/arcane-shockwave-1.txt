@@ -1,0 +1,16 @@
+Generate one image with your image generation tool, then save it as arcane-shockwave-1.png in the current directory. Reply with just the file name.
+
+Two images are attached. The first is a frame of our game as it is now: a stylised 3D action game seen from a steep camera about 46 degrees down, on a warm, pale sandstone floor; a small red wizard has cast the Arcane nova, a shockwave ring that bursts out from them. It is drawn as a rolling, billowing ring of magenta and violet plasma. The second is the approved concept of the Arcane beam, the element's anchor: crisp, bright magenta-white energy with a hard core.
+
+The designer's note on the nova: "its not bad, but i want to try out a less organic and more discrete magical shockwave". So: no billowing gas, no smoke, no fire-like plasma. Magical, crisp, made of distinct shapes.
+
+Draw a concept sheet: a grid of six panels, two rows of three, thin dark gutters between them. Every panel is the same game camera (46 degrees down, same framing), on the same pale sandstone floor, with the same small red wizard at the centre (about 1.6 metres tall) and a few green goblins near the panel's edge. Each panel shows a different idea for the shockwave at the moment it is halfway out, about 3 metres from the wizard, in the Arcane palette: white-pink at its brightest, saturated magenta, deep violet in its shadows.
+
+1. Rings of glyphs: two or three thin, sharp concentric rings of glowing runes racing outward, stepping out in discrete jumps, faint afterimages of the earlier steps behind them.
+2. Tiles: a ring of flat hexagonal tiles of light flipping up out of the floor as the wave passes over them, settling back and fading behind it.
+3. A shell: a hard-edged, translucent cylinder wall of magenta energy rising from the floor, a crisp bright rim on top, thin horizontal bands of light running round it.
+4. Segments: a ring broken into bright dashes with gaps, spinning as it expands, a second fainter ring turning the other way.
+5. A magic circle: a precise geometric circle drawn on the floor (rings, radial spokes, small runes) expanding outward from the wizard and flashing as it reaches its edge.
+6. Shards: a ring of thin crystalline triangles of light flung outward, edge-on and tumbling, each leaving a short sharp streak.
+
+Paint with restraint: flat, readable shapes, few of them; crisp edges, not soft clouds. No text, no labels, no numbers, no UI, no arrows.

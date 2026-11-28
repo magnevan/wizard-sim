@@ -33,7 +33,7 @@ describe('3D stand-ins', () => {
       for (const [x, y] of [[1.5, 0], [2, 1.6], [2, -1.7]]) devSpawnEnemy(w, ARCH.swarmer, x, y);
       devStage(w, { hold: true, puppet: -1, goal: null, aim: 0 });   // held: no wind-up telegraphs to count
       const d = parseDemo(`${r}@1.5,0`)!, s = new Standins();
-      s.drawFire = true; s.drawArcane = true; s.drawEarth = true;
+      s.drawFire = true; s.drawArcane = true; s.drawEarth = true; s.drawCold = true;
       let most = 0;
       try {
         for (let k = 0; k < 150; k++) {

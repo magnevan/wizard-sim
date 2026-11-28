@@ -496,7 +496,10 @@ function marginMaterial(): THREE.MeshLambertMaterial {
         vec3 mgR = normalize(vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]));
         mgR = normalize(vec3(mgR.x, 0.0, mgR.z));
         float mgH = aCorner.y * aFan.y, mgB = aCorner.y * aCorner.y * (0.12 + 0.3 * grWind * mgGust(aRoot.xz, grTime)) * aFan.y;
-        vec3 transformed = aRoot + mgR * (aCorner.x * aFan.x + mgB) + vec3(0.0, mgH, 0.0);
+        // its height along the camera's own up (leaning back, away from the eye), so the steep camera sees the whole
+        // painted tuft rather than an upright card foreshortened to a streak
+        vec3 mgU = normalize(vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]));
+        vec3 transformed = aRoot + mgR * (aCorner.x * aFan.x + mgB) + mgU * mgH;
         float sp = abs(aFan.z); vMgCol = sp;
         vMgUv = vec2(aFan.z < 0.0 ? 0.5 - aCorner.x : 0.5 + aCorner.x, aCorner.y);
         vMgRoot = aRoot.xz;`);
@@ -517,7 +520,7 @@ function marginMaterial(): THREE.MeshLambertMaterial {
         diffuseColor.rgb = g * mix(0.82, 1.5, tx.r) * mix(0.95, 1.08, vMgUv.y);
       }`);
   };
-  m.customProgramCacheKey = () => 'margin-grass-3';
+  m.customProgramCacheKey = () => 'margin-grass-4';
   return (marginMat = m);
 }
 /** Raised grass fans along the margins of the last ground map (buildGround first); null where there are none. */
@@ -552,8 +555,9 @@ export function marginGrass(): THREE.Mesh | null {
     if (vnoise(jx * 0.55, jy * 0.55) < (over ? 0.55 : foot ? 0.32 : 0.4)) continue;
     if (hash(jx * 1.7, jy * 2.3) < 0.15) continue;
     const tall = Math.max(F.G[q], foot ? 0.6 : 0);
-    const w = 0.65 + 0.4 * hash(jx, jy + 9.0) + 0.3 * tall;
-    const h = 0.7 * (0.5 + 0.35 * hash(jx + 4.0, jy)) * (1 + 0.6 * tall) * (verge && !over ? 1.25 : over ? 0.8 : 1);
+    // about the painted tuft's own proportions (its cell is square, the tuft 0.85 of it high), so it isn't squashed
+    const w = 0.5 + 0.3 * hash(jx, jy + 9.0) + 0.25 * tall;
+    const h = w * (0.7 + 0.25 * hash(jx + 4.0, jy)) * (verge && !over ? 1.1 : over ? 0.75 : 1);
     // sprite: short fans and clumps on verges, combed long clumps at the foot of things, sparse ones on a path's shoulder
     const row = over ? 3 : shoulder && !verge ? 3 : foot && tall > 0.5 && hash(jx, jy + 2.0) > 0.4 ? 2 : Math.floor(hash(jx + 7.0, jy) * 2);
     const sp = row * 4 + Math.floor(hash(jx + 1.3, jy + 5.1) * 4);

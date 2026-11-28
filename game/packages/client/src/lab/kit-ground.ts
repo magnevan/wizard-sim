@@ -403,12 +403,21 @@ vec3 groundLawn(sampler2D t, float tile, vec2 p) {
   c *= mix(vec3(0.65, 0.77, 0.65), vec3(1.18, 1.08, 0.75), smoothstep(0.25, 0.75, sweep));
   // a soft mottle at clump scale (the cells read as scales if pushed harder)
   vec2 tA = grTufts(p / 0.62);
-  vec3 pu = grPushAt(p);   // whoever walks here parts the grass
+  // whoever walks here parts the grass. (A grass card's colour (GR_CARD) leaves out the parting and the stamped tufts:
+  // its root's colour would flip between a light tuft and a dark gap as the tufts bend round a walker.)
+  #ifdef GR_CARD
+  vec3 pu = vec3(0.0);
+  #else
+  vec3 pu = grPushAt(p);
+  #endif
   c *= mix(0.9, 1.06, tA.x) * mix(0.95, 1.05, tA.y);
   // worn to earth along paths: ragged where the grass breaks into it
   float wn = s.r + (lwN(p * 1.3) - 0.5) * 0.8 + (lwN(p * 4.1 + 7.0) - 0.5) * 0.45 + (tA.x - 0.5) * 0.3;
   float bare = smoothstep(0.58, 0.95, wn), fringe = smoothstep(0.12, 0.5, wn) * (1.0 - bare);
   // painted tufts: short lawn everywhere, big combed clumps in long grass, sparse ones at a path's fringe; none on bare earth
+  #ifdef GR_CARD
+  c *= 0.97;   // (about the stamped tufts' mean)
+  #else
   if (grTuftOn > 0.5) {
     vec2 b1 = grBomb(p, 0.85, 0.0, 2.0, 1.45, 0.7 * (1.0 - lg * 0.85) * (1.0 - bare), 1.0, pu);
     vec2 b2 = grBomb(p, 1.2, 2.0, 1.0, 2.2, 0.65 * lg * (1.0 - bare), 7.0, pu);
@@ -419,6 +428,7 @@ vec3 groundLawn(sampler2D t, float tile, vec2 p) {
     // between tufts the ground is the darker underside of the lawn; a tuft takes the lawn's colour at its own value
     c *= mix(0.82, mix(0.7, 1.4, b.x), b.y);
   }
+  #endif
   // long grass: paler and warmer toward straw, and a sheen rolling across it in the gusts
   // (straw only out in the open; at the foot of things long grass is lush and deep)
   // trodden: flattened grass round someone's feet shows its paler, flatter side
@@ -540,13 +550,17 @@ function marginMaterial(feet = false): THREE.MeshLambertMaterial {
         vec3 mgU = normalize(vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]));
         // someone walking through bends the tuft away from them and presses it down
         vec3 mgP = grPushAt((modelMatrix * vec4(aRoot, 1.0)).xz);
-        ${feet ? 'vMgFade = aFade;' : 'mgH *= 1.0 - 0.55 * mgP.z; vMgFade = 1.0;'}
-        vec3 transformed = aRoot + mgR * (aCorner.x * aFan.x + mgB) + mgU * mgH + vec3(mgP.x, 0.0, mgP.y) * aCorner.y * aCorner.y * aFan.y * 0.6;
+        // (the foot grass grows up out of the lawn as it fades in, whole and in proportion: its alpha is nearly all on or
+        // off, so fading that pops, and shrinking only its height squashes it into a streak)
+        float mgS = 1.0;
+        ${feet ? 'vMgFade = aFade; mgS = aFade; mgH *= mgS; mgB *= mgS;' : 'mgH *= 1.0 - 0.55 * mgP.z; vMgFade = 1.0;'}
+        vec3 transformed = aRoot + mgR * (aCorner.x * aFan.x * mgS + mgB) + mgU * mgH + vec3(mgP.x, 0.0, mgP.y) * aCorner.y * aCorner.y * aFan.y * 0.6;
         float sp = abs(aFan.z); vMgCol = sp;
         vMgUv = vec2(aFan.z < 0.0 ? 0.5 - aCorner.x : 0.5 + aCorner.x, aCorner.y);
         vMgRoot = aRoot.xz;`);
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
       #define GR_NO_FLOWERS
+      #define GR_CARD
       ${GROUND_GLSL}
       uniform sampler2D grLawn; uniform float grLawnS;
       varying vec2 vMgUv; varying vec2 vMgRoot; varying float vMgCol; varying float vMgFade;`)
@@ -555,15 +569,15 @@ function marginMaterial(feet = false): THREE.MeshLambertMaterial {
         // the sprite's own cell, its foot (painted about a tenth up the cell) at the card's foot
         vec2 suv = vec2(vMgUv.x, 0.1 + vMgUv.y * 0.85);
         vec4 tx = texture2D(grTuft, (vec2(col, 3.0 - row) + clamp(suv, 0.01, 0.99)) / 4.0);
-        tx.a *= vMgFade;   // (fading out: the tuft thins to its densest blades)
         diffuseColor.a = clamp((tx.a - 0.45) / max(fwidth(tx.a), 0.0001) + 0.5, 0.0, 1.0);
         if (diffuseColor.a < 0.02) discard;
         vec3 g = groundLawn(grLawn, grLawnS, vMgRoot);
         // the ground's colour at its root, lifted toward the tips as the painted blades catch the light
         diffuseColor.rgb = g * mix(0.82, 1.5, tx.r) * mix(0.95, 1.08, vMgUv.y);
+        diffuseColor.rgb = mix(g * 0.95, diffuseColor.rgb, vMgFade * vMgFade);   // a foot tuft growing in starts as the ground's own colour
       }`);
   };
-  m.customProgramCacheKey = () => (feet ? 'foot-grass-1' : 'margin-grass-6');
+  m.customProgramCacheKey = () => (feet ? 'foot-grass-4' : 'margin-grass-8');
   return (marginMats[feet ? 1 : 0] = m);
 }
 /** Raised grass fans along the margins of the last ground map (buildGround first); null where there are none. */
@@ -688,7 +702,7 @@ function fillFootGrass(list: readonly { x: number; z: number; r: number }[]) {
         const x = (gx + 0.5 + (hash(gx, gz) - 0.5) * 0.8) * FOOT_STEP, z = (gz + 0.5 + (hash(gz + 7.7, gx) - 0.5) * 0.8) * FOOT_STEP;
         const e = Math.hypot((x - b.x) / rx, (z - cz) / rz);
         if (e > 1 || hash(gx * 1.9, gz * 2.7) < 0.3) continue;
-        const key = gz * 100003 + gx, to = 1 - smooth(0.45, 1, e);
+        const key = gz * 100003 + gx, to = 1 - smooth(0.3, 1, e);
         const had = footShown.get(key);
         if (had) { had.to = Math.max(had.to, to); continue; }
         const i = Math.floor((x - F.x0) / CELL), j = Math.floor((z - F.y0) / CELL);
@@ -700,9 +714,9 @@ function fillFootGrass(list: readonly { x: number; z: number; r: number }[]) {
         footShown.set(key, { x, y: F.top[q] * UPM, z, w: h * 1.25, h, sp: hash(gx + 2.2, gz) > 0.5 ? sp : -sp - 0.0001, f: 0, to });
       }
   }
-  // ease each toward its target over about a fifth of a second; drop the ones faded out
+  // ease each toward its target over about half a second; drop the ones faded out
   let n = 0;
-  const k = 1 - Math.exp(-dt / 0.07);
+  const k = 1 - Math.exp(-dt / 0.16);
   for (const [key, t] of footShown) {
     t.f += (t.to - t.f) * k;
     if (t.to === 0 && t.f < 0.02) { footShown.delete(key); continue; }

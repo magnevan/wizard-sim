@@ -678,4 +678,22 @@ window.ROUNDS = [
     ],
     general: 'Anything else',
   },
+{
+    id: 'cold-1',
+    group: 'Cold',
+    topic: 'All casts',
+    tab: '1 · first pass',
+    el: 'cold',
+    date: '2026-11-28',
+    title: 'Cold, first pass: every cast drawn',
+    lead: 'You, 2026-11-28: “instead of doing haze, can we just move to another element? We need to get visuals for all of them, and its more important than polishing everything to a sheen.” So: Fire left as it is, and every Cold cast drawn in one pass, reusing what Fire built (the spray, the wave cut to a fan, the gas), so you can say which need more.',
+    items: [
+      { id: 'spray', title: 'Frost spray (Force)', text: 'Fire’s spray (the same raindrop from the hands, motions and fan) in frost: cold mist puffs (the smoke sheet’s shapes, white where thick, cyan in their shade), a cold white jet, ice glints and snowflakes for the embers and ash, no smoke, a cold glaze on the floor. Two runes close, and three at the game’s distance.', vid: ['k1-spray-9.mp4', 'k1-spray-26.mp4'], ask: 'Keep?' },
+      { id: 'ring', title: 'Frost ring (Area on yourself)', text: 'The anchor from before (“good for now”), unchanged: ice teeth racing out, a snow blast riding over them, rime left behind. Three runes.', vid: ['k1-ring-12.mp4'], ask: 'Still good?' },
+      { id: 'burst', title: 'Frost burst (Shift+LMB)', text: 'New: the Frost ring cut to the aimed fan, as Fire’s burst is its wave cut to the fan (it was a flat see-through fan). Three runes.', vid: ['k1-burst-12.mp4'], ask: 'Keep?' },
+      { id: 'fog', title: 'Freezing fog (Place)', text: 'New: a low cold cloud lying over the zone, drifting and curling, white where thick and cyan in its shade, its edge ragged, rolling in and thinning away at the end; the stone under it frosted. The same ray-marched gas as Fire’s patch and burning, in mist. Three runes.', vid: ['k1-fog-12.mp4'], ask: 'Keep?' },
+      { id: 'self', title: 'Chill (Self) and Chilled on bodies', text: 'Chill: the caster’s frost bursts out and up for a moment (as Burn’s flames flare). Chilled: a thin cold mist clinging to the body and sinking down it, pooling at the feet, in place of the ring at their feet (see the spray clips). Frozen (not in a clip: it needs water first): a still, faceted crust of glassy ice over the body.', vid: ['k1-self-9.mp4'], ask: 'Keep?' },
+    ],
+    general: 'Anything else about Cold, or its identity as a whole',
+  },
 ];

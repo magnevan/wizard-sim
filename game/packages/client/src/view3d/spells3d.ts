@@ -11,7 +11,7 @@
  * the scene point (heightAt below).
  */
 import * as THREE from 'three';
-import { MAX_SEATS, type World } from '@wizard-sim/sim';
+import { EL, MAX_SEATS, type World } from '@wizard-sim/sim';
 import { ArcaneBeams } from './fx/arcane';
 import { ColdNovas } from './fx/cold';
 import { FireWaves } from './fx/fire-wave';
@@ -22,6 +22,7 @@ import { SpellLights } from './fx/lights';
 import { FxStage } from './fx/stage';
 import { Standins } from './fx/standins';
 import { BodyStatuses } from './fx/statuses';
+import { ZoneFogs } from './fx/zone-fog';
 import { WindupTells } from './fx/windup';
 import { applyFxOff, fxOff } from './fx-off';
 import { sceneX, sceneZ } from './scene-map';
@@ -53,11 +54,15 @@ export class Spells3D {
   readonly standins = new Standins();
   /** The Frost ring (fx/cold.ts), unless the stand-ins draw it (standins.drawCold). */
   readonly cold = new ColdNovas();
+  /** Freezing fog (Cold's Place, the sim's frost zones: fx/zone-fog.ts). */
+  readonly fogs: ZoneFogs;
   /** The Fire ring and the Fire burst, one travelling wave (fx/fire-wave.ts), unless the stand-ins draw Fire (standins.drawFire). */
   readonly fireWaves = new FireWaves();
   /** Each seat's cast windup: motes drawn in to the hand (fx/windup.ts). */
   readonly windups = new WindupTells();
   private spraysBy: FireSpray[] = [];
+  /** The Frost spray per seat: Fire's spray in frost (fx/fire.ts, element 'cold'). */
+  private coldSprays: FireSpray[] = [];
   /** The effect time of the last frame (s), for the impact's jolt at render. */
   private shakeAt = 0;
   private grid: SurfGrid | null = null;
@@ -88,6 +93,8 @@ export class Spells3D {
     this.stage.scene.add(this.earth.group);
     this.statuses = new BodyStatuses((x, z) => this.simHeight(x, z));
     this.stage.scene.add(this.statuses.group);
+    this.fogs = new ZoneFogs((x, z) => this.simHeight(x, z));
+    this.stage.scene.add(this.fogs.group);
     // the whole effects' names for ?fxoff= (view3d/fx-off.ts)
     this.cold.group.name = 'cold'; this.fireWaves.group.name = 'wave'; this.windups.group.name = 'windup'; this.arcane.group.name = 'arcane';
     this.arcane.haze.name = 'arcane.haze'; this.earth.group.name = 'earth'; this.earth.meshes.name = 'earth.rocks'; this.statuses.group.name = 'statuses';
@@ -112,6 +119,10 @@ export class Spells3D {
       f.group.name = 'spray';
       f.fan.heightAt = simHeight;
       this.spraysBy.push(f); this.stage.scene.add(f.group);
+      const c = new FireSpray('b', sheets, 13 + s * 19, 'cold');
+      c.group.name = 'spray.cold';
+      c.fan.heightAt = simHeight;
+      this.coldSprays.push(c); this.stage.scene.add(c.group);
     }
     this.grid = new SurfGrid(simHeight);
     this.floor = new FireFloor('b', sheets, this.grid, 23);
@@ -129,7 +140,10 @@ export class Spells3D {
     this.earth.afterStep(w);
     if (!this.spraysBy.length) return;
     const t = w.clock[0] / 60, all = sprays(w);
-    for (let s = 0; s < MAX_SEATS; s++) this.spraysBy[s].update(t, all.find((p) => p.seat === s && p.kind === 'fire') ?? null, this.groundUnder(w, s), null);
+    for (let s = 0; s < MAX_SEATS; s++) {
+      this.spraysBy[s].update(t, all.find((p) => p.seat === s && p.kind === 'fire') ?? null, this.groundUnder(w, s), null);
+      this.coldSprays[s].update(t, all.find((p) => p.seat === s && p.kind === 'cold') ?? null, this.groundUnder(w, s), null);
+    }
   }
 
   /** After a replayed step (rollback): its events, once each. */
@@ -146,10 +160,14 @@ export class Spells3D {
     // Fire as its stand-in too (look B hidden): the lab's ?standins=all
     const fireB = !this.standins.drawFire;
     for (const f of this.spraysBy) f.group.visible &&= fireB;
+    for (const c of this.coldSprays) c.group.visible &&= !this.standins.drawCold;
     if (this.floor) this.floor.group.visible &&= fireB;
     if (this.grid && this.floor && fireB) {
       const all = sprays(w);
-      for (let s = 0; s < MAX_SEATS; s++) this.spraysBy[s].update(t, all.find((p) => p.seat === s && p.kind === 'fire') ?? null, this.groundUnder(w, s), this.lights, o.castAt?.(s) ?? null);
+      for (let s = 0; s < MAX_SEATS; s++) {
+        this.spraysBy[s].update(t, all.find((p) => p.seat === s && p.kind === 'fire') ?? null, this.groundUnder(w, s), this.lights, o.castAt?.(s) ?? null);
+        this.coldSprays[s].update(t, all.find((p) => p.seat === s && p.kind === 'cold') ?? null, this.groundUnder(w, s), this.lights, o.castAt?.(s) ?? null);
+      }
       this.grid.update(w);
       this.floor.update(t, this.lights);
     }
@@ -158,16 +176,20 @@ export class Spells3D {
     if (this.arcane.group.visible) this.arcane.update(w, t, this.lights);
     this.cold.group.visible = !this.standins.drawCold;
     if (this.cold.group.visible) this.cold.update(t, this.lights);
+    this.fogs.group.visible = !this.standins.drawCold;
+    if (this.fogs.group.visible) this.fogs.update(w, t, (x, z) => this.simHeight(x, z), this.lights);
     this.fireWaves.group.visible = fireB;
     if (fireB) this.fireWaves.update(t, this.lights);
     this.earth.meshes.visible = this.earth.group.visible = !this.standins.drawEarth;
     if (!this.standins.drawEarth) { this.earth.update(w, t, o.alpha ?? 0, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]]); this.shakeAt = t + (o.alpha ?? 0) / 60; }
-    // Burn's flare: the caster's flames surge up for a moment as the spell goes off, then settle into Burning
+    // Burn's flare: the caster's flames surge up for a moment as the spell goes off, then settle into Burning; Chill's
+    // (below 0): its frost bursts out round the caster
     const now = w.clock[0] + (o.alpha ?? 0);
+    const pulse = (a: number, len: number): number => (a < 0.06 ? a / 0.06 : Math.max(0, 1 - (a - 0.06) / len));
     const flare = (i: number): number => {
       if (i >= MAX_SEATS) return 0;
-      const a = this.standins.fireSelfAge(i, now);
-      return a < 0.06 ? a / 0.06 : Math.max(0, 1 - (a - 0.06) / 0.3);
+      const f = pulse(this.standins.selfAge(i, now, EL.fire), 0.3);
+      return f > 0 ? f : -pulse(this.standins.selfAge(i, now, EL.cold), 0.5);
     };
     this.statuses.update(w, t, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]], this.lights, flare);
     this.windups.update(w, o.alpha ?? 0, (i) => o.bodyAt?.(i) ?? [w.bodies.x[i], w.bodies.y[i]], (x, y) => this.simHeight(x, y));
@@ -194,7 +216,7 @@ export class Spells3D {
   }
 
   /** Forget every remembered event and the floor's burn ages (a lab drawing another world with the same effects). */
-  reset(): void { this.standins.rewind(-1); this.cold.reset(); this.fireWaves.reset(); this.earth.reset(); this.floor?.reset(); }
+  reset(): void { this.standins.rewind(-1); this.cold.reset(); this.fogs.reset(); this.fireWaves.reset(); this.earth.reset(); this.floor?.reset(); }
 
   /**
    * After each step, when the host doesn't draw every step (a lab stepping a world on to a frozen moment): the fire

@@ -21,6 +21,9 @@
 .el-neutral { --el: #6b5f8a; --el-soft: #e9e5f2 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .el-neutral { --el: #b3a6e0; --el-soft: #2a2638 } }
 :root[data-theme="dark"] .el-neutral { --el: #b3a6e0; --el-soft: #2a2638 }
+.el-cold { --el: #2a7bb8; --el-soft: #dcecf8 }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .el-cold { --el: #7cc4f5; --el-soft: #1a2a38 } }
+:root[data-theme="dark"] .el-cold { --el: #7cc4f5; --el-soft: #1a2a38 }
 
 body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }

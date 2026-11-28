@@ -31,7 +31,7 @@ import {
   placeRadius, queueOf, specOf, type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import * as X from '../../art/px';
-import { isColdNova } from './cold';
+import { isColdBurst, isColdFog, isColdNova } from './cold';
 import { isFireBurst, isFireNova, isFirePatch } from './fire-wave';
 import { plainRock } from './earth-sheets';
 import type { SpellLights } from './lights';
@@ -120,11 +120,11 @@ export class Standins {
     }
   }
 
-  /** Seconds since seat `who`'s latest Fire self-cast (Burn) at tick `now` (fractional), or Infinity: its flare is drawn
-   * by the caster's own burning (fx/body-burn.ts), not by a stand-in. */
-  fireSelfAge(who: number, now: number): number {
+  /** Seconds since seat `who`'s latest self-cast of element `el` (Fire: Burn; Cold: Chill) at tick `now` (fractional), or
+   * Infinity: its flare is drawn on the caster's own body (fx/body-burn.ts, body-frost.ts), not by a stand-in. */
+  selfAge(who: number, now: number, el: number): number {
     let age = Infinity;
-    for (const r of this.recs) if (r.kind === 'self' && r.who === who && r.look === EL.fire && r.tick <= now) age = Math.min(age, (now - r.tick) / 60);
+    for (const r of this.recs) if (r.kind === 'self' && r.who === who && r.look === el && r.tick <= now) age = Math.min(age, (now - r.tick) / 60);
     return age;
   }
 
@@ -146,7 +146,7 @@ export class Standins {
       case 'burst': {
         if (e.ev === EV.dismiss || e.ev === EV.wellDry || e.ev === EV.gutter) return;
         const sp = seatSpec();
-        add(e.who >= MAX_SEATS ? 'slam' : 'burst', { r: e.amount ?? 1, look: e.look ?? (sp ? sp.look || sp.form : 0), heal: !!sp?.heal, coldNova: e.who < MAX_SEATS && isColdNova(sp), fireWave: e.who < MAX_SEATS && (isFireNova(sp) || isFirePatch(sp)) });
+        add(e.who >= MAX_SEATS ? 'slam' : 'burst', { r: e.amount ?? 1, look: e.look ?? (sp ? sp.look || sp.form : 0), heal: !!sp?.heal, coldNova: e.who < MAX_SEATS && (isColdNova(sp) || isColdFog(sp)), fireWave: e.who < MAX_SEATS && (isFireNova(sp) || isFirePatch(sp)) });
         return;
       }
       case 'zap': {
@@ -160,8 +160,9 @@ export class Standins {
       case 'shatter': add('shatter', {}); return;
       case 'cast': {
         const sp = seatSpec();
-        // (a self-cast has no form or look: with Fire in it, it is Burn, drawn by the caster's own flames: fireSelfAge)
-        if (sp?.shape === 'self') add('self', { look: sp.counts[EL.fire - 1] > 0 ? EL.fire : sp.look || sp.form, heal: sp.heal });
+        // (a self-cast has no form or look: with Fire in it, it is Burn, drawn by the caster's own flames; with Cold, Chill,
+        // its frost: selfAge)
+        if (sp?.shape === 'self') add('self', { look: sp.counts[EL.fire - 1] > 0 ? EL.fire : sp.counts[EL.cold - 1] > 0 ? EL.cold : sp.look || sp.form, heal: sp.heal });
         // a Discharge's reach (effects.ts: 4 u and one a rune), shown even when it finds nobody to zap
         if (sp?.shape === 'discharge') add('burst', { r: 4 + Math.max(1, sp.sizeN), look: EL.lightning });
         return;
@@ -170,7 +171,7 @@ export class Standins {
         if (e.text === 'imbue') {
           const sp = { form: e.look ?? 0, counts: new Uint8Array(N_EL) } as unknown as SpellSpec;
           if (e.els) for (let id = 1; id <= N_EL; id++) if (e.els & (1 << id)) sp.counts[id - 1] = 1;
-          add('imbue', { r: e.amount ?? 2, half: (e.half ?? 0.1) * TAU, line: imbueLine(sp), fireWave: isFireBurst(e) });
+          add('imbue', { r: e.amount ?? 2, half: (e.half ?? 0.1) * TAU, line: imbueLine(sp), fireWave: isFireBurst(e), coldNova: isColdBurst(e) });
           return;
         }
         if (e.text && /^(strike|sweep|heavy|lash|thrust|slam|cleave|smash|spin)/.test(e.text)) add('blow', {});
@@ -257,6 +258,7 @@ export class Standins {
           break;
         }
         case ZONE.steam: case ZONE.frost: case ZONE.spring: case ZONE.spark: default: {
+          if (ty === ZONE.frost && !this.drawCold) break;   // Freezing fog (zone-fog.ts)
           const Q = ty === ZONE.steam ? STEAM : ty === ZONE.frost ? palOf(EL.cold) : ty === ZONE.spring ? palOf(EL.life) : ty === ZONE.spark ? palOf(EL.lightning) : P;
           const pulse = 0.85 + 0.15 * Math.sin(t * 3 + k);
           B.ring(B.tintBuf, x, y, 0, r, Q.deep, 0.15 * fadeOut, Q.mid, 0.35 * fadeOut * pulse);
@@ -415,6 +417,7 @@ export class Standins {
         if (spec.shape === 'spray') {
           const look = spec.look || spec.form;
           if (look === EL.fire && !spec.scald && !spec.heal && !this.drawFire) continue;   // look B (fire.ts)
+          if (look === EL.cold && !spec.scald && !spec.heal && !this.drawCold) continue;   // the Frost spray (fire.ts, element 'cold')
           const n = Math.max(1, Math.min(5, spec.sizeN || 1)), { half, range } = sprayDrop(n);
           const face = Math.atan2(s.aimY[i], s.aimX[i]), reach = Math.min(range, Math.hypot(ex - x, ey - y));
           B.ring(B.tintBuf, x, y, 0.3, reach, P.mid, 0.55, P.deep, 0.35, face - half, face + half);
@@ -516,7 +519,8 @@ export class Standins {
     for (let i = 0; i < MAX_BODIES; i++) {
       if (!b.kind[i]) continue;
       const [x, y] = at(i), g = this.ground(x, y), r = b.r[i], h = b.kind[i] === KIND.wizard || b.kind[i] === KIND.double ? 2.7 : Math.max(1.6, Math.min(3.8, r * 6));
-      if (b.frozen[i] > 0) { const P = palOf(EL.ice); B.band(B.tintBuf, x, g, y, r + 0.25, g + h * 0.95, P.mid, 0.55, 0.4, r + 0.15); B.band(B.glowBuf, x, g, y, r + 0.26, g + h * 0.95, P.light, 0.15, 0.35, r + 0.16); }
+      if ((b.frozen[i] > 0 || b.chill[i] > 0.05) && !this.drawCold) { /* body-frost.ts */ }
+      else if (b.frozen[i] > 0) { const P = palOf(EL.ice); B.band(B.tintBuf, x, g, y, r + 0.25, g + h * 0.95, P.mid, 0.55, 0.4, r + 0.15); B.band(B.glowBuf, x, g, y, r + 0.26, g + h * 0.95, P.light, 0.15, 0.35, r + 0.16); }
       else if (b.chill[i] > 0.05) B.circle(B.tintBuf, x, y, r + 0.2, 0.1, palOf(EL.cold).mid, 0.4 + 0.5 * b.chill[i]);
       if (b.burn[i] > 0) {
         const P = palOf(EL.fire);
@@ -649,6 +653,7 @@ export class Standins {
         }
         case 'imbue': {
           if (r.fireWave && !this.drawFire) break;   // fire-wave.ts
+          if (r.coldNova && !this.drawCold) break;   // cold.ts (the Frost burst)
           const grow = Math.min(1, age / 0.15), reach = r.r * grow, face = Math.atan2(r.y2 - r.y, r.x2 - r.x);
           if (r.line) {
             const ex = r.x + Math.cos(face) * reach, ey = r.y + Math.sin(face) * reach, nx = -Math.sin(face) * SHAPES.imbueLineHalf, ny = Math.cos(face) * SHAPES.imbueLineHalf;
@@ -697,7 +702,8 @@ export class Standins {
           break;
         }
         case 'self': {
-          if (r.look === EL.fire) break;   // Burn: the caster's own flames flare up instead (fireSelfAge)
+          if (r.look === EL.fire) break;   // Burn: the caster's own flames flare up instead (selfAge)
+          if (r.look === EL.cold && !this.drawCold) break;   // Chill: the caster's frost bursts out instead (body-frost.ts)
           const g = this.ground(r.x, r.y);
           B.band(B.glowBuf, r.x, g + 2.4 * k, r.y, 0.8, g + 2.4 * k + 0.5, P.light, 0.8 * fade, 0);
           B.circle(B.tintBuf, r.x, r.y, 0.9, 0.12, P.deep, fade);

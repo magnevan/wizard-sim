@@ -90,6 +90,12 @@ This replaces the shape-first order ("every other family in batches: sprays, bea
 
 **After the three phases** (not placed yet): enemy attacks, deaths, cast previews.
 
+### Phase 1.2: Cold (started 2026-11-28)
+
+The user, 2026-11-28, closing Fire: "I think instead of doing haze, can we just move to another element? We need to get visuals for all of them, and its more important than polishing everything to a sheen". So Fire stops here (the flamethrower's haze skipped; impacts wait for the shared pass; its identity card later), and each element gets **one first pass over every cast**, reusing what earlier elements built, reviewed as one round.
+
+- [ ] **Cold, first pass (round `cold-1`):** the Frost spray is Fire's spray (`fire.ts` `FireSpray`, element `'cold'`: mist puffs from the smoke sheet, a cold jet, ice glints, snowflakes, no smoke, a cold glaze; `spells3d.ts` `coldSprays`); the Frost burst is the Frost ring cut to the aimed fan (`cold.ts` FAN: `fanK` / `fanMap`, `isColdBurst`; the stand-ins skip it); Freezing fog is new (`fx/zone-fog.ts`: ray-marched mist per frost zone plus a rime decal; `isColdFog` skips the landing ring); Chill flares the caster's frost and Chilled / Frozen are `fx/body-frost.ts` (mist sinking down the body; a still faceted ice crust), Chill's flare packed below 0 in `uS2.w` (`Standins.selfAge`). Not yet seen in a clip: Frozen. Known soft spots: the spray and fog read a little flat and white.
+
 ### Phase 1.1: Fire
 
 The spray is the anchor. What's locked so far: flipbook flames that burn out (Codex-painted, after Magicka 1's method), a raindrop from the hands, ash-flake embers, dark smoke, the phases. Open verdicts first: `r15-fire`, `r16-impacts`.

@@ -26,9 +26,10 @@ uniform vec4 uS[${max}];   // burn 0..1, ...
 uniform vec4 uS2[${max}];  // -, radius, seed, flare 0..1 (the caster's Burn going off)
 uniform float uClock;
 // how tall the flames reach on body i, and its box (centre, half size)
-float topOf(int i) { return uP[i].w * (1.05 + 0.35 * uS[i].x) * (1.0 + 0.3 * uS2[i].w); }
+// (uS2.w: Burn's flare above 0; below 0 it is Chill's, body-frost.ts)
+float topOf(int i) { return uP[i].w * (1.05 + 0.35 * uS[i].x) * (1.0 + 0.3 * max(uS2[i].w, 0.0)); }
 void boxOf(int i, out vec3 c, out vec3 h) {
-  float top = topOf(i), R = (uS2[i].y * 1.9 + 0.25) * (1.0 + 0.12 * uS2[i].w);
+  float top = topOf(i), R = (uS2[i].y * 1.9 + 0.25) * (1.0 + 0.12 * max(uS2[i].w, 0.0));
   c = uP[i].xyz + vec3(0.0, top * 0.5 + 0.1, 0.0); h = vec3(R, top * 0.5 + 0.35, R);
 }
 `;
@@ -63,7 +64,7 @@ vec3 gasRamp(float h) {
 }
 vec2 gas(vec3 p, int i) {
   // a flare (Burn going off) swells the sheath, thickens it and lifts its tongues
-  vec4 P = uP[i]; float fl = uS2[i].w, k = min(1.0, uS[i].x + fl), rad = uS2[i].y * (1.0 + 0.1 * fl), seed = uS2[i].z;
+  vec4 P = uP[i]; float fl = max(uS2[i].w, 0.0), k = min(1.0, uS[i].x + fl), rad = uS2[i].y * (1.0 + 0.1 * fl), seed = uS2[i].z;
   float y = p.y - P.y, top = topOf(i);
   if (y < 0.0 || y > top + 0.3) return vec2(0.0, 1.0);
   vec2 o = p.xz - P.xz; float r = length(o);

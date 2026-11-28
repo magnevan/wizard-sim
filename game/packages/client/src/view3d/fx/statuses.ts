@@ -19,6 +19,7 @@ import * as THREE from 'three';
 import { type World } from '@wizard-sim/sim';
 import { ParticleBatch } from './particles';
 import { BodyBurn } from './body-burn';
+import { BodyFrost } from './body-frost';
 import { type SpellLights } from './lights';
 import { bodyHeight } from '../hud-marks';
 
@@ -181,6 +182,7 @@ export class BodyStatuses {
   private readonly U = { uP: { value: this.P }, uS: { value: this.S }, uS2: { value: this.S2 }, uClock: { value: 0 }, uN: { value: 0 } };
   private readonly batches: { b: ParticleBatch; per: number }[] = [];
   private readonly burn: BodyBurn;
+  private readonly frost: BodyFrost;
   /** Bodies drawn last frame (the lab's numbers). */
   shown = 0;
 
@@ -192,7 +194,8 @@ export class BodyStatuses {
     };
     add(4, MIST(4), LOOK_MIST, { order: 1 });
     this.burn = new BodyBurn(MAX, this.U);
-    this.group.add(this.burn.mesh);
+    this.frost = new BodyFrost(MAX, this.U);
+    this.group.add(this.burn.mesh, this.frost.mesh);
     add(8, EMBERS(8), LOOK_EMBER, { order: 3 });
     add(3, DRIPS(3), LOOK_DRIP, { order: 3 });
     add(6, GLINTS(6), LOOK_GLINT, { order: 4, soft: 0.05 });
@@ -208,11 +211,12 @@ export class BodyStatuses {
       const frozen = b.frozen[i] > 0 ? 1 : 0, burn = b.burn[i] > 0 ? (b.burnPool[i] < 10 ? 0.5 : 1) : 0;
       // any chill shows (a three-rune ring leaves a light one): glints and breath by its square root, at least 0.45
       const chill = b.chill[i] > 0.04 ? Math.max(0.45, Math.sqrt(Math.min(1, b.chill[i]))) : 0, stun = b.stun[i] > 0 ? 1 : 0, wet = b.wet[i] > 0 && !frozen ? 1 : 0;
-      if (!(burn || chill || frozen || stun || wet)) continue;
+      const fl0 = flare(i);
+      if (!(burn || chill || frozen || stun || wet || fl0 < 0)) continue;
       const [x, y] = bodyAt(i), g = this.heightAt(x, y), h = bodyHeight(w, i);
       this.P[n].set(x, g, y, h);
       this.S[n].set(burn, chill, frozen, stun);
-      const fl = burn ? flare(i) : 0;
+      const fl = fl0 > 0 ? (burn ? fl0 : 0) : fl0;
       this.S2[n].set(wet, Math.max(0.3, b.r[i]) * 1.15, i * 7 + 3, fl);
       if (lights && burn) lights.add(x, g + h * 0.5, y, 0xff7020, ((h > 3 ? 2.2 : 1.3) * (0.88 + 0.12 * Math.sin(t * 19 + i)) + 3 * fl) * burn, h > 3 ? 4.5 : 3 + 2 * fl);
       if (lights && frozen) lights.add(x, g + h * 0.5, y, 0xbff4ff, 0.5, 2.5);
@@ -222,8 +226,8 @@ export class BodyStatuses {
     this.U.uN.value = n; this.U.uClock.value = t;
     this.group.visible = n > 0;
     for (const { b: batch, per } of this.batches) batch.count = n * per;
-    this.burn.count = n;
+    this.burn.count = n; this.frost.count = n;
   }
 
-  dispose(): void { for (const { b } of this.batches) b.dispose(); this.burn.dispose(); }
+  dispose(): void { for (const { b } of this.batches) b.dispose(); this.burn.dispose(); this.frost.dispose(); }
 }

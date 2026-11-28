@@ -292,13 +292,70 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   return vec4(c * m * col.w, a);
 }`;
 
+// ---- the Frost spray's looks (Cold; the same stream, motions and fan as Fire's: FireSpray with element 'cold') ----
+
+/** Frost mist: the smoke sheet's painted puffs as cold mist, white where thick, cyan in their shade, covering. */
+const LOOK_PUFF_COLD = /* glsl */ `
+uniform sampler2D uSheet;
+uniform float uPuffFrom;
+${SHEET_GLSL}
+vec4 look(vec2 uv, vec4 col, vec4 data) {
+  float age = col.x;
+  vec2 q = uv * 0.5 + 0.5; if (data.y > 0.5) q.x = 1.0 - q.x;
+  float lum = flipbook(uSheet, q, 0.0, age, 4.0, 1.0).r, m = smoothstep(0.03, 0.6, lum);
+  vec3 c = mix(vec3(0.2, 0.55, 1.1), vec3(1.5, 1.65, 1.75), smoothstep(0.3, 0.85, lum + 0.25 * (1.0 - age)));
+  float fade = smoothstep(0.0, 0.06, age) * (1.0 - smoothstep(0.5, 1.0, age));
+  float cover = m * fade * 0.6;
+  return vec4(c * cover, cover);
+}`;
+
+const LOOK_GLOW_COLD = /* glsl */ `
+vec4 look(vec2 uv, vec4 col, vec4 data) {
+  float m = exp(-dot(uv, uv) * 2.6) * sin(min(col.y, 0.999) * 3.14159);
+  return vec4(vec3(0.35, 0.75, 1.3) * 0.12 * m, 0.04 * m);
+}`;
+
+/** The core: a cold white jet, pale cyan as it opens into the mist. */
+const LOOK_CORE_COLD = /* glsl */ `
+uniform float uTime;
+vec4 look(vec2 uv, vec4 col, vec4 data) {
+  float h = clamp(col.x, 0.0, 1.0);
+  float noise = vnoise3(vec3(uv * 7.0, uTime * 24.0 - h * 8.0));
+  float r = length(uv);
+  float m = (1.0 - smoothstep(0.18, 0.92 + (noise - 0.5) * 0.35 * h, r)) * (1.0 - smoothstep(0.45, 1.0, h));
+  m *= mix(1.0, smoothstep(0.25, 0.65, noise), smoothstep(0.35, 0.9, h));
+  vec3 c = mix(vec3(2.8, 3.4, 3.9), vec3(0.7, 1.5, 2.4), h);
+  return vec4(c * m * 0.5, 0.12 * m);
+}`;
+
+/** A glint: a sliver of ice (cold.ts's shard), glassy, covering. */
+const LOOK_GLINT = /* glsl */ `
+vec4 look(vec2 uv, vec4 col, vec4 data) {
+  vec2 q = vec2(uv.x * 1.8, uv.y);
+  float m = 1.0 - (abs(q.x) + abs(q.y));
+  if (m <= 0.0) return vec4(0.0);
+  float core = smoothstep(0.3, 0.7, m);
+  vec3 c = mix(vec3(0.3, 0.7, 1.2), vec3(1.6, 1.75, 1.85), core);
+  float a = smoothstep(0.0, 0.1, m) * 0.9 * col.w;
+  return vec4(c * a, a);
+}`;
+
+/** A snowflake: a small soft white fleck turning in the air (the ash's motion). */
+const LOOK_FLAKE_COLD = /* glsl */ `
+vec4 look(vec2 uv, vec4 col, vec4 data) {
+  float turn = 0.35 + 0.65 * col.y;
+  float m = 1.0 - smoothstep(0.25, 0.7, length(vec2(uv.x, uv.y / turn)));
+  float a = m * 0.8 * col.w;
+  return vec4(vec3(1.5, 1.65, 1.8) * a, a);
+}`;
+
 /**
  * The spray's light on the floor: a warm pool round the staff's tip and a fan exactly the sim's (its half-angle, out
  * to where the channel stops), with heat flowing outward through it, so where it burns reads on the ground even though
  * the flames fly above it.
  */
 const FAN = /* glsl */ `
-uniform vec4 uFan; uniform float uHalf, uFanOn, uClock, uNozF, uRange, uRb;
+uniform vec4 uFan; uniform float uHalf, uFanOn, uClock, uNozF, uRange, uRb, uCool;
 float dropW(float d) {
   float c = uRange - uRb, at = (c * c - uRb * uRb) / max(c, 1e-3);
   return d < at ? d * tan(min(uHalf, 1.4)) : sqrt(max(uRb * uRb - (d - c) * (d - c), 0.0));
@@ -321,6 +378,8 @@ vec4 decal(vec3 wp) {
   // a warm glaze: it takes a little of the pale stone's own colour away (alpha) and puts saturated firelight back, so the
   // floor under the fire turns orange rather than just brighter (which the tone map would wash to cream)
   vec3 c = mix(vec3(1.0, 0.45, 0.1), vec3(1.0, 0.24, 0.04), clamp(r / max(uFan.w, 1.0), 0.0, 1.0));
+  // (the Frost spray's: a cold glaze, frost-white near, cyan out along it)
+  c = mix(c, mix(vec3(0.85, 0.95, 1.05), vec3(0.4, 0.75, 1.1), clamp(r / max(uFan.w, 1.0), 0.0, 1.0)), uCool);
   return vec4(c * k * 0.35, clamp(k * 0.12, 0.0, 0.95));
 }`;
 
@@ -348,11 +407,17 @@ export class FireSpray {
   /** The flames as burning gas (?spray=gas), and the painted puffs and glow: both built, one drawn (switched live). */
   private gas: SprayGas;
   private flip: ParticleBatch[] = [];
-  private F = { uFan: { value: new THREE.Vector4() }, uFanOn: { value: 0 }, uClock: { value: 0 }, uNozF: { value: NOZZLE.forward + 0.6 } };
+  private F = { uFan: { value: new THREE.Vector4() }, uFanOn: { value: 0 }, uClock: { value: 0 }, uNozF: { value: NOZZLE.forward + 0.6 }, uCool: { value: 0 } };
 
-  /** `look` and `sheets` are the spike's and are ignored (see FxLook, FireSheets). */
-  constructor(readonly look: FxLook, sheets: FireSheets | null, seed: number) {
+  /**
+   * `look` and `sheets` are the spike's and are ignored (see FxLook, FireSheets). `element`: Fire's spray, or Cold's
+   * (the Frost spray, 2026-11-28: the same stream, drop, motions and fan in frost: mist, a cold jet, ice glints and
+   * snowflakes, no smoke).
+   */
+  constructor(readonly look: FxLook, sheets: FireSheets | null, seed: number, readonly element: 'fire' | 'cold' = 'fire') {
     void sheets;
+    const cold = element === 'cold';
+    this.F.uCool.value = cold ? 1 : 0;
     const L = (life: number | ((n: number) => number)) => (typeof life === 'number' ? () => life : life);
     const add = (motion: string, lookSrc: string, rate: (n: number) => number, life: number | ((n: number) => number), order: number, extra: Record<string, THREE.IUniform> = {}, seedOf = order) => {
       const cap = Math.ceil(rate(5) * L(life)(5)) + 2;
@@ -361,20 +426,20 @@ export class FireSpray {
       this.layers.push({ b, rate, life: L(life) });
       this.group.add(b.mesh);
     };
-    add(SMOKE, LOOK_SMOKE, RATE.smoke, RATE.smokeLife, 0, { uSheet: { value: FIRE_TEX.smokeburn } });
+    if (!cold) add(SMOKE, LOOK_SMOKE, RATE.smoke, RATE.smokeLife, 0, { uSheet: { value: FIRE_TEX.smokeburn } });
     // the body: one volume, a mesh (fire-body.ts), its deep-red outline shell first, then the flame
     // the flames: painted puffs over a soft glow, or (?spray=gas) the burning gas of the rest of Fire (fire-spray-gas.ts)
-    add(GLOW, LOOK_GLOW, RATE.glow, RATE.glowLife, 2, {}, 7);
-    add(PUFF, LOOK_PUFF, RATE.puff, RATE.puffLife, 3, { uSheet: { value: FIRE_TEX.burn }, uPuffFrom: { value: -1 } }, 8);
+    add(GLOW, cold ? LOOK_GLOW_COLD : LOOK_GLOW, RATE.glow, RATE.glowLife, 2, {}, 7);
+    add(PUFF, cold ? LOOK_PUFF_COLD : LOOK_PUFF, RATE.puff, RATE.puffLife, 3, { uSheet: { value: cold ? FIRE_TEX.smokeburn : FIRE_TEX.burn }, uPuffFrom: { value: -1 } }, 8);
     this.flip = this.layers.slice(-2).map((l) => l.b);
     this.gas = new SprayGas(SPRAY_HEAD, this.U);
     this.group.add(this.gas.mesh);
     this.body = new FireBody(SPRAY_HEAD, this.U, seed);
     this.body.group.visible = BODY_MESH;
     this.group.add(this.body.group);
-    add(CORE, LOOK_CORE, RATE.core, RATE.coreLife, 4);
-    add(EMBER, LOOK_EMBER, RATE.ember, RATE.emberLife, 5);
-    add(DRIFT, LOOK_DRIFT, RATE.drift, RATE.driftLife, 5, {}, 9);
+    add(CORE, cold ? LOOK_CORE_COLD : LOOK_CORE, RATE.core, RATE.coreLife, 4);
+    add(EMBER, cold ? LOOK_GLINT : LOOK_EMBER, RATE.ember, RATE.emberLife, 5);
+    add(DRIFT, cold ? LOOK_FLAKE_COLD : LOOK_DRIFT, RATE.drift, RATE.driftLife, 5, {}, 9);
     this.fan = new GroundDecal({ look: FAN, uniforms: { ...this.F, uHalf: this.U.uHalf, uRange: this.U.uRange, uRb: this.U.uRb } });
     this.group.add(this.fan.mesh);
   }
@@ -407,7 +472,7 @@ export class FireSpray {
     this.body.uGrow.value = Math.min(1, (t - r.t0) / 1.0);
     // the release erodes outward in the body's shader; this only cleans up after it
     this.body.uOn.value = r.end === Infinity ? 1 : Math.max(0, 1 - Math.max(0, t - r.end - 0.8) / 0.3);
-    const look = sprayLook(), gas = look !== 'flip';
+    const look = this.element === 'fire' ? sprayLook() : 'flip', gas = look !== 'flip';
     this.gas.mesh.visible = gas;
     for (const b of this.flip) b.mesh.visible = look !== 'gas';
     // a long overlap (the user on the first mix: "the transition is too jarring"): the puffs come in from near the
@@ -441,8 +506,9 @@ export class FireSpray {
       const A = now, cs = Math.cos(A.ang), sn = Math.sin(A.ang), on2 = Math.min(1, (t - r.t0) / 0.12);
       const nf = this.U.uNoz.value.x, at = (f: number) => nf + f * Math.max(0, A.reach - nf);
       const flick = 0.85 + 0.15 * Math.sin(t * 23) * Math.sin(t * 7.3);
-      lights.add(A.x + cs * at(0.1), groundY + NOZZLE.height, A.z + sn * at(0.1), 0xffc070, (2.2 + 0.5 * n) * on2 * flick, 5 + n);
-      lights.add(A.x + cs * at(0.6), groundY + 1.1, A.z + sn * at(0.6), 0xff7a2a, (3.4 + 1.0 * n) * on2 * flick, 6 + 1.5 * n);
+      const cold = this.element === 'cold', k = cold ? 0.45 : 1;
+      lights.add(A.x + cs * at(0.1), groundY + NOZZLE.height, A.z + sn * at(0.1), cold ? 0xd8f4ff : 0xffc070, (2.2 + 0.5 * n) * on2 * flick * k, 5 + n);
+      lights.add(A.x + cs * at(0.6), groundY + 1.1, A.z + sn * at(0.6), cold ? 0x8fd4ff : 0xff7a2a, (3.4 + 1.0 * n) * on2 * flick * k, 6 + 1.5 * n);
     }
   }
 

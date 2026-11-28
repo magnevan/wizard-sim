@@ -34,7 +34,7 @@
  * kept per sim tick and cut back on a rewind, so rollback and the lab's frozen moments draw the same thing.
  */
 import * as THREE from 'three';
-import { EL, type SpellSpec, type World } from '@wizard-sim/sim';
+import { EL, MAX_SEATS, type SpellSpec, type World } from '@wizard-sim/sim';
 import { GroundDecal } from './decal';
 import type { SpellLights } from './lights';
 import { NovaRing } from './nova-ring';
@@ -44,6 +44,11 @@ import { PATH_GLSL, RING, RingTracker, centerAt, fillPath, frontR, pathUniform, 
 /** Is this spell the Frost ring (drawn here; the stand-ins skip its burst)? Ice's ring and the mixed rings aren't, yet. */
 export const isColdNova = (s: SpellSpec | null | undefined): boolean =>
   !!s && s.shape === 'nova' && (s.look || s.form) === EL.cold && !s.heal && !s.scald && !s.freeze;
+/** Is this spell Freezing fog (Cold's Place)? zone-fog.ts draws it; the stand-ins skip its landing ring. */
+export const isColdFog = (s: SpellSpec | null | undefined): boolean =>
+  !!s && s.cast === 'place' && (s.look || s.form) === EL.cold && !s.heal && !s.scald && !s.freeze;
+/** Is this imbue event (a `move` with text 'imbue') a pure Frost burst? Its element mask holds Cold alone. */
+export const isColdBurst = (e: { text?: string; els?: number }): boolean => e.text === 'imbue' && e.els === 1 << EL.cold;
 
 /** How the front moves, in seconds and u (art/novas.ts cold(), in 3D units). */
 export const COLD = {
@@ -81,11 +86,29 @@ float toothBreak(float ti) { return 0.86 + uHold + 0.32 * rnd(ti, 3.0); }
 float tri(float u, float c) { return u < c ? u / c : (1.0 - u) / (1.0 - c); }
 `;
 
+/**
+ * The Frost burst (the imbued burst, Shift+LMB): the same ring cut to the aimed fan, as fire-wave.ts does for Fire.
+ * uHalf over 3.1 is a whole ring. fanK: how much of an angle round the ring is drawn; fanMap: an angle dealt round the
+ * whole ring (0..2π) put across the fan instead.
+ */
+const FAN = /* glsl */ `
+uniform float uFace, uHalf;
+float fanK(float th) {
+  if (uHalf > 3.1) return 1.0;
+  float d = abs(atan(sin(th - uFace), cos(th - uFace)));
+  return 1.0 - smoothstep(uHalf * 0.8, uHalf * 1.12, d + 0.05 * sin(th * 9.0 + 1.3));
+}
+float fanMap(float th) { return uHalf > 3.1 ? th : uFace + (fract(th / 6.2831853) * 2.0 - 1.0) * uHalf * 1.05; }
+`;
+
 /** The front: the ring's look (nova-ring.ts). uQ: the age in reach times; uGrow: how much of its height it has. */
 const LOOK_FRONT = /* glsl */ `
 uniform float uQ, uGrow;
 ${TEETH}
-vec4 look(vec2 p) {
+${FAN}
+vec4 look0(vec2 p);
+vec4 look(vec2 p) { return look0(p) * fanK(p.x); }
+vec4 look0(vec2 p) {
   float a = p.x / 6.2831853;
   float f = a * uNt, ti = floor(f), u = fract(f), c = toothTip(ti);
   float brk = clamp((uQ - toothBreak(ti)) / 0.12, 0.0, 1.0);
@@ -126,11 +149,12 @@ vec4 look(vec2 p) {
 const SHARDS = /* glsl */ `
 ${TEETH}
 ${PATH_GLSL}
+${FAN}
 uniform float uShards;
 Particle emitParticle(float k, float back) {
   if (k >= uShards) return P0();
   float ti = floor(rnd(k, 11.0) * uNt), early = rnd(k, 12.0) < 0.2 ? 1.0 : 0.0;
-  float th = (ti + toothTip(ti) + (rnd(k, 13.0) - 0.5) * 1.6) / uNt * 6.2831853;
+  float th = fanMap((ti + toothTip(ti) + (rnd(k, 13.0) - 0.5) * 1.6) / uNt * 6.2831853);
   float born = early > 0.5 ? (0.25 + 0.6 * rnd(k, 14.0)) * uTr : (toothBreak(ti) + 0.05 * rnd(k, 14.0)) * uTr;
   float life = 0.45 + 0.35 * rnd(k, 15.0), a = uAge - back - born;
   if (a < 0.0 || a > life) return P0();
@@ -165,7 +189,10 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
  */
 const LOOK_MIST = /* glsl */ `
 uniform float uMist, uClock;
-vec4 look(vec2 p) {
+${FAN}
+vec4 look0(vec2 p);
+vec4 look(vec2 p) { return look0(p) * fanK(p.x); }
+vec4 look0(vec2 p) {
   float y = clamp(p.y / max(uHeight, 1e-3), 0.0, 1.0);   // (unclamped, pow() below gives NaN at the top: black dots)
   // wraps round the ring without a seam: noise on the circle
   vec3 q = vec3(cos(p.x) * 3.2, sin(p.x) * 3.2, p.y * 2.6 - uClock * 0.9);
@@ -182,7 +209,10 @@ vec4 look(vec2 p) {
  */
 const LOOK_BLAST = /* glsl */ `
 uniform float uClock, uFade, uGrow;
-vec4 look(vec2 p) {
+${FAN}
+vec4 look0(vec2 p);
+vec4 look(vec2 p) { return look0(p) * fanK(p.x); }
+vec4 look0(vec2 p) {
   float H = max(uHeight, 1e-3), y = p.y / H;
   vec3 q = vec3(cos(p.x) * 4.0, sin(p.x) * 4.0, uClock * 1.6 + uSeed * 0.01);
   float lump = fbm3(q), lump2 = vnoise3(vec3(cos(p.x) * 13.0, sin(p.x) * 13.0, uClock * 3.0 + 5.0));
@@ -207,10 +237,11 @@ vec4 look(vec2 p) {
 /** Snow puffs: thrown out with the blast at every height, riding the front, then hanging and sinking as they thin. */
 const PUFFS = /* glsl */ `
 ${PATH_GLSL}
+${FAN}
 uniform float uPuffs;
 Particle emitParticle(float k, float back) {
   if (k >= uPuffs) return P0();
-  float th = rnd(k, 31.0) * 6.2831853, born = (0.05 + 0.95 * rnd(k, 32.0)) * uTr;
+  float th = fanMap(rnd(k, 31.0) * 6.2831853), born = (0.05 + 0.95 * rnd(k, 32.0)) * uTr;
   float life = 0.45 + 0.3 * rnd(k, 33.0), a = uAge - back - born;
   if (a < 0.0 || a > life) return P0();
   float al = a / life, tau = 0.2, v = 2.0 + 2.0 * rnd(k, 34.0);
@@ -239,12 +270,13 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
 /** Flakes settling inside the ring after the blast, twinkling on whole frames. */
 const FLAKES = /* glsl */ `
 ${PATH_GLSL}
+${FAN}
 uniform float uFlakes;
 Particle emitParticle(float k, float back) {
   if (k >= uFlakes) return P0();
   float born = uTr * 0.5 + rnd(k, 51.0) * 0.8, life = 0.7 + 0.5 * rnd(k, 52.0), a = uAge - back - born;
   if (a < 0.0 || a > life) return P0();
-  float th = rnd(k, 53.0) * 6.2831853, rr = sqrt(rnd(k, 54.0)) * uR;
+  float th = fanMap(rnd(k, 53.0) * 6.2831853), rr = sqrt(rnd(k, 54.0)) * uR;
   vec2 c = centerAt(born);
   Particle p = P0(); p.alive = true;
   p.pos = vec3(c.x + cos(th) * rr + sin(a * 4.0 + k) * 0.12, uGy + (0.9 + 1.2 * rnd(k, 55.0)) * (1.0 - a / life) + 0.05, c.y + sin(th) * rr);
@@ -287,7 +319,10 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
  */
 const RIME = /* glsl */ `
 uniform vec2 uM, uC; uniform float uRn, uRf, uMelt, uN, uFront;
-vec4 decal(vec3 wp) {
+${FAN}
+vec4 decal0(vec3 wp);
+vec4 decal(vec3 wp) { vec2 d0 = wp.xz - uM; return decal0(wp) * fanK(atan(d0.y, d0.x)); }
+vec4 decal0(vec3 wp) {
   vec2 d = wp.xz - uM; float rr = length(d);
   float ang = atan(d.y, d.x);
   float edge = min(uRn, uRf) * (0.94 + 0.06 * vnoise3(vec3(cos(ang) * 3.0, sin(ang) * 3.0, uSeed * 0.01)));
@@ -338,15 +373,16 @@ class Slot {
   readonly puffs: ParticleBatch;
   readonly flakes: ParticleBatch;
   readonly flash: ParticleBatch;
-  readonly B = { uClock: { value: 0 }, uFade: { value: 0 }, uGrow: { value: 0 } };
-  readonly M = { uMist: { value: 0 }, uClock: { value: 0 } };
   readonly P = {
     uPath: { value: pathUniform() },
     uAge: { value: 0 }, uR: { value: 3 }, uTr: { value: 0.38 }, uR0: { value: RING.r0 }, uH: { value: 0.7 }, uGy: { value: 0 },
     uNt: { value: 56 }, uHold: { value: 0 },
+    uFace: { value: 0 }, uHalf: { value: Math.PI },
   };
-  readonly F = { uQ: { value: 0 }, uGrow: { value: 0 } };
-  readonly D = { uM: { value: new THREE.Vector2() }, uC: { value: new THREE.Vector2() }, uRn: { value: 0 }, uRf: { value: 3 }, uMelt: { value: 0 }, uN: { value: 1 }, uFront: { value: 0 } };
+  readonly F = { uQ: { value: 0 }, uGrow: { value: 0 }, uFace: this.P.uFace, uHalf: this.P.uHalf };
+  readonly D = { uM: { value: new THREE.Vector2() }, uC: { value: new THREE.Vector2() }, uRn: { value: 0 }, uRf: { value: 3 }, uMelt: { value: 0 }, uN: { value: 1 }, uFront: { value: 0 }, uFace: this.P.uFace, uHalf: this.P.uHalf };
+  readonly B = { uClock: { value: 0 }, uFade: { value: 0 }, uGrow: { value: 0 }, uFace: this.P.uFace, uHalf: this.P.uHalf };
+  readonly M = { uMist: { value: 0 }, uClock: { value: 0 }, uFace: this.P.uFace, uHalf: this.P.uHalf };
   rec: RingRec | null = null;
   private covered = '';
 
@@ -363,8 +399,9 @@ class Slot {
   }
 
   /** Draw ring `r` at age `age` s; `heightAt` reads the floor (sim x, y). Returns the spell light's strength (0: none). */
-  draw(r: RingRec, age: number, heightAt: (x: number, y: number) => number): number {
+  draw(r: RingRec, age: number, heightAt: (x: number, y: number) => number, face = 0, half = Math.PI): number {
     if (this.rec !== r) { this.rec = r; this.covered = ''; }
+    this.P.uFace.value = face; this.P.uHalf.value = half;
     const n = runesOf(r.r), Tr = COLD.reach * stretchOf(r.r), q = age / Tr, hold = holdOf(n);
     const H = COLD.height + COLD.heightPerRune * (n - 1);
     const Rn = frontR(r.r, q);
@@ -423,24 +460,37 @@ class Slot {
 export class ColdNovas {
   readonly group = new THREE.Group();
   private readonly rings = new RingTracker(isColdNova, lifeOf);
+  /** Frost bursts: the ring cut to the aimed fan; they don't follow anyone (fire-wave.ts's bursts). */
+  private bursts: { rec: RingRec; face: number; half: number }[] = [];
   private slots: Slot[] = [];
   /** The floor's height (u) under sim point (x, y). */
   heightAt: (x: number, y: number) => number = () => 0;
 
-  /** After each sim step (shown or replayed): new Frost rings, and every live ring's caster's spot this tick. */
-  afterStep(w: World): void { this.rings.afterStep(w); }
+  /** After each sim step (shown or replayed): new Frost rings and bursts, and every live ring's caster's spot this tick. */
+  afterStep(w: World): void {
+    this.rings.afterStep(w);
+    const tick = w.clock[0];
+    for (const e of w.events) {
+      if (e.kind !== 'move' || !isColdBurst(e) || e.who < 0 || e.who >= MAX_SEATS) continue;
+      if (this.bursts.some((b) => b.rec.tick === tick && b.rec.who === e.who)) continue;
+      const face = Math.atan2((e.y2 ?? e.y) - e.y, (e.x2 ?? e.x) - e.x);
+      this.bursts.push({ rec: { tick, who: e.who, x: e.x, y: e.y, r: e.amount ?? 2.5, seed: (tick * 37 + e.who * 11) % 9973, path: [] }, face, half: (e.half ?? 0.17) * Math.PI * 2 });
+    }
+    this.bursts = this.bursts.filter((b) => (tick - b.rec.tick) / 60 < lifeOf(b.rec.r) + 0.1);
+  }
 
   /** A rewind put the world back to `tick`: rings cast after it go, and every path is cut back to it. */
-  rewind(tick: number): void { this.rings.rewind(tick); }
+  rewind(tick: number): void { this.rings.rewind(tick); this.bursts = this.bursts.filter((b) => b.rec.tick <= tick); }
 
-  /** Draw every live ring at time t (s, the sim clock), asking `lights` for each front's cold light. */
+  /** Draw every live ring and burst at time t (s, the sim clock), asking `lights` for each front's cold light. */
   update(t: number, lights: SpellLights | null): void {
-    const live = this.rings.live(t);
+    const live: { rec: RingRec; face: number; half: number }[] = this.rings.live(t).map((rec) => ({ rec, face: 0, half: Math.PI }));
+    for (const b of this.bursts) { const a = t - b.rec.tick / 60; if (a >= 0 && a <= lifeOf(b.rec.r)) live.push(b); }
     while (this.slots.length < live.length && this.slots.length < 8) { const s = new Slot(); this.slots.push(s); this.group.add(s.group); }
     this.slots.forEach((s, i) => {
-      const r = live[i];
-      if (!r) { s.hide(); return; }
-      const age = t - r.tick / 60, front = s.draw(r, age, this.heightAt);
+      const wv = live[i];
+      if (!wv) { s.hide(); return; }
+      const r = wv.rec, age = t - r.tick / 60, front = s.draw(r, age, this.heightAt, wv.face, wv.half);
       if (lights && age < 0.12) { const [fx, fy] = centerAt(r, 0); lights.add(fx, this.heightAt(fx, fy) + 1.0, fy, 0xd8f4ff, age < 0.05 ? 6 : 3, r.r + 3); }
       if (lights && front > 0) {
         const [cx, cy] = centerAt(r, age), n = runesOf(r.r);
@@ -450,7 +500,7 @@ export class ColdNovas {
   }
 
   /** Forget every ring (a lab drawing another world). */
-  reset(): void { this.rings.reset(); for (const s of this.slots) s.hide(); }
+  reset(): void { this.rings.reset(); this.bursts = []; for (const s of this.slots) s.hide(); }
 
   dispose(): void { for (const s of this.slots) s.dispose(); }
 }

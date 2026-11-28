@@ -19,7 +19,7 @@ import { cageOvergrowth, clearOvergrowth, coreGlow, overgrowthSlot, pathOvergrow
 import { smokeMesh, type SmokeSpec } from './kit-smoke';
 import { kerbRows, KERB_ROUND, KERB_W, type KerbSeg } from './kit-road';
 import { LAWN_VARY, STONE_MATS, STONE_PAINT, STONE_U, WEATHERED, stoneDecl, stoneFrag } from './kit-stones';
-import { buildGround, cloudify, GROUND_U, marginGrass, setGroundArt, softLawnShadow } from './kit-ground';
+import { buildGround, cloudify, footGrass, GROUND_U, marginGrass, setGroundArt, softLawnShadow } from './kit-ground';
 import { advanceWeather, WIND_TIME } from './weather';
 
 export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string; ox?: number; oy?: number;
@@ -1180,6 +1180,7 @@ export function buildKit(data: KitData): THREE.Group {
     }
   }
   const margin = marginGrass(); if (margin) root.add(margin);   // raised grass at the lawn's edges (kit-ground.ts)
+  if (GROUND_U.grOn.value) root.add(footGrass());   // and round walkers' feet (filled each frame by setGrassPushers)
   cloudify(root);   // cloud shadows drifting over everything lit
   return root;
 }

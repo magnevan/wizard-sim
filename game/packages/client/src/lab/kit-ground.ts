@@ -59,6 +59,7 @@ export function setGroundArt(tuft: THREE.Texture | undefined, earth: THREE.Textu
 export function setGrassPushers(list: readonly { x: number; z: number; r: number }[]) {
   const P = GROUND_U.grPush.value;
   for (let i = 0; i < P.length; i++) { const b = list[i]; if (b) P[i].set(b.x, b.z, b.r, 1); else P[i].w = 0; }
+  fillFootGrass(list.slice(0, P.length));
 }
 /** The clouds: on (1) or off, their clock, cover, darkness and size (weather.ts; at their defaults a picture at &t= is as before). */
 export const CLOUD_U = { clOn: WEATHER.clouds, clT: CLOUD_TIME, clCover: WEATHER.cover, clDark: WEATHER.dark, clSize: WEATHER.size };
@@ -510,16 +511,19 @@ const vnoise = (x: number, y: number) => {
   return (hash(i, j) * (1 - u) + hash(i + 1, j) * u) * (1 - v) + (hash(i, j + 1) * (1 - u) + hash(i + 1, j + 1) * u) * v;
 };
 const UPM = 1 / 0.6;   // u per metre (kit-render's M)
-let marginMat: THREE.MeshLambertMaterial | null = null;
-function marginMaterial(): THREE.MeshLambertMaterial {
-  if (marginMat) return marginMat;
+const marginMats: (THREE.MeshLambertMaterial | null)[] = [null, null];
+/** The edge grass's material; `feet`: the foot grass's (footGrass), each card fading by its own aFade, never pressed flat. */
+function marginMaterial(feet = false): THREE.MeshLambertMaterial {
+  const have = marginMats[feet ? 1 : 0];
+  if (have) return have;
   const m = new THREE.MeshLambertMaterial({ color: 0xffffff, alphaToCoverage: true, side: THREE.DoubleSide });
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, GROUND_U);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
       attribute vec3 aRoot; attribute vec3 aFan; attribute vec2 aCorner; uniform float grTime, grWind;
       ${PUSH_GLSL}
-      varying vec2 vMgUv; varying vec2 vMgRoot; varying float vMgCol;
+      varying vec2 vMgUv; varying vec2 vMgRoot; varying float vMgCol; varying float vMgFade;
+      ${feet ? 'attribute float aFade;' : ''}
       float mgGust(vec2 p, float t) {
         vec2 W = vec2(0.93, 0.37); float al = dot(p, W), ac = dot(p, vec2(-W.y, W.x));
         float e = 0.42 + 0.3 * sin(al * 0.21 - t * 0.83 + 1.4 * sin(ac * 0.13 + t * 0.11)) + 0.26 * sin(al * 0.078 - t * 0.31 + ac * 0.05 + 1.7)
@@ -536,7 +540,7 @@ function marginMaterial(): THREE.MeshLambertMaterial {
         vec3 mgU = normalize(vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]));
         // someone walking through bends the tuft away from them and presses it down
         vec3 mgP = grPushAt((modelMatrix * vec4(aRoot, 1.0)).xz);
-        mgH *= 1.0 - 0.55 * mgP.z;
+        ${feet ? 'vMgFade = aFade;' : 'mgH *= 1.0 - 0.55 * mgP.z; vMgFade = 1.0;'}
         vec3 transformed = aRoot + mgR * (aCorner.x * aFan.x + mgB) + mgU * mgH + vec3(mgP.x, 0.0, mgP.y) * aCorner.y * aCorner.y * aFan.y * 0.6;
         float sp = abs(aFan.z); vMgCol = sp;
         vMgUv = vec2(aFan.z < 0.0 ? 0.5 - aCorner.x : 0.5 + aCorner.x, aCorner.y);
@@ -545,12 +549,13 @@ function marginMaterial(): THREE.MeshLambertMaterial {
       #define GR_NO_FLOWERS
       ${GROUND_GLSL}
       uniform sampler2D grLawn; uniform float grLawnS;
-      varying vec2 vMgUv; varying vec2 vMgRoot; varying float vMgCol;`)
+      varying vec2 vMgUv; varying vec2 vMgRoot; varying float vMgCol; varying float vMgFade;`)
       .replace('#include <map_fragment>', `{
         float sp = floor(vMgCol + 0.5), col = mod(sp, 4.0), row = floor(sp / 4.0);
         // the sprite's own cell, its foot (painted about a tenth up the cell) at the card's foot
         vec2 suv = vec2(vMgUv.x, 0.1 + vMgUv.y * 0.85);
         vec4 tx = texture2D(grTuft, (vec2(col, 3.0 - row) + clamp(suv, 0.01, 0.99)) / 4.0);
+        tx.a *= vMgFade;   // (fading out: the tuft thins to its densest blades)
         diffuseColor.a = clamp((tx.a - 0.45) / max(fwidth(tx.a), 0.0001) + 0.5, 0.0, 1.0);
         if (diffuseColor.a < 0.02) discard;
         vec3 g = groundLawn(grLawn, grLawnS, vMgRoot);
@@ -558,8 +563,8 @@ function marginMaterial(): THREE.MeshLambertMaterial {
         diffuseColor.rgb = g * mix(0.82, 1.5, tx.r) * mix(0.95, 1.08, vMgUv.y);
       }`);
   };
-  m.customProgramCacheKey = () => 'margin-grass-5';
-  return (marginMat = m);
+  m.customProgramCacheKey = () => (feet ? 'foot-grass-1' : 'margin-grass-6');
+  return (marginMats[feet ? 1 : 0] = m);
 }
 /** Raised grass fans along the margins of the last ground map (buildGround first); null where there are none. */
 export function marginGrass(): THREE.Mesh | null {
@@ -639,6 +644,63 @@ export function marginGrass(): THREE.Mesh | null {
   mesh.receiveShadow = true; mesh.frustumCulled = false; mesh.raycast = () => undefined;
   mesh.name = `margin-grass (${n})`;
   return mesh;
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// foot grass: a few tufts round each walker's feet on the lawn, so the soles are a little hidden in the grass. They stand
+// on a fixed grid in the world and fade in only near someone's feet, so a wizard walks into grass that stays put rather
+// than dragging a clump along. Short on mown lawn, taller in long grass; none on paving or worn paths.
+// ---------------------------------------------------------------------------------------------------------------
+const FOOT_MAX = 384, FOOT_STEP = 0.2;
+let foot: { mesh: THREE.Mesh; geo: THREE.InstancedBufferGeometry; root: Float32Array; fan: Float32Array; fade: Float32Array } | null = null;
+/** The foot grass's mesh (add it to the scene once; setGrassPushers refills it each frame). */
+export function footGrass(): THREE.Mesh {
+  if (foot) return foot.mesh;
+  const geo = new THREE.InstancedBufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(new Array(12).fill(0), 3));
+  geo.setAttribute('aCorner', new THREE.Float32BufferAttribute([-0.5, 0, 0.5, 0, 0.5, 1, -0.5, 1], 2));
+  geo.setIndex([0, 1, 2, 0, 2, 3]);
+  const root = new Float32Array(FOOT_MAX * 3), fan = new Float32Array(FOOT_MAX * 3), fade = new Float32Array(FOOT_MAX);
+  geo.setAttribute('aRoot', new THREE.InstancedBufferAttribute(root, 3).setUsage(THREE.DynamicDrawUsage));
+  geo.setAttribute('aFan', new THREE.InstancedBufferAttribute(fan, 3).setUsage(THREE.DynamicDrawUsage));
+  geo.setAttribute('aFade', new THREE.InstancedBufferAttribute(fade, 1).setUsage(THREE.DynamicDrawUsage));
+  geo.instanceCount = 0;
+  const mesh = new THREE.Mesh(geo, marginMaterial(true));
+  mesh.frustumCulled = false; mesh.receiveShadow = true; mesh.raycast = () => undefined; mesh.name = 'foot-grass';
+  foot = { mesh, geo, root, fan, fade };
+  return mesh;
+}
+function fillFootGrass(list: readonly { x: number; z: number; r: number }[]) {
+  const F = FIELDS;
+  if (!foot) return;
+  let n = 0;
+  const seen = new Set<number>();
+  if (F && GROUND_U.grTuftOn.value) for (const b of list) {
+    // a band just in front of the feet (toward the camera, +z): its tufts rise over the robe's hem and the soles.
+    // (Nearer in, they stand inside the robe and are hidden.)
+    const rx = b.r * 1.15, rz = b.r * 0.55, cz = b.z + b.r * 0.8;
+    for (let gz = Math.floor((cz - rz) / FOOT_STEP); gz <= Math.ceil((cz + rz) / FOOT_STEP); gz++)
+      for (let gx = Math.floor((b.x - rx) / FOOT_STEP); gx <= Math.ceil((b.x + rx) / FOOT_STEP); gx++) {
+        const key = gz * 100003 + gx;
+        if (seen.has(key) || n >= FOOT_MAX) continue;
+        const x = (gx + 0.5 + (hash(gx, gz) - 0.5) * 0.8) * FOOT_STEP, z = (gz + 0.5 + (hash(gz + 7.7, gx) - 0.5) * 0.8) * FOOT_STEP;
+        const e = Math.hypot((x - b.x) / rx, (z - cz) / rz);
+        if (e > 1 || hash(gx * 1.9, gz * 2.7) < 0.3) continue;
+        const i = Math.floor((x - F.x0) / CELL), j = Math.floor((z - F.y0) / CELL);
+        if (i < 0 || j < 0 || i >= F.nx || j >= F.ny) continue;
+        const q = j * F.nx + i;
+        if (!F.lawn[q] || F.R[q] > 0.35) continue;
+        seen.add(key);
+        const long = Math.min(1, F.G[q]), h = (0.4 + 0.25 * long) * (0.85 + 0.4 * hash(gx + 3.1, gz));
+        const row = long > 0.5 && hash(gx, gz + 1.7) > 0.4 ? 2 : Math.floor(hash(gx + 5.3, gz) * 2), sp = row * 4 + Math.floor(hash(gx + 1.1, gz + 9.2) * 4);
+        foot.root.set([x, F.top[q] * UPM, z], n * 3);
+        foot.fan.set([h * 1.25, h, hash(gx + 2.2, gz) > 0.5 ? sp : -sp - 0.0001], n * 3);
+        foot.fade[n] = 1 - smooth(0.55, 1, e);
+        n++;
+      }
+  }
+  foot.geo.instanceCount = n;
+  for (const a of ['aRoot', 'aFan', 'aFade']) (foot.geo.getAttribute(a) as THREE.InstancedBufferAttribute).needsUpdate = true;
 }
 
 // ---------------------------------------------------------------------------------------------------------------

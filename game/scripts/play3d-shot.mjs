@@ -36,9 +36,10 @@ const SHOTS = [
   { name: 'practice-26', q: 'shot=practice&cam=26' },
   { name: 'practice-34', q: 'shot=practice&cam=34' },
   { name: 'practice-fire', q: 'shot=practice-fire&cam=26&local=0' },
-  // the infirmary's lawn (--only infirmary-20,infirmary-12): the natural ground in the game, not only in kit3d.html
+  // the infirmary's lawn (--only infirmary-20,infirmary-12,infirmary-feet): the natural ground in the game, not only in kit3d.html
   { name: 'infirmary-20', q: 'shot=infirmary&cam=20' },
   { name: 'infirmary-12', q: 'shot=infirmary&cam=12' },
+  { name: 'infirmary-feet', q: 'shot=infirmary&cam=5' },
   // the perf note: 240 frames at the default distance (times are the last 120)
   { name: 'perf-plaza-26', q: 'shot=plaza&cam=26&perf=1' },
 ].filter((s) => !only || only.split(',').includes(s.name));

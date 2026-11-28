@@ -12,6 +12,7 @@ import { KIND, MAX_BODIES, MAX_SEATS, type RoomDef, type World } from '@wizard-s
 import type { GameView } from '../game-view';
 import type { SoundDirector } from '../audio/director';
 import { setupStage, spinKit } from '../lab/kit-render';
+import { setGrassPushers } from '../lab/kit-ground';
 import { Camera3D } from './camera3d';
 import { Fader } from './fade';
 import { KitScene, hasScene } from './kit-scene';
@@ -186,6 +187,14 @@ export class View3D implements GameView {
     // the sun and its shadow box ride along with the view
     const t = this.camera.target;
     this.sun.position.set(t.x - 30, t.y + 40, t.z + 22); this.sun.target.position.copy(t);
+    // the grass parts round whoever stands in it: the eight bodies nearest the view's middle (kit-ground.ts)
+    const walkers: { x: number; z: number; r: number; d: number }[] = [];
+    for (let i = 0; i < MAX_BODIES; i++) {
+      if (!b.kind[i]) continue;
+      const [x, y] = this.drawnAt(w, i, alpha), p = ground(x, y);
+      walkers.push({ x: p.x, z: p.z, r: Math.max(0.3, b.r[i]), d: (p.x - t.x) ** 2 + (p.z - t.z) ** 2 });
+    }
+    setGrassPushers(walkers.sort((a, c) => a.d - c.d).slice(0, 8));
     spinKit(now / 1000);
     this.render();
     this.hud.draw(w, alpha, now, this.camera, (i) => this.drawnAt(w, i, alpha), (x, y) => ground(x, y));

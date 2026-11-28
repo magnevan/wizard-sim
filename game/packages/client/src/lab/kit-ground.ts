@@ -23,7 +23,9 @@ type GPiece = { class?: string; shape?: string; footprint?: [number, number]; he
   grow?: { kind?: string; blooms?: readonly string[]; spikes?: readonly string[]; bloom?: unknown } };
 
 /** The last ground map's fields, for the margin grass (marginGrass). */
-let FIELDS: { nx: number; ny: number; x0: number; y0: number; top: Float32Array; lawn: Uint8Array; R: Float32Array; G: Float32Array; B: Float32Array; dHard: Float32Array; dWear: Float32Array } | null = null;
+let FIELDS: { nx: number; ny: number; x0: number; y0: number; top: Float32Array; lawn: Uint8Array; R: Float32Array; G: Float32Array; B: Float32Array; dHard: Float32Array; dWear: Float32Array; hems: Hem[] } | null = null;
+/** A plant's outline on the ground (signed distance, u) and its middle and reach: the margin grass hems it. */
+type Hem = { x: number; y: number; r: number; sd: (x: number, y: number) => number; tall: number };
 /** The ground map's cell (u). */
 const CELL = 0.5;
 /** Shared by every ground material: the map, where it lies, and the wind's time. */
@@ -43,6 +45,8 @@ export const GROUND_U = {
   grBloom: { value: null as THREE.Texture | null }, grBloomOn: { value: 0 }, grFlw: { value: null as THREE.Texture | null },
   /** the spill's colours: R of grFlw is how much, G which of these eight (i / 7) */
   grFlwPal: { value: Array.from({ length: 8 }, () => new THREE.Vector3(1, 1, 1)) },
+  /** who's walking through the grass (setGrassPushers): world x, z, radius (u), strength (0: none) */
+  grPush: { value: Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, 1, 0)) },
 };
 /** Hand the ground its painted tufts and its earth tile (either may be missing: the ground then does without). */
 export function setGroundArt(tuft: THREE.Texture | undefined, earth: THREE.Texture | undefined, earthTile: number, lawn?: THREE.Texture, lawnTile = 5, bloom?: THREE.Texture) {
@@ -50,6 +54,11 @@ export function setGroundArt(tuft: THREE.Texture | undefined, earth: THREE.Textu
   GROUND_U.grLawn.value = lawn ?? null; GROUND_U.grLawnS.value = lawnTile;
   GROUND_U.grTuft.value = tuft ?? null; GROUND_U.grTuftOn.value = tuft ? 1 : 0;
   GROUND_U.grEarth.value = earth ?? null; GROUND_U.grEarthS.value = earthTile; GROUND_U.grEarthOn.value = earth ? 1 : 0;
+}
+/** Who stands in the grass this frame (world x, z and radius in u; up to 8, nearest first): the grass parts round them. */
+export function setGrassPushers(list: readonly { x: number; z: number; r: number }[]) {
+  const P = GROUND_U.grPush.value;
+  for (let i = 0; i < P.length; i++) { const b = list[i]; if (b) P[i].set(b.x, b.z, b.r, 1); else P[i].w = 0; }
 }
 /** The clouds: on (1) or off, their clock, cover, darkness and size (weather.ts; at their defaults a picture at &t= is as before). */
 export const CLOUD_U = { clOn: WEATHER.clouds, clT: CLOUD_TIME, clCover: WEATHER.cover, clDark: WEATHER.dark, clSize: WEATHER.size };
@@ -234,7 +243,10 @@ export function buildGround(floors: GFloor[], instances: GInst[], piece: (p: str
   t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true;
   GROUND_U.grMap.value?.dispose();
   GROUND_U.grMap.value = t; GROUND_U.grO.value.set(x0, y0); GROUND_U.grS.value.set(nx * CELL, ny * CELL); GROUND_U.grOn.value = 1;
-  FIELDS = { nx, ny, x0, y0, top, lawn, R, G, B, dHard, dWear };
+  // every plant standing on the lawn gets a hem of grass round its foot (marginGrass), so it grows out of the lawn
+  const hems: Hem[] = [...standing, ...patches].filter((s) => s.k.grow && s.it.p !== 'setpiece.grass-long')
+    .map((s) => ({ x: s.it.x, y: s.it.y, r: s.r, sd: s.sd, tall: Math.min(1, (s.k.height ?? 1) / 2) }));
+  FIELDS = { nx, ny, x0, y0, top, lawn, R, G, B, dHard, dWear, hems };
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -244,7 +256,24 @@ export function buildGround(floors: GFloor[], instances: GInst[], piece: (p: str
  * GLSL for natural ground: the uniforms, hex tiling, tufts, the wind, and lawnVary (the meadow's broad drift, as
  * before) and groundLawn (all of it together). A material using it gets GROUND_U in its uniforms.
  */
+/** GLSL: how the grass at a world point (u) is pushed by whoever walks in it: xy away from them (0 to 1), z crushed flat. */
+const PUSH_GLSL = `
+uniform vec4 grPush[8];
+vec3 grPushAt(vec2 p) {
+  vec3 o = vec3(0.0);
+  for (int i = 0; i < 8; i++) {
+    vec4 b = grPush[i];
+    if (b.w <= 0.0) continue;
+    vec2 v = p - b.xy; float d = length(v);
+    o.xy += (d > 0.001 ? v / d : vec2(0.0)) * (1.0 - smoothstep(b.z * 0.5, b.z * 2.4, d)) * b.w;
+    o.z = max(o.z, (1.0 - smoothstep(b.z * 0.4, b.z * 1.5, d)) * b.w);
+  }
+  float l = length(o.xy); if (l > 1.0) o.xy /= l;
+  return o;
+}
+`;
 export const GROUND_GLSL = `
+${PUSH_GLSL}
 uniform float grOn, grTime, grWind, grSheen, grTuftOn, grEarthS, grEarthOn, grBloomOn; uniform sampler2D grMap, grTuft, grEarth, grBloom, grFlw; uniform vec2 grO, grS; uniform vec3 grFlwPal[8];
 float lwH(vec2 q) { return fract(sin(dot(q, vec2(127.1, 311.7))) * 43758.5453); }
 vec2 lwH2(vec2 q) { return fract(sin(vec2(dot(q, vec2(127.1, 311.7)), dot(q, vec2(269.5, 183.3)))) * 43758.5453); }
@@ -303,7 +332,7 @@ float grGust(vec2 p, float t) {
 // one sprite from the sheet's rows row0..row0+rows-1, size u across (and 1/0.72 deeper on the ground, as the game's
 // 46-degree camera foreshortens it), flipped at random. Cells are visited far to near, so a nearer tuft is painted over
 // a farther one. Returns (grey value, coverage).
-vec2 grBomb(vec2 p, float cell, float row0, float rows, float size, float dens, float seed) {
+vec2 grBomb(vec2 p, float cell, float row0, float rows, float size, float dens, float seed, vec3 pu) {
   vec2 i = floor(p / cell), gx = dFdx(p), gy = dFdy(p);
   vec2 acc = vec2(0.5, 0.0);
   for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
@@ -318,7 +347,9 @@ vec2 grBomb(vec2 p, float cell, float row0, float rows, float size, float dens, 
     vec2 foot = (c + 0.15 + 0.7 * h) * cell;
     float tip = max(0.1 - d.y * 0.72 - 0.1, 0.0);
     d.x -= grWind * (0.22 * grGust(foot, grTime) + 0.03 * sin(grTime * 3.1 + h.y * 40.0)) * tip * tip;
-    vec2 uv = vec2(0.5 + d.x * fl, 0.1 - d.y * 0.72);   // its foot at the cell's point, the blades rising over the ground behind it
+    // someone walking through: the blades lean away from them and lie flatter (shorter on screen) the nearer they are
+    d.x -= pu.x * 0.45 * tip * tip;
+    vec2 uv = vec2(0.5 + d.x * fl, 0.1 + (-d.y * 0.72) / max(0.35, 1.0 - 0.6 * pu.z + 0.25 * pu.y));   // its foot at the cell's point, the blades rising over the ground behind it
     if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) continue;
     float row = row0 + floor(lwH(c + seed + 2.7) * rows), col = floor(lwH(c + seed + 6.3) * 4.0);
     vec2 cuv = (vec2(col, 3.0 - row) + clamp(uv, 0.01, 0.99)) / 4.0;
@@ -371,15 +402,16 @@ vec3 groundLawn(sampler2D t, float tile, vec2 p) {
   c *= mix(vec3(0.65, 0.77, 0.65), vec3(1.18, 1.08, 0.75), smoothstep(0.25, 0.75, sweep));
   // a soft mottle at clump scale (the cells read as scales if pushed harder)
   vec2 tA = grTufts(p / 0.62);
+  vec3 pu = grPushAt(p);   // whoever walks here parts the grass
   c *= mix(0.9, 1.06, tA.x) * mix(0.95, 1.05, tA.y);
   // worn to earth along paths: ragged where the grass breaks into it
   float wn = s.r + (lwN(p * 1.3) - 0.5) * 0.8 + (lwN(p * 4.1 + 7.0) - 0.5) * 0.45 + (tA.x - 0.5) * 0.3;
   float bare = smoothstep(0.58, 0.95, wn), fringe = smoothstep(0.12, 0.5, wn) * (1.0 - bare);
   // painted tufts: short lawn everywhere, big combed clumps in long grass, sparse ones at a path's fringe; none on bare earth
   if (grTuftOn > 0.5) {
-    vec2 b1 = grBomb(p, 0.85, 0.0, 2.0, 1.45, 0.7 * (1.0 - lg * 0.85) * (1.0 - bare), 1.0);
-    vec2 b2 = grBomb(p, 1.2, 2.0, 1.0, 2.2, 0.65 * lg * (1.0 - bare), 7.0);
-    vec2 b3 = grBomb(p, 0.5, 3.0, 1.0, 0.7, fringe * 0.9, 13.0);
+    vec2 b1 = grBomb(p, 0.85, 0.0, 2.0, 1.45, 0.7 * (1.0 - lg * 0.85) * (1.0 - bare), 1.0, pu);
+    vec2 b2 = grBomb(p, 1.2, 2.0, 1.0, 2.2, 0.65 * lg * (1.0 - bare), 7.0, pu);
+    vec2 b3 = grBomb(p, 0.5, 3.0, 1.0, 0.7, fringe * 0.9, 13.0, pu);
     vec2 b = b1;
     b = vec2(mix(b.x, b2.x, b2.y), b.y + b2.y * (1.0 - b.y));
     b = vec2(mix(b.x, b3.x, b3.y), b.y + b3.y * (1.0 - b.y));
@@ -388,6 +420,8 @@ vec3 groundLawn(sampler2D t, float tile, vec2 p) {
   }
   // long grass: paler and warmer toward straw, and a sheen rolling across it in the gusts
   // (straw only out in the open; at the foot of things long grass is lush and deep)
+  // trodden: flattened grass round someone's feet shows its paler, flatter side
+  c *= 1.0 + 0.1 * pu.z * (1.0 - bare);
   float lush = smoothstep(0.05, 0.4, s.b);
   c = mix(c, c * vec3(1.18, 1.1, 0.74), lg * 0.3 * (1.0 - lush));
   c = mix(c, c * vec3(0.72, 0.86, 0.62), lg * lush * 0.8);
@@ -484,6 +518,7 @@ function marginMaterial(): THREE.MeshLambertMaterial {
     Object.assign(sh.uniforms, GROUND_U);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
       attribute vec3 aRoot; attribute vec3 aFan; attribute vec2 aCorner; uniform float grTime, grWind;
+      ${PUSH_GLSL}
       varying vec2 vMgUv; varying vec2 vMgRoot; varying float vMgCol;
       float mgGust(vec2 p, float t) {
         vec2 W = vec2(0.93, 0.37); float al = dot(p, W), ac = dot(p, vec2(-W.y, W.x));
@@ -499,7 +534,10 @@ function marginMaterial(): THREE.MeshLambertMaterial {
         // its height along the camera's own up (leaning back, away from the eye), so the steep camera sees the whole
         // painted tuft rather than an upright card foreshortened to a streak
         vec3 mgU = normalize(vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]));
-        vec3 transformed = aRoot + mgR * (aCorner.x * aFan.x + mgB) + mgU * mgH;
+        // someone walking through bends the tuft away from them and presses it down
+        vec3 mgP = grPushAt((modelMatrix * vec4(aRoot, 1.0)).xz);
+        mgH *= 1.0 - 0.55 * mgP.z;
+        vec3 transformed = aRoot + mgR * (aCorner.x * aFan.x + mgB) + mgU * mgH + vec3(mgP.x, 0.0, mgP.y) * aCorner.y * aCorner.y * aFan.y * 0.6;
         float sp = abs(aFan.z); vMgCol = sp;
         vMgUv = vec2(aFan.z < 0.0 ? 0.5 - aCorner.x : 0.5 + aCorner.x, aCorner.y);
         vMgRoot = aRoot.xz;`);
@@ -520,7 +558,7 @@ function marginMaterial(): THREE.MeshLambertMaterial {
         diffuseColor.rgb = g * mix(0.82, 1.5, tx.r) * mix(0.95, 1.08, vMgUv.y);
       }`);
   };
-  m.customProgramCacheKey = () => 'margin-grass-4';
+  m.customProgramCacheKey = () => 'margin-grass-5';
   return (marginMat = m);
 }
 /** Raised grass fans along the margins of the last ground map (buildGround first); null where there are none. */
@@ -563,6 +601,29 @@ export function marginGrass(): THREE.Mesh | null {
     const sp = row * 4 + Math.floor(hash(jx + 1.3, jy + 5.1) * 4);
     roots.push(jx, F.top[q] * UPM, jy);
     fans.push(w, h, hash(jx + 2.2, jy) > 0.5 ? sp : -sp - 0.0001);
+  }
+  // the hems: grass walked round each plant's outline, rooted just outside it, so its blades rise over the plant's foot
+  for (const hm of F.hems) {
+    const n = Math.max(6, Math.ceil((2 * Math.PI * hm.r) / 0.26));
+    for (let k = 0; k < n; k++) {
+      const a = ((k + hash(hm.x + k, hm.y) * 0.6) / n) * 2 * Math.PI, dx = Math.cos(a), dy = Math.sin(a);
+      // further out on the camera's side (+z), where a plant's low leaves spill forward past its outline
+      const near = Math.max(0, dy);
+      const off = 0.02 + 0.3 * hash(hm.x * 1.3 + k, hm.y + 4.1) + near * (0.3 + 0.2 * hm.tall);
+      let t = hm.r + 0.5;
+      for (let it = 0; it < 8; it++) t -= hm.sd(hm.x + dx * t, hm.y + dy * t) - off;   // walk in to `off` outside the outline
+      const jx = hm.x + dx * t, jy = hm.y + dy * t;
+      const i = Math.floor((jx - F.x0) / CELL), j = Math.floor((jy - F.y0) / CELL);
+      if (i < 0 || j < 0 || i >= F.nx || j >= F.ny) continue;
+      const q = j * F.nx + i;
+      if (!F.lawn[q] || F.R[q] > 0.35 || hash(jx * 2.1, jy * 1.3) < 0.12) continue;
+      const w = 0.45 + 0.3 * hash(jx + 3.3, jy) + 0.2 * hm.tall;
+      const h = w * (0.8 + 0.35 * hash(jx, jy + 6.6)) * (1 + 0.3 * near);
+      const row = hash(jx + 5.5, jy) < 0.45 ? 2 : Math.floor(hash(jx + 7.0, jy) * 2);
+      const sp = row * 4 + Math.floor(hash(jx + 1.3, jy + 5.1) * 4);
+      roots.push(jx, F.top[q] * UPM, jy);
+      fans.push(w, h, hash(jx + 2.2, jy) > 0.5 ? sp : -sp - 0.0001);
+    }
   }
   const n = roots.length / 3;
   if (!n) return null;

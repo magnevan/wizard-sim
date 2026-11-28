@@ -27,3 +27,4 @@ One file per mechanic, copied from `_template.md`. The table mirrors each note's
 | [element-spillover](element-spillover.md) | developing (round 2: fix the machine, get the element; the opening's order in `explorations/2026-11-16-element-order.md`) | 5, 2, 6 |
 | [air-element](air-element.md) | parked (deferred; a full draft waits on the user's `air-*` answers) | 2, 3, 5 |
 | [world-spells](world-spells.md) | developing (Shift+Space weather from the spell language; Fire, Arcane and the fusions open: `explorations/2026-11-27-spell-pass.md`) | 2, 3, 4, 7 |
+| [casting-styles](casting-styles.md) | developing (Shield and Sigil without runes, paid in Concentration and Bindings: `explorations/2026-11-28-element-identities.md`) | 1, 2, 4, 7 |

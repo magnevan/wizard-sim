@@ -26,7 +26,7 @@
  * Stateless in the kit's sense: every frame is a function of the clock, the event and the kept path.
  */
 import * as THREE from 'three';
-import { EL, MAX_SEATS, type SpellSpec, type World } from '@wizard-sim/sim';
+import { EL, MAX_SEATS, specOf, type SpellSpec, type World } from '@wizard-sim/sim';
 import { GroundDecal } from './decal';
 import { FIRE_TEX, SHEET_GLSL } from './fire-sheets';
 import type { SpellLights } from './lights';
@@ -36,6 +36,15 @@ import { FX_U } from './stage';
 import { PATH_GLSL, RING, RingTracker, centerAt, fillPath, frontR, pathUniform, runesOf, stretchOf, type RingRec } from './ring-shape';
 
 const TAU = Math.PI * 2;
+
+/**
+ * The palette switch: the same wave in Fire's colours or Arcane's (uArc 1: magenta and violet plasma, white-pink at its
+ * hottest; the Arcane pass, 2026-11-28: one shape, each element its look). pal(fire, arcane) in every shader's colours.
+ */
+const PAL = /* glsl */ `
+uniform float uArc;
+vec3 pal(vec3 a, vec3 b) { return mix(a, b, uArc); }
+`;
 
 /** Is this spell the Fire ring (drawn here; the stand-ins skip it)? Mixed rings (steam, a healing ring) aren't, yet. */
 export const isFireNova = (s: SpellSpec | null | undefined): boolean =>
@@ -47,6 +56,15 @@ export const isFirePatch = (s: SpellSpec | null | undefined): boolean =>
 
 /** Is this imbue event (a `move` with text 'imbue') a pure Fire burst? Its element mask holds Fire alone. */
 export const isFireBurst = (e: { text?: string; els?: number }): boolean => e.text === 'imbue' && e.els === 1 << EL.fire;
+
+/** Is this burst event a placed blast going off (away from its caster), not the caster's own ring? */
+export const isZoneBlast = (w: World, e: { who: number; x: number; y: number }): boolean =>
+  e.who < 0 || e.who >= MAX_SEATS || Math.hypot(e.x - w.bodies.x[e.who], e.y - w.bodies.y[e.who]) > 0.8;
+
+/** The Arcane ring and burst: the same wave in Arcane's colours (FireWaves with element EL.arcane). */
+export const isArcaneNova = (s: SpellSpec | null | undefined): boolean =>
+  !!s && s.shape === 'nova' && (s.look || s.form) === EL.arcane && !s.heal && !s.scald && !s.freeze;
+export const isArcaneBurst = (e: { text?: string; els?: number }): boolean => e.text === 'imbue' && e.els === 1 << EL.arcane;
 
 export const FIRE_WAVE = {
   /** Seconds the front takes to reach a three-unit ring (the Frost ring's 0.32, a touch slower: fire rolls). */
@@ -133,13 +151,14 @@ void main() {
 const VOL_FRAG = /* glsl */ `
 #include <packing>
 ${VOL_COMMON}
+${PAL}
 uniform sampler2D uDepth; uniform vec2 uRes; uniform float uNear, uFar;
 in vec3 vWorld;
 out vec4 fxColor;
 // 0 hottest .. 1 going out: saturated (almost no blue), so after the tone map the core stays yellow and the body orange
 vec3 gasRamp(float h) {
   h = clamp(h, 0.0, 1.0);
-  vec3 c0 = vec3(3.2, 1.6, 0.08), c1 = vec3(2.5, 0.8, 0.03), c2 = vec3(1.6, 0.3, 0.012), c3 = vec3(0.7, 0.08, 0.01), c4 = vec3(0.12, 0.02, 0.01);
+  vec3 c0 = pal(vec3(3.2, 1.6, 0.08), vec3(3.0, 2.3, 3.2)), c1 = pal(vec3(2.5, 0.8, 0.03), vec3(2.6, 0.7, 2.3)), c2 = pal(vec3(1.6, 0.3, 0.012), vec3(1.3, 0.14, 1.6)), c3 = pal(vec3(0.7, 0.08, 0.01), vec3(0.42, 0.04, 0.8)), c4 = pal(vec3(0.12, 0.02, 0.01), vec3(0.06, 0.01, 0.15));
   if (h < 0.2) return mix(c0, c1, h / 0.2);
   if (h < 0.45) return mix(c1, c2, (h - 0.2) / 0.25);
   if (h < 0.7) return mix(c2, c3, (h - 0.45) / 0.25);
@@ -322,9 +341,10 @@ Particle emitParticle(float k, float back) {
 }`;
 
 const LOOK_FLASH = /* glsl */ `
+${PAL}
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   float m = exp(-dot(uv, uv) * 3.0) * (1.0 - col.x);
-  return vec4(vec3(2.8, 1.5, 0.45) * m, 0.0);
+  return vec4(pal(vec3(2.8, 1.5, 0.45), vec3(2.6, 1.8, 3.0)) * m, 0.0);
 }`;
 
 /**
@@ -334,6 +354,7 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
 const GROUND = /* glsl */ `
 uniform vec2 uC0, uCn;
 uniform float uRn, uRmax, uFront, uScorch, uHot, uFace, uHalf, uN, uShock, uShockA;
+${PAL}
 vec4 decal(vec3 wp) {
   vec2 v = wp.xz - uC0; float d = length(v), th = atan(v.y, v.x);
   float inArc = 1.0;
@@ -341,15 +362,15 @@ vec4 decal(vec3 wp) {
   vec4 o = vec4(0.0);
   // the opening burst's shock: a bright ring racing over the floor ahead of the wave
   float sk = length(wp.xz - uCn) - uShock;
-  o.rgb += vec3(2.6, 1.0, 0.15) * exp(-sk * sk / 0.012) * uShockA * inArc;
+  o.rgb += pal(vec3(2.6, 1.0, 0.15), vec3(2.4, 0.8, 2.6)) * exp(-sk * sk / 0.012) * uShockA * inArc;
   // the hot line on the floor under the front
   float dn = abs(length(wp.xz - uCn) - uRn);
   float sd = length(wp.xz - uCn) - uRn;
   float g = exp(-sd * sd / 0.025) * uFront * inArc;
-  o.rgb += vec3(2.2, 0.9, 0.22) * g * 0.65;
+  o.rgb += pal(vec3(2.2, 0.9, 0.22), vec3(1.8, 0.5, 2.2)) * g * 0.65;
   // just behind the front the stone is freshly sooted: a dark band riding inside it (the dark the pale floor needs)
   float band = exp(-pow((sd + 0.45) / 0.4, 2.0)) * uFront * inArc;
-  o.a += band * 0.28; o.rgb += vec3(0.05, 0.015, 0.0) * band;
+  o.a += band * 0.28; o.rgb += pal(vec3(0.05, 0.015, 0.0), vec3(0.03, 0.0, 0.05)) * band;
   // scorch where the front has been, ragged at its outer edge, thin near the caster
   float reach = 1.0 - smoothstep(uRmax - 0.45, uRmax + 0.15, d + (vnoise3(vec3(th * 3.0, 0.0, uSeed)) - 0.5) * 0.5);
   float inner = smoothstep(0.35, 1.1, d);
@@ -365,9 +386,9 @@ vec4 decal(vec3 wp) {
   float m = clamp(spokes * 0.55 + bl * 0.45, 0.0, 1.0) * reach * inner * inArc;
   float a = m * 0.65 * uScorch;
   o.a += a;
-  o.rgb += vec3(0.018, 0.012, 0.008) * a;
+  o.rgb += pal(vec3(0.018, 0.012, 0.008), vec3(0.02, 0.008, 0.035)) * a;
   // a moment of glow in the fresh scorch, cooling
-  o.rgb += vec3(1.3, 0.4, 0.08) * m * uHot * 0.12;
+  o.rgb += pal(vec3(1.3, 0.4, 0.08), vec3(1.0, 0.2, 1.3)) * m * uHot * 0.12;
   return o;
 }`;
 
@@ -430,9 +451,10 @@ Particle emitParticle(float k, float back) {
 
 /** A spark: a hot streak, covering (it has to show on the pale stone). */
 const LOOK_SPARK = /* glsl */ `
+${PAL}
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   float m = 1.0 - smoothstep(0.25, 1.0, length(uv));
-  vec3 c = mix(vec3(3.0, 1.6, 0.15), vec3(1.6, 0.35, 0.02), col.z);
+  vec3 c = mix(pal(vec3(3.0, 1.6, 0.15), vec3(2.6, 1.8, 3.0)), pal(vec3(1.6, 0.35, 0.02), vec3(1.4, 0.3, 1.8)), col.z);
   return vec4(c * m, m) * col.w;
 }`;
 
@@ -441,9 +463,10 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
  * centre covering a little so the colour holds on the pale stone; reddening as it cools, flickering.
  */
 const LOOK_EMBERS = /* glsl */ `
+${PAL}
 vec4 look(vec2 uv, vec4 col, vec4 data) {
   float r2 = dot(uv, uv), core = exp(-r2 * 9.0), glow = exp(-r2 * 2.5);
-  vec3 c = mix(vec3(2.6, 0.75, 0.08), vec3(1.5, 0.18, 0.03), col.x) * col.y;
+  vec3 c = mix(pal(vec3(2.6, 0.75, 0.08), vec3(2.4, 0.6, 2.6)), pal(vec3(1.5, 0.18, 0.03), vec3(1.2, 0.15, 1.6)), col.x) * col.y;
   return vec4(c * (core * 1.2 + glow * 0.55), core * 0.55) * col.w;
 }`;
 
@@ -460,11 +483,11 @@ class Slot {
   readonly P = {
     uPath: { value: pathUniform() },
     uAge: { value: 0 }, uR: { value: 3 }, uTr: { value: 0.34 }, uR0: { value: RING.r0 }, uH: { value: 1 }, uGy: { value: 0 },
-    uFace: { value: 0 }, uHalf: { value: Math.PI }, uN: { value: 1 },
+    uFace: { value: 0 }, uHalf: { value: Math.PI }, uN: { value: 1 }, uArc: { value: 0 },
   };
   readonly D = {
     uC0: { value: new THREE.Vector2() }, uCn: { value: new THREE.Vector2() }, uRn: { value: 0 }, uRmax: { value: 0 },
-    uFront: { value: 0 }, uScorch: { value: 0 }, uHot: { value: 0 }, uShock: { value: 0 }, uShockA: { value: 0 }, uFace: this.P.uFace, uHalf: this.P.uHalf, uN: this.P.uN,
+    uFront: { value: 0 }, uScorch: { value: 0 }, uHot: { value: 0 }, uShock: { value: 0 }, uShockA: { value: 0 }, uFace: this.P.uFace, uHalf: this.P.uHalf, uN: this.P.uN, uArc: this.P.uArc,
   };
   /** The sheet's uniforms: the wave's (P) and its own. */
   readonly S: Record<string, THREE.IUniform>;
@@ -519,6 +542,7 @@ class Slot {
     // under it burns and chars by itself (fire-floor.ts)
     this.S.uTube.value = w.splash ? 0 : 1;
     if (w.splash) { this.smoke.mesh.visible = false; this.embers.mesh.visible = false; }
+    if (this.P.uArc.value > 0.5) this.smoke.mesh.visible = false;   // Arcane: no smoke
     this.sparks.u.uCount.value = w.ring || w.splash ? SPARK_CAP : Math.round(SPARK_CAP * 0.45); this.sparks.count = SPARK_CAP; this.sparks.mesh.visible = age < 0.6;
     this.flash.count = 1; this.flash.mesh.visible = age < 0.17;
     // the ground: the hot line under the front, then the scorch
@@ -549,7 +573,7 @@ class Slot {
 /** Every Fire ring and Fire burst in the world. */
 export class FireWaves {
   readonly group = new THREE.Group();
-  private readonly rings = new RingTracker(isFireNova, lifeOf);
+  private readonly rings: RingTracker;
   /** Bursts don't follow anyone: kept as plain records with their face and half-angle. */
   private bursts: Wave[] = [];
   private ringWaves = new Map<RingRec, Wave>();
@@ -558,17 +582,39 @@ export class FireWaves {
   heightAt: (x: number, y: number) => number = () => 0;
 
   /** One slot made up front (hidden), so its shaders compile with the stage's warm-up instead of on the first cast. */
-  constructor() { const s = new Slot(); s.hide(); this.slots.push(s); this.group.add(s.group); }
+  /** `element`: EL.fire (the Fire ring and burst) or EL.arcane (the same wave in Arcane's colours). */
+  constructor(readonly element: number = EL.fire) {
+    this.rings = new RingTracker(element === EL.arcane ? isArcaneNova : isFireNova, lifeOf);
+    const s = this.slot(); s.hide();
+  }
+
+  private slot(): Slot { const s = new Slot(); s.P.uArc.value = this.element === EL.arcane ? 1 : 0; this.slots.push(s); this.group.add(s.group); return s; }
 
   /** After each sim step (shown or replayed): new rings and bursts, and every ring's caster's spot this tick. */
   afterStep(w: World): void {
     this.rings.afterStep(w);
     const tick = w.clock[0];
     for (const e of w.events) {
-      if (e.kind !== 'move' || !isFireBurst(e) || e.who < 0 || e.who >= MAX_SEATS) continue;
+      if (e.kind !== 'move' || !(this.element === EL.arcane ? isArcaneBurst(e) : isFireBurst(e)) || e.who < 0 || e.who >= MAX_SEATS) continue;
       if (this.bursts.some((b) => b.rec.tick === tick && b.rec.who === e.who)) continue;
       const face = Math.atan2((e.y2 ?? e.y) - e.y, (e.x2 ?? e.x) - e.x);
       this.bursts.push({ rec: { tick, who: e.who, x: e.x, y: e.y, r: e.amount ?? 2.5, seed: (tick * 37 + e.who * 11) % 9973, path: [] }, face, half: (e.half ?? 0.17) * TAU, ring: false });
+    }
+    // Arcane: a delayed blast going off (the sim's ZONE.blast: a burst event at the zone, not at the caster) is a whole
+    // ring of the wave standing where it was placed (zone-sigil.ts draws its fuse)
+    // Arcane on yourself (Attune): a small quick ring of the wave round the caster as it goes off
+    if (this.element === EL.arcane) for (const e of w.events) {
+      if (e.kind !== 'cast' || e.who < 0 || e.who >= MAX_SEATS || !w.seats.active[e.who]) continue;
+      const sp = specOf(w, e.who);
+      if (sp.shape !== 'self' || !(sp.counts[EL.arcane - 1] > 0) || sp.counts[EL.fire - 1] > 0 || sp.counts[EL.cold - 1] > 0) continue;
+      if (this.bursts.some((b) => b.rec.tick === tick && b.rec.who === e.who)) continue;
+      const bx = w.bodies.x[e.who], by = w.bodies.y[e.who];
+      this.bursts.push({ rec: { tick, who: e.who, x: bx, y: by, r: 1.6, seed: (tick * 43 + e.who * 5) % 9973, path: [] }, face: 0, half: Math.PI, ring: false });
+    }
+    if (this.element === EL.arcane) for (const e of w.events) {
+      if (e.kind !== 'burst' || e.look !== EL.arcane || !isZoneBlast(w, e)) continue;
+      if (this.bursts.some((b) => b.rec.tick === tick && b.rec.x === e.x && b.rec.y === e.y)) continue;
+      this.bursts.push({ rec: { tick, who: e.who, x: e.x, y: e.y, r: e.amount ?? 2, seed: (tick * 41 + Math.round(e.x * 13)) % 9973, path: [] }, face: 0, half: Math.PI, ring: false });
     }
     this.bursts = this.bursts.filter((b) => (tick - b.rec.tick) / 60 < lifeOf() + 0.1);
   }
@@ -590,18 +636,18 @@ export class FireWaves {
     for (const k of this.ringWaves.keys()) if (!this.rings.recs.includes(k)) this.ringWaves.delete(k);
     for (const b of this.bursts) { const a = t - b.rec.tick / 60; if (a >= 0 && a <= lifeOf()) live.push(b); }
     live.sort((a, b) => b.rec.tick - a.rec.tick);
-    while (this.slots.length < live.length && this.slots.length < 8) { const s = new Slot(); this.slots.push(s); this.group.add(s.group); }
+    while (this.slots.length < live.length && this.slots.length < 8) this.slot();
     this.slots.forEach((s, i) => {
       const wv = live[i];
       if (!wv) { s.hide(); return; }
       const age = t - wv.rec.tick / 60, front = s.draw(wv, age, this.heightAt);
       if (!lights) return;
       const r = wv.rec, [cx, cy] = wv.ring ? centerAt(r, age) : [r.x, r.y];
-      if (age < 0.16) lights.add(cx, this.heightAt(cx, cy) + 0.9, cy, 0xffd9a0, age < 0.06 ? 10 : 5, r.r + 3);
+      if (age < 0.16) lights.add(cx, this.heightAt(cx, cy) + 0.9, cy, this.element === EL.arcane ? 0xf0c8ff : 0xffd9a0, age < 0.06 ? 10 : 5, r.r + 3);
       if (front > 0) {
         // the light rides the front: on a burst, out along the aim
         const R = s.D.uRn.value * (wv.ring ? 0 : 0.7), lx = cx + Math.cos(wv.face) * R, ly = cy + Math.sin(wv.face) * R;
-        lights.add(lx, this.heightAt(lx, ly) + 0.8, ly, 0xff8a30, 3.2 * front, r.r + 2.5);
+        lights.add(lx, this.heightAt(lx, ly) + 0.8, ly, this.element === EL.arcane ? 0xd060ff : 0xff8a30, 3.2 * front, r.r + 2.5);
       }
     });
   }

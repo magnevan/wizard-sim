@@ -696,4 +696,21 @@ window.ROUNDS = [
     ],
     general: 'Anything else about Cold, or its identity as a whole',
   },
+  {
+    id: 'arcane-1',
+    group: 'Arcane',
+    topic: 'All casts',
+    tab: '1 · first pass',
+    el: 'arcane',
+    date: '2026-11-28',
+    title: 'Arcane, first pass: every cast drawn',
+    lead: 'You on Cold: “these all seem fine for a first pass. maybe we just move on”. The same way for Arcane: one pass over every cast, built from what Fire made (its wave is one shape; Arcane brings only its colours). The beam is the locked anchor and unchanged.',
+    items: [
+      { id: 'ring', title: 'Arcane nova (Area on yourself)', text: 'Fire’s wave in Arcane’s colours: a rolling ring of plasma, white-pink at its hottest, magenta, violet at its edges; violet sparks and embers, no smoke; the racing ring and shock line of the opening burst. (It was a pink disc.) Three runes, close and at the game’s distance.', vid: ['r1-ring-12.mp4', 'r1-ring-26.mp4'], ask: 'Keep?' },
+      { id: 'burst', title: 'Arcane burst (Shift+LMB)', text: 'The same wave cut to the aimed fan, as Fire’s burst. (It was a pink fan.)', vid: ['r1-burst-12.mp4'], ask: 'Keep?' },
+      { id: 'place', title: 'Arcane blast (Place, a delayed blast)', text: 'New: a magenta sigil on the ground for the fuse (0.6 s): an outer ring of glyph ticks turning one way, an inner ring turning back, the disc filling with light from the rim inward; then it goes off as a whole ring of the Arcane wave standing where it was placed.', vid: ['r1-place-12.mp4'], ask: 'Keep?' },
+      { id: 'self', title: 'Attune (Self)', text: 'A small quick ring of the Arcane wave round the caster as it goes off (it was a lilac ring).', vid: ['r1-self-9.mp4'], ask: 'Keep?' },
+    ],
+    general: 'Anything else about Arcane, or its identity as a whole',
+  },
 ];

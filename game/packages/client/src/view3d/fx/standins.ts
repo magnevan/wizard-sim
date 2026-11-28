@@ -32,7 +32,7 @@ import {
 } from '@wizard-sim/sim';
 import * as X from '../../art/px';
 import { isColdBurst, isColdFog, isColdNova } from './cold';
-import { isFireBurst, isFireNova, isFirePatch } from './fire-wave';
+import { isArcaneBurst, isArcaneNova, isFireBurst, isFireNova, isFirePatch, isZoneBlast } from './fire-wave';
 import { plainRock } from './earth-sheets';
 import type { SpellLights } from './lights';
 import { Batch, type RGB } from './standins-batch';import { sprayDrop } from '../../spray-drop';
@@ -74,7 +74,7 @@ const specPal = (s: SpellSpec): Pal => (s.scald ? STEAM : s.heal ? palOf(EL.life
 const hash = (a: number, b = 0, c = 0): number => { const s = Math.sin(a * 127.1 + b * 311.7 + c * 74.7) * 43758.5453; return s - Math.floor(s); };
 
 /** A remembered event: what it was, when (tick), and what it needs to be drawn. */
-interface Rec { key: string; tick: number; life: number; kind: keyof typeof LIFE; x: number; y: number; x2: number; y2: number; r: number; look: number; who: number; half: number; line: boolean; heal: boolean; coldNova?: boolean; fireWave?: boolean }
+interface Rec { key: string; tick: number; life: number; kind: keyof typeof LIFE; x: number; y: number; x2: number; y2: number; r: number; look: number; who: number; half: number; line: boolean; heal: boolean; coldNova?: boolean; fireWave?: boolean; arcWave?: boolean }
 
 /** What the host passes each frame. */
 export interface StandinFrame {
@@ -146,7 +146,7 @@ export class Standins {
       case 'burst': {
         if (e.ev === EV.dismiss || e.ev === EV.wellDry || e.ev === EV.gutter) return;
         const sp = seatSpec();
-        add(e.who >= MAX_SEATS ? 'slam' : 'burst', { r: e.amount ?? 1, look: e.look ?? (sp ? sp.look || sp.form : 0), heal: !!sp?.heal, coldNova: e.who < MAX_SEATS && (isColdNova(sp) || isColdFog(sp)), fireWave: e.who < MAX_SEATS && (isFireNova(sp) || isFirePatch(sp)) });
+        add(e.who >= MAX_SEATS ? 'slam' : 'burst', { r: e.amount ?? 1, look: e.look ?? (sp ? sp.look || sp.form : 0), heal: !!sp?.heal, coldNova: e.who < MAX_SEATS && (isColdNova(sp) || isColdFog(sp)), fireWave: e.who < MAX_SEATS && (isFireNova(sp) || isFirePatch(sp)), arcWave: (e.who < MAX_SEATS && isArcaneNova(sp)) || (e.look === EL.arcane && isZoneBlast(w, e)) });
         return;
       }
       case 'zap': {
@@ -162,7 +162,7 @@ export class Standins {
         const sp = seatSpec();
         // (a self-cast has no form or look: with Fire in it, it is Burn, drawn by the caster's own flames; with Cold, Chill,
         // its frost: selfAge)
-        if (sp?.shape === 'self') add('self', { look: sp.counts[EL.fire - 1] > 0 ? EL.fire : sp.counts[EL.cold - 1] > 0 ? EL.cold : sp.look || sp.form, heal: sp.heal });
+        if (sp?.shape === 'self') add('self', { look: sp.counts[EL.fire - 1] > 0 ? EL.fire : sp.counts[EL.cold - 1] > 0 ? EL.cold : sp.counts[EL.arcane - 1] > 0 ? EL.arcane : sp.look || sp.form, heal: sp.heal });
         // a Discharge's reach (effects.ts: 4 u and one a rune), shown even when it finds nobody to zap
         if (sp?.shape === 'discharge') add('burst', { r: 4 + Math.max(1, sp.sizeN), look: EL.lightning });
         return;
@@ -171,7 +171,7 @@ export class Standins {
         if (e.text === 'imbue') {
           const sp = { form: e.look ?? 0, counts: new Uint8Array(N_EL) } as unknown as SpellSpec;
           if (e.els) for (let id = 1; id <= N_EL; id++) if (e.els & (1 << id)) sp.counts[id - 1] = 1;
-          add('imbue', { r: e.amount ?? 2, half: (e.half ?? 0.1) * TAU, line: imbueLine(sp), fireWave: isFireBurst(e), coldNova: isColdBurst(e) });
+          add('imbue', { r: e.amount ?? 2, half: (e.half ?? 0.1) * TAU, line: imbueLine(sp), fireWave: isFireBurst(e), coldNova: isColdBurst(e), arcWave: isArcaneBurst(e) });
           return;
         }
         if (e.text && /^(strike|sweep|heavy|lash|thrust|slam|cleave|smash|spin)/.test(e.text)) add('blow', {});
@@ -227,6 +227,7 @@ export class Standins {
       const x = z.x[k], y = z.y[k], r = z.r[k], P = palOf(z.look[k] || leadOf(z.els, k)), fadeOut = Math.min(1, z.life[k] / 30);
       switch (ty) {
         case ZONE.blast: case ZONE.geyser: {
+          if (ty === ZONE.blast && z.look[k] === EL.arcane && !this.drawArcane) break;   // zone-sigil.ts
           // the fuse: the disc fills toward its rim until it goes off
           const f = 1 - z.timer[k] / Math.max(1, T(SHAPES.delayedBlast)), Q = ty === ZONE.geyser ? palOf(has(z.els, k, EL.water) ? EL.water : EL.earth) : P;
           B.ring(B.tintBuf, x, y, 0, r * f, Q.deep, 0.15, Q.mid, 0.45);
@@ -640,6 +641,7 @@ export class Standins {
         case 'burst': case 'slam': {
           if (r.coldNova && !this.drawCold) break;   // cold.ts
           if (r.fireWave && !this.drawFire) break;   // fire-wave.ts
+          if (r.arcWave && !this.drawArcane) break;   // fire-wave.ts (Arcane's colours)
           // the sim hits the whole disc at once: its rim stands at the full radius from the first frame, a wave runs out to it
           const Q = r.kind === 'slam' ? { light: SLAM, mid: SLAM, deep: SLAM } : P, grow = Math.min(1, age / 0.22), rr = r.r * (0.3 + 0.7 * grow);
           B.ring(B.tintBuf, r.x, r.y, 0, r.r, Q.mid, 0.2 * fade, Q.deep, 0.4 * fade);
@@ -653,6 +655,7 @@ export class Standins {
         }
         case 'imbue': {
           if (r.fireWave && !this.drawFire) break;   // fire-wave.ts
+          if (r.arcWave && !this.drawArcane) break;   // fire-wave.ts (Arcane's colours)
           if (r.coldNova && !this.drawCold) break;   // cold.ts (the Frost burst)
           const grow = Math.min(1, age / 0.15), reach = r.r * grow, face = Math.atan2(r.y2 - r.y, r.x2 - r.x);
           if (r.line) {
@@ -704,6 +707,7 @@ export class Standins {
         case 'self': {
           if (r.look === EL.fire) break;   // Burn: the caster's own flames flare up instead (selfAge)
           if (r.look === EL.cold && !this.drawCold) break;   // Chill: the caster's frost bursts out instead (body-frost.ts)
+          if (r.look === EL.arcane && !this.drawArcane) break;   // Attune: a small ring of the Arcane wave (fire-wave.ts)
           const g = this.ground(r.x, r.y);
           B.band(B.glowBuf, r.x, g + 2.4 * k, r.y, 0.8, g + 2.4 * k + 0.5, P.light, 0.8 * fade, 0);
           B.circle(B.tintBuf, r.x, r.y, 0.9, 0.12, P.deep, fade);

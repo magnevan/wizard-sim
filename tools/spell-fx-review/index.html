@@ -24,6 +24,9 @@
 .el-cold { --el: #2a7bb8; --el-soft: #dcecf8 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .el-cold { --el: #7cc4f5; --el-soft: #1a2a38 } }
 :root[data-theme="dark"] .el-cold { --el: #7cc4f5; --el-soft: #1a2a38 }
+.el-arcane { --el: #b0309a; --el-soft: #f6dff1 }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .el-arcane { --el: #f07ad8; --el-soft: #361a31 } }
+:root[data-theme="dark"] .el-arcane { --el: #f07ad8; --el-soft: #361a31 }
 
 body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }

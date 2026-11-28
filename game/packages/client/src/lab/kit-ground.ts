@@ -651,7 +651,7 @@ export function marginGrass(): THREE.Mesh | null {
 // on a fixed grid in the world and fade in only near someone's feet, so a wizard walks into grass that stays put rather
 // than dragging a clump along. Short on mown lawn, taller in long grass; none on paving or worn paths.
 // ---------------------------------------------------------------------------------------------------------------
-const FOOT_MAX = 384, FOOT_STEP = 0.2;
+const FOOT_MAX = 900, FOOT_STEP = 0.2;
 let foot: { mesh: THREE.Mesh; geo: THREE.InstancedBufferGeometry; root: Float32Array; fan: Float32Array; fade: Float32Array } | null = null;
 /** The foot grass's mesh (add it to the scene once; setGrassPushers refills it each frame). */
 export function footGrass(): THREE.Mesh {
@@ -670,34 +670,45 @@ export function footGrass(): THREE.Mesh {
   foot = { mesh, geo, root, fan, fade };
   return mesh;
 }
+/** The foot grass's tufts now showing, by grid cell: where, what, and how far faded in (eased, so none pops). */
+const footShown = new Map<number, { x: number; y: number; z: number; w: number; h: number; sp: number; f: number; to: number }>();
+let footLast = 0;
 function fillFootGrass(list: readonly { x: number; z: number; r: number }[]) {
   const F = FIELDS;
   if (!foot) return;
-  let n = 0;
-  const seen = new Set<number>();
+  const now = performance.now(), dt = footLast ? Math.min(0.1, (now - footLast) / 1000) : 1;
+  footLast = now;
+  for (const t of footShown.values()) t.to = 0;
   if (F && GROUND_U.grTuftOn.value) for (const b of list) {
-    // a band just in front of the feet (toward the camera, +z): its tufts rise over the robe's hem and the soles.
-    // (Nearer in, they stand inside the robe and are hidden.)
-    const rx = b.r * 1.15, rz = b.r * 0.55, cz = b.z + b.r * 0.8;
+    // a ring round the feet, a little further toward the camera (+z). Tufts close in stand inside the robe and are
+    // hidden by it, so a walker passes over them; the outer edge fades over a wide band, far from the feet.
+    const rx = b.r * 1.5, rz = b.r * 1.3, cz = b.z + b.r * 0.3;
     for (let gz = Math.floor((cz - rz) / FOOT_STEP); gz <= Math.ceil((cz + rz) / FOOT_STEP); gz++)
       for (let gx = Math.floor((b.x - rx) / FOOT_STEP); gx <= Math.ceil((b.x + rx) / FOOT_STEP); gx++) {
-        const key = gz * 100003 + gx;
-        if (seen.has(key) || n >= FOOT_MAX) continue;
         const x = (gx + 0.5 + (hash(gx, gz) - 0.5) * 0.8) * FOOT_STEP, z = (gz + 0.5 + (hash(gz + 7.7, gx) - 0.5) * 0.8) * FOOT_STEP;
         const e = Math.hypot((x - b.x) / rx, (z - cz) / rz);
         if (e > 1 || hash(gx * 1.9, gz * 2.7) < 0.3) continue;
+        const key = gz * 100003 + gx, to = 1 - smooth(0.45, 1, e);
+        const had = footShown.get(key);
+        if (had) { had.to = Math.max(had.to, to); continue; }
         const i = Math.floor((x - F.x0) / CELL), j = Math.floor((z - F.y0) / CELL);
         if (i < 0 || j < 0 || i >= F.nx || j >= F.ny) continue;
         const q = j * F.nx + i;
         if (!F.lawn[q] || F.R[q] > 0.35) continue;
-        seen.add(key);
         const long = Math.min(1, F.G[q]), h = (0.4 + 0.25 * long) * (0.85 + 0.4 * hash(gx + 3.1, gz));
         const row = long > 0.5 && hash(gx, gz + 1.7) > 0.4 ? 2 : Math.floor(hash(gx + 5.3, gz) * 2), sp = row * 4 + Math.floor(hash(gx + 1.1, gz + 9.2) * 4);
-        foot.root.set([x, F.top[q] * UPM, z], n * 3);
-        foot.fan.set([h * 1.25, h, hash(gx + 2.2, gz) > 0.5 ? sp : -sp - 0.0001], n * 3);
-        foot.fade[n] = 1 - smooth(0.55, 1, e);
-        n++;
+        footShown.set(key, { x, y: F.top[q] * UPM, z, w: h * 1.25, h, sp: hash(gx + 2.2, gz) > 0.5 ? sp : -sp - 0.0001, f: 0, to });
       }
+  }
+  // ease each toward its target over about a fifth of a second; drop the ones faded out
+  let n = 0;
+  const k = 1 - Math.exp(-dt / 0.07);
+  for (const [key, t] of footShown) {
+    t.f += (t.to - t.f) * k;
+    if (t.to === 0 && t.f < 0.02) { footShown.delete(key); continue; }
+    if (n >= FOOT_MAX) continue;
+    foot.root.set([t.x, t.y, t.z], n * 3); foot.fan.set([t.w, t.h, t.sp], n * 3); foot.fade[n] = t.f;
+    n++;
   }
   foot.geo.instanceCount = n;
   for (const a of ['aRoot', 'aFan', 'aFade']) (foot.geo.getAttribute(a) as THREE.InstancedBufferAttribute).needsUpdate = true;

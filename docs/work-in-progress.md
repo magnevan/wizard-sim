@@ -7,6 +7,13 @@ cssclasses:
 
 [Start here](start-here.md) · [Threads](threads/README.md) · [Backlog (GitHub issues)](https://github.com/magnevan/wizard-sim/issues) · [How tasks work](tasks.md)
 
+## Spell identities
+
+> [!in-review] Answer the spell changes
+> The element identities and the casting styles (Shield and Sigil paid in Concentration and Bindings) mapped onto every spell: a cost table and sixteen changes, each with Claude's recommendation. Nothing built yet.
+
+[Spell Ramifications](https://claude.ai/artifact/FMhzY77FbQuJJtgPxdkb9n) · [Record](explorations/2026-11-28-spell-ramifications.md) · [Thread](threads/element-identity.md) · [Elements](world/elements.md)
+
 ## Campaign opening
 
 The opening is a chain of eight stops, Life first; the yard and the battery are built ([route](campaign/01-opening/brief.md#the-route), [thread](threads/opening.md)). Its places will be built in stylised 3D from a modular kit ([flexible building](explorations/2026-11-23-flexible-building.md)); a map editor the user and an LLM share comes next ([thread](threads/map-editor.md)).

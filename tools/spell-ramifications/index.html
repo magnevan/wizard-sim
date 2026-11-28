@@ -1,0 +1,290 @@
+<title>Spell Ramifications</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one reading column of change cards, grouped by element; each card reads today → proposed → my view → your answer. */
+:root {
+  --bg: #eceff4; --panel: #ffffff; --ink: #1a2030; --muted: #5b6579; --line: #d3d9e3; --accent: #3b55d0; --accent-soft: #e3e8fb; --warn: #b4442c;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #11141b; --panel: #191e28; --ink: #e5e8ee; --muted: #9aa3b4; --line: #2b3241; --accent: #8fa2ff; --accent-soft: #232b45; --warn: #ff8a6e; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #11141b; --panel: #191e28; --ink: #e5e8ee; --muted: #9aa3b4; --line: #2b3241; --accent: #8fa2ff; --accent-soft: #232b45; --warn: #ff8a6e; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--f-body); }
+.wrap { max-width: 780px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: 2.1rem; font-weight: 800; }
+h2 { font-size: 1.35rem; font-weight: 800; display: flex; gap: 10px; align-items: center; }
+h3 { font-size: 1.12rem; font-weight: 600; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 65ch; }
+.save { font-size: .85rem; color: var(--muted); }
+.save.warn { color: var(--warn); }
+section { display: grid; gap: 14px; }
+.rules { display: grid; gap: 6px; padding: 0; margin: 0; list-style: none; }
+.rules li { padding-left: 14px; border-left: 2px solid var(--line); max-width: 68ch; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; }
+.head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.keys { display: flex; gap: 4px; flex-wrap: wrap; }
+.key { font: 500 .78rem var(--f-mono); color: #10131a; padding: 2px 7px; border-radius: 5px; border-bottom: 2px solid rgba(0,0,0,.25); white-space: nowrap; }
+.cast { font: 500 .78rem var(--f-mono); color: var(--muted); border: 1px solid var(--line); padding: 1px 7px; border-radius: 5px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .pair { grid-template-columns: 1fr; } }
+.pair > div { min-width: 0; }
+.lab { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; display: block; margin-bottom: 2px; }
+.view { background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; }
+.view .lab { color: var(--accent); }
+.q { font-weight: 700; }
+.answer { display: grid; gap: 8px; }
+.choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.choices button { font: 700 .9rem var(--f-body); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+.choices button:hover:not(:disabled) { border-color: var(--accent); }
+.choices button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.choices button:disabled { opacity: .5; cursor: default; }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+textarea { width: 100%; box-sizing: border-box; font: .95rem/1.4 var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; resize: vertical; }
+.slug { font: .72rem var(--f-mono); color: var(--muted); }
+.tablewrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: .93rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 700; }
+.agreed { display: grid; gap: 6px; padding-left: 20px; margin: 0; }
+.dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <h1>Spell Ramifications</h1>
+    <p class="lede">What the element identities and the casting styles (Concentration and Bindings) change in every spell. Most spells only change how they're paid for; the cards below are the ones whose effect changes. Each has my recommendation; pick an answer and add a note where you want something different.</p>
+    <p class="save" id="saveState">Connecting to saved answers…</p>
+  </header>
+
+  <section>
+    <h2>The rules applied</h2>
+    <ul class="rules">
+      <li><b>Who is still paying for it?</b> Released (runes once, the world's now), Concentration (held against pressure) or a Binding (a made thing).</li>
+      <li><b>Arcane</b> concentrates (beam, charge and release, delayed blast) and disrupts what's being paid for, by amounts, power against power. Matter is out of its reach.</li>
+      <li><b>Walls stop everything;</b> coats decide what each hit costs; wards resist magic only.</li>
+      <li><b>No switches:</b> no absolute reflection, immunity or dispel.</li>
+      <li><b>Lightning</b> follows rules you can learn and disrupts actions. <b>Fire</b> consumes, <b>Water</b> is the medium, <b>Cold</b> controls.</li>
+    </ul>
+  </section>
+
+  <section id="changes"></section>
+
+  <section>
+    <h2>Only the cost changes</h2>
+    <p class="lede">The same spells, paid differently. Everything not listed keeps its cost: sprays, rings, missiles, beams, patches, rain, fog, heals, and every Earth, Lightning and Ice spell.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Spell</th><th>Today</th><th>New</th></tr></thead>
+      <tbody id="costRows"></tbody>
+    </table></div>
+    <div id="costAnswer"></div>
+  </section>
+
+  <section>
+    <h2>Already agreed</h2>
+    <ul class="agreed">
+      <li>An Arcane rune in a rock wall makes a <b>charged wall</b>: it stores the magic that hits it, glows as it fills and bursts when it breaks or is dismissed. Numbers open.</li>
+      <li><b>Arcane gets no bonus against stone:</b> rock walls, stone armour and boulders take its plain damage.</li>
+      <li>A shield takes an Earth-carried spell's impact in full; its coat resists only its own elements (already the rule).</li>
+    </ul>
+  </section>
+
+  <section id="general"></section>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const EL = { water: ['Q', '#3fa1ff'], life: ['W', '#5fe07a'], shield: ['E', '#ffe08a'], cold: ['R', '#aeefff'], lightning: ['A', '#c7a8ff'], arcane: ['S', '#ff4f9b'], sigil: ['D', '#e07bff'], fire: ['F', '#ff7b39'], earth: ['G', '#c99a68'] };
+  const NAME = { water: 'Water', life: 'Life', shield: 'Shield', cold: 'Cold', lightning: 'Lightning', arcane: 'Arcane', sigil: 'Sigil', fire: 'Fire', earth: 'Earth' };
+  const CHOICES = [['yes', 'Yes'], ['tweak', 'Yes, with changes'], ['no', 'No']];
+
+  const GROUPS = [
+    { name: 'Arcane', color: '#ff4f9b', items: [
+      { id: 'c-expose', title: 'Expose becomes disruption', keys: ['arcane'], cast: 'any spell carrying Arcane',
+        today: 'Expose: for a moment the target’s wards and resistances don’t count, and structures take extra damage. A switch, and it hits rock too.',
+        next: 'Each Arcane rune disrupts by an amount: it drains the Concentration of fields and wards it hits, strips HP or charges from Bindings (turrets, glyphs, auras, guards), shortens timed magic and lowers magical resistance. No bonus against flesh or stone.',
+        view: 'Recommended. It’s the core of Arcane’s new identity, and it removes a binary effect.' },
+      { id: 'c-arcane-shield', title: 'Shields are weak against Arcane', keys: ['shield', 'arcane'], cast: 'fields, wards',
+        today: 'A barrier stops enemy beams outright, Arcane ones included.',
+        next: 'Arcane hits on a field or ward cost extra Concentration. An Arcane coat (Shield + Arcane) resists that. A spell disrupts by its Arcane runes only, so a fire beam (Arcane + Fire) disrupts less than a pure Arcane beam.',
+        view: 'Recommended. The reverse of Magicka, which you accepted; the coat keeps it from being a hard counter.' },
+      { id: 'c-nova', title: 'The Arcane ring charges and releases', keys: ['arcane'], cast: 'ring (and its burst)',
+        today: 'An instant blast ring around you.',
+        next: 'How long you hold before releasing charges it: bigger and stronger, capped near 1.5 s. A tap still gives a small quick ring. The Arcane imbued burst charges the same way, since the ring and the burst are one cast.',
+        view: 'Recommended. It costs a slower emergency ring, which the tap keeps from hurting much.' },
+      { id: 'c-attune', title: 'Attune becomes opening yourself', keys: ['arcane'], cast: 'self',
+        today: 'Twice the regen for 3 s an Arcane rune, a 16 HP sting a rune, and 25 % more damage taken.',
+        next: 'It strips the magic held on you, buffs and hostile effects alike, by amount. Field regen doubles (not Concentration). While it lasts, magic acts 25 % more on you both ways, spells and heals; blows are unchanged. The sting stays.',
+        view: 'Recommended.', question: 'May you open the ally under the cursor too? That frees them of a hostile effect at the price of their buffs, a support verb. I’d say yes.' },
+      { id: 'c-arcane-aura', title: 'The Arcane aura becomes a disrupting field', keys: ['sigil', 'arcane'], cast: 'self',
+        today: 'A glass cannon: your hits deal more damage, but anything knocks you down easily.',
+        next: 'Magic near the wearer is disrupted a little every half second: enemy wards and fields drain, glyphs and turrets lose HP. Your partners’ magic too.',
+        view: 'Recommended. The glass cannon overlaps opening yourself, and an aura should affect those around you. Walk it into an enemy shield wall; keep it away from your healer’s wards.' },
+    ] },
+    { name: 'Shield', color: '#ffe08a', items: [
+      { id: 'c-mirror', title: 'The mirror ward stops being absolute', keys: ['shield'], cast: 'self',
+        today: 'Shield alone on yourself turns back the next few shots.',
+        next: 'It turns shots back while it holds, each one draining Concentration by its damage, so a big hit gets partly through. Arcane shots aren’t returned; they pour in.',
+        view: 'Recommended: no absolute reflection.' },
+      { id: 'c-turnback', title: 'Barriers turn shots back by the same rule', keys: ['shield'], cast: 'place, ring',
+        today: 'Enemy shots that hit a pure barrier turn back.',
+        next: 'Each turned shot costs Concentration by its damage; Arcane isn’t turned.',
+        view: 'Recommended, so the mirror and the barrier read alike.' },
+      { id: 'c-prism', title: 'The Prism becomes the anti-magic guard', keys: ['shield', 'arcane'], cast: 'weapon cast',
+        today: 'Arcane +1 resistance, Physical −0.25. It stores what it blocks and fires it as the Lance; the only block that stops beams and sprays; Phase (Retreat) and Clear (allies’ beams don’t hurt you).',
+        next: 'Some resistance to every element, weaker against blows (about −0.5). Capacitor, Lance, Phase and Clear kept. Optional: its block disrupts the ward or field behind what it stops.',
+        view: 'Lean yes (your idea). It overlaps wards a little.' },
+    ] },
+    { name: 'Life and Earth', color: '#5fe07a', items: [
+      { id: 'c-hedge', title: 'Shield + Earth + Life is a living hedge', keys: ['shield', 'earth', 'life'], cast: 'place, ring',
+        today: 'A rock wall that heals those sheltering against it.',
+        next: 'It also regrows its own HP slowly, and Fire burns it fast (Fire consumes growth).',
+        view: 'Small and optional: a first pull on the Life thread.' },
+      { id: 'c-imbue', title: 'Imbued resistances count as magic', keys: ['life'], cast: 'heals',
+        today: 'A heal’s imbued resistance just decays on its own.',
+        next: 'The line made exact: physical states (wet, burning, chill, frozen, knocked down) are the world’s; magic is anything held, bound or lent (wards, auras, Haste, imbues). Arcane cuts imbues by amount.',
+        view: 'Recommended: opening yourself needs it to have something to strip.' },
+    ] },
+    { name: 'Lightning', color: '#c7a8ff', items: [
+      { id: 'c-arc', title: 'Lightning’s path follows stated rules', keys: ['lightning'], cast: 'arc, jumps',
+        today: 'It chains to nearby bodies, further through the wet.',
+        next: 'Its jumps prefer the wettest body in reach, then the nearest (tall and metal later), and the help panel says so. Its stun interrupts channels as well as wind-ups (to check in the sim).',
+        view: 'Recommended: small, and it makes “unpredictable” learnable.' },
+    ] },
+    { name: 'Across the game', color: '#9aa3b4', items: [
+      { id: 's-economy', title: 'The rune budget without Shield and Sigil', keys: [], cast: 'economy',
+        today: 'Regen R = 1 rune a second, shared among nine pools.',
+        next: 'Scale R by 7/9 at first, so the field elements regen as now. Concentration refills on its own while nothing’s held. Start with 3 Bindings (Sigil had 3 runes) and a 3 s cooldown. Survive starts with 1 Binding, as it starts with Sigil 1.',
+        view: 'A starting point to tune in play, not a final number.' },
+      { id: 's-boosts', title: 'Regen boosts touch only field pools', keys: [], cast: 'economy',
+        today: 'Attune and Siphon flood every pool, Shield and Sigil included.',
+        next: 'Attune, Siphon and zones touch only the field pools. Concentration and Bindings grow through training.',
+        view: 'Recommended: it keeps the caster’s own resources the caster’s.' },
+      { id: 's-power', title: 'A caster power stat', keys: [], cast: 'every caster',
+        today: 'No power level; spells scale only with runes.',
+        next: 'Every caster has a power: the wizard’s grows with the campaign, enemy casters’ by type. Disruption uses it first: Arcane amount × attacker power ÷ holder power.',
+        view: 'Recommended: it’s how a weak wizard’s Arcane dents a strong ward without breaking it.' },
+      { id: 's-world', title: 'World spells under the styles', keys: [], cast: 'Shift+Space',
+        today: 'World spells bind their runes; time warp is pure Sigil, Nullify pure Shield.',
+        next: 'Their element runes stay bound, as decided. Time warp holds a Binding; Nullify holds Concentration.',
+        view: 'Recommended: each style pays the way it does everywhere else.' },
+      { id: 's-kit', title: 'A weapon and a guard are two Bindings', keys: [], cast: 'weapon casts',
+        today: 'A weapon binds a Sigil rune; a guard is paid once.',
+        next: 'Both hold a Binding. With 3, a sword and a guard leave one for a turret or a glyph.',
+        view: 'Accept it and tune the count. The alternative is one free slot for a carried weapon.' },
+    ] },
+  ];
+
+  const COSTS = [
+    ['Blink (Shield, Force)', 'a Shield rune', 'a lump of Concentration'],
+    ['Elemental blink', 'a Shield rune + elements', 'a lump of Concentration + elements'],
+    ['Barriers, coated fields and their rings', 'drain the Shield pool (+ elements once)', 'drain Concentration (+ elements once)'],
+    ['Wards, on you or an ally', 'the Shield pool, as a battery', 'Concentration'],
+    ['Rock and ice walls, arcs and rings', 'a Shield rune + Earth or Ice, once', 'Earth or Ice + a Binding'],
+    ['Stone armour', 'paid once', 'Earth + a Binding'],
+    ['The nine guards', 'paid once', 'a Binding'],
+    ['Weapons, the sculpting wand', 'bind a Sigil rune', 'a Binding'],
+    ['Turrets, the Lens', 'bind a Sigil rune', 'a Binding (turret shots still draw from pools)'],
+    ['Glyphs, line glyphs, the snare glyph', 'bind a Sigil rune', 'a Binding, with charges'],
+    ['Orbitals, rune motes', 'bind a Sigil rune', 'a Binding'],
+    ['Auras, Haste', 'bind a Sigil rune', 'a Binding'],
+  ];
+
+  // ---------- state ----------
+  const answers = {}; let db = null; const groups = [];
+  const setSave = (t, w) => { $('saveState').textContent = t; $('saveState').classList.toggle('warn', !!w); };
+  const chains = {};
+  function write(id, body) {
+    answers[id] = Object.assign({ choice: null, note: '' }, answers[id], body);
+    paint();
+    if (!db) return;
+    setSave('Saving…');
+    const doc = { choice: answers[id].choice || null, note: answers[id].note || '', updatedAt: new Date().toISOString() };
+    const k = 'answers/' + id;
+    chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set(doc)).then(() => setSave('All saved')).catch(() => setSave('Couldn’t save that. Check your connection and try again.', true));
+  }
+  function answerBlock(id, label, withChoices = true) {
+    const wrap = el('div', 'answer');
+    let box = null;
+    if (withChoices) {
+      box = el('div', 'choices'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', label);
+      for (const [v, l] of CHOICES) {
+        const b = el('button', null, l); b.type = 'button'; b.dataset.v = v; b.disabled = true;
+        b.addEventListener('click', () => write(id, { choice: answers[id]?.choice === v ? null : v }));
+        box.append(b);
+      }
+      wrap.append(box);
+    }
+    const ta = el('textarea'); ta.rows = 2; ta.id = 'n-' + id; ta.disabled = true;
+    ta.placeholder = withChoices ? 'Note (what to change, or why not)' : 'Anything else';
+    ta.setAttribute('aria-label', 'Note: ' + label);
+    let timer;
+    ta.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => write(id, { note: ta.value }), 900); });
+    ta.addEventListener('blur', () => { clearTimeout(timer); if ((answers[id]?.note || '') !== ta.value) write(id, { note: ta.value }); });
+    wrap.append(ta, el('span', 'slug', 'answers/' + id));
+    groups.push({ id, box, ta });
+    return wrap;
+  }
+  function paint() {
+    for (const g of groups) {
+      const a = answers[g.id] || {};
+      if (g.box) for (const b of g.box.children) { b.disabled = !db; b.setAttribute('aria-pressed', String(a.choice === b.dataset.v)); }
+      g.ta.disabled = !db;
+      if (document.activeElement !== g.ta && g.ta.value !== (a.note || '')) g.ta.value = a.note || '';
+    }
+  }
+
+  // ---------- build ----------
+  const host = $('changes');
+  host.append(el('h2', null, 'Changes to judge'));
+  for (const G of GROUPS) {
+    const h = el('h2'); const d = el('span', 'dot'); d.style.background = G.color; h.append(d, document.createTextNode(G.name));
+    host.append(h);
+    for (const it of G.items) {
+      const c = el('article', 'card');
+      const head = el('div', 'head');
+      if (it.keys.length) {
+        const k = el('div', 'keys');
+        for (const e of it.keys) { const s = el('span', 'key', EL[e][0] + ' ' + NAME[e]); s.style.background = EL[e][1]; k.append(s); }
+        head.append(k);
+      }
+      head.append(el('span', 'cast', it.cast));
+      c.append(head, el('h3', null, it.title));
+      const pair = el('div', 'pair');
+      const t = el('div'); t.append(el('span', 'lab', 'Today'), el('p', null, it.today));
+      const n = el('div'); n.append(el('span', 'lab', 'Proposed'), el('p', null, it.next));
+      pair.append(t, n); c.append(pair);
+      const v = el('div', 'view'); v.append(el('span', 'lab', 'My view'), el('p', null, it.view));
+      if (it.question) v.append(el('p', 'q', it.question));
+      c.append(v, answerBlock(it.id, it.title));
+      host.append(c);
+    }
+  }
+  const rows = $('costRows');
+  for (const [s, a, b] of COSTS) { const tr = el('tr'); tr.append(el('td', null, s), el('td', null, a), el('td', null, b)); rows.append(tr); }
+  const ca = el('div', 'card'); ca.append(el('h3', null, 'Does the cost table look right?'), answerBlock('costs', 'Cost table')); $('costAnswer').append(ca);
+  const gen = $('general'); const gc = el('div', 'card'); gc.append(el('h3', null, 'Anything I missed?'), el('p', 'lede', 'A spell that should change and isn’t here, or one that shouldn’t.'), answerBlock('general', 'General', false)); gen.append(gc);
+  paint();
+
+  (async () => {
+    try { db = await window.claude?.use?.('db'); } catch { db = null; }
+    if (!db) { setSave('Read-only here: answers need the page’s saved-answers store, which isn’t available in this view.', true); paint(); return; }
+    paint();
+    const timer = setTimeout(() => setSave('Saved answers are slow to load. You can still answer; changes save when the connection returns.', true), 10000);
+    db.collection('answers').onSnapshot((snap) => {
+      for (const d of snap.docs) { const x = d.data(); answers[d.id] = { choice: x.choice || null, note: x.note || '' }; }
+      if (!snap.metadata.fromCache) { clearTimeout(timer); if (!snap.metadata.hasPendingWrites) setSave('All saved'); }
+      paint();
+    }, () => { clearTimeout(timer); db = null; setSave('Saved answers are unavailable, so the page is read-only. Reload to try again.', true); paint(); });
+  })();
+})();
+</script>

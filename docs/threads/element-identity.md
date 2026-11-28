@@ -9,7 +9,7 @@ Each element's identity in play is written down (five questions each), and Shiel
 
 ## Next
 
-- [ ] Go through every existing spell (the Spell Atlas's cells, `tools/spell-atlas/`) and say how it changes under the identities and the casting styles: its cost (released, Concentration or a Binding), and any change of effect. The new ones first: Arcane's charge and release on Area, Arcane on yourself as opening yourself, Arcane's disruption by amounts, Shield weak against Arcane, Fire on stone, Earth + Life structures.
+- [ ] Go through every existing spell (the Spell Atlas's cells, `tools/spell-atlas/`) and say how it changes under the identities and the casting styles: its cost (released, Concentration or a Binding), and any change of effect. The new ones first: Arcane's charge and release on Area, Arcane on yourself as opening yourself, Arcane's disruption by amounts, Shield weak against Arcane, Earth + Life structures.
 - [ ] Open from the identities: what an Arcane rune adds to a rock wall (a charged wall, recommended, or magical resistance); whether a shield takes an Earth-carried spell's impact at a normal rate; the Prism reworked as the anti-magic guard (`game/packages/sim/src/guards.ts`).
 - [ ] Numbers: how many Bindings, the cooldown, Concentration's size, regen and drain; the shared rune budget without Shield and Sigil.
 - [ ] Settle with the spell pass: world spells bind runes today; glyph charges; Haste as a Binding.
